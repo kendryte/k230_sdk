@@ -1,0 +1,2 @@
+#!/bin/bash
+./face_mask.elf face_detection_320.kmodel 0.4 0.2 face_mask.kmodel 0.5 1024x768.jpg 2

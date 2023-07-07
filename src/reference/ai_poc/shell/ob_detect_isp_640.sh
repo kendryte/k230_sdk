@@ -1,0 +1,1 @@
+./ob_det.elf yolov8n_640.kmodel 0.25 0.6 None 0
