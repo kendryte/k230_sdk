@@ -1,0 +1,22 @@
+
+
+menu "toolchain configurations"
+config TOOLCHAIN_PREFIX_RTT
+        string "rt-smart toolchain prefix"
+        default "riscv64-unknown-linux-musl-"
+
+config TOOLCHAIN_PATH_RTT
+        string "rt-smart toolchain path"
+        default "/opt/toolchain/riscv64-linux-musleabi_for_x86_64-pc-linux-gnu/bin"
+
+config TOOLCHAIN_PREFIX_LINUX
+        string "linux toolchain prefix"
+        default "riscv64-unknown-linux-gnu-"
+
+config TOOLCHAIN_PATH_LINUX
+        string "linux toolchain path"
+        default "/opt/toolchain/Xuantie-900-gcc-linux-5.10.4-glibc-x86_64-V2.6.0/bin"
+
+endmenu
+
+

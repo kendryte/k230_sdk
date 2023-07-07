@@ -1,0 +1,692 @@
+From f5640ee983fe90d395a70fca26a8f9906cc4764d Mon Sep 17 00:00:00 2001
+From: zhouquan <zhouquan@rt-thread.com>
+Date: Fri, 24 Feb 2023 10:46:57 +0800
+Subject: [PATCH 15/17] =?UTF-8?q?=F0=9F=8C=88=20style(tests):=20change=20a?=
+ =?UTF-8?q?bsolute=20to=20relative?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ tests/10_opencv_flip/10_opencv_flip.cpp        |  4 ++--
+ .../11_opencv_transpose.cpp                    |  4 ++--
+ tests/12_opencv_Rect/12_opencv_Rect.cpp        |  4 ++--
+ .../13_opencv_resize_remap.cpp                 |  6 +++---
+ .../14_opencv_affine_rotation.cpp              |  8 ++++----
+ .../15_opencv_perspectiveTrans.cpp             |  4 ++--
+ .../16_opencv_cvtColor/16_opencv_cvtColor.cpp  |  8 ++++----
+ .../17_opencv_matchTemplate.cpp                |  6 +++---
+ .../18_opencv_threshold.cpp                    |  6 +++---
+ .../19_getStructuringElement.cpp               | 12 ++++++------
+ .../20_opencv_laplacian_sobel.cpp              | 10 +++++-----
+ .../21_opencv_keypoint/21_opencv_keypoint.cpp  |  2 +-
+ tests/22_opencv_dnn/22_opencv_dnn.cpp          | 10 +++++-----
+ tests/23_opencv_ml/23_opencv_ml.cpp            | 18 +++++++++---------
+ .../24_opencv_features2d.cpp                   |  4 ++--
+ tests/25_opencv_calib3d/25_opencv_calib3d.cpp  | 10 +++++-----
+ .../26_opencv_objdetect.cpp                    |  8 ++++----
+ .../27_opencv_objdetect.cpp                    |  4 ++--
+ .../2_opencv_core_split_merge.cpp              |  4 ++--
+ .../3_opencv_addWeighted.cpp                   |  6 +++---
+ .../4_opencv_bitwise_or.cpp                    |  8 ++++----
+ .../5_opencv_copyMakeBorder.cpp                |  4 ++--
+ tests/8_opencv_mean/8_opencv_mean.cpp          |  4 ++--
+ .../9_opencv_minMaxLoc/9_opencv_minMaxLoc.cpp  |  2 +-
+ 24 files changed, 78 insertions(+), 78 deletions(-)
+
+diff --git a/tests/10_opencv_flip/10_opencv_flip.cpp b/tests/10_opencv_flip/10_opencv_flip.cpp
+index 151e9be496..cb75abe21a 100644
+--- a/tests/10_opencv_flip/10_opencv_flip.cpp
++++ b/tests/10_opencv_flip/10_opencv_flip.cpp
+@@ -20,7 +20,7 @@ using namespace std;
+ 
+ int main()
+ {
+-    Mat lena = imread("/1.bmp", 1);
++    Mat lena = imread("./1.bmp", 1);
+     if (lena.empty()) {
+         printf("could not load image...\n");
+         return -1;
+@@ -28,5 +28,5 @@ int main()
+ 
+     Mat lena_flip;
+     flip(lena, lena_flip, 1);
+-    imwrite("/lena_flip.jpg", lena_flip);
++    imwrite("./lena_flip.jpg", lena_flip);
+ }
+diff --git a/tests/11_opencv_transpose/11_opencv_transpose.cpp b/tests/11_opencv_transpose/11_opencv_transpose.cpp
+index d40ab5bd53..6368ff234b 100644
+--- a/tests/11_opencv_transpose/11_opencv_transpose.cpp
++++ b/tests/11_opencv_transpose/11_opencv_transpose.cpp
+@@ -18,7 +18,7 @@ using namespace cv;
+ using namespace std;
+ int main()
+ {
+-    Mat lena = imread("/1.bmp", 3);
++    Mat lena = imread("./1.bmp", 3);
+     if (lena.empty()) {
+         printf("could not load image...\n");
+         return -1;
+@@ -26,6 +26,6 @@ int main()
+ 
+     Mat lena_transpose = lena;
+     transpose(lena_transpose, lena_transpose);
+-    imwrite("/lena_transpose.jpg", lena_transpose);
++    imwrite("./lena_transpose.jpg", lena_transpose);
+     return 0;
+ }
+diff --git a/tests/12_opencv_Rect/12_opencv_Rect.cpp b/tests/12_opencv_Rect/12_opencv_Rect.cpp
+index 954f6dbced..17249da420 100644
+--- a/tests/12_opencv_Rect/12_opencv_Rect.cpp
++++ b/tests/12_opencv_Rect/12_opencv_Rect.cpp
+@@ -19,10 +19,10 @@ using namespace std;
+ int main()
+ {
+     cv::Rect m_select;
+-    Mat      lena = imread("/1.bmp");
++    Mat      lena = imread("./1.bmp");
+     m_select      = Rect(100, 100, 300, 300);
+     Mat lena_rect = lena(m_select);
+-    imwrite("/lena_rect.jpg", lena_rect);
++    imwrite("./lena_rect.jpg", lena_rect);
+ 
+     return 0;
+ }
+diff --git a/tests/13_opencv_resize_remap/13_opencv_resize_remap.cpp b/tests/13_opencv_resize_remap/13_opencv_resize_remap.cpp
+index a7a1ec5fee..6a0ae3cbb4 100644
+--- a/tests/13_opencv_resize_remap/13_opencv_resize_remap.cpp
++++ b/tests/13_opencv_resize_remap/13_opencv_resize_remap.cpp
+@@ -21,7 +21,7 @@ using namespace std;
+ 
+ int main()
+ {
+-    Mat lena = imread("/1.bmp", 1);
++    Mat lena = imread("./1.bmp", 1);
+     if (!lena.data) {
+         cout << "Input Image reading error !" << endl;
+         return -1;
+@@ -32,7 +32,7 @@ int main()
+     Mat  lena_resize = Mat::zeros(R_size, CV_8UC3);
+     resize(lena, lena_resize, R_size, 0, 0, INTER_AREA);
+ 
+-    imwrite("/lena_resize.jpg", lena_resize);
++    imwrite("./lena_resize.jpg", lena_resize);
+ 
+     // remap example
+     Mat lena_remap = Mat::zeros(lena.size(), CV_8UC3);
+@@ -53,7 +53,7 @@ int main()
+         }
+     }
+     remap(lena, lena_remap, mMapX, mMapY, INTER_LINEAR);
+-    imwrite("/lena_remap.jpg", lena_remap);
++    imwrite("./lena_remap.jpg", lena_remap);
+ 
+     return 0;
+ }
+diff --git a/tests/14_opencv_affine_rotation/14_opencv_affine_rotation.cpp b/tests/14_opencv_affine_rotation/14_opencv_affine_rotation.cpp
+index 14a1ccccaa..09c92f186c 100644
+--- a/tests/14_opencv_affine_rotation/14_opencv_affine_rotation.cpp
++++ b/tests/14_opencv_affine_rotation/14_opencv_affine_rotation.cpp
+@@ -22,7 +22,7 @@ using namespace std;
+ 
+ int main()
+ {
+-    Mat lena = imread("/1.bmp", 1);
++    Mat lena = imread("./1.bmp", 1);
+     if (!lena.data) {
+         cout << "Input Image reading error !" << endl;
+         return -1;
+@@ -45,7 +45,7 @@ int main()
+ 	Mat lena_getAffine = Mat::zeros(lena.size(), CV_8UC3);
+ 
+ 	warpAffine(lena,  lena_getAffine, Affine_fun, lena.size());
+-    imwrite("/lena_getAffine.jpg", lena_getAffine);
++    imwrite("./lena_getAffine.jpg", lena_getAffine);
+ 
+     //getRotationMatrix2D example
+ 
+@@ -53,7 +53,7 @@ int main()
+ 	Mat lena_resize = Mat::zeros(R_size, CV_8UC3);
+ 	resize(lena, lena_resize, R_size, 0, 0, INTER_AREA);
+ 
+-    imwrite("/lena_resize.jpg", lena_resize);
++    imwrite("./lena_resize.jpg", lena_resize);
+ 
+     //remap example
+ 	Mat lena_rotation = Mat::zeros(lena.size(), CV_8UC3);
+@@ -63,7 +63,7 @@ int main()
+     double scale = 0.5;
+ 	Mat Rotation_fun = getRotationMatrix2D(center, angle, scale);
+ 	warpAffine(lena, lena_rotation, Rotation_fun, lena_sz, 1, 0, (0));
+-    imwrite("/lena_rotation.jpg", lena_rotation);
++    imwrite("./lena_rotation.jpg", lena_rotation);
+ 
+     return 0;
+ }
+diff --git a/tests/15_opencv_perspectiveTrans/15_opencv_perspectiveTrans.cpp b/tests/15_opencv_perspectiveTrans/15_opencv_perspectiveTrans.cpp
+index 735cf7b018..122fed0436 100644
+--- a/tests/15_opencv_perspectiveTrans/15_opencv_perspectiveTrans.cpp
++++ b/tests/15_opencv_perspectiveTrans/15_opencv_perspectiveTrans.cpp
+@@ -21,7 +21,7 @@ using namespace std;
+ 
+ int main()
+ {
+-    Mat lena = imread("/1.bmp", 1);
++    Mat lena = imread("./1.bmp", 1);
+     if (!lena.data) {
+         cout << "Input Image reading error !" << endl;
+ 		return -1;
+@@ -82,7 +82,7 @@ int main()
+     cv::Mat perspectiveMmat = cv::getPerspectiveTransform(lenaPoint,dstPoint);
+     cv::warpPerspective(lena,dst,perspectiveMmat,lena.size(),cv::INTER_CUBIC);
+     //图像透视化的函数
+-    cv::imwrite("/Perspective.jpg", dst);
++    cv::imwrite("./Perspective.jpg", dst);
+ 
+     return 0;
+ }
+diff --git a/tests/16_opencv_cvtColor/16_opencv_cvtColor.cpp b/tests/16_opencv_cvtColor/16_opencv_cvtColor.cpp
+index ce3fb4ffa5..6974576bb8 100644
+--- a/tests/16_opencv_cvtColor/16_opencv_cvtColor.cpp
++++ b/tests/16_opencv_cvtColor/16_opencv_cvtColor.cpp
+@@ -20,7 +20,7 @@ using namespace std;
+ 
+ int main()
+ {
+-    Mat lena = imread("/1.bmp", 1);
++    Mat lena = imread("./1.bmp", 1);
+     if (!lena.data) {
+         cout << "Input Image reading error !" << endl;
+ 		return -1;
+@@ -30,8 +30,8 @@ int main()
+ 	cvtColor(lena, lena_gray, COLOR_BGR2GRAY);
+ 	cvtColor(lena, lena_hsv, COLOR_BGR2HSV);
+ 	cvtColor(lena, lena_rgb, COLOR_BGR2RGB);
+-    imwrite("/lena_gray.jpg", lena_gray);
+-    imwrite("/lena_hsv.jpg", lena_hsv);
+-    imwrite("/lena_rgb.jpg", lena_rgb);
++    imwrite("./lena_gray.jpg", lena_gray);
++    imwrite("./lena_hsv.jpg", lena_hsv);
++    imwrite("./lena_rgb.jpg", lena_rgb);
+     return 0;
+ }
+diff --git a/tests/17_opencv_matchTemplate/17_opencv_matchTemplate.cpp b/tests/17_opencv_matchTemplate/17_opencv_matchTemplate.cpp
+index baae52fe72..fefc27743a 100644
+--- a/tests/17_opencv_matchTemplate/17_opencv_matchTemplate.cpp
++++ b/tests/17_opencv_matchTemplate/17_opencv_matchTemplate.cpp
+@@ -20,7 +20,7 @@ using namespace std;
+ 
+ int main()
+ {
+-    Mat lena = imread("/1.bmp", 1);
++    Mat lena = imread("./1.bmp", 1);
+     if (!lena.data) {
+         cout << "Input Image reading error !" << endl;
+ 		return -1;
+@@ -31,7 +31,7 @@ int main()
+ 
+ 	Rect cut = Rect(300, 300, 50, 50);
+ 	lena_cut = lena(cut);
+-    imwrite("/lena_cut.jpg", lena_cut);
++    imwrite("./lena_cut.jpg", lena_cut);
+ 
+     Mat lena_match;
+ 	matchTemplate(lena, lena_cut, lena_match, TM_CCOEFF_NORMED);
+@@ -52,7 +52,7 @@ int main()
+ 	line(lena, pt4, pt3, cv::Scalar(0, 255, 0), 11, 1);
+ 	line(lena, pt3, pt1, cv::Scalar(0, 255, 0), 11, 1);
+ 
+-    imwrite("/lena.jpg", lena);
++    imwrite("./lena.jpg", lena);
+ 
+     return 0;
+ }
+diff --git a/tests/18_opencv_threshold/18_opencv_threshold.cpp b/tests/18_opencv_threshold/18_opencv_threshold.cpp
+index fe83b93a8f..c6a38358bd 100644
+--- a/tests/18_opencv_threshold/18_opencv_threshold.cpp
++++ b/tests/18_opencv_threshold/18_opencv_threshold.cpp
+@@ -20,7 +20,7 @@ using namespace std;
+ 
+ int main()
+ {
+-    Mat lena = imread("/1.bmp", 1);
++    Mat lena = imread("./1.bmp", 1);
+     if (!lena.data) {
+         cout << "Input Image reading error !" << endl;
+ 		return -1;
+@@ -28,11 +28,11 @@ int main()
+ 
+     Mat lena_gray, lena_threshold;
+   	cvtColor(lena, lena_gray, COLOR_BGR2GRAY);
+-    imwrite("/lena_gray.jpg", lena_gray);
++    imwrite("./lena_gray.jpg", lena_gray);
+ 
+     threshold(lena_gray, lena_threshold, 170, 255, THRESH_BINARY);
+ 
+-    imwrite("/lena_threshold.jpg", lena_threshold);
++    imwrite("./lena_threshold.jpg", lena_threshold);
+ 
+     return 0;
+ }
+diff --git a/tests/19_getStructuringElement/19_getStructuringElement.cpp b/tests/19_getStructuringElement/19_getStructuringElement.cpp
+index 77ec5b407f..cb69e0fbd0 100644
+--- a/tests/19_getStructuringElement/19_getStructuringElement.cpp
++++ b/tests/19_getStructuringElement/19_getStructuringElement.cpp
+@@ -23,7 +23,7 @@ using namespace std;
+ 
+ int main()
+ {
+-    Mat lena = imread("/1.bmp", 1);
++    Mat lena = imread("./1.bmp", 1);
+     if (!lena.data) {
+         cout << "Input Image reading error !" << endl;
+         return -1;
+@@ -36,14 +36,14 @@ int main()
+     // dilate
+     Mat lena_dilate;
+     dilate(lena, lena_dilate, element);
+-    imwrite("/lena_dilate.jpg", lena_dilate);
++    imwrite("./lena_dilate.jpg", lena_dilate);
+ 
+     Mat element1;
+     element1 = getStructuringElement(MORPH_RECT, Size(10, 10));
+     // erode
+     Mat lena_erode;
+     erode(lena_dilate, lena_erode, element1);
+-    imwrite("/lena_erode.jpg", lena_erode);
++    imwrite("./lena_erode.jpg", lena_erode);
+ 
+     // //findContours
+     // Mat lena_contour, lena_binary, lena_gray;
+@@ -52,7 +52,7 @@ int main()
+     // vector<Vec4i> hierarchy;
+ 
+     // threshold(lena_gray, lena_binary, 130, 255, THRESH_BINARY);
+-    // imwrite("/lena_binary.jpg", lena_binary);
++    // imwrite("./lena_binary.jpg", lena_binary);
+     // findContours(lena_binary, contours, hierarchy, RETR_CCOMP, CHAIN_APPROX_SIMPLE);
+ 
+     // //cout << contours[1] << endl;
+@@ -64,7 +64,7 @@ int main()
+     // // }
+     // //Scalar color(0, 0, 255);
+     // //drawContours(lena, contours, 1, color, FILLED, 8, hierarchy);
+-    // imwrite("/lena_c.jpg", contours);
++    // imwrite("./lena_c.jpg", contours);
+ 
+     Mat image;
+     GaussianBlur(lena, image, Size(3, 3), 0);  //高斯滤波
+@@ -92,7 +92,7 @@ int main()
+         drawContours(imageContours, contours, i, Scalar(255), 1, 8, hierarchy);
+     }
+ 
+-    imwrite("/lena_contour.jpg", imageContours);
++    imwrite("./lena_contour.jpg", imageContours);
+ 
+     return 0;
+ }
+diff --git a/tests/20_opencv_laplacian_sobel/20_opencv_laplacian_sobel.cpp b/tests/20_opencv_laplacian_sobel/20_opencv_laplacian_sobel.cpp
+index 7a068b8194..970ddfdf51 100644
+--- a/tests/20_opencv_laplacian_sobel/20_opencv_laplacian_sobel.cpp
++++ b/tests/20_opencv_laplacian_sobel/20_opencv_laplacian_sobel.cpp
+@@ -23,7 +23,7 @@ using namespace cv;
+ void mythreshold(int, void*);
+ int main(){
+     Mat lena, dst;
+-     lena = imread("/1.bmp");
++     lena = imread("./1.bmp");
+      if (!lena.data) {
+          cout << "Input Image reading error !" << endl;
+          return -1;
+@@ -36,16 +36,16 @@ int main(){
+     Mat dst_x, dst_y;
+     Sobel(lena_gray, dst_x, -1, 1, 0); // x方向导数运算参数，可取0,1,2
+     Sobel(lena_gray, dst_y, -1, 0, 1); // y方向导数运算参数
+-     imwrite("/sobel_x.jpg", dst_x);
+-     imwrite("/sobel_y.jpg", dst_y);
++     imwrite("./sobel_x.jpg", dst_x);
++     imwrite("./sobel_y.jpg", dst_y);
+      addWeighted(dst_x, 0.5, dst_y, 0.5, 0, dst);
+-     imwrite("/sobel.jpg", dst);
++     imwrite("./sobel.jpg", dst);
+ 
+      //laplacian
+ 	 Mat laplacian;
+     Laplacian(lena_gray,laplacian,CV_16S,3,1,0);
+     convertScaleAbs(laplacian,laplacian);
+-     imwrite("/laplacian.jpg", laplacian);
++     imwrite("./laplacian.jpg", laplacian);
+ 
+      return 0;
+ }
+diff --git a/tests/21_opencv_keypoint/21_opencv_keypoint.cpp b/tests/21_opencv_keypoint/21_opencv_keypoint.cpp
+index 0d248f1886..82db1726ef 100644
+--- a/tests/21_opencv_keypoint/21_opencv_keypoint.cpp
++++ b/tests/21_opencv_keypoint/21_opencv_keypoint.cpp
+@@ -24,7 +24,7 @@ using namespace std;
+ 
+ int main()
+ {
+-    Mat lena = imread("/1.bmp");
++    Mat lena = imread("./1.bmp");
+     if (!lena.data) {
+ 		cout << "Input Image reading error !" << endl;
+ 		return -1;
+diff --git a/tests/22_opencv_dnn/22_opencv_dnn.cpp b/tests/22_opencv_dnn/22_opencv_dnn.cpp
+index 588d1a0b0f..9fdf7726fb 100644
+--- a/tests/22_opencv_dnn/22_opencv_dnn.cpp
++++ b/tests/22_opencv_dnn/22_opencv_dnn.cpp
+@@ -20,7 +20,7 @@
+ #include<sys/stat.h>
+ 
+ using namespace std;
+-using namespace cv::dnn; 
++using namespace cv::dnn;
+ using namespace cv;
+ 
+ Mat convertTo3Channels(const Mat& binImg)
+@@ -38,7 +38,7 @@ Mat convertTo3Channels(const Mat& binImg)
+ 
+ void argMax(const Mat& res, float &score, int &index)
+ {
+-    float* pdata = (float*)res.data ; 
++    float* pdata = (float*)res.data ;
+     for(int i=0;i < 10; i++)
+     {
+ 	if(score<pdata[i] )
+@@ -71,7 +71,7 @@ pbModel::pbModel(string pbfile,string oNode)
+ 
+ void pbModel::run(string fileName)
+ {
+-    int pos = fileName.rfind("/");
++    int pos = fileName.rfind("./");
+     string baseName = fileName.substr(pos+1 ,fileName.size()-1);
+     cv::Mat image = cv::imread(fileName);
+     cv::Mat image2 = this->imageProcess(image);
+@@ -109,8 +109,8 @@ Mat pbModel::imageProcess(const Mat& binImg)
+ 
+ int main()
+ {
+-    string name = "/48.png";
+-    string pbfile = "/mnist_model_1channel.pb";
++    string name = "./48.png";
++    string pbfile = "./mnist_model_1channel.pb";
+     string outNode = "output_class_1/Softmax";
+     pbModel pbRun(pbfile, outNode);
+     pbRun.run(name);
+diff --git a/tests/23_opencv_ml/23_opencv_ml.cpp b/tests/23_opencv_ml/23_opencv_ml.cpp
+index b58ae558d7..1dedceaf05 100644
+--- a/tests/23_opencv_ml/23_opencv_ml.cpp
++++ b/tests/23_opencv_ml/23_opencv_ml.cpp
+@@ -16,12 +16,12 @@
+ #include "opencv2/opencv.hpp"
+ #include <iostream>
+ #include <opencv2/ml.hpp>
+- 
++
+ using namespace cv;
+ using namespace cv::ml;
+- 
++
+ int main() {
+-    Mat labels = (Mat_<char>(8,1) << 1, 0 ,1, 0, 0, 0, 0, 0); 
++    Mat labels = (Mat_<char>(8,1) << 1, 0 ,1, 0, 0, 0, 0, 0);
+     //标签，决定某个数据满足目的(1)与否(0)
+     Mat data = (Mat_<char>(8,1) << 1, -1 ,30, -60, -70, -10, -12, -100); //数据集
+     data.convertTo(data, CV_32F);
+@@ -30,17 +30,17 @@ int main() {
+     model->setIterations(100); //设置梯度下降迭代次数
+     model->setLearningRate(0.001); //学习率α grad = θi - α * dJ(θi)/dθi
+     model->setMiniBatchSize(1);
+-    model->setTrainMethod(LogisticRegression::MINI_BATCH); 
++    model->setTrainMethod(LogisticRegression::MINI_BATCH);
+     //训练方法，BATCH OR MINI_BATCH
+-    model->setRegularization(LogisticRegression::REG_DISABLE); 
++    model->setRegularization(LogisticRegression::REG_DISABLE);
+     //不正则化，即不启用代价惩罚
+     model->train(data, ROW_SAMPLE,labels);  //对数据集按行读取进行训练
+-    model->save("/model.xml");
+-    Ptr<LogisticRegression> lr = LogisticRegression::load("/model.xml");
+- 
++    model->save("./model.xml");
++    Ptr<LogisticRegression> lr = LogisticRegression::load("./model.xml");
++
+     //测试
+     Mat result;
+-    Mat test = (Mat_<float>(4,1) << 1,-1,0,30); 
++    Mat test = (Mat_<float>(4,1) << 1,-1,0,30);
+     lr->predict(test, result);
+     std::cout << "result: " << result << std::endl;
+     return 0;
+diff --git a/tests/24_opencv_features2d/24_opencv_features2d.cpp b/tests/24_opencv_features2d/24_opencv_features2d.cpp
+index 2ae7e084bd..c1816bbce4 100644
+--- a/tests/24_opencv_features2d/24_opencv_features2d.cpp
++++ b/tests/24_opencv_features2d/24_opencv_features2d.cpp
+@@ -23,13 +23,13 @@ using namespace cv;
+ int main()
+ {
+   Mat image;
+-  image = imread("/test.jpg");
++  image = imread("./test.jpg");
+   // vector of keyPoints
+   std::vector<KeyPoint> keyPoints;
+   Ptr<FeatureDetector> fast=FastFeatureDetector::create(40);
+   // feature point detection
+   fast->detect(image,keyPoints);
+   drawKeypoints(image, keyPoints, image, Scalar::all(255), DrawMatchesFlags::DRAW_OVER_OUTIMG);
+-  imwrite("/demo24_fast_feature.jpg", image);
++  imwrite("./demo24_fast_feature.jpg", image);
+   return 0;
+ }
+diff --git a/tests/25_opencv_calib3d/25_opencv_calib3d.cpp b/tests/25_opencv_calib3d/25_opencv_calib3d.cpp
+index e6ed23632c..aad135fa3e 100644
+--- a/tests/25_opencv_calib3d/25_opencv_calib3d.cpp
++++ b/tests/25_opencv_calib3d/25_opencv_calib3d.cpp
+@@ -29,11 +29,11 @@ string disparity_window = "disparity";
+ 
+ 
+ 
+-int main() 
++int main()
+ {
+-    imgL = imread("/im0.png");
+-    imgR = imread("/im1.png");
+-	
++    imgL = imread("./im0.png");
++    imgR = imread("./im1.png");
++
+     stereo->setNumDisparities(2 * 16);
+     numDisparity = numDisparity * 16;
+     stereo->compute(imgL, imgR, disp);
+@@ -45,7 +45,7 @@ int main()
+     disp.convertTo(disparity, CV_8U);
+     applyColorMap(disparity, disparity, COLORMAP_JET);
+ 
+-    imwrite("/demo25_result.jpg", disparity);
++    imwrite("./demo25_result.jpg", disparity);
+     return 0;
+ 
+ }
+diff --git a/tests/26_opencv_objdetect/26_opencv_objdetect.cpp b/tests/26_opencv_objdetect/26_opencv_objdetect.cpp
+index b51435a602..d213989644 100644
+--- a/tests/26_opencv_objdetect/26_opencv_objdetect.cpp
++++ b/tests/26_opencv_objdetect/26_opencv_objdetect.cpp
+@@ -30,9 +30,9 @@ int main()
+     Mat edges;
+ 
+     CascadeClassifier cascade, nestedCascade;
+-    cascade.load("/haarcascade_frontalface_alt.xml");
+-    nestedCascade.load("/haarcascade_eye.xml");
+-    frame = imread("/1.bmp");
++    cascade.load("./haarcascade_frontalface_alt.xml");
++    nestedCascade.load("./haarcascade_eye.xml");
++    frame = imread("./1.bmp");
+     detectAndDraw( frame, cascade, nestedCascade, 2, 0);
+     return 0;
+ }
+@@ -122,6 +122,6 @@ void detectAndDraw(Mat& img, CascadeClassifier& cascade,
+             circle( img, center, radius, color, 3, 8, 0 );
+         }
+     }
+-    imwrite("/demo26_result.jpg", img);
++    imwrite("./demo26_result.jpg", img);
+ }
+ 
+diff --git a/tests/27_opencv_background_substract/27_opencv_objdetect.cpp b/tests/27_opencv_background_substract/27_opencv_objdetect.cpp
+index c237884c75..4bb8a197b3 100644
+--- a/tests/27_opencv_background_substract/27_opencv_objdetect.cpp
++++ b/tests/27_opencv_background_substract/27_opencv_objdetect.cpp
+@@ -36,7 +36,7 @@ int main()
+ 	cv::Mat img, fgMask;
+ 	for (int i = 100; i < 112; i++)
+ 	{
+-		sprintf(file_names, "/picture/w%d.jpg", i);
++		sprintf(file_names, "./picture/w%d.jpg", i);
+ 		img = cv::imread(file_names);
+ 		if (!img.data)
+ 		{
+@@ -45,7 +45,7 @@ int main()
+ 		pBackSub->apply(img, fgMask);
+ 		//get the frame number and write it on the current frame
+ 		cv::rectangle(img, cv::Point(10, 2), cv::Point(100, 20), cv::Scalar(255, 255, 255), -1);
+-		sprintf(filename, "/picture1/p%d.jpg", i);
++		sprintf(filename, "./picture1/p%d.jpg", i);
+ 		imwrite(filename, fgMask);
+ 	}
+ }
+diff --git a/tests/2_opencv_core_split_merge/2_opencv_core_split_merge.cpp b/tests/2_opencv_core_split_merge/2_opencv_core_split_merge.cpp
+index 26b72906ee..c2cbc634ab 100644
+--- a/tests/2_opencv_core_split_merge/2_opencv_core_split_merge.cpp
++++ b/tests/2_opencv_core_split_merge/2_opencv_core_split_merge.cpp
+@@ -22,7 +22,7 @@ using namespace std;
+ int main(int argc, char **argv)
+ {
+     vector<Mat> channels;
+-    Mat         img = imread("/a.jpg", 1);
++    Mat         img = imread("./a.jpg", 1);
+ 
+     // split
+     //  分离彩色通道
+@@ -41,6 +41,6 @@ int main(int argc, char **argv)
+ 
+     // merge
+     merge(r_channels, img2);
+-    imwrite("/b.jpg", img2);
++    imwrite("./b.jpg", img2);
+     return 0;
+ }
+diff --git a/tests/3_opencv_core_addweight/3_opencv_addWeighted.cpp b/tests/3_opencv_core_addweight/3_opencv_addWeighted.cpp
+index 384aa56fd5..b8d70150fd 100644
+--- a/tests/3_opencv_core_addweight/3_opencv_addWeighted.cpp
++++ b/tests/3_opencv_core_addweight/3_opencv_addWeighted.cpp
+@@ -21,12 +21,12 @@ using namespace cv;
+ 
+ int main()
+ {
+-    Mat img_test_1 = imread("/1.jpg", 1);
++    Mat img_test_1 = imread("./1.jpg", 1);
+     if (!img_test_1.data) {
+         cout << "Image 1 reading error !" << endl;
+         return 0;
+     }
+-    Mat img_test_2 = imread("/2.png", 1);
++    Mat img_test_2 = imread("./2.png", 1);
+     if (!img_test_2.data) {
+         cout << "Image 2 reading error !" << endl;
+         return 0;
+@@ -41,6 +41,6 @@ int main()
+     }
+ 
+     addWeighted(img_test_1, 0.3, img_test_2, 0.7, 3, img_test_addWeighted, CV_8UC1);
+-    imwrite("/addWeighted.jpg", img_test_addWeighted);
++    imwrite("./addWeighted.jpg", img_test_addWeighted);
+     return 0;
+ }
+diff --git a/tests/4_opencv_bitwise_or/4_opencv_bitwise_or.cpp b/tests/4_opencv_bitwise_or/4_opencv_bitwise_or.cpp
+index 23458faf70..bf398a03b7 100644
+--- a/tests/4_opencv_bitwise_or/4_opencv_bitwise_or.cpp
++++ b/tests/4_opencv_bitwise_or/4_opencv_bitwise_or.cpp
+@@ -20,7 +20,7 @@ using namespace cv;
+ 
+ int main()
+ {
+-    Mat img_test_1 = imread("/1.jpg", 1);
++    Mat img_test_1 = imread("./1.jpg", 1);
+     if (!img_test_1.data) {
+         cout << "Image 1 reading error !" << endl;
+         return 0;
+@@ -29,11 +29,11 @@ int main()
+     Mat mask                = Mat::zeros(img_test_1.size(), CV_8UC3);
+     Mat img_test_bitwise_or = Mat::zeros(img_test_1.size(), CV_8UC3);
+ 
+-    imwrite("/img_test_bitwise_or.jpg", img_test_bitwise_or);
+-    imwrite("/mask.jpg", mask);
++    imwrite("./img_test_bitwise_or.jpg", img_test_bitwise_or);
++    imwrite("./mask.jpg", mask);
+ 
+     bitwise_or(img_test_1, img_test_bitwise_or, mask);
+ 
+-    imwrite("/bitwise_or.jpg", mask);
++    imwrite("./bitwise_or.jpg", mask);
+     return 0;
+ }
+diff --git a/tests/5_opencv_copyMakeBorder/5_opencv_copyMakeBorder.cpp b/tests/5_opencv_copyMakeBorder/5_opencv_copyMakeBorder.cpp
+index 939e2019ba..4e92513647 100644
+--- a/tests/5_opencv_copyMakeBorder/5_opencv_copyMakeBorder.cpp
++++ b/tests/5_opencv_copyMakeBorder/5_opencv_copyMakeBorder.cpp
+@@ -20,7 +20,7 @@ using namespace cv;
+ 
+ int main()
+ {
+-    Mat luna = imread("/1.jpg", 1);
++    Mat luna = imread("./1.jpg", 1);
+     if (!luna.data) {
+         cout << "Image 1 reading error !" << endl;
+         return 0;
+@@ -28,7 +28,7 @@ int main()
+     cv::Mat luna_dst;
+     cv::resize(luna, luna, Size(400, 400));
+     cv::copyMakeBorder(luna, luna_dst, 50, 50, 50, 50, cv::BorderTypes::BORDER_CONSTANT, cv::Scalar(0, 255, 0));
+-    imwrite("/luna_dst.jpg", luna_dst);
++    imwrite("./luna_dst.jpg", luna_dst);
+ 
+     return 0;
+ }
+diff --git a/tests/8_opencv_mean/8_opencv_mean.cpp b/tests/8_opencv_mean/8_opencv_mean.cpp
+index 55a8efca6d..d0bf8c332a 100644
+--- a/tests/8_opencv_mean/8_opencv_mean.cpp
++++ b/tests/8_opencv_mean/8_opencv_mean.cpp
+@@ -21,7 +21,7 @@ using namespace cv;
+ 
+ int main()
+ {
+-    Mat src = imread("/1.jpg", IMREAD_GRAYSCALE);
++    Mat src = imread("./1.jpg", IMREAD_GRAYSCALE);
+     if (src.empty()) {
+ 		printf("could not load image...\n");
+ 		return -1;
+@@ -34,7 +34,7 @@ int main()
+ 	printf("max loc: (%d, %d)\n", maxLoc.x, maxLoc.y);
+ 
+ 	// 彩色图像 三通道的 均值与方差
+-    src = imread("/1.jpg");
++    src = imread("./1.jpg");
+     Mat means, stddev;
+ 	meanStdDev(src, means, stddev);
+ 	printf("blue channel->> mean: %.2f, stddev: %.2f\n", means.at<double>(0, 0), stddev.at<double>(0, 0));
+diff --git a/tests/9_opencv_minMaxLoc/9_opencv_minMaxLoc.cpp b/tests/9_opencv_minMaxLoc/9_opencv_minMaxLoc.cpp
+index 185e657f56..2c606f50a1 100644
+--- a/tests/9_opencv_minMaxLoc/9_opencv_minMaxLoc.cpp
++++ b/tests/9_opencv_minMaxLoc/9_opencv_minMaxLoc.cpp
+@@ -20,7 +20,7 @@ using namespace cv;
+ 
+ int main()
+ {
+-    cv::Mat lena = cv::imread("/1.bmp", 0);
++    cv::Mat lena = cv::imread("./1.bmp", 0);
+     double minVal;
+     double maxVal;
+     cv::Point minLoc;
+-- 
+2.34.1
+

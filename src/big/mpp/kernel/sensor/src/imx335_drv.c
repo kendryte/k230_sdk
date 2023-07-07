@@ -1,0 +1,1258 @@
+/* Copyright (c) 2023, Canaan Bright Sight Co., Ltd
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 1. Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ * CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#include "sensor_dev.h"
+#include "io.h"
+#include <math.h>
+
+// #include "gpio.h"
+
+#include "drv_gpio.h"
+
+#define pr_info(...) /* rt_kprintf(__VA_ARGS__) */
+#define pr_debug(...) /*rt_kprintf(__VA_ARGS__)*/
+#define pr_warn(...) /*rt_kprintf(__VA_ARGS__)*/
+#define pr_err(...) rt_kprintf(__VA_ARGS__)
+
+/* Streaming Mode */
+#define IMX335_REG_MODE_SELECT 0x3000
+#define IMX335_MODE_STANDBY 0x01
+#define IMX335_MODE_STREAMING 0x00
+
+/* Lines per frame */
+#define IMX335_REG_LPFR 0x3030
+
+/* Chip ID */
+#define IMX335_REG_ID 0x3912
+#define IMX335_ID 0x00
+
+/* Exposure control */
+#define IMX335_REG_SHR0_L 0x3058
+#define IMX335_REG_SHR0_M 0x3059
+#define IMX335_VMAX 4500
+
+/* Analog gain control */
+#define IMX335_REG_AGAIN_L 0x30e8
+#define IMX335_REG_AGAIN_H 0x30e9
+#define IMX335_AGAIN_STEP (1.0f/256.0f)
+
+/* Group hold register */
+#define IMX335_REG_HOLD 0x3001
+
+/* Input clock rate */
+#define IMX335_INCLK_RATE 24000000
+
+/* CSI2 HW configuration */
+#define IMX335_LINK_FREQ 594000000
+#define IMX335_NUM_DATA_LANES 4
+
+#define IMX335_REG_MIN 0x00
+#define IMX335_REG_MAX 0xfffff
+
+
+static const k_sensor_reg imx335_mipi_2lane_raw10_1920x1080_30fps_regs[] = {
+    { 0x3000, 0x01 },
+    { 0x3002, 0x00 },
+    { 0x3a01, 0x01 }, // 2 lane
+    { 0x300c, 0x3b }, // lane 24MHz
+    { 0x300d, 0x2a },
+    { 0x314c, 0xc6 },
+    { 0x314d, 0x00 },
+    { 0x315a, 0x02 },
+    { 0x3168, 0xa0 },
+    { 0x316a, 0x7e },
+    { 0x319e, 0x01 },	//1188Mbps
+    { 0x3a18, 0x8f }, // mipi phy
+    { 0x3a19, 0x00 },
+    { 0x3a1a, 0x4f },
+    { 0x3a1b, 0x00 },
+    { 0x3a1c, 0x47 },
+    { 0x3a1d, 0x00 },
+    { 0x3a1e, 0x37 },
+    { 0x3a1f, 0x01 },
+    { 0x3a20, 0x4f },
+    { 0x3a21, 0x00 },
+    { 0x3a22, 0x87 },
+    { 0x3a23, 0x00 },
+    { 0x3a24, 0x4f },
+    { 0x3a25, 0x00 },
+    { 0x3a26, 0x7f },
+    { 0x3a27, 0x00 },
+    { 0x3a28, 0x3f },
+    { 0x3a29, 0x00 },
+    { 0x3050, 0x00 }, // AD bit, 12bit ==> 0x00, 10bit
+    { 0x319d, 0x00 }, // output bit, 12bit ==>0x00, 10bit
+    { 0x341c, 0xff }, // AD bit, 12bit ==>0xff, 10bit
+    { 0x341d, 0x01 }, // AD bit, 12bit ==>0x01, 10bit
+    { 0x3018, 0x04 }, // window mode
+    { 0x3300, 0x00 }, // scan mode or binning
+    { 0x3302, 0x10 }, //black level
+    { 0x3199, 0x00 }, // HADD VADD
+    { 0x3030, 0x94 }, // V span max, VMAX = 4500
+    { 0x3031, 0x11 },
+    { 0x3032, 0x00 },
+    { 0x3034, 0x26 }, // H span max, HMAX = 550
+    { 0x3035, 0x02 },
+    { 0x304c, 0x14 }, // V OB width
+    { 0x304e, 0x00 }, // H dir inv
+    { 0x304f, 0x00 }, // V dir inv
+    { 0x3058, 0xac }, // shutter sweep time, 1000 ET Line
+    { 0x3059, 0x0d },
+    { 0x305a, 0x00 },
+    { 0x30e8, 0x00 },
+    { 0x30e9, 0x00 },
+    { 0x3056, 0x48 }, // effective pixel line, y output size = 1096 line = 8 + 1080 +8
+    { 0x3057, 0x04 },
+    { 0x302c, 0x80 }, // crop mode H start, 672/2 + 48 = 384
+    { 0x302d, 0x01 },
+    { 0x302e, 0x98 }, // crop mode H size, 1944 = 12 + 1920 +12
+    { 0x302f, 0x07 },
+    { 0x3072, 0x28 }, // crop mode OB V size
+    { 0x3073, 0x00 },
+    { 0x3074, 0x60 }, // crop mode UL V start
+    { 0x3075, 0x02 },
+    { 0x3076, 0x90 }, // crop mode V size,
+    { 0x3077, 0x08 },
+    { 0x30c6, 0x12 }, // crop mode black offset
+    { 0x30c7, 0x00 },
+    { 0x30ce, 0x64 }, // crop mode UNRD_LINE_MAX
+    { 0x30cf, 0x00 },
+    { 0x30d8, 0xc0 }, // crop mode UNREAD_ED_ADR
+    { 0x30d9, 0x0b },
+    { REG_NULL, 0x00 }
+};
+
+static const k_sensor_reg imx335_mipi_2lane_raw12_1920x1080_30fps_mclk_24m_regs[] = {
+    { 0x3000, 0x01 },
+    { 0x3002, 0x00 },
+    { 0x3a01, 0x01 }, // 2 lane
+    { 0x300c, 0x3b }, // lane 24MHz
+    { 0x300d, 0x2a },
+    { 0x314c, 0xc6 },
+    { 0x314d, 0x00 },
+    { 0x315a, 0x02 },
+    { 0x3168, 0xa0 },
+    { 0x316a, 0x7e },
+    { 0x319e, 0x01 },	//1188Mbps
+    { 0x3a18, 0x8f }, // mipi phy
+    { 0x3a19, 0x00 },
+    { 0x3a1a, 0x4f },
+    { 0x3a1b, 0x00 },
+    { 0x3a1c, 0x47 },
+    { 0x3a1d, 0x00 },
+    { 0x3a1e, 0x37 },
+    { 0x3a1f, 0x01 },
+    { 0x3a20, 0x4f },
+    { 0x3a21, 0x00 },
+    { 0x3a22, 0x87 },
+    { 0x3a23, 0x00 },
+    { 0x3a24, 0x4f },
+    { 0x3a25, 0x00 },
+    { 0x3a26, 0x7f },
+    { 0x3a27, 0x00 },
+    { 0x3a28, 0x3f },
+    { 0x3a29, 0x00 },
+    { 0x3018, 0x04 }, // window mode
+    { 0x3300, 0x00 }, // scan mode or binning
+    { 0x3302, 0x10 }, //black level
+    { 0x3199, 0x00 }, // HADD VADD
+    { 0x3030, 0x94 }, // V span max
+    { 0x3031, 0x11 },
+    { 0x3032, 0x00 },
+    { 0x3034, 0x26 }, // H span max
+    { 0x3035, 0x02 },
+    { 0x304c, 0x14 }, // V OB width
+    { 0x304e, 0x00 }, // H dir inv
+    { 0x304f, 0x00 }, // V dir inv
+    { 0x3058, 0xac }, // shutter sweep time, 1000 ET Line
+    { 0x3059, 0x0d },
+    { 0x305a, 0x00 },
+    { 0x30e8, 0x00 },
+    { 0x30e9, 0x00 },
+    { 0x3056, 0x48 }, // effective pixel line
+    { 0x3057, 0x04 },
+    { 0x302c, 0x80 }, // crop mode H start
+    { 0x302d, 0x01 },
+    { 0x302e, 0x98 }, // crop mode H size, 1944
+    { 0x302f, 0x07 },
+    { 0x3072, 0x28 }, // crop mode OB V size
+    { 0x3073, 0x00 },
+    { 0x3074, 0x60 }, // crop mode UL V start
+    { 0x3075, 0x02 },
+    { 0x3076, 0x90 }, // crop mode V size, 2192
+    { 0x3077, 0x08 },
+    { 0x30c6, 0x12 }, // crop mode black offset
+    { 0x30c7, 0x00 },
+    { 0x30ce, 0x64 }, // crop mode UNRD_LINE_MAX
+    { 0x30cf, 0x00 },
+    { 0x30d8, 0xc0 }, // crop mode UNREAD_ED_ADR
+    { 0x30d9, 0x0b },
+    { REG_NULL, 0x00 }
+};
+
+
+static const k_sensor_reg imx335_mipi_2lane_raw12_1920x1080_30fps_mclk_74_25_regs[] = {
+    { 0x3000, 0x01 },
+    { 0x3002, 0x00 },
+    { 0x3a01, 0x01 }, // 2 lane
+    { 0x300c, 0xb6 }, // lane 24MHz
+    { 0x300d, 0x7f },
+    { 0x314c, 0x80 },
+    { 0x314d, 0x00 },
+    { 0x315a, 0x03 },
+    { 0x3168, 0x68 },
+    { 0x316a, 0x7f },
+    { 0x319e, 0x01 },	//1188Mbps
+    { 0x3a18, 0x8f }, // mipi phy
+    { 0x3a19, 0x00 },
+    { 0x3a1a, 0x4f },
+    { 0x3a1b, 0x00 },
+    { 0x3a1c, 0x47 },
+    { 0x3a1d, 0x00 },
+    { 0x3a1e, 0x37 },
+    { 0x3a1f, 0x01 },
+    { 0x3a20, 0x4f },
+    { 0x3a21, 0x00 },
+    { 0x3a22, 0x87 },
+    { 0x3a23, 0x00 },
+    { 0x3a24, 0x4f },
+    { 0x3a25, 0x00 },
+    { 0x3a26, 0x7f },
+    { 0x3a27, 0x00 },
+    { 0x3a28, 0x3f },
+    { 0x3a29, 0x00 },
+    { 0x3018, 0x04 }, // window mode
+    { 0x3300, 0x00 }, // scan mode or binning
+    { 0x3302, 0x10 }, //black level
+    { 0x3199, 0x00 }, // HADD VADD
+    { 0x3030, 0x94 }, // V span max
+    { 0x3031, 0x11 },
+    { 0x3032, 0x00 },
+    { 0x3034, 0x26 }, // H span max
+    { 0x3035, 0x02 },
+    { 0x304c, 0x14 }, // V OB width
+    { 0x304e, 0x00 }, // H dir inv
+    { 0x304f, 0x00 }, // V dir inv
+    { 0x3058, 0xac }, // shutter sweep time, 1000 ET Line
+    { 0x3059, 0x0d },
+    { 0x305a, 0x00 },
+    { 0x30e8, 0x00 },
+    { 0x30e9, 0x00 },
+    { 0x3056, 0x48 }, // effective pixel line
+    { 0x3057, 0x04 },
+    { 0x302c, 0x80 }, // crop mode H start
+    { 0x302d, 0x01 },
+    { 0x302e, 0x98 }, // crop mode H size, 1944
+    { 0x302f, 0x07 },
+    { 0x3072, 0x28 }, // crop mode OB V size
+    { 0x3073, 0x00 },
+    { 0x3074, 0x60 }, // crop mode UL V start
+    { 0x3075, 0x02 },
+    { 0x3076, 0x90 }, // crop mode V size, 2192
+    { 0x3077, 0x08 },
+    { 0x30c6, 0x12 }, // crop mode black offset
+    { 0x30c7, 0x00 },
+    { 0x30ce, 0x64 }, // crop mode UNRD_LINE_MAX
+    { 0x30cf, 0x00 },
+    { 0x30d8, 0xc0 }, // crop mode UNREAD_ED_ADR
+    { 0x30d9, 0x0b },
+    { REG_NULL, 0x00 }
+};
+
+static const k_sensor_reg imx335_mipi_2lane_raw12_2592x1944_30fps_mclk_24m_regs[] = {
+    { 0x3000, 0x01 },
+    { 0x3002, 0x00 },
+    { 0x3a01, 0x01 }, // 2 lane
+    { 0x300c, 0x3b }, // lane 24MHz
+    { 0x300d, 0x2a },
+    { 0x314c, 0xc6 },
+    { 0x314d, 0x00 },
+    { 0x315a, 0x02 },
+    { 0x3168, 0xa0 },
+    { 0x316a, 0x7e },
+    { 0x319e, 0x01 },	//1188Mbps
+    { 0x3a18, 0x8f }, // mipi phy
+    { 0x3a19, 0x00 },
+    { 0x3a1a, 0x4f },
+    { 0x3a1b, 0x00 },
+    { 0x3a1c, 0x47 },
+    { 0x3a1d, 0x00 },
+    { 0x3a1e, 0x37 },
+    { 0x3a1f, 0x01 },
+    { 0x3a20, 0x4f },
+    { 0x3a21, 0x00 },
+    { 0x3a22, 0x87 },
+    { 0x3a23, 0x00 },
+    { 0x3a24, 0x4f },
+    { 0x3a25, 0x00 },
+    { 0x3a26, 0x7f },
+    { 0x3a27, 0x00 },
+    { 0x3a28, 0x3f },
+    { 0x3a29, 0x00 },
+    { 0x3302, 0x10 }, //black level
+    { 0x3058, 0xac }, // shutter sweep time, 1000 ET Line
+    { 0x3059, 0x0d },
+    { 0x305a, 0x00 },
+    { 0x30e8, 0x00 },
+    { 0x30e9, 0x00 },
+    { REG_NULL, 0x00 }
+};
+
+
+static const k_sensor_reg imx335_mipi_2lane_raw12_2592x1944_30fps_mclk_74_25_regs[] = {
+    { 0x3000, 0x01 },
+    { 0x3002, 0x00 },
+    { 0x3a01, 0x01 }, // 2 lane
+    { 0x300c, 0xb6 }, // lane 24MHz
+    { 0x300d, 0x7f },
+    { 0x314c, 0x80 },
+    { 0x314d, 0x00 },
+    { 0x315a, 0x03 },
+    { 0x3168, 0x68 },
+    { 0x316a, 0x7f },
+    { 0x319e, 0x01 },	//1188Mbps
+    { 0x3a18, 0x8f }, // mipi phy
+    { 0x3a19, 0x00 },
+    { 0x3a1a, 0x4f },
+    { 0x3a1b, 0x00 },
+    { 0x3a1c, 0x47 },
+    { 0x3a1d, 0x00 },
+    { 0x3a1e, 0x37 },
+    { 0x3a1f, 0x01 },
+    { 0x3a20, 0x4f },
+    { 0x3a21, 0x00 },
+    { 0x3a22, 0x87 },
+    { 0x3a23, 0x00 },
+    { 0x3a24, 0x4f },
+    { 0x3a25, 0x00 },
+    { 0x3a26, 0x7f },
+    { 0x3a27, 0x00 },
+    { 0x3a28, 0x3f },
+    { 0x3a29, 0x00 },
+    { 0x3302, 0x10 }, //black level
+    { 0x3058, 0xac }, // shutter sweep time, 1000 ET Line
+    { 0x3059, 0x0d },
+    { 0x305a, 0x00 },
+    { 0x30e8, 0x00 },
+    { 0x30e9, 0x00 },
+    { REG_NULL, 0x00 }
+};
+
+static const k_sensor_reg imx335_mipi_4lane_raw10_2592x1940_30fps_regs[] = {
+    { 0x3000, 0x01},
+    { 0x3002, 0x01},
+    { 0x3004, 0x04},
+    { 0x3004, 0x00},
+    //All pixel A},D Conversion 10bit / Output 10 bit / 891 Mbps /30fps
+    { 0x3018, 0x00},
+    { 0x3030, 0x94},
+    { 0x3031, 0x11},
+    { 0x3032, 0x00},
+    { 0x3034, 0x26},
+    { 0x3035, 0x02},
+    { 0x304c, 0x14},
+    { 0x304e, 0x00},
+    { 0x304f, 0x00},
+    { 0x3050, 0x00},
+    { 0x3056, 0xac},
+    { 0x3057, 0x07},
+    { 0x3072, 0x28},
+    { 0x3073, 0x00},
+    { 0x3074, 0xb0},
+    { 0x3075, 0x00},
+    { 0x3076, 0x58},
+    { 0x3077, 0x0f},
+    //All pixel
+    { 0x3078, 0x01},
+    { 0x3079, 0x02},
+    { 0x307a, 0xff},
+    { 0x307b, 0x02},
+    { 0x307c, 0x00},
+    { 0x307d, 0x00},
+    { 0x307e, 0x00},
+    { 0x307f, 0x00},
+    { 0x3080, 0x01},
+    { 0x3081, 0x02},
+    { 0x3082, 0xff},
+    { 0x3083, 0x02},
+    { 0x3084, 0x00},
+    { 0x3085, 0x00},
+    { 0x3086, 0x00},
+    { 0x3087, 0x00},
+    { 0x30a4, 0x33},
+    { 0x30a8, 0x10},
+    { 0x30a9, 0x04},
+    { 0x30ac, 0x00},
+    { 0x30ad, 0x00},
+    { 0x30b0, 0x10},
+    { 0x30b1, 0x08},
+    { 0x30b4, 0x00},
+    { 0x30b5, 0x00},
+    { 0x30b6, 0x00},
+    { 0x30b7, 0x00},
+    { 0x3112, 0x08},
+    { 0x3113, 0x00},
+    { 0x3116, 0x08},
+    { 0x3117, 0x00},
+    { 0x3199, 0x00},
+    { 0x319d, 0x00},
+    { 0x3300, 0x00},
+    { 0x341c, 0xff},
+    { 0x341d, 0x01},
+    { 0x3a01, 0x03},
+    { 0x3a18, 0x7f},
+    { 0x3a19, 0x00},
+    { 0x3a1a, 0x37},
+    { 0x3a1b, 0x00},
+    { 0x3a1c, 0x37},
+    { 0x3a1d, 0x00},
+    { 0x3a1e, 0xf7},
+    { 0x3a1f, 0x00},
+    { 0x3a20, 0x3f},
+    { 0x3a21, 0x00},
+    { 0x3a22, 0x6f},
+    { 0x3a23, 0x00},
+    { 0x3a24, 0x3f},
+    { 0x3a25, 0x00},
+    { 0x3a26, 0x5f},
+    { 0x3a27, 0x00},
+    { 0x3a28, 0x2f},
+    { 0x3a29, 0x00},
+    //----891Mbps/lane 24MHz
+    { 0x300c, 0x3b},
+    { 0x300d, 0x2a},
+    { 0x314c, 0x29},
+    { 0x314d, 0x01},
+    { 0x315a, 0x06},
+    { 0x3168, 0xa0},
+    { 0x316a, 0x7e},
+    { 0x319e, 0x02},
+    { 0x3000, 0x00},
+    { 0x3002, 0x00},
+    { 0x3302, 0x10 }, //black level
+    { 0x3058, 0xac }, // shutter sweep time, 1000 ET Line
+    { 0x3059, 0x0d },
+    { 0x305a, 0x00 },
+    { 0x30e8, 0x00 },
+    { 0x30e9, 0x00 },
+    { REG_NULL, 0x00 }
+};
+
+
+static const k_sensor_reg imx335_mipi_4lane_raw12_2592x1944_30fps_mclk_74_25_regs[] = {	//891Mbps
+    { 0x3000, 0x01 },
+    { 0x3002, 0x00 },
+    { 0x3a01, 0x03 }, // 4 lane
+    { 0x300c, 0xb6 }, // lane 24MHz
+    { 0x300d, 0x7f },
+    { 0x314c, 0xC0 },
+    { 0x314d, 0x00 },
+    { 0x315a, 0x07 },
+    { 0x3168, 0x68 },
+    { 0x316a, 0x7F },
+    { 0x319e, 0x02 },	//891Mbps
+    { 0x3a18, 0x7f }, 	// mipi phy
+    { 0x3a19, 0x00 },
+    { 0x3a1a, 0x37 },
+    { 0x3a1b, 0x00 },
+    { 0x3a1c, 0x37 },
+    { 0x3a1d, 0x00 },
+    { 0x3a1e, 0xf7 },
+    { 0x3a1f, 0x00 },
+    { 0x3a20, 0x3f },
+    { 0x3a21, 0x00 },
+    { 0x3a22, 0x6f },
+    { 0x3a23, 0x00 },
+    { 0x3a24, 0x3f },
+    { 0x3a25, 0x00 },
+    { 0x3a26, 0x5f },
+    { 0x3a27, 0x00 },
+    { 0x3a28, 0x2f },
+    { 0x3a29, 0x00 },
+    { 0x3302, 0x10 }, //black level
+    { 0x3058, 0xac }, // shutter sweep time, 1000 ET Line
+    { 0x3059, 0x0d },
+    { 0x30e8, 0x00 },
+	{ 0x30e9, 0x00 },
+    { REG_NULL, 0x00 }
+};
+
+
+static const k_sensor_reg imx335_mipi_4lane_raw12_2592x1944_30fps_mclk_24m_regs[] = {	//891Mbps
+    { 0x3000, 0x01 },
+    { 0x3002, 0x00 },
+    { 0x3a01, 0x03 }, // 4 lane
+    { 0x300c, 0x3b }, // lane 24MHz
+    { 0x300d, 0x2a },
+    { 0x314c, 0x19 },
+    { 0x314d, 0x01 },
+    { 0x315a, 0x06 },
+    { 0x3168, 0xa0 },
+    { 0x316a, 0x7e },
+    { 0x319e, 0x02 },	//891Mbps
+    { 0x3a18, 0x7f }, 	// mipi phy
+    { 0x3a19, 0x00 },
+    { 0x3a1a, 0x37 },
+    { 0x3a1b, 0x00 },
+    { 0x3a1c, 0x37 },
+    { 0x3a1d, 0x00 },
+    { 0x3a1e, 0xf7 },
+    { 0x3a1f, 0x00 },
+    { 0x3a20, 0x3f },
+    { 0x3a21, 0x00 },
+    { 0x3a22, 0x6f },
+    { 0x3a23, 0x00 },
+    { 0x3a24, 0x3f },
+    { 0x3a25, 0x00 },
+    { 0x3a26, 0x5f },
+    { 0x3a27, 0x00 },
+    { 0x3a28, 0x2f },
+    { 0x3a29, 0x00 },
+    { 0x3302, 0x10 }, //black level
+    { 0x3058, 0xac }, // shutter sweep time, 1000 ET Line
+    { 0x3059, 0x0d },
+    { 0x30e8, 0x00 },
+	{ 0x30e9, 0x00 },
+    { REG_NULL, 0x00 }
+};
+
+static k_sensor_mode imx335_mode_info[] = {
+    {
+        .index = 0,
+        .sensor_type = IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_LINEAR,
+        .size = {
+            .bounds_width = 1920,
+            .bounds_height = 1080,
+            .top = 0,
+            .left = 0,
+            .width = 1920,
+            .height = 1080,
+        },
+        .fps = 30000,
+        .hdr_mode = SENSOR_MODE_LINEAR,
+        .bit_width = 12,
+        .bayer_pattern = BAYER_RGGB,
+        .mipi_info = {
+            .csi_id = 0,
+            .mipi_lanes = 2,
+            .data_type = 0x2C,
+        },
+        .reg_list = imx335_mipi_2lane_raw12_1920x1080_30fps_mclk_24m_regs,
+    },
+    {
+        .index = 1,
+        .sensor_type = IMX335_MIPI_2LANE_RAW12_2592X1944_30FPS_LINEAR,
+        .size = {
+            .bounds_width = 2592,
+            .bounds_height = 1944,
+            .top = 0,
+            .left = 0,
+            .width = 2592,
+            .height = 1944,
+        },
+        .fps = 30000,
+        .hdr_mode = SENSOR_MODE_LINEAR,
+        .bit_width = 12,
+        .bayer_pattern = BAYER_RGGB,
+        .mipi_info = {
+            .csi_id = 0,
+            .mipi_lanes = 2,
+            .data_type = 0x2C,
+        },
+        .reg_list = imx335_mipi_2lane_raw12_2592x1944_30fps_mclk_24m_regs,
+    },
+    {
+        .index = 2,
+        .sensor_type = IMX335_MIPI_4LANE_RAW12_2592X1944_30FPS_LINEAR,
+        .size = {
+            .bounds_width = 2592,
+            .bounds_height = 1944,
+            .top = 0,
+            .left = 0,
+            .width = 2592,
+            .height = 1944,
+        },
+        .fps = 30000,
+        .hdr_mode = SENSOR_MODE_LINEAR,
+        .bit_width = 12,
+        .bayer_pattern = BAYER_RGGB,
+        .mipi_info = {
+            .csi_id = 0,
+            .mipi_lanes = 4,
+            .data_type = 0x2C,
+        },
+        .reg_list = imx335_mipi_4lane_raw12_2592x1944_30fps_mclk_24m_regs,
+    },
+
+    {
+        .index = 3,
+        .sensor_type = IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_MCLK_7425_LINEAR,
+        .size = {
+            .bounds_width = 1920,
+            .bounds_height = 1080,
+            .top = 0,
+            .left = 0,
+            .width = 1920,
+            .height = 1080,
+        },
+        .fps = 30000,
+        .hdr_mode = SENSOR_MODE_LINEAR,
+        .bit_width = 12,
+        .bayer_pattern = BAYER_RGGB,
+        .mipi_info = {
+            .csi_id = 0,
+            .mipi_lanes = 2,
+            .data_type = 0x2C,
+        },
+        .reg_list = imx335_mipi_2lane_raw12_1920x1080_30fps_mclk_74_25_regs,
+    },
+    {
+        .index = 4,
+        .sensor_type = IMX335_MIPI_2LANE_RAW12_2592X1944_30FPS_MCLK_7425_LINEAR,
+        .size = {
+            .bounds_width = 2592,
+            .bounds_height = 1944,
+            .top = 0,
+            .left = 0,
+            .width = 2592,
+            .height = 1944,
+        },
+        .fps = 30000,
+        .hdr_mode = SENSOR_MODE_LINEAR,
+        .bit_width = 12,
+        .bayer_pattern = BAYER_RGGB,
+        .mipi_info = {
+            .csi_id = 0,
+            .mipi_lanes = 2,
+            .data_type = 0x2C,
+        },
+        .reg_list = imx335_mipi_2lane_raw12_2592x1944_30fps_mclk_74_25_regs,
+    },
+    {
+        .index = 5,
+        .sensor_type = IMX335_MIPI_4LANE_RAW12_2592X1944_30FPS_MCLK_7425_LINEAR,
+        .size = {
+            .bounds_width = 2592,
+            .bounds_height = 1944,
+            .top = 0,
+            .left = 0,
+            .width = 2592,
+            .height = 1944,
+        },
+        .fps = 30000,
+        .hdr_mode = SENSOR_MODE_LINEAR,
+        .bit_width = 12,
+        .bayer_pattern = BAYER_RGGB,
+        .mipi_info = {
+            .csi_id = 0,
+            .mipi_lanes = 4,
+            .data_type = 0x2C,
+        },
+        .reg_list = imx335_mipi_4lane_raw12_2592x1944_30fps_mclk_74_25_regs,
+    },
+};
+
+static k_sensor_mode* current_mode = NULL;
+
+static int imx335_power_reset(k_s32 on)
+{
+    #define IMX335_RST_PIN                  46  
+    #define IMX335_MASTER_PIN               28
+
+    kd_pin_mode(IMX335_RST_PIN, GPIO_DM_OUTPUT);
+    kd_pin_mode(IMX335_MASTER_PIN, GPIO_DM_OUTPUT);
+
+    kd_pin_write(IMX335_MASTER_PIN, GPIO_PV_LOW);
+    if (on)
+        kd_pin_write(IMX335_RST_PIN, GPIO_PV_HIGH); // GPIO_PV_LOW  GPIO_PV_HIGH
+    else
+        kd_pin_write(IMX335_RST_PIN, GPIO_PV_LOW); // GPIO_PV_LOW  GPIO_PV_HIGH
+
+    rt_thread_mdelay(1);
+
+    return 0;
+}
+
+static int imx335_i2c_init(k_sensor_i2c_info* i2c_info)
+{
+    i2c_info->i2c_bus = rt_i2c_bus_device_find(i2c_info->i2c_name);
+    if (i2c_info->i2c_bus == RT_NULL) {
+        pr_err("can't find %s deivce", i2c_info->i2c_name);
+        return RT_ERROR;
+    }
+
+    return 0;
+}
+
+static k_s32 imx335_sensor_get_chip_id(void* ctx, k_u32* chip_id)
+{
+    k_s32 ret = 0;
+    k_u16 id_high = 0;
+    k_u16 id_low = 0;
+    struct sensor_driver_dev* dev = ctx;
+    pr_info("%s enter\n", __func__);
+
+    ret = sensor_reg_read(&dev->i2c_info, IMX335_REG_ID, &id_high);
+    ret |= sensor_reg_read(&dev->i2c_info, IMX335_REG_ID + 1, &id_low);
+    if (ret) {
+        rt_kprintf("%s error\n", __func__);
+        return -1;
+    }
+
+    *chip_id = (id_high << 8) | id_low;
+    pr_info("%s chip_id[0x%08X]\n", __func__, *chip_id);
+    return ret;
+}
+
+static k_s32 imx335_sensor_power_on(void* ctx, k_s32 on)
+{
+    k_s32 ret = 0;
+    struct sensor_driver_dev* dev = ctx;
+    k_u32 chip_id = 0;
+    pr_info("%s enter, %d\n", __func__, on);
+    if (on) {
+        imx335_power_reset(0);
+        imx335_i2c_init(&dev->i2c_info);
+        imx335_power_reset(1);
+        imx335_sensor_get_chip_id(ctx, &chip_id);
+    } else {
+        imx335_power_reset(on);
+    }
+
+    return ret;
+}
+
+static k_s32 imx335_sensor_init(void* ctx, k_sensor_mode mode)
+{
+    k_s32 ret = 0;
+    k_s32 i = 0;
+    struct sensor_driver_dev* dev = ctx;
+
+    if (current_mode == NULL) {
+        for (i = 0; i < sizeof(imx335_mode_info) / sizeof(k_sensor_mode); i++) {
+            if (imx335_mode_info[i].sensor_type == mode.sensor_type) {
+                current_mode = &(imx335_mode_info[i]);
+                dev->sensor_mode = &(imx335_mode_info[i]);
+                break;
+            }
+        }
+    }
+
+    if (current_mode == NULL) {
+        pr_err("%s, current mode not exit.\n", __func__);
+        return -1;
+    }
+
+    switch (current_mode->index) {
+    default:
+        ret = sensor_reg_list_write(&dev->i2c_info, current_mode->reg_list);
+
+        current_mode->ae_info.frame_length = IMX335_VMAX;
+        current_mode->ae_info.cur_frame_length = current_mode->ae_info.frame_length;
+        current_mode->ae_info.one_line_exp_time = 0.000007407; // s
+        current_mode->ae_info.gain_accuracy = 1024;
+
+        current_mode->ae_info.min_gain = 1.0;
+        current_mode->ae_info.max_gain = 50.0;
+
+        current_mode->ae_info.integration_time_increment = current_mode->ae_info.one_line_exp_time;
+        current_mode->ae_info.gain_increment = IMX335_AGAIN_STEP;
+
+        current_mode->ae_info.max_long_integraion_line = current_mode->ae_info.frame_length - 9;
+        current_mode->ae_info.min_long_integraion_line = 1;
+
+        current_mode->ae_info.max_integraion_line = current_mode->ae_info.frame_length - 9;
+        current_mode->ae_info.min_integraion_line = 1;
+
+        current_mode->ae_info.max_vs_integraion_line = current_mode->ae_info.frame_length - 9;
+        current_mode->ae_info.min_vs_integraion_line = 1;
+
+        current_mode->ae_info.max_long_integraion_time = current_mode->ae_info.integration_time_increment * current_mode->ae_info.max_long_integraion_line;
+
+        current_mode->ae_info.min_long_integraion_time = current_mode->ae_info.integration_time_increment * current_mode->ae_info.min_long_integraion_line;
+
+        current_mode->ae_info.max_integraion_time = current_mode->ae_info.integration_time_increment * current_mode->ae_info.max_integraion_line;
+
+        current_mode->ae_info.min_integraion_time = current_mode->ae_info.integration_time_increment * current_mode->ae_info.min_integraion_line;
+
+        current_mode->ae_info.max_vs_integraion_time = current_mode->ae_info.integration_time_increment * current_mode->ae_info.max_vs_integraion_line;
+
+        current_mode->ae_info.min_vs_integraion_time = current_mode->ae_info.integration_time_increment * current_mode->ae_info.min_vs_integraion_line;
+
+        current_mode->ae_info.cur_long_integration_time = 0.0;
+        current_mode->ae_info.cur_integration_time = 0.0;
+        current_mode->ae_info.cur_vs_integration_time = 0.0;
+
+        current_mode->ae_info.cur_long_again = 0.0;
+        current_mode->ae_info.cur_long_dgain = 0.0;
+
+        current_mode->ae_info.cur_again = 0.0;
+        current_mode->ae_info.cur_dgain = 0.0;
+
+        current_mode->ae_info.cur_vs_again = 0.0;
+        current_mode->ae_info.cur_vs_dgain = 0.0;
+
+        current_mode->ae_info.a_long_gain.min = 1.0;
+        current_mode->ae_info.a_long_gain.max = 100.0;
+        current_mode->ae_info.a_long_gain.step = (1.0f / 256.0f);
+
+        current_mode->ae_info.a_gain.min = 1.0;
+        current_mode->ae_info.a_gain.max = 100.0;
+        current_mode->ae_info.a_gain.step = (1.0f / 256.0f);
+
+        current_mode->ae_info.a_vs_gain.min = 1.0;
+        current_mode->ae_info.a_vs_gain.max = 100.0;
+        current_mode->ae_info.a_vs_gain.step = (1.0f / 256.0f);
+
+        current_mode->ae_info.d_long_gain.max = 1.0;
+        current_mode->ae_info.d_long_gain.min = 1.0;
+        current_mode->ae_info.d_long_gain.step = (1.0f / 1024.0f);
+
+        current_mode->ae_info.d_gain.max = 1.0;
+        current_mode->ae_info.d_gain.min = 1.0;
+        current_mode->ae_info.d_gain.step = (1.0f / 1024.0f);
+
+        current_mode->ae_info.d_vs_gain.max = 1.0;
+        current_mode->ae_info.d_vs_gain.min = 1.0;
+        current_mode->ae_info.d_vs_gain.step = (1.0f / 1024.0f);
+
+        current_mode->ae_info.cur_fps = current_mode->fps;
+        break;
+    }
+
+	k_u16 again_h, again_l;
+	k_u16 SHR0_m, SHR0_l;
+    k_u32 exp_time;
+    float again = 0, dgain = 0;
+
+    ret = sensor_reg_read(&dev->i2c_info,  IMX335_REG_AGAIN_L, &again_l);
+    ret = sensor_reg_read(&dev->i2c_info,  IMX335_REG_AGAIN_H, &again_h);
+    //again = (float)(((again_h & 0x07) << 8) | again_l) * 0.015f;	//db value/20, (RegVal * 3/10)/20
+    again = (float)((again_h & 0x07)<<8 | again_l) * 0.015f;
+    again = powf(10, again);	//times value
+
+    dgain = 1.0;
+    current_mode->ae_info.cur_gain = again * dgain;
+
+    ret = sensor_reg_read(&dev->i2c_info, IMX335_REG_SHR0_L, &SHR0_l);
+    ret |= sensor_reg_read(&dev->i2c_info, IMX335_REG_SHR0_M, &SHR0_m);
+    exp_time =IMX335_VMAX - ((SHR0_m <<8) | SHR0_l);
+
+    current_mode->ae_info.cur_integration_time = exp_time * current_mode->ae_info.one_line_exp_time;
+
+    pr_info("%s exit, sensor_type:%d\n", __func__, mode.sensor_type);
+    return ret;
+}
+
+static k_s32 imx335_sensor_get_mode(void* ctx, k_sensor_mode* mode)
+{
+    k_s32 ret = -1;
+
+    for (k_s32 i = 0; i < sizeof(imx335_mode_info) / sizeof(k_sensor_mode); i++) {
+        if (imx335_mode_info[i].sensor_type == mode->sensor_type) {
+            memcpy(mode, &imx335_mode_info[i], sizeof(k_sensor_mode));
+            current_mode = &(imx335_mode_info[i]);
+            return 0;
+        }
+    }
+    pr_debug("%s, the mode not exit.\n", __func__);
+
+    return ret;
+}
+
+static k_s32 imx335_sensor_set_mode(void* ctx, k_sensor_mode mode)
+{
+    k_s32 ret = 0;
+
+    pr_debug("%s enter\n", __func__);
+
+    return ret;
+}
+
+static k_s32 imx335_sensor_enum_mode(void* ctx, k_sensor_enum_mode* enum_mode)
+{
+    k_s32 ret = 0;
+
+    pr_debug("%s enter\n", __func__);
+    if (enum_mode->index >= (sizeof(imx335_mode_info) / sizeof(k_sensor_mode))) {
+        pr_err("%s, invalid mode index.\n", __func__);
+        return -1;
+    }
+
+    for (k_s32 i = 0; i < sizeof(imx335_mode_info) / sizeof(k_sensor_mode); i++) {
+        if (imx335_mode_info[i].index == enum_mode->index) {
+            memcpy(&enum_mode->mode, &imx335_mode_info[i], sizeof(k_sensor_mode));
+            return 0;
+        }
+    }
+    return ret;
+}
+
+static k_s32 imx335_sensor_get_caps(void* ctx, k_sensor_caps* caps)
+{
+    k_s32 ret = 0;
+
+    pr_debug("%s enter\n", __func__);
+    memset(caps, 0, sizeof(k_sensor_caps));
+    caps->bit_width = current_mode->bit_width;
+    caps->bayer_pattern = current_mode->bayer_pattern;
+    caps->resolution.width = current_mode->size.width;
+    caps->resolution.height = current_mode->size.height;
+
+    return ret;
+}
+
+static k_s32 imx335_sensor_conn_check(void* ctx, k_s32* conn)
+{
+    k_s32 ret = 0;
+
+    pr_debug("%s enter\n", __func__);
+    *conn = 1;
+
+    return ret;
+}
+
+static k_s32 imx335_sensor_set_stream(void* ctx, k_s32 enable)
+{
+    k_s32 ret = 0;
+    struct sensor_driver_dev* dev = ctx;
+
+    pr_info("%s enter, enable(%d)\n", __func__, enable);
+    if (enable) {
+        ret = sensor_reg_write(&dev->i2c_info, IMX335_REG_MODE_SELECT, IMX335_MODE_STREAMING);
+    } else {
+        ret = sensor_reg_write(&dev->i2c_info, IMX335_REG_MODE_SELECT, IMX335_MODE_STANDBY);
+    }
+    pr_info("%s exit, ret(%d)\n", __func__, ret);
+
+    return ret;
+}
+
+static k_s32 imx335_sensor_get_again(void* ctx, k_sensor_gain* gain)
+{
+    k_s32 ret = 0;
+
+    pr_debug("%s enter\n", __func__);
+
+    if (gain->exp_frame_type == SENSOR_EXPO_FRAME_TYPE_1FRAME) {
+        gain->gain[SENSOR_LINEAR_PARAS] = current_mode->ae_info.cur_again;
+    } else if (gain->exp_frame_type == SENSOR_EXPO_FRAME_TYPE_2FRAMES) {
+        gain->gain[SENSOR_DUAL_EXP_L_PARAS] = current_mode->ae_info.cur_again;
+        gain->gain[SENSOR_DUAL_EXP_S_PARAS] = current_mode->ae_info.cur_vs_again;
+    } else {
+        pr_err("%s, unsupport exposure frame.\n", __func__);
+        return -1;
+    }
+
+    return ret;
+}
+
+static k_s32 imx335_sensor_set_again(void* ctx, k_sensor_gain gain)
+{
+    k_s32 ret = 0;
+    k_u32 again;
+    float SensorGain;
+    struct sensor_driver_dev* dev = ctx;
+
+    if (gain.exp_frame_type == SENSOR_EXPO_FRAME_TYPE_1FRAME) {
+    	again = (k_u32)(log10f(gain.gain[SENSOR_LINEAR_PARAS])*200.0f/3.0f + 0.5f); 	//20*log(gain)*10/3
+    	ret = sensor_reg_write(&dev->i2c_info, IMX335_REG_AGAIN_L,(again & 0xff));
+    	ret |= sensor_reg_write(&dev->i2c_info, IMX335_REG_AGAIN_H,(again & 0x0700)>>8);
+
+
+    	SensorGain = (float)(again) * 0.015f;	//db value/20,(RegVal * 3/10)/20
+    	current_mode->ae_info.cur_again = powf(10, SensorGain);
+
+    } else if (gain.exp_frame_type == SENSOR_EXPO_FRAME_TYPE_2FRAMES) {
+       again = (k_u32)(log10f(gain.gain[SENSOR_DUAL_EXP_L_PARAS])*200.0f/3.0f + 0.5f); 	//20*log(gain)*10/3
+       ret = sensor_reg_write(&dev->i2c_info, IMX335_REG_AGAIN_L,(again & 0xff));
+    	ret |= sensor_reg_write(&dev->i2c_info, IMX335_REG_AGAIN_H,(again & 0x0700)>>8);
+
+
+    	SensorGain = (float)(again) * 0.015f;	//db value/20,(RegVal * 3/10)/20
+    	current_mode->ae_info.cur_again = powf(10, SensorGain);
+
+        //again = (k_u32)(gain.gain[SENSOR_DUAL_EXP_S_PARAS] * 16);
+        // TODO
+        //current_mode->ae_info.cur_vs_again = again / 16.0f;
+        current_mode->ae_info.cur_vs_again = current_mode->ae_info.cur_again;
+    } else {
+        pr_err("%s, unsupport exposure frame.\n", __func__);
+        return -1;
+    }
+    pr_debug("%s, exp_frame_type(%d), cur_again(%u)\n", __func__, gain.exp_frame_type, (k_u32)(current_mode->ae_info.cur_again * 1000));
+
+    return ret;
+}
+
+static k_s32 imx335_sensor_get_dgain(void* ctx, k_sensor_gain* gain)
+{
+    k_s32 ret = 0;
+
+    pr_debug("%s enter\n", __func__);
+
+    if (gain->exp_frame_type == SENSOR_EXPO_FRAME_TYPE_1FRAME) {
+        gain->gain[SENSOR_LINEAR_PARAS] = current_mode->ae_info.cur_dgain;
+    } else if (gain->exp_frame_type == SENSOR_EXPO_FRAME_TYPE_2FRAMES) {
+        gain->gain[SENSOR_DUAL_EXP_L_PARAS] = current_mode->ae_info.cur_dgain;
+        gain->gain[SENSOR_DUAL_EXP_S_PARAS] = current_mode->ae_info.cur_vs_dgain;
+    } else {
+        pr_err("%s, unsupport exposure frame.\n", __func__);
+        return -1;
+    }
+
+    return ret;
+}
+
+static k_s32 imx335_sensor_set_dgain(void* ctx, k_sensor_gain gain)
+{
+    k_s32 ret = 0;
+    k_u32 dgain;
+    struct sensor_driver_dev* dev = ctx;
+
+    pr_debug("%s enter exp_frame_type(%d)\n", __func__, gain.exp_frame_type);
+    if (gain.exp_frame_type == SENSOR_EXPO_FRAME_TYPE_1FRAME) {
+        dgain = (k_u32)(gain.gain[SENSOR_LINEAR_PARAS] * 1024);
+        current_mode->ae_info.cur_dgain = dgain / 1024.0f;
+
+    } else if (gain.exp_frame_type == SENSOR_EXPO_FRAME_TYPE_2FRAMES) {
+        dgain = (k_u32)(gain.gain[SENSOR_DUAL_EXP_L_PARAS] * 1024);
+        current_mode->ae_info.cur_dgain = dgain / 1024.0f;
+
+        dgain = (k_u32)(gain.gain[SENSOR_DUAL_EXP_S_PARAS] * 1024);
+        // TODO wirte vs gain register
+        current_mode->ae_info.cur_vs_dgain = dgain / 1024.0f;
+    } else {
+        pr_err("%s, unsupport exposure frame.\n", __func__);
+        return -1;
+    }
+    current_mode->ae_info.cur_gain = current_mode->ae_info.cur_again * current_mode->ae_info.cur_dgain;
+    pr_debug("%s,cur_gain(%d)\n", __func__, (k_u32)(current_mode->ae_info.cur_gain * 10000));
+
+    return ret;
+}
+
+static k_s32 imx335_sensor_get_intg_time(void* ctx, k_sensor_intg_time* time)
+{
+    k_s32 ret = 0;
+
+    pr_debug("%s enter\n", __func__);
+
+    if (time->exp_frame_type == SENSOR_EXPO_FRAME_TYPE_1FRAME) {
+        time->intg_time[SENSOR_LINEAR_PARAS] = current_mode->ae_info.cur_integration_time;
+    } else if (time->exp_frame_type == SENSOR_EXPO_FRAME_TYPE_2FRAMES) {
+        time->intg_time[SENSOR_DUAL_EXP_L_PARAS] = current_mode->ae_info.cur_integration_time;
+        time->intg_time[SENSOR_DUAL_EXP_S_PARAS] = current_mode->ae_info.cur_vs_integration_time;
+    } else {
+        pr_err("%s, unsupport exposure frame.\n", __func__);
+        return -1;
+    }
+
+    return ret;
+}
+
+static k_s32 imx335_sensor_set_intg_time(void* ctx, k_sensor_intg_time time)
+{
+    k_s32 ret = 0;
+    k_u32 exp_line = 0;
+    float integraion_time = 0;
+    struct sensor_driver_dev* dev = ctx;
+
+    if (time.exp_frame_type == SENSOR_EXPO_FRAME_TYPE_1FRAME) {
+        integraion_time = time.intg_time[SENSOR_LINEAR_PARAS];
+
+        exp_line = integraion_time / current_mode->ae_info.one_line_exp_time;
+        exp_line = MIN(current_mode->ae_info.max_integraion_line, MAX(current_mode->ae_info.min_integraion_line, exp_line));
+
+        k_u32 SHR0 = IMX335_VMAX - exp_line;
+        ret = sensor_reg_write(&dev->i2c_info, IMX335_REG_SHR0_L, SHR0 & 0xff);
+        ret |= sensor_reg_write(&dev->i2c_info, IMX335_REG_SHR0_M, (SHR0 >> 8) & 0xff);
+
+
+        current_mode->ae_info.cur_integration_time = exp_line * current_mode->ae_info.one_line_exp_time;
+    } else if (time.exp_frame_type == SENSOR_EXPO_FRAME_TYPE_2FRAMES) {
+        integraion_time = time.intg_time[SENSOR_DUAL_EXP_L_PARAS];
+        exp_line = integraion_time / current_mode->ae_info.one_line_exp_time;
+        exp_line = MIN(current_mode->ae_info.max_integraion_line, MAX(current_mode->ae_info.min_integraion_line, exp_line));
+
+        current_mode->ae_info.cur_integration_time = exp_line * current_mode->ae_info.one_line_exp_time;
+
+        integraion_time = time.intg_time[SENSOR_DUAL_EXP_S_PARAS];
+        exp_line = integraion_time / current_mode->ae_info.one_line_exp_time;
+        exp_line = MIN(current_mode->ae_info.max_integraion_line, MAX(current_mode->ae_info.min_integraion_line, exp_line));
+
+        current_mode->ae_info.cur_vs_integration_time = exp_line * current_mode->ae_info.one_line_exp_time;
+    } else {
+        pr_err("%s, unsupport exposure frame.\n", __func__);
+        return -1;
+    }
+    pr_debug("%s exp_frame_type(%d), exp_line(%d), integraion_time(%u)\n",
+        __func__, time.exp_frame_type, exp_line, (k_u32)(integraion_time * 1000000000));
+
+    return ret;
+}
+
+static k_s32 imx335_sensor_get_exp_parm(void* ctx, k_sensor_exposure_param* exp_parm)
+{
+    k_s32 ret = 0;
+
+    pr_debug("%s enter\n", __func__);
+    memset(exp_parm, 0, sizeof(k_sensor_exposure_param));
+
+    return ret;
+}
+
+static k_s32 imx335_sensor_set_exp_parm(void* ctx, k_sensor_exposure_param exp_parm)
+{
+    k_s32 ret = 0;
+
+    pr_debug("%s enter\n", __func__);
+
+    return ret;
+}
+
+static k_s32 imx335_sensor_get_fps(void* ctx, k_u32* fps)
+{
+    k_s32 ret = 0;
+
+    pr_debug("%s enter\n", __func__);
+    *fps = current_mode->fps;
+
+    return ret;
+}
+
+static k_s32 imx335_sensor_set_fps(void* ctx, k_u32 fps)
+{
+    k_s32 ret = 0;
+
+    pr_debug("%s enter\n", __func__);
+
+    return ret;
+}
+
+static k_s32 imx335_sensor_get_isp_status(void* ctx, k_sensor_isp_status* staus)
+{
+    k_s32 ret = 0;
+
+    pr_debug("%s enter\n", __func__);
+    memset(staus, 0, sizeof(k_sensor_isp_status));
+
+    return ret;
+}
+
+static k_s32 imx335_sensor_set_blc(void* ctx, k_sensor_blc blc)
+{
+    k_s32 ret = 0;
+
+    pr_debug("%s enter\n", __func__);
+
+    return ret;
+}
+
+static k_s32 imx335_sensor_set_wb(void* ctx, k_sensor_white_balance wb)
+{
+    k_s32 ret = 0;
+
+    pr_debug("%s enter\n", __func__);
+
+    return ret;
+}
+
+static k_s32 imx335_sensor_get_tpg(void* ctx, k_sensor_test_pattern* tpg)
+{
+    k_s32 ret = 0;
+
+    pr_debug("%s enter\n", __func__);
+    memset(tpg, 0, sizeof(k_sensor_test_pattern));
+
+    return ret;
+}
+
+static k_s32 imx335_sensor_set_tpg(void* ctx, k_sensor_test_pattern tpg)
+{
+    k_s32 ret = 0;
+
+    pr_debug("%s enter\n", __func__);
+
+    return ret;
+}
+
+static k_s32 imx335_sensor_get_expand_curve(void* ctx, k_sensor_compand_curve* curve)
+{
+    k_s32 ret = 0;
+
+    pr_debug("%s enter\n", __func__);
+    memset(curve, 0, sizeof(k_sensor_compand_curve));
+
+    return ret;
+}
+
+static k_s32 imx335_sensor_get_otp_data(void* ctx, void* data)
+{
+    k_s32 ret = 0;
+
+    pr_debug("%s enter\n", __func__);
+    memset(data, 0, sizeof(void*));
+
+    return ret;
+}
+
+struct sensor_driver_dev imx335_sensor_drv = {
+    .i2c_info = {
+        .i2c_bus = NULL,
+        .i2c_name = "i2c0",
+        .slave_addr = 0x1a,
+        .size = SENSOR_REG_VALUE_8BIT,
+    },
+    .sensor_name = "imx335",
+    .sensor_func = {
+        .sensor_power = imx335_sensor_power_on,
+        .sensor_init = imx335_sensor_init,
+        .sensor_get_chip_id = imx335_sensor_get_chip_id,
+        .sensor_get_mode = imx335_sensor_get_mode,
+        .sensor_set_mode = imx335_sensor_set_mode,
+        .sensor_enum_mode = imx335_sensor_enum_mode,
+        .sensor_get_caps = imx335_sensor_get_caps,
+        .sensor_conn_check = imx335_sensor_conn_check,
+        .sensor_set_stream = imx335_sensor_set_stream,
+        .sensor_get_again = imx335_sensor_get_again,
+        .sensor_set_again = imx335_sensor_set_again,
+        .sensor_get_dgain = imx335_sensor_get_dgain,
+        .sensor_set_dgain = imx335_sensor_set_dgain,
+        .sensor_get_intg_time = imx335_sensor_get_intg_time,
+        .sensor_set_intg_time = imx335_sensor_set_intg_time,
+        .sensor_get_exp_parm = imx335_sensor_get_exp_parm,
+        .sensor_set_exp_parm = imx335_sensor_set_exp_parm,
+        .sensor_get_fps = imx335_sensor_get_fps,
+        .sensor_set_fps = imx335_sensor_set_fps,
+        .sensor_get_isp_status = imx335_sensor_get_isp_status,
+        .sensor_set_blc = imx335_sensor_set_blc,
+        .sensor_set_wb = imx335_sensor_set_wb,
+        .sensor_get_tpg = imx335_sensor_get_tpg,
+        .sensor_set_tpg = imx335_sensor_set_tpg,
+        .sensor_get_expand_curve = imx335_sensor_get_expand_curve,
+        .sensor_get_otp_data = imx335_sensor_get_otp_data,
+    },
+};

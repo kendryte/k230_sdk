@@ -1,0 +1,79 @@
+From 6e3d958ddf90c4278a46c25e3270af2697fab18d Mon Sep 17 00:00:00 2001
+From: zhouquan <zhouquan@rt-thread.com>
+Date: Mon, 31 Oct 2022 17:51:53 +0800
+Subject: [PATCH 15/15] change toolchains, cancel some waring, fix make twice
+ bug
+
+---
+ src/omv/ports/unix/omv_portconfig.mk | 36 +++++++++++++++++++---------
+ 1 file changed, 25 insertions(+), 11 deletions(-)
+
+diff --git a/src/omv/ports/unix/omv_portconfig.mk b/src/omv/ports/unix/omv_portconfig.mk
+index dde22894..64d23a42 100644
+--- a/src/omv/ports/unix/omv_portconfig.mk
++++ b/src/omv/ports/unix/omv_portconfig.mk
+@@ -8,12 +8,15 @@
+ # RP2 Makefile.
+ # This just invokes make in MicroPython RP2 port with OpenMV's cmake arg.
+ 
+-TOOLCHAIN_ROOT = /home/user/maix3/software/tools/gnu_gcc/riscv64-unknown-linux-musl-rv64imafdcv-lp64d/bin/
++TOOLCHAIN_ROOT = ~/.tools/gnu_gcc/riscv64-unknown-linux-musl-rv64imafdcv-lp64d/bin/
+ # TOOLCHAIN_ROOT = /opt/arm-linux-musleabi_for_x86_64-pc-linux-gnu/bin/
+ CROSS_COMPILE = $(TOOLCHAIN_ROOT)riscv64-unknown-linux-musl-
+ # CROSS_COMPILE = $(TOOLCHAIN_ROOT)arm-linux-musleabi-
+ 
+-CFLAGS += -Wall
++CFLAGS += -Wall -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast
++CFLAGS += -Wno-builtin-declaration-mismatch -Wno-sign-compare -Wno-incompatible-pointer-types
++CFLAGS += -Wno-type-limits -Wno-implicit-function-declaration -Wno-int-conversion -Wno-return-type
++CFLAGS += -Wno-missing-braces -Wno-unused-function -Wno-comment -Wno-unused-variable
+ CFLAGS += -O0 -g --static -mcmodel=medany
+ mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
+ LD_FILES = $(BUILD)/unix.lds
+@@ -143,13 +146,24 @@ FIRM_OBJ += $(addprefix $(BUILD)/$(OMV_DIR)/imlib/, \
+ 	zbar.o                      \
+    )
+ 
+-FIRM_OBJ += $(wildcard $(BUILD)/$(TENSORFLOW_DIR)/*.o)
+-FIRM_OBJ += $(wildcard $(BUILD)/$(OMV_DIR)/ports/$(PORT)/*.o)
++# FIRM_OBJ += $(wildcard $(BUILD)/$(OMV_DIR)/ports/$(PORT)/*.o)
++OMV_DIR_PORT_ALL_OBJ := $(notdir $(wildcard $(OMV_DIR)/ports/$(PORT)/*.c)) 
++FIRM_OBJ += $(addprefix $(BUILD)/$(OMV_DIR)/ports/$(PORT)/, $(OMV_DIR_PORT_ALL_OBJ:.c=.o))
++
+ #------------- MicroPy Objects -------------------#
+-FIRM_OBJ += $(wildcard $(BUILD)/$(MICROPY_DIR)/modules/*.o)
+-FIRM_OBJ += $(wildcard $(BUILD)/$(MICROPY_DIR)/ports/$(PORT)/modules/*.o)
+-FIRM_OBJ += $(wildcard $(BUILD)/$(MICROPY_DIR)/py/*.o)
+-FIRM_OBJ += $(wildcard $(BUILD)/$(MICROPY_DIR)/boards/$(TARGET)/*.o)
++#FIRM_OBJ += $(wildcard $(BUILD)/$(MICROPY_DIR)/modules/*.o)
++MICROPY_DIR_MODULES_ALL_OBJ := $(notdir $(wildcard $(OMV_DIR)/modules/*.c)) 
++FIRM_OBJ += $(addprefix $(BUILD)/$(MICROPY_DIR)/modules/, $(MICROPY_DIR_MODULES_ALL_OBJ:.c=.o))
++
++#FIRM_OBJ += $(wildcard $(BUILD)/$(MICROPY_DIR)/ports/$(PORT)/modules/*.o)
++MICROPY_DIR_PORT_MODULES_ALL_OBJ := $(notdir $(wildcard $(OMV_DIR)/ports/$(PORT)/modules/*.c)) 
++FIRM_OBJ += $(addprefix $(BUILD)/$(MICROPY_DIR)/ports/$(PORT)/modules/, $(MICROPY_DIR_PORT_MODULES_ALL_OBJ:.c=.o))
++
++# FIRM_OBJ += $(wildcard $(BUILD)/$(MICROPY_DIR)/py/*.o)
++MICROPY_DIR_PY_ALL_OBJ := $(notdir $(wildcard $(MICROPY_DIR)/py/*.c)) 
++MICROPY_DIR_PY_OBJ = $(filter-out emitnative.c,$(MICROPY_DIR_PY_ALL_OBJ))
++FIRM_OBJ += $(addprefix $(BUILD)/$(MICROPY_DIR)/py/, $(MICROPY_DIR_PY_OBJ:.c=.o))
++
+ FIRM_OBJ += $(addprefix $(BUILD)/$(MICROPY_DIR)/,\
+ 	alloc.o					\
+ 	input.o					\
+@@ -222,9 +236,9 @@ FIRM_OBJ += $(addprefix $(BUILD)/$(MICROPY_DIR)/extmod/,\
+ MICROPY_ARGS += BOARD=$(TARGET) FROZEN_MANIFEST=$(FROZEN_MANIFEST)\
+                 BUILD=$(BUILD)/$(MICROPY_DIR) #USER_C_MODULES="" 
+ ELFNAME = openmv
+-COMPILE_TIME = $(shell date +"%Y-%M-%d %H:%M:%S")
+-COMPILE_INFO = $(shell file $(FW_DIR)/$(ELFNAME).elf)
+-FILE_SZIE = $(shell ls -lht $(FW_DIR)/$(ELFNAME).elf)
++# COMPILE_TIME = $(shell date +"%Y-%M-%d %H:%M:%S")
++# COMPILE_INFO = $(shell file $(FW_DIR)/$(ELFNAME).elf)
++# FILE_SZIE = $(shell ls -lht $(FW_DIR)/$(ELFNAME).elf)
+ 
+ ###################################################
+ #Export Variables
+-- 
+2.38.0.windows.1
+

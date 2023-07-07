@@ -1,0 +1,28 @@
+From ed511f1d12666e4adc1fbc8c76736940823f1b90 Mon Sep 17 00:00:00 2001
+From: MaJun <majun258@linux.alibaba.com>
+Date: Mon, 27 Jan 2020 15:19:05 +0800
+Subject: [PATCH 13/15] package/botan: Enable botan for csky cpu
+
+Enable botan for csky cpu
+
+Signed-off-by: MaJun <majun258@linux.alibaba.com>
+Signed-off-by: Guo Ren <guoren@linux.alibaba.com>
+---
+ package/botan/Config.in | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/package/botan/Config.in b/package/botan/Config.in
+index 95367b9..7a9f16d 100644
+--- a/package/botan/Config.in
++++ b/package/botan/Config.in
+@@ -2,6 +2,7 @@ config BR2_PACKAGE_BOTAN_ARCH_SUPPORTS
+ 	bool
+ 	default y if BR2_aarch64 || BR2_aarch64_be
+ 	default y if BR2_arm || BR2_armeb
++	default y if BR2_csky
+ 	default y if BR2_i386 || BR2_x86_64
+ 	default y if BR2_m68k
+ 	default y if BR2_mips || BR2_mipsel || BR2_mips64 || BR2_mips64el
+-- 
+2.17.1
+

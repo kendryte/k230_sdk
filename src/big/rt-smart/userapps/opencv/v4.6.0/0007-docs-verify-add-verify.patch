@@ -1,0 +1,24 @@
+From cbe156087e7adab421c5625bcb8568b88c2ef8e0 Mon Sep 17 00:00:00 2001
+From: zhouquan <zhouquan@rt-thread.com>
+Date: Mon, 5 Dec 2022 11:38:18 +0800
+Subject: [PATCH 07/14] =?UTF-8?q?=F0=9F=93=83=20docs(verify):=20add=20veri?=
+ =?UTF-8?q?fy?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ verify | 1 +
+ 1 file changed, 1 insertion(+)
+ create mode 100644 verify
+
+diff --git a/verify b/verify
+new file mode 100644
+index 0000000000..8c30831776
+--- /dev/null
++++ b/verify
+@@ -0,0 +1 @@
++[commit]: 24470d6c51ea4694ac198bb0704fca2b832a273e
+-- 
+2.34.1
+

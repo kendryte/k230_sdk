@@ -1,0 +1,24 @@
+From 8153575d1c53084c255dfb1a159ac1dc34919c1f Mon Sep 17 00:00:00 2001
+From: zhouquan <zhouquan@rt-thread.com>
+Date: Mon, 5 Dec 2022 11:33:48 +0800
+Subject: [PATCH 16/18] =?UTF-8?q?=F0=9F=93=83=20docs(verify):=20add=20veri?=
+ =?UTF-8?q?fy?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ verify | 1 +
+ 1 file changed, 1 insertion(+)
+ create mode 100644 verify
+
+diff --git a/verify b/verify
+new file mode 100644
+index 00000000..6c483edb
+--- /dev/null
++++ b/verify
+@@ -0,0 +1 @@
++[commit]: 4252f01d2725bb7bdd12b3be31c7031f358fb91e
+-- 
+2.38.0.windows.1
+

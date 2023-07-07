@@ -1,0 +1,88 @@
+menu "Kernel Testcase"
+
+config UTEST_MEMHEAP_TC
+    bool "memheap stability test"
+    default y
+    depends on RT_USING_MEMHEAP
+
+config UTEST_IRQ_TC
+    bool "IRQ test"
+    default n
+
+config UTEST_SEMAPHORE_TC
+    bool "semaphore test"
+    default n
+    depends on RT_USING_SEMAPHORE
+
+config UTEST_EVENT_TC
+    bool "event test"
+    default n
+    depends on RT_USING_EVENT
+
+config UTEST_TIMER_TC
+    bool "timer test"
+    default n
+
+config UTEST_MESSAGEQUEUE_TC
+    bool "message queue test"
+    default n
+
+config UTEST_MUTEX_TC
+    bool "mutex test"
+    default n
+
+config UTEST_MAILBOX_TC
+    bool "mailbox test"
+    default n
+
+config UTEST_THREAD_TC
+    bool "thread test"
+    default n
+    select RT_USING_TIMER_SOFT
+    select RT_USING_THREAD
+
+config UTEST_MMU_TC
+    bool "MMU test"
+    default n
+
+config UTEST_ADC
+    bool "ADC test"
+    default n
+
+config RT_USING_GPIO
+    bool "GPIO test"
+    default n
+
+config RT_USING_SPI
+    bool "SPI test"
+    default n
+
+config UTEST_OTP
+    bool "OTP test"
+    default n
+
+config UTEST_WDT
+    bool "WatchDog test"
+    default n
+    
+config UTEST_TS
+    bool "TS test"
+    default n
+
+config UTEST_GPIO
+    bool "GPIO test"
+    default n
+
+config UTEST_PWM
+    bool "PWM test"
+    default n
+
+config UTEST_HWTIMER
+    bool "hwtimer test"
+    default n
+
+config UTEST_RTC
+    bool "rtc test"
+    default n
+
+endmenu

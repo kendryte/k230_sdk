@@ -1,0 +1,113 @@
+/**
+ * @file k_sensor_ioctl.h
+ * @author
+ * @brief
+ * @version 1.0
+ * @date 2023-03-20
+ *
+ * @copyright
+ * Copyright (c) 2023, Canaan Bright Sight Co., Ltd
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 1. Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ * CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#ifndef __K_SNESOR_IOCTL_H__
+#define __K_SNESOR_IOCTL_H__
+
+#include "k_sensor_comm.h"
+#include "k_ioctl.h"
+#include "k_type.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* End of #ifdef __cplusplus */
+
+
+/* Sensor ioctl cmd */
+typedef enum {
+    KD_IOC_NR_SENSOR_DEV_POWER,
+    KD_IOC_NR_SENSOR_DEV_INIT,
+    KD_IOC_NR_SENSOR_DEV_ID,
+    KD_IOC_NR_SENSOR_DEV_READ_REG,
+    KD_IOC_NR_SENSOR_DEV_WRITE_REG,
+    KD_IOC_NR_SENSOR_DEV_GET_MODE,
+    KD_IOC_NR_SENSOR_DEV_SET_MODE,
+    KD_IOC_NR_SENSOR_DEV_ENUM_MODE,
+    KD_IOC_NR_SENSOR_DEV_GET_CAPS,
+    KD_IOC_NR_SENSOR_DEV_CHECK_CONN,
+    KD_IOC_NR_SENSOR_DEV_SET_STREAM,
+    KD_IOC_NR_SENSOR_DEV_GET_AGAIN,
+    KD_IOC_NR_SENSOR_DEV_SET_AGAIN,
+    KD_IOC_NR_SENSOR_DEV_GET_DGAIN,
+    KD_IOC_NR_SENSOR_DEV_SET_DGAIN,
+    KD_IOC_NR_SENSOR_DEV_GET_INTG_TIME,
+    KD_IOC_NR_SENSOR_DEV_SET_INTG_TIME,
+    KD_IOC_NR_SENSOR_DEV_GET_EXP_PRAM,
+    KD_IOC_NR_SENSOR_DEV_SET_EXP_PRAM,
+    KD_IOC_NR_SENSOR_DEV_GET_FPS,
+    KD_IOC_NR_SENSOR_DEV_SET_FPS,
+    KD_IOC_NR_SENSOR_DEV_GET_ISP_STATUS,
+    KD_IOC_NR_SENSOR_DEV_SET_BLC,
+    KD_IOC_NR_SENSOR_DEV_SET_WB,
+    KD_IOC_NR_SENSOR_DEV_GET_TPG,
+    KD_IOC_NR_SENSOR_DEV_SET_TPG,
+    KD_IOC_NR_SENSOR_DEV_GET_EXPAND_CURVE,
+    KD_IOC_NR_SENSOR_DEV_GET_OTP_DATA,
+} k_ioc_nr_sensor;
+
+#define KD_IOC_SENSOR_S_POWER           _IOW(K_IOC_TYPE_SENSOR, KD_IOC_NR_SENSOR_DEV_POWER, k_s32)
+#define KD_IOC_SENSOR_S_INIT            _IOW(K_IOC_TYPE_SENSOR, KD_IOC_NR_SENSOR_DEV_INIT, k_sensor_mode)
+#define KD_IOC_SENSOR_G_ID              _IOW(K_IOC_TYPE_SENSOR, KD_IOC_NR_SENSOR_DEV_ID, k_u32)
+#define KD_IOC_SENSOR_REG_READ          _IOW(K_IOC_TYPE_SENSOR, KD_IOC_NR_SENSOR_DEV_READ_REG, k_sensor_reg)
+#define KD_IOC_SENSOR_REG_WRITE         _IOW(K_IOC_TYPE_SENSOR, KD_IOC_NR_SENSOR_DEV_WRITE_REG, k_sensor_reg)
+#define KD_IOC_SENSOR_G_MODE            _IOW(K_IOC_TYPE_SENSOR, KD_IOC_NR_SENSOR_DEV_GET_MODE, k_sensor_mode)
+#define KD_IOC_SENSOR_S_MODE            _IOW(K_IOC_TYPE_SENSOR, KD_IOC_NR_SENSOR_DEV_SET_MODE, k_sensor_mode)
+#define KD_IOC_SENSOR_ENUM_MODE         _IOW(K_IOC_TYPE_SENSOR, KD_IOC_NR_SENSOR_DEV_SET_MODE, k_sensor_enum_mode)
+#define KD_IOC_SENSOR_G_CAPS            _IOW(K_IOC_TYPE_SENSOR, KD_IOC_NR_SENSOR_DEV_GET_CAPS, k_sensor_caps)
+#define KD_IOC_SENSOR_CHECK_CONN        _IOW(K_IOC_TYPE_SENSOR, KD_IOC_NR_SENSOR_DEV_CHECK_CONN, k_bool)
+#define KD_IOC_SENSOR_S_STREAM          _IOW(K_IOC_TYPE_SENSOR, KD_IOC_NR_SENSOR_DEV_SET_STREAM, k_bool)
+#define KD_IOC_SENSOR_G_AGAIN           _IOW(K_IOC_TYPE_SENSOR, KD_IOC_NR_SENSOR_DEV_GET_AGAIN, k_sensor_gain)
+#define KD_IOC_SENSOR_S_AGAIN           _IOW(K_IOC_TYPE_SENSOR, KD_IOC_NR_SENSOR_DEV_SET_AGAIN, k_sensor_gain)
+#define KD_IOC_SENSOR_G_DGAIN           _IOW(K_IOC_TYPE_SENSOR, KD_IOC_NR_SENSOR_DEV_GET_DGAIN, k_sensor_gain)
+#define KD_IOC_SENSOR_S_DGAIN           _IOW(K_IOC_TYPE_SENSOR, KD_IOC_NR_SENSOR_DEV_SET_DGAIN, k_sensor_gain)
+#define KD_IOC_SENSOR_G_INTG_TIME       _IOW(K_IOC_TYPE_SENSOR, KD_IOC_NR_SENSOR_DEV_GET_INTG_TIME, k_sensor_intg_time)
+#define KD_IOC_SENSOR_S_INTG_TIME       _IOW(K_IOC_TYPE_SENSOR, KD_IOC_NR_SENSOR_DEV_SET_INTG_TIME, k_sensor_intg_time)
+#define KD_IOC_SENSOR_GET_EXP_PRAM      _IOW(K_IOC_TYPE_SENSOR, KD_IOC_NR_SENSOR_DEV_GET_EXP_PRAM, k_sensor_exposure_param)
+#define KD_IOC_SENSOR_SET_EXP_PRAM      _IOW(K_IOC_TYPE_SENSOR, KD_IOC_NR_SENSOR_DEV_SET_EXP_PRAM, k_sensor_exposure_param)
+#define KD_IOC_SENSOR_G_FPS             _IOW(K_IOC_TYPE_SENSOR, KD_IOC_NR_SENSOR_DEV_GET_FPS, k_u32)
+#define KD_IOC_SENSOR_S_FPS             _IOW(K_IOC_TYPE_SENSOR, KD_IOC_NR_SENSOR_DEV_SET_FPS, k_u32)
+#define KD_IOC_SENSOR_G_ISP_STATUS      _IOW(K_IOC_TYPE_SENSOR, KD_IOC_NR_SENSOR_DEV_GET_ISP_STATUS, k_sensor_isp_status)
+#define KD_IOC_SENSOR_S_BLC             _IOW(K_IOC_TYPE_SENSOR, KD_IOC_NR_SENSOR_DEV_SET_BLC, k_sensor_blc)
+#define KD_IOC_SENSOR_S_WB              _IOW(K_IOC_TYPE_SENSOR, KD_IOC_NR_SENSOR_DEV_SET_WB, k_sensor_white_balance)
+#define KD_IOC_SENSOR_G_TPG             _IOW(K_IOC_TYPE_SENSOR, KD_IOC_NR_SENSOR_DEV_GET_TPG, k_sensor_test_pattern)
+#define KD_IOC_SENSOR_S_TPG             _IOW(K_IOC_TYPE_SENSOR, KD_IOC_NR_SENSOR_DEV_SET_TPG, k_sensor_test_pattern)
+#define KD_IOC_SENSOR_G_EXPAND_CURVE    _IOW(K_IOC_TYPE_SENSOR, KD_IOC_NR_SENSOR_DEV_GET_EXPAND_CURVE, k_sensor_compand_curve)
+#define KD_IOC_SENSOR_G_OTP_DATA        _IOW(K_IOC_TYPE_SENSOR, KD_IOC_NR_SENSOR_DEV_GET_OTP_DATA, void*)
+
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
+#endif
+

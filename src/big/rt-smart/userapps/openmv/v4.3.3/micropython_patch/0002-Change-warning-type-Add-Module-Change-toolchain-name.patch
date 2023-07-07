@@ -1,0 +1,55 @@
+From d064082543f89a61d697188a1202ac008cc7c355 Mon Sep 17 00:00:00 2001
+From: zhouquan <zhouquan@rt-thread.com>
+Date: Thu, 20 Oct 2022 15:23:43 +0800
+Subject: [PATCH 2/3] Change warning type, Add Module, Change toolchain name
+
+---
+ ports/unix/Makefile | 10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/ports/unix/Makefile b/ports/unix/Makefile
+index cd8bb379c..f3ea67912 100644
+--- a/ports/unix/Makefile
++++ b/ports/unix/Makefile
+@@ -36,7 +36,7 @@ INC +=  -I$(TOP)
+ INC += -I$(BUILD)
+ 
+ # compiler settings
+-CWARN = -Wall -Werror
++CWARN = -Wall # -Werror
+ CWARN += -Wextra -Wno-unused-parameter -Wpointer-arith -Wdouble-promotion -Wfloat-conversion
+ CFLAGS += $(INC) $(CWARN) -std=gnu99 -DUNIX $(CFLAGS_MOD) $(COPT) -I$(VARIANT_DIR) $(CFLAGS_EXTRA)
+ 
+@@ -254,9 +254,11 @@ OBJ += $(addprefix $(BUILD)/, $(SRC_CXX:.cpp=.o))
+ OBJ += $(addprefix $(BUILD)/, $(SHARED_SRC_C:.c=.o))
+ OBJ += $(addprefix $(BUILD)/, $(EXTMOD_SRC_C:.c=.o))
+ OBJ += $(addprefix $(BUILD)/, $(LIB_SRC_C:.c=.o))
++OBJ += $(addprefix $(BUILD)/, $(SRC_MOD:.c=.o))
++
+ 
+ # List of sources for qstr extraction
+-SRC_QSTR += $(SRC_C) $(SRC_CXX) $(SHARED_SRC_C) $(EXTMOD_SRC_C)
++SRC_QSTR += $(SRC_C) $(SRC_CXX) $(SHARED_SRC_C) $(EXTMOD_SRC_C) $(OMV_SRC_QSTR)
+ # Append any auto-generated sources that are needed by sources listed in
+ # SRC_QSTR
+ SRC_QSTR_AUTO_DEPS +=
+@@ -282,14 +284,14 @@ ifeq ($(MICROPY_FORCE_32BIT),1)
+ RUN_TESTS_MPY_CROSS_FLAGS = --mpy-cross-flags='-march=x86'
+ endif
+ 
+-ifeq ($(CROSS_COMPILE),arm-linux-gnueabi-)
++ifeq ($(CROSS_COMPILE),riscv64-unknown-linux-musl-)
+ # Force disable error text compression when compiling for ARM as the compiler
+ # cannot optimise out the giant strcmp list generated for MP_MATCH_COMPRESSED.
+ # Checked on:
+ # arm-linux-gnueabi-gcc (Ubuntu/Linaro 7.5.0-3ubuntu1~18.04) 7.5.0
+ # arm-linux-gnueabi-gcc (Ubuntu 9.3.0-17ubuntu1~20.04) 9.3.0
+ # See https://github.com/micropython/micropython/pull/7659 for details.
+-$(info Detected arm-linux-gnueabi-gcc. Disabling error message compression.)
++$(info Detected riscv64-unknown-linux-musl-. Disabling error message compression.)
+ MICROPY_ROM_TEXT_COMPRESSION = 0
+ endif
+ 
+-- 
+2.33.1.windows.1
+

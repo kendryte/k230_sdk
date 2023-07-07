@@ -1,0 +1,26 @@
+# RT-Thread building script for component
+
+from building import *
+import os
+cwd     = GetCurrentDir()
+src     = Glob('*.c')
+CPPPATH = ['include']
+LIBPATH = [cwd + '/lib/']
+libname = ''
+liblist = os.listdir(str(cwd + '/lib'))
+for item in liblist:
+    if item[-2:] == ".a":
+        libname = libname + '-l' + item[3:-2] + ' '
+
+LINKFLAGS = ' -Wl,--whole-archive ' + libname  + ' -Wl,--no-whole-archive'
+group = DefineGroup('Mpp', src, depend = [''], CPPPATH = CPPPATH, LINKFLAGS = LINKFLAGS, LIBPATH=LIBPATH)
+
+objs = [group]
+
+list = os.listdir(cwd)
+
+for item in list:
+    if os.path.isfile(os.path.join(cwd, item, 'SConscript')):
+        objs = objs + SConscript(os.path.join(item, 'SConscript'))
+
+Return('objs')

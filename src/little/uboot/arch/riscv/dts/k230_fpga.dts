@@ -1,0 +1,227 @@
+/* Copyright (c) 2023, Canaan Bright Sight Co., Ltd
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 1. Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ * CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+/dts-v1/;
+/ {
+	model = "kendryte k230 fpga";
+	compatible = "kendryte,k230_fpga";
+	#address-cells = <2>;
+	#size-cells = <2>;
+
+	aliases {
+		uart0 = &serial0;
+	};
+
+	chosen {
+		bootargs = "console=ttyS0,115200n8  debug loglevel=7";
+		stdout-path = "uart0:115200n8";
+	};
+
+	cpus {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		timebase-frequency = <8000000>;
+		u-boot,dm-pre-reloc;
+		cpu@0 {
+			device_type = "cpu";
+			reg = <0>;
+			status = "okay";
+			compatible = "riscv";
+			riscv,isa = "rv64imafdcvsu";
+			mmu-type = "riscv,sv39";
+			clock-frequency = <50000000>;
+			u-boot,dm-pre-reloc;
+		};
+	};
+
+	memory@0 {
+		device_type = "memory";
+		reg = <0x0 0x0 0x0 0x60000000>;  /*uboot memory config*/
+	};
+
+	soc {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		compatible = "simple-bus";
+		ranges;
+		u-boot,dm-pre-reloc;
+
+		dummy_apb: apb-clock {
+			compatible = "fixed-clock";
+			clock-frequency = <50000000>;
+			clock-output-names = "dummy_apb";
+			#clock-cells = <0>;
+			u-boot,dm-pre-reloc;
+		};
+
+		sdclk: virt_50mhz {
+                #clock-cells = <1>;
+                compatible = "fixed-clock";
+                clock-frequency = <25000000>;
+        };
+
+		serial0: serial@91400000 {
+			compatible = "snps,dw-apb-uart";
+			reg = <0x0 0x91400000 0x0 0x400>;
+			clock-frequency = <25000000>;
+			clock-names = "baudclk";
+			reg-shift = <2>;
+			reg-io-width = <4>;
+			u-boot,dm-pre-reloc;
+		};
+
+		mmc: mmc0@91581000 {
+			compatible = "snps,dwcmshc-sdhci";
+			reg = <0x0 0x91581000 0x0 0x400>;
+			bus-width = <4>;
+			clocks = <&sdclk 4>;
+			max-frequency = <25000000>;
+			no-1-8-v;
+			fifo-mode;
+			status = "okay";
+			
+		};
+
+		spi0: spi@91584000 {
+			compatible = "snps,dwc-ssi-1.01a";
+			reg = <0x0 0x91584000 0x0 0x1000>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			num-cs = <1>;
+			clocks = <&dummy_apb>;
+			spi-max-frequency = <50000000>;
+			spi-flash@0 {
+				compatible = "jedec,spi-nor";
+				reg = <0>;
+				spi-max-frequency = <5000000>;
+				spi-tx-bus-width = <1>;
+				spi-rx-bus-width = <1>;
+				spi-cpha;
+				spi-cpol;
+				status = "disabled";
+			};
+		};
+
+		spi1: spi@91582000 {
+			compatible = "snps,dwc-ssi-1.01a";
+			reg = <0x0 0x91582000 0x0 0x1000>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			num-cs = <1>;
+			clocks = <&dummy_apb>;
+			reg-io-width = <4>;
+			spi-max-frequency = <50000000>;
+			status = "okay";
+
+			spi-nand@0 {
+				#address-cells = <1>;
+				#size-cells = <1>;
+				compatible = "spi-nand";
+				reg = <0>;
+				spi-max-frequency = <5000000>;
+				spi-tx-bus-width = <1>;
+				spi-rx-bus-width = <1>;
+				spi-cpha;
+				spi-cpol;
+				status = "disabled";
+				partition@0 {
+						label = "uboot";
+						reg = <0x00000000 0x00200000>;
+				};
+    		};
+		};
+		
+
+	
+		usbotg0: usb-otg@91500000 {
+			compatible = "snps,dwc2";
+			reg = <0x0 0x91500000 0x0 0x10000>;
+			g-tx-fifo-size = <128 128 128 128 128 128>;
+			dr_mode = "otg";
+			otg-rev = <0x200>;
+			u-boot,dm-pre-reloc;
+			status = "disabled";
+		};
+
+		iomux: iomux@91105000 {
+			compatible = "pinctrl-single";
+			reg = <0x0 0x91105000 0x0 0x10000>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			#pinctrl-cells = <1>;
+			pinctrl-single,register-width = <32>;
+			pinctrl-single,function-mask = <0xffffffff>;
+			u-boot,dm-pre-reloc;
+		};
+	};
+};
+
+&iomux {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart0_pins &mmc0_pins &spi0_pins &spi1_pins>;
+
+	uart0_pins: iomux_uart0_pins {
+		pinctrl-single,pins = <
+			(39*4) (0x1<<11 | 0x1<<9 | 0x1<<8 | 0x0<<7 | 0x7<<1 | 0x1)
+			(38*4) (0x1<<11 | 0x1<<9 | 0x0<<8 | 0x1<<7 | 0x7<<1 | 0x1)
+		>;
+	};
+	mmc0_pins: iomux_mmc0_pins {
+		pinctrl-single,pins = <
+			(26*4) (0x1<<11 | 0x0<<9 | 0x0<<8 | 0x1<<7 | 0x7<<1 | 0x1)
+			(27*4) (0x1<<11 | 0x0<<9 | 0x1<<8 | 0x1<<7 | 0x1<<6 | 0x7<<1 | 0x1)
+			(28*4) (0x1<<11 | 0x0<<9 | 0x1<<8 | 0x1<<7 | 0x1<<6 | 0x7<<1 | 0x1)
+			(29*4) (0x1<<11 | 0x0<<9 | 0x1<<8 | 0x1<<7 | 0x1<<6 | 0x7<<1 | 0x1)
+			(30*4) (0x1<<11 | 0x0<<9 | 0x1<<8 | 0x1<<7 | 0x1<<6 | 0x7<<1 | 0x1)
+			(31*4) (0x1<<11 | 0x0<<9 | 0x1<<8 | 0x1<<7 | 0x1<<6 | 0x7<<1 | 0x1)
+		>;
+	};
+	spi0_pins: iomux_spi0_pins {
+		pinctrl-single,pins = <
+			/*gpio 	func s		MSC 	IE 		OE 			pu		pd 		ds		st */
+			(14*4) (0x1<<11 | 0x1<<9 | 0x0<<8 | 0x1<<7 | 0x1<<6 | 0x0<<5 | 0x7<<1 | 0x1)   //cs
+			(15*4) (0x1<<11 | 0x1<<9 | 0x0<<8 | 0x1<<7 | 0x0<<6 | 0x0<<5 | 0x7<<1 | 0x1)  //clk
+			(16*4) (0x1<<11 | 0x1<<9 | 0x1<<8 | 0x1<<7 | 0x0<<6 | 0x0<<5 | 0x7<<1 | 0x1)  //d0
+			(17*4) (0x1<<11 | 0x1<<9 | 0x1<<8 | 0x1<<7 | 0x0<<6 | 0x0<<5 | 0x7<<1 | 0x1) //d1
+			(18*4) (0x1<<11 | 0x1<<9 | 0x1<<8 | 0x1<<7 | 0x0<<6 | 0x0<<5 | 0x7<<1 | 0x1)//2
+			(19*4) (0x1<<11 | 0x1<<9 | 0x1<<8 | 0x1<<7 | 0x0<<6 | 0x0<<5 | 0x7<<1 | 0x1)//3
+			(20*4) (0x1<<11 | 0x1<<9 | 0x1<<8 | 0x1<<7 | 0x0<<6 | 0x0<<5 | 0x7<<1 | 0x1)//4
+			(21*4) (0x1<<11 | 0x1<<9 | 0x1<<8 | 0x1<<7 | 0x0<<6 | 0x0<<5 | 0x7<<1 | 0x1)//5
+			(22*4) (0x1<<11 | 0x1<<9 | 0x1<<8 | 0x1<<7 | 0x0<<6 | 0x0<<5 | 0x7<<1 | 0x1)//7
+			(23*4) (0x1<<11 | 0x1<<9 | 0x1<<8 | 0x1<<7 | 0x0<<6 | 0x0<<5 | 0x7<<1 | 0x1)//7
+			(24*4) (0x1<<11 | 0x1<<9 | 0x1<<8 | 0x1<<7 | 0x0<<6 | 0x0<<5 | 0x7<<1 | 0x1)//dqs
+			(25*4) (0x0<<11 | 0x1<<9 | 0x0<<8 | 0x1<<7 | 0x1<<6 | 0x0<<5 | 0x7<<1 | 0x1) //reset
+		>;
+	};
+	spi1_pins: iomux_spi1_pins {
+		pinctrl-single,pins = <
+			(54*4) (0x1<<11 | 0x1<<9 | 0x0<<8 | 0x1<<7 | 0x1<<6 | 0x7<<1 | 0x1)
+			(55*4) (0x1<<11 | 0x1<<9 | 0x0<<8 | 0x1<<7 | 0x7<<1 | 0x1)
+			(56*4) (0x1<<11 | 0x1<<9 | 0x1<<8 | 0x1<<7 | 0x7<<1 | 0x1)
+			(57*4) (0x1<<11 | 0x1<<9 | 0x1<<8 | 0x1<<7 | 0x7<<1 | 0x1)
+			(58*4) (0x1<<11 | 0x1<<9 | 0x1<<8 | 0x1<<7 | 0x7<<1 | 0x1)
+			(59*4) (0x1<<11 | 0x1<<9 | 0x1<<8 | 0x1<<7 | 0x7<<1 | 0x1)
+		>;
+	};
+};

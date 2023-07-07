@@ -1,0 +1,14 @@
+/* Copyright (c) 2023, Canaan Bright Sight Co., Ltd
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+*/
+
+/* reset-controller has multi reset */
+
+&sysctl_reset {
+    status          = "okay";
+    compatible      = "canaan,k230-sysctl-reset";
+    #reset-cells    = <4>;                          /* indicate consumer resets have 5 parameters. phandle+offset+type+done+assert */
+};

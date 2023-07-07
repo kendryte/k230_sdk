@@ -1,0 +1,26 @@
+From f91a7cd3aef48803bb836d00e8e7e3e4c47d0208 Mon Sep 17 00:00:00 2001
+From: Guo Ren <guoren@linux.alibaba.com>
+Date: Thu, 21 Jan 2021 13:41:36 +0800
+Subject: [PATCH 17/17] package/gcc: Update GCC 9.0 to 10.0
+
+Signed-off-by: Guo Ren <guoren@linux.alibaba.com>
+---
+ package/gcc/Config.in.host | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/package/gcc/Config.in.host b/package/gcc/Config.in.host
+index 2d083e5..afb2a47 100644
+--- a/package/gcc/Config.in.host
++++ b/package/gcc/Config.in.host
+@@ -4,7 +4,7 @@ choice
+ 	prompt "GCC compiler Version"
+ 	default BR2_GCC_VERSION_ARC if BR2_arc
+ 	default BR2_GCC_VERSION_CSKY if BR2_csky
+-	default BR2_GCC_VERSION_9_X
++	default BR2_GCC_VERSION_10_X
+ 	help
+ 	  Select the version of gcc you wish to use.
+ 
+-- 
+2.17.1
+

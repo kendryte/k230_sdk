@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fatdisk>
+    <disk_size>1046528</disk_size>
+    <sector_size>512</sector_size>
+    <cluster_size>4096</cluster_size>
+    <root_dir>rootfs</root_dir>
+    <output>rootfs.bin</output>
+    <strip>1</strip>
+</fatdisk>
+

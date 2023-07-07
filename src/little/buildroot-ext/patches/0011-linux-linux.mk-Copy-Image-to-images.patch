@@ -1,0 +1,26 @@
+From 00ff0dc5a24367e3be52936b5ebd84b0f409bd2f Mon Sep 17 00:00:00 2001
+From: Guo Ren <ren_guo@c-sky.com>
+Date: Sat, 28 Dec 2019 18:53:25 +0800
+Subject: [PATCH 11/15] linux/linux.mk: Copy Image to images
+
+Signed-off-by: Guo Ren <ren_guo@c-sky.com>
+Signed-off-by: Guo Ren <guoren@linux.alibaba.com>
+---
+ linux/linux.mk | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/linux/linux.mk b/linux/linux.mk
+index e53d548..582442a 100644
+--- a/linux/linux.mk
++++ b/linux/linux.mk
+@@ -455,6 +455,7 @@ else
+ # build process.
+ define LINUX_INSTALL_IMAGE
+ 	$(INSTALL) -m 0644 -D $(LINUX_IMAGE_PATH) $(1)/$(notdir $(LINUX_IMAGE_NAME))
++	$(INSTALL) -m 0644 -D $(LINUX_ARCH_PATH)/boot/Image $(1)/Image
+ endef
+ endif
+ 
+-- 
+2.17.1
+

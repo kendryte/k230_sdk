@@ -1,0 +1,10 @@
+config BR2_PACKAGE_VG_LITE
+    bool "VGLite GPU user-space library"
+    help
+        VGLite GPU user-space library
+
+config BR2_PACKAGE_VG_LITE_DEMOS
+    bool "VGLite GPU demos"
+    select BR2_PACKAGE_VG_LITE
+    help
+        VGLite GPU test samples

@@ -1,0 +1,23 @@
+From 6d5562a06757b2d6428f87697f710b099039fc86 Mon Sep 17 00:00:00 2001
+From: zhouquan <zhouquan@rt-thread.com>
+Date: Tue, 6 Dec 2022 11:44:00 +0800
+Subject: [PATCH 18/18] =?UTF-8?q?=F0=9F=93=83=20docs(verify):=20update=20v?=
+ =?UTF-8?q?erify?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ verify | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/verify b/verify
+index 6c483edb..7d9fb4f7 100644
+--- a/verify
++++ b/verify
+@@ -1 +1 @@
+-[commit]: 4252f01d2725bb7bdd12b3be31c7031f358fb91e
++[commit]: 33471d6c77d63349041634604722731896bc358a
+-- 
+2.38.0.windows.1
+

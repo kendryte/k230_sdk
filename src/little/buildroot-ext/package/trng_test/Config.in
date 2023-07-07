@@ -1,0 +1,7 @@
+config BR2_PACKAGE_TRNG_TEST
+	bool "trng test"
+	help
+	  k230 trng demo for test
+
+
+

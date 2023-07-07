@@ -1,0 +1,123 @@
+From 547dcb0f7b92b0d156e79a6112a7d6d8801e78e8 Mon Sep 17 00:00:00 2001
+From: Guo Ren <ren_guo@c-sky.com>
+Date: Wed, 9 Oct 2019 15:08:35 +0800
+Subject: [PATCH 07/19] arch/riscv: add v & xthead extension
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Reference to riscv-spec: Non-Standard Extension Names
+
+Non-standard subsets are named using a single “X” followed by a name
+beginning with a letter and an optional version number. For example,
+“Xhwacha” names the Hwacha vector-fetch ISA extension; “Xhwacha2”
+and “Xhwacha2p0” name version 2.0 of same.
+
+Non-standard extensions must be separated from other multi-letter
+extensions by a single un- derscore. For example, an ISA with
+non-standard extensions Argle and Bargle may be named “RV64GXargle
+Xbargle”.
+
+Changelog v2:
+    - remove ISA_CUSTOM_STR support
+
+Changelog v3:
+    - add lp64v for GCC_TAEGET_ABI
+
+Signed-off-by: Guo Ren <ren_guo@c-sky.com>
+Signed-off-by: Mao Han <han_mao@c-sky.com>
+Signed-off-by: Ma Jun  <majun@linux.alibaba.com>
+Signed-off-by: Guo Ren <guoren@linux.alibaba.com>
+---
+ arch/Config.in.riscv | 34 ++++++++++++++++++++++++++++++++++
+ arch/arch.mk.riscv   |  9 +++++++++
+ 2 files changed, 43 insertions(+)
+
+diff --git a/arch/Config.in.riscv b/arch/Config.in.riscv
+index 1fc20e5..d8bdf13 100644
+--- a/arch/Config.in.riscv
++++ b/arch/Config.in.riscv
+@@ -18,6 +18,15 @@ config BR2_RISCV_ISA_RVD
+ config BR2_RISCV_ISA_RVC
+ 	bool
+ 
++config BR2_RISCV_ISA_RVV
++	bool
++
++config BR2_RISCV_ISA_RVV0P7
++	bool
++
++config BR2_RISCV_ISA_THEAD
++	bool
++
+ choice
+ 	prompt "Target Architecture Variant"
+ 	default BR2_riscv_g
+@@ -63,6 +72,26 @@ config BR2_RISCV_ISA_CUSTOM_RVD
+ config BR2_RISCV_ISA_CUSTOM_RVC
+ 	bool "Compressed Instructions (C)"
+ 	select BR2_RISCV_ISA_RVC
++
++choice
++	prompt "Vector Instructions"
++	default BR2_RISCV_ISA_CUSTOM_RVV_NONE
++
++config BR2_RISCV_ISA_CUSTOM_RVV_NONE
++	bool "Vector Instructions (None)"
++
++config BR2_RISCV_ISA_CUSTOM_RVV
++	bool "Vector Instructions (V)"
++	select BR2_RISCV_ISA_RVV
++
++config BR2_RISCV_ISA_CUSTOM_RVV0P7
++	bool "Vector 0.7 Instructions (V0P7)"
++	select BR2_RISCV_ISA_RVV0P7
++endchoice
++
++config BR2_RISCV_ISA_CUSTOM_THEAD
++	bool "T-HEAD Extensions"
++	select BR2_RISCV_ISA_THEAD
+ endif
+ 
+ choice
+@@ -110,6 +139,10 @@ config BR2_RISCV_ABI_LP64F
+ config BR2_RISCV_ABI_LP64D
+ 	bool "lp64d"
+ 	depends on BR2_ARCH_IS_64 && BR2_RISCV_ISA_RVD
++
++config BR2_RISCV_ABI_LP64V
++	bool "lp64v"
++	depends on BR2_ARCH_IS_64 && BR2_RISCV_ISA_RVV
+ endchoice
+ 
+ config BR2_ARCH
+@@ -126,6 +159,7 @@ config BR2_GCC_TARGET_ABI
+ 	default "lp64" if BR2_RISCV_ABI_LP64
+ 	default "lp64f" if BR2_RISCV_ABI_LP64F
+ 	default "lp64d" if BR2_RISCV_ABI_LP64D
++	default "lp64v" if BR2_RISCV_ABI_LP64V
+ 
+ config BR2_READELF_ARCH_NAME
+ 	default "RISC-V"
+diff --git a/arch/arch.mk.riscv b/arch/arch.mk.riscv
+index f3bf2b3..5cab248 100644
+--- a/arch/arch.mk.riscv
++++ b/arch/arch.mk.riscv
+@@ -26,5 +26,14 @@ endif
+ ifeq ($(BR2_RISCV_ISA_RVC),y)
+ GCC_TARGET_ARCH := $(GCC_TARGET_ARCH)c
+ endif
++ifeq ($(BR2_RISCV_ISA_RVV),y)
++GCC_TARGET_ARCH := $(GCC_TARGET_ARCH)v
++endif
++ifeq ($(BR2_RISCV_ISA_RVV0P7),y)
++GCC_TARGET_ARCH := $(GCC_TARGET_ARCH)v0p7
++endif
++ifeq ($(BR2_RISCV_ISA_THEAD),y)
++GCC_TARGET_ARCH := $(GCC_TARGET_ARCH)xthead
++endif
+ 
+ endif
+-- 
+2.17.1
+

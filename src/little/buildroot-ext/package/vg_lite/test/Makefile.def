@@ -1,0 +1,2 @@
+#SDK_DIR = $(TOPDIR)/k230_fpga_defconfig/build/vg_lite
+CFLAGS += -g -Og

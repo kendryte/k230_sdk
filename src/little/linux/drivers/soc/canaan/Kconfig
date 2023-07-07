@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: GPL-2.0
+#
+# k230 power configuration
+#
+menuconfig CANAAN_PWR		#config canaan dir enable
+	bool "canaan pwr driver support"
+	select PM_GENERIC_DOMAINS if PM
+	default y
+
+if CANAAN_PWR
+	config K230_PM_DOMAINS		#config the k230_pm_domains.c can be compiled
+	bool "k230 power"
+	default y
+endif

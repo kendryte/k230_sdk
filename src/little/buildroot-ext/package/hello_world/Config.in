@@ -1,0 +1,6 @@
+
+config BR2_PACKAGE_HELLO_WORLD
+	bool "hello world"
+	depends on BR2_riscv
+	help
+	  k510 hello world demo

@@ -1,0 +1,82 @@
+choice
+    prompt "CPU Arch"
+    default CORTEX_A
+
+    config CORTEX_A
+        bool "ARM Cortex-A"
+
+    config CORTEX_M
+        bool "ARM Cortex-M"
+
+    config AARCH64
+        bool "ARM AArch64"
+
+    config RISCV64
+        bool "RISC-V 64"
+
+    config I386
+        bool "I386"
+endchoice
+
+config ARCH
+    string
+    default "Cortex-A" if CORTEX_A
+    default "AArch64"  if AARCH64
+    default "Cortex-M" if CORTEX_M
+    default "RISCV64"  if RISCV64
+    default "I386"     if I386
+    default "Cortex-A"
+
+choice
+    prompt "Compiler"
+    default GNU_GCC_MUSL
+
+    config GNU_GCC
+        bool "GNU GCC (with RT-Thread ulibc)"
+
+    config GNU_GCC_MUSL
+        bool "GNU GCC with builtin musl libc"
+    
+    config GNU_GCC_NEWLIB
+        bool "GNU GCC with builtin newlib libc"
+endchoice
+
+config Toolchain
+    string
+    default "gcc" if GNU_GCC
+    default "gcc_musl" if GNU_GCC_MUSL
+    default "gcc_newlib" if GNU_GCC_NEWLIB
+    default "gcc"
+
+config EXEC_PATH
+    string "Toolchain Path"
+    default "/opt/bin"
+
+config CUSTOM_PREFIX
+    bool "Using specific prefix of toolchain"
+    default n
+
+if CUSTOM_PREFIX
+    config PREFIX
+        string "Prefix of toolchain"
+        default "arm-linux-musleabi-" if GNU_GCC_MUSL && CORTEX_A
+        default "aarch64-linux-musleabi-" if GNU_GCC_MUSL && AARCH64
+        default "riscv64-unknown-linux-musl-" if GNU_GCC_MUSL && RISCV64
+        default "i386-unknown-linux-musl-" if GNU_GCC_MUSL && I386
+        default "arm-none-eabi-"
+endif
+
+if !CUSTOM_PREFIX
+    config PREFIX
+        string
+        default "arm-none-eabi-" if GNU_GCC_NEWLIB
+        default "arm-linux-musleabi-" if GNU_GCC_MUSL && CORTEX_A
+        default "aarch64-linux-musleabi-" if GNU_GCC_MUSL && AARCH64
+        default "riscv64-unknown-linux-musl-" if GNU_GCC_MUSL && RISCV64
+        default "i386-unknown-linux-musl-" if GNU_GCC_MUSL && I386
+        default "arm-none-eabi-"
+endif
+
+config TARGET_FILE
+    string
+    default ""

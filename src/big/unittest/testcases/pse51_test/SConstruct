@@ -1,0 +1,52 @@
+import os
+import sys
+
+# add building.py path
+sys.path = sys.path + [os.path.join('..','..','..','tools')]
+from building import *
+
+def BuildSingleApplication(TARGET, src, **parameters):
+    global BuildOptions
+
+    PrepareEnv(None)
+
+    env = BuildEnv()
+    env.AppendUnique(CPPPATH = env['UserRoot'])
+    ArchConfig = env['ArchConfig']
+
+    # use staitc flags
+    env.AppendUnique(CCFLAGS   = ArchConfig.STATIC_FLAGS)
+    env.AppendUnique(LINKFLAGS = ArchConfig.STATIC_FLAGS)
+    env.AppendUnique(CPPPATH = ['include'])
+
+    # remove warning as error
+    env['CCFLAGS'] = env['CCFLAGS'].replace(' -Werror', '')
+
+    # parse rtconfig.h file
+    BuildOptions = ParseOptions(os.path.join(env['UserRoot'], 'rtconfig.h'))
+    BuildOptions['RT_USING_GCC_MUSL'] = True
+
+    target_vdir = 'build/' + TARGET
+    objs = env.Object(src, variant_dir=target_vdir, duplicate=0)
+
+    # include crt/libraries
+    objs.extend(SConscript(env['UserRoot'] + '/sdk/SConscript', variant_dir=target_vdir + '/sdk', duplicate=0))
+
+    target = env.Program(TARGET, objs)
+
+    return target
+
+l = os.walk('conformance')
+
+for (dirname, sdir, sfile) in l:
+    for item in sfile:
+        if dirname.find('testfrmw') != -1:
+            continue
+
+        if item.endswith('.c'):
+            src = dirname + '/' + item
+            target = src.replace('conformance/interfaces/', 'bin/')
+            target = target[:target.index('.')]
+
+            # print('build %s => %s' %(src, target))
+            BuildSingleApplication(target, src)

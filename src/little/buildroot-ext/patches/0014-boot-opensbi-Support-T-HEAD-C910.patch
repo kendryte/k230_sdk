@@ -1,0 +1,26 @@
+From 2b24633cd86102649a2ebb6dfd32c0df4f7741ff Mon Sep 17 00:00:00 2001
+From: Yibin Liu <jiulong@linux.alibaba.com>
+Date: Tue, 25 Feb 2020 16:11:49 +0800
+Subject: [PATCH 15/20] boot/opensbi: Enable generic
+
+---
+ boot/opensbi/Config.in  | 2 +-
+ 1 files changed,  1 insertions(+), 1 deletion(-)
+
+diff --git a/boot/opensbi/Config.in b/boot/opensbi/Config.in
+index b9b0ace..6c7fe98 100644
+--- a/boot/opensbi/Config.in
++++ b/boot/opensbi/Config.in
+@@ -15,7 +15,7 @@ config BR2_TARGET_OPENSBI
+ if BR2_TARGET_OPENSBI
+ config BR2_TARGET_OPENSBI_PLAT
+ 	string "OpenSBI Platform"
+-	default ""
++	default "generic"
+ 	help
+ 	  Specifies the OpenSBI platform to build. If no platform is
+ 	  specified only the OpenSBI platform independent static
+ 
+-- 
+2.17.1
+

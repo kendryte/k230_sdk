@@ -1,0 +1,153 @@
+/* Copyright (c) 2023, Canaan Bright Sight Co., Ltd
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 1. Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ * CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#ifndef DRV_RTC_H__
+#define DRV_RTC_H__
+#include <stdint.h>
+
+#define IRQN_PMU_INTERRUPT   175
+#define RT_DEVICE_CTRL_RTC_SET_CALLBACK     0x44
+#define RT_DEVICE_CTRL_RTC_STOP_ALARM       0x45
+
+typedef struct _rtc_interrupt_ctrl
+{
+    uint32_t timer_w_en : 1;
+    uint32_t timer_r_en : 1;
+    uint32_t resv0 : 6;
+    uint32_t tick_en : 1;
+    uint32_t tick_sel : 4;
+    uint32_t resv1 : 3;
+    uint32_t alarm_en : 1;
+    uint32_t alarm_clr : 1;
+    uint32_t resv2 : 6;
+    uint32_t second_cmp : 1;
+    uint32_t minute_cmp : 1;
+    uint32_t hour_cmp : 1;
+    uint32_t week_cmp : 1;
+    uint32_t day_cmp : 1;
+    uint32_t month_cmp : 1;
+    uint32_t year_cmp : 1;
+    uint32_t resv3 : 1;
+} __attribute__((packed, aligned(4))) rtc_interrupt_ctrl_t;
+
+
+typedef struct _rtc_initial_count
+{
+    uint32_t curr_count : 15; /*!< RTC counter currunt value */
+    uint32_t resv0 : 1;
+    uint32_t sum_count : 15;   /*!< RTC counter max value */
+    uint32_t resv1 : 1;
+} __attribute__((packed, aligned(4))) rtc_count_t;
+
+
+typedef struct _rtc_alarm_time
+{
+    uint32_t alarm_second : 6;
+    uint32_t resv0 : 2;
+    uint32_t alarm_minute : 6;
+    uint32_t resv1 : 2;
+    uint32_t alarm_hour : 5;
+    uint32_t resv2 : 3;
+    uint32_t alarm_week : 3;
+    uint32_t resv3 : 5;
+} __attribute__((packed, aligned(4))) rtc_alarm_time_t;
+
+
+typedef struct _rtc_alarm_date
+{
+    uint32_t alarm_day : 5;
+    uint32_t resv0 : 3;
+    uint32_t alarm_month : 4;
+    uint32_t resv1 : 4;
+    uint32_t alarm_year_l : 7;
+    uint32_t resv2 : 1;
+    uint32_t alarm_year_h : 7;
+    uint32_t resv3 : 1;
+} __attribute__((packed, aligned(4))) rtc_alarm_date_t;
+
+
+typedef struct _rtc_time
+{
+    uint32_t second : 6;
+    uint32_t resv0 : 2;
+    uint32_t minute : 6;
+    uint32_t resv1 : 2;
+    uint32_t hour : 5;
+    uint32_t resv2 : 3;
+    uint32_t week : 3;
+    uint32_t resv3 : 5;
+} __attribute__((packed, aligned(4))) rtc_time_t;
+
+
+typedef struct _rtc_date
+{
+    uint32_t day : 5;
+    uint32_t resv0 : 3;
+    uint32_t month : 4;
+    uint32_t resv1 : 4;
+    uint32_t year_l : 7;
+    uint32_t leap_year : 1;
+    uint32_t year_h : 7;
+    uint32_t resv2 : 1;
+} __attribute__((packed, aligned(4))) rtc_date_t;
+
+
+typedef struct _rtc
+{
+    rtc_date_t date;
+    rtc_time_t time;
+    rtc_alarm_date_t alarm_date;
+    rtc_alarm_time_t alarm_time;
+    rtc_count_t count;
+    rtc_interrupt_ctrl_t int_ctrl;
+} __attribute__((packed, aligned(4))) rtc_t;
+
+typedef enum _rtc_tick_interrupt_mode_e
+{
+    RTC_INT_ALARM_YEAR, //单次中断
+    RTC_INT_ALARM_MONTH,
+    RTC_INT_ALARM_DAY,
+    RTC_INT_ALARM_WEEK,
+    RTC_INT_ALARM_HOUR,
+    RTC_INT_ALARM_MINUTE,
+    RTC_INT_ALARM_SECOND,
+    RTC_INT_TICK_YEAR,  //周期中断
+    RTC_INT_TICK_MONTH,
+    RTC_INT_TICK_DAY,
+    RTC_INT_TICK_WEEK,
+    RTC_INT_TICK_HOUR,
+    RTC_INT_TICK_MINUTE,
+    RTC_INT_TICK_SECOND,
+    RTC_INT_TICK_S8,
+    RTC_INT_TICK_S64,
+} rtc_interrupt_mode_t;
+
+struct kd_alarm_setup
+{
+    rt_uint32_t flag;                /* alarm flag */
+    struct tm tm;                /* when will the alarm wake up user */
+};
+
+#endif

@@ -1,0 +1,28 @@
+From 11db251b2bb69890a890723a529c6a8746643a39 Mon Sep 17 00:00:00 2001
+From: Mao Han <han_mao@c-sky.com>
+Date: Fri, 25 Oct 2019 17:10:17 +0800
+Subject: [PATCH 09/15] package/ntfs-3g: Don't use ffs builtin from gcc
+
+Signed-off-by: Mao Han <han_mao@c-sky.com>
+Signed-off-by: Chen Zhixing <zhixing_chen@c-sky.com>
+Signed-off-by: Guo Ren <guoren@linux.alibaba.com>
+---
+ package/ntfs-3g/ntfs-3g.mk | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/package/ntfs-3g/ntfs-3g.mk b/package/ntfs-3g/ntfs-3g.mk
+index 1a388af..25b7844 100644
+--- a/package/ntfs-3g/ntfs-3g.mk
++++ b/package/ntfs-3g/ntfs-3g.mk
+@@ -17,6 +17,8 @@ NTFS_3G_CPE_ID_VENDOR = tuxera
+ # 0001-Fixed-reporting-an-error-when-failed-to-build-the-mo.patch
+ NTFS_3G_IGNORE_CVES += CVE-2019-9755
+ 
++NTFS_3G_CONF_ENV += CFLAGS="-fno-builtin-ffs"
++
+ ifeq ($(BR2_PACKAGE_LIBFUSE),y)
+ NTFS_3G_CONF_OPTS += --with-fuse=external
+ NTFS_3G_DEPENDENCIES += libfuse
+-- 
+2.17.1
+

@@ -1,0 +1,36 @@
+From 261414536a34ebe835887f7de7b355d8a1ab35cf Mon Sep 17 00:00:00 2001
+From: zhouquan <zhouquan@rt-thread.com>
+Date: Fri, 21 Oct 2022 19:45:27 +0800
+Subject: [PATCH 12/14] read_data will conflict, change to read_data_1
+
+---
+ src/omv/imlib/qrcode.c | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
+
+diff --git a/src/omv/imlib/qrcode.c b/src/omv/imlib/qrcode.c
+index 854069b0..ba3cdc2d 100644
+--- a/src/omv/imlib/qrcode.c
++++ b/src/omv/imlib/qrcode.c
+@@ -2488,9 +2488,7 @@ static void read_bit(const struct quirc_code *code,
+     ds->data_bits++;
+ }
+ 
+-static void read_data(const struct quirc_code *code,
+-                      struct quirc_data *data,
+-                      struct datastream *ds)
++static void read_data_1(const struct quirc_code *code, struct quirc_data *data, struct datastream *ds)
+ {
+     int y = code->size - 1;
+     int x = code->size - 1;
+@@ -2853,7 +2851,7 @@ quirc_decode_error_t quirc_decode(const struct quirc_code *code,
+     if (err)
+         { fb_free(); return err; }
+ 
+-    read_data(code, data, ds);
++    read_data_1(code, data, ds);
+     err = codestream_ecc(data, ds);
+     if (err)
+         { fb_free(); return err; }
+-- 
+2.33.1.windows.1
+

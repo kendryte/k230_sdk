@@ -1,0 +1,5 @@
+[sudo] password for trigger: 
+Sorry, try again.
+[sudo] password for trigger: 
+Sorry, try again.
+[sudo] password for trigger: 

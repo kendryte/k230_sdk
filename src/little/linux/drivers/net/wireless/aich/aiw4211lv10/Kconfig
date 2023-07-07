@@ -1,0 +1,6 @@
+# SPDX-License-Identifier: GPL-2.0-only
+config AIW4211LV10
+	tristate "Aich AiW4211LV10 (SDIO) support"
+	depends on CFG80211
+	help
+	  This adds support for AiW4211LV10 wireless SDIO dongles.

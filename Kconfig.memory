@@ -1,0 +1,85 @@
+
+menu "Memory configuration"
+
+config MEM_TOTAL_SIZE
+	hex "total memory size"
+	default 0x20000000
+
+#MEM_PARAM_BASE
+config MEM_QUICK_BOOT_CFG_BASE
+	hex "quick boot cfg  memory address"
+	default 0x00000000
+config MEM_QUICK_BOOT_CFG_SIZE
+	hex "quick boot cfg size"
+	default 0x00040000
+
+config MEM_SENSOR_CFG_BASE
+	hex "sensor parameters memory address"
+	default 0x00040000
+config MEM_SENSOR_CFG_SIZE
+	hex "sensor parameters memory size"
+	default 0x000c0000
+
+
+config MEM_IPCM_BASE
+	hex "IPCM base memory address"
+	default 0x00100000
+config MEM_IPCM_SIZE
+	hex "IPCM memory size"
+	default 0x00100000
+
+config MEM_RTT_SYS_BASE
+	hex "rt-smart system base memory address"
+	default 0x00200000
+config MEM_RTT_SYS_SIZE
+	hex "rt-smart system memory size"
+	default 0x07e00000
+
+config MEM_LINUX_SYS_BASE
+	hex "linux system base memory address"
+	default 0x08000000
+config MEM_LINUX_SYS_SIZE
+	hex "linux system memory size"
+	default 0x08000000
+
+config MEM_AI_MODEL_BASE
+	hex "AI model memory address"
+	default 0x10000000
+config MEM_AI_MODEL_SIZE
+	hex "AI model memory size"
+	default 0x04000000
+
+config MEM_FACE_DATA_BASE
+	hex "face database address"
+	default 0x14000000
+config MEM_FACE_DATA_SIZE
+	hex "face database size"
+	default 0x00040000
+
+config MEM_SPECKLE_BASE
+	hex "speckle pattern address"
+	default 0x14040000
+config MEM_SPECKLE_SIZE
+	hex "speckle pattern size"
+	default 0x01000000
+
+config MEM_MMZ_BASE
+	hex "MMZ base memory address"
+	default 0x18000000
+config MEM_MMZ_SIZE
+	hex "MMZ memory size"
+	default 0x8000000
+
+config MEM_RTAPP_BASE
+	hex "rtapp memory address"
+	default 0x18000000
+config MEM_RTAPP_SIZE
+	hex "rtapp memory size"
+	default 0x8000000
+
+config MEM_BOUNDARY_RESERVED_SIZE
+	hex "reserved memory size, reserve 4K memory in each memeory boundary, to detect memory out of bounds access"
+	default 0x00001000
+
+endmenu
+

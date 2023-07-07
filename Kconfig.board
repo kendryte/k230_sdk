@@ -1,0 +1,44 @@
+
+
+menu "board configuration"
+
+choice 
+
+	prompt "reference board"
+        help
+          Select the reference board.
+
+config BOARD_K230_EVB
+	bool "K230 evb"
+
+config BOARD_K230_FPGA
+	bool "K230 fpga"
+
+endchoice
+
+config BOARD_NAME
+       string "define K230 reference board name"
+       depends on BOARD_K230_EVB=y || BOARD_K230_FPGA=y
+       default "k230_evb"
+
+config QUICK_BOOT
+        bool "quick boot"
+        help  
+              quick boot, not enter uboot cmd;
+        default y
+
+config GEN_SECURITY_IMG
+        bool "create security image "
+        help  
+              create security image ;
+        default n
+
+config UBOOT_DEFCONFIG
+        string "uboot defconfig  "
+        help  
+              uboot defconfig ;
+       default "k230_evb"
+
+endmenu
+
+

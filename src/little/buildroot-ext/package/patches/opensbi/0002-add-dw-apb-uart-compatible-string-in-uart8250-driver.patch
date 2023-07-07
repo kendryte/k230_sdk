@@ -1,0 +1,12 @@
+Index: opensbi-89182b257c8798e15e4c685c1af0c2862d528d2a/lib/utils/serial/fdt_serial_uart8250.c
+===================================================================
+--- opensbi-89182b257c8798e15e4c685c1af0c2862d528d2a.orig/lib/utils/serial/fdt_serial_uart8250.c
++++ opensbi-89182b257c8798e15e4c685c1af0c2862d528d2a/lib/utils/serial/fdt_serial_uart8250.c
+@@ -28,6 +28,7 @@ static int serial_uart8250_init(void *fd
+ static const struct fdt_match serial_uart8250_match[] = {
+ 	{ .compatible = "ns16550" },
+ 	{ .compatible = "ns16550a" },
++	{ .compatible = "snps,dw-apb-uart" },
+ 	{ },
+ };
+ 

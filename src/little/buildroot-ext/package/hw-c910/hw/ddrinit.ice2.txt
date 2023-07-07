@@ -1,0 +1,7 @@
+# Set gdb environment
+set height 0
+
+# Don't confirm when quit
+set confirm off
+
+shell $(sleep 1)

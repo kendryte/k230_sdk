@@ -1,0 +1,169 @@
+# Set gdb environment
+set height 0
+
+# Don't confirm when quit
+set confirm off
+
+# Setup clock and ddr if necessary
+if (($mxstatus & 0xf0000000) == 0xc0000000)
+	restore u-boot-spl.bin binary 0x3fe400000
+	set $pc=0x3fe400000
+	c
+end
+
+shell $(sleep 1)
+
+# Set cpu mode to M-status
+set $satp=0
+set *0x0=0x73
+set $pc=0
+si
+set $pc=0
+si
+
+set $pmpaddr0=0x1fffffffff
+set $pmpcfg0=0x9f
+
+#################################
+# Release GPU reset
+#################################
+# GPU Reset Sequence (ref: Vivante.GC8000UL.Hardware.Integration-v1.07-620-20171206.pdf, $3.4)
+# Reset registers defined in RST_MGR (ref: regcode_regdoc_gen_rst_mgr(sltds).xlsm)
+set $GPU_USW_RST_RegAddr =0x3fff78094
+set $GPU_USW_ARST_RegAddr=0x3fff780a4
+set $GPU_USW_CRST_RegAddr=0x3fff780c0
+
+# Clock refer to: regcode_regdoc_gen_clk_mgr_sltds.xlsm
+set $CPU_CLK_CFG_RegAddr =0x3fff77070
+set $GPU_CLK_CFG_RegAddr =0x3fff7709c
+
+# Disable gpu's aclk & cclk
+set *$CPU_CLK_CFG_RegAddr &= ~((1 << 21) | (1 << 20))
+
+# 1212 is default 500M
+set *$GPU_CLK_CFG_RegAddr = 0x00011212
+
+# Enable gpu's aclk & cclk
+set *$CPU_CLK_CFG_RegAddr |= (1 << 21) | (1 << 20)
+
+# Disable GPU
+set *$GPU_USW_ARST_RegAddr=0
+set *$GPU_USW_RST_RegAddr=0
+set *$GPU_USW_CRST_RegAddr=0
+
+# Enable GPU
+set *$GPU_USW_RST_RegAddr=1
+set *$GPU_USW_CRST_RegAddr=1
+set *$GPU_USW_ARST_RegAddr=1
+
+# x/wx 0x3fff27028 should get 0x20151217
+set $gpu_chipdate=*0x3fff27028
+printf "GPU ChipDate is:0x%08x, ", $gpu_chipdate
+printf "working freq=%dKHz\n", *0x3fff7713c
+
+#################################
+# Release DPU reset
+#################################
+# DPU Reset Sequence (ref: Vivante.GC8000.Hardware.Integration)
+# set dpu_pixclk_div_en to be disable
+set *0x3fff77098 = 0x11611212
+
+# enable dpu_aclk and dpu_cclk
+set *0x3fff77070 |= (1 << 23 | 1 << 22)
+
+# set dpu_pixclk_div_en, dpu_pixclk_div_en, ahb_clk_dpu_en, dpu_aclk_div_en, dpu_cclk_div_en
+set *0x3fff77098 = 0x11611212
+
+# dpu rst
+set *0x3fff78090 |= (1 << 0)
+
+# dpu crst
+set *0x3fff780a0 |= (1 << 0)
+
+# dpu arst
+set *0x3fff7809c |= (1 << 0)
+
+# set DPU_DISPLAY_BUF as GPIO
+set *0x3fe830700 |= (1 << 2)
+
+# Enable LCD 5V output, it also control by "lcd-power" in dts
+set *0x3fff72000 |= (1 << 2)
+set *0x3fff72004 |= (1 << 2)
+
+printf "DPU ChipDate is:0x%08x, pixclk 1/8, cclk=1/2 of 297MHz\n", *0x3fff28028
+
+#################################
+# GMAC config
+#################################
+# Set GMAC0 PHY interface, 0: MII/GMII, 1: RGMII
+set *0x3fe83025c |= (1 << 0)
+
+# Set padmux for GMAC0(RGMII)
+set *0x3fe8302cc = 0x20202020
+set *0x3fe8302d0 = 0x07072020
+set *0x3fe8302d4 = 0x07070707
+
+#################################
+# Enable USB
+#################################
+# Setup USB_CLK_CFG(0xFFF770F1)
+set $USB_CLK_CFG=*0x3FFF770F0
+
+# Set ahb_clk_usb_en=1 to enable USB AHB clock
+set $USB_CLK_CFG |= (1<<17)
+
+# Set cfg_apb_clk_usb_phy_en=1 to enable APB clock
+set $USB_CLK_CFG |= (1<<16)
+
+# Set usb_phy_ref_clk_div_en=1 to enable PHY ref clock
+set $USB_CLK_CFG |= (1<<7)
+
+# Set usb_suspend_clk_div_en=1 to enable suspend clock
+set $USB_CLK_CFG |= (1<<15)
+set *0x3FFF770F0=$USB_CLK_CFG
+
+# delay 10us at least
+shell sleep 0.1
+
+# Setup PHY internal ref clock (USB_CLK_CFG)
+set *0x3FE83009C=0x1
+# delay 10us at least
+shell sleep 0.1
+
+# Release PHY (USB_PHY_USW_RST_CFG)
+set *0x3FFF78048=0x1
+# delay 10us at least
+shell sleep 0.1
+
+#################################
+# Enable DMAC
+#################################
+# enable dma ahb clock
+set *0x3fff77094 |= (1 << 11)
+
+# enable dma axi clock
+set *0x3fff77070 |= (1 << 13)
+
+# dma reset
+set *0x3fff78050 |= (1 << 0)
+
+# dma arst
+set *0x3fff780c4 |= (1 << 0)
+
+#################################
+# Enable SD
+#################################
+# set SD1_CWPR/GPIO1-15 to GPIO
+set *0x3fe83033c |= (1 << 22)
+
+# set SD1_CWPR/GPIO1-15 to output
+set *0x3fff72004 |= (1 << 15)
+
+# set SD1_CWPR/GPIO1-15 to Low(enable power)
+set *0x3fff72000 &= ~(1 << 15)
+
+# enable SD clock
+set *0x3fff77078 = 0x0c800c80
+
+# de-assert SD reset
+set *0x3fff78058 |= (1 << 16)

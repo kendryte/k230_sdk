@@ -1,0 +1,23 @@
+# Set gdb environment
+set height 0
+
+# Don't confirm when quit
+set confirm off
+
+# uart - ccu config
+set *0x200190c=0xb0009
+
+# gmac - ccu
+set *0x2001970=0xc0000000
+set *0x200197c=0x10001
+shell $(sleep 1)
+
+# gmac - pin
+set *0x20000c0=0x88888888
+set *0x20000c4=0x88888888
+set *0x20000c8=0x1
+set *0x20000D0=0x10000
+shell $(sleep 1)
+set *0x20000D0=0x00000
+shell $(sleep 1)
+set *0x20000D0=0x10000

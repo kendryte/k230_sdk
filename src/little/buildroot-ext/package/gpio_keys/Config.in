@@ -1,0 +1,7 @@
+config BR2_PACKAGE_GPIO_KEYS
+	bool "gpio keys"
+	help
+	  k230 gpio keys demo for test
+
+
+

@@ -1,0 +1,29 @@
+import os
+from building import *
+Import('rtconfig')
+
+src = Glob('*.c')
+cwd = GetCurrentDir()
+group = []
+
+if rtconfig.PLATFORM == 'gcc' and GetDepend('RT_USING_MUSL') and not GetDepend('RT_USING_MLIB'):
+        CPPDEFINES = ['__STDC_ISO_10646__=201206L', '_STDC_PREDEF_H']
+        LIBS       = ['c', 'gcc']
+
+        # if os.path.exists(os.path.join(cwd, 'libc', 'lib', 'libc.a')):
+        # force to use libc in toolchains
+
+        if False:
+            CFLAGS     = ' -nostdinc'
+            CPPPATH    = [cwd, cwd + '/libc/include']
+            LIBPATH    = [cwd + '/libc/lib']
+
+            group = DefineGroup('musl', src, depend = ['RT_USING_LIBC', 'RT_USING_MUSL'], CFLAGS = CFLAGS, 
+                CPPPATH = CPPPATH, CPPDEFINES = CPPDEFINES, LIBS = LIBS, LIBPATH = LIBPATH)
+        else:
+            CPPPATH    = [cwd]
+            LINKFLAGS = ' --specs=kernel.specs'
+            group = DefineGroup('musl', src, depend = ['RT_USING_LIBC', 'RT_USING_MUSL'], CPPPATH = CPPPATH, LINKFLAGS = LINKFLAGS, 
+                CPPDEFINES = CPPDEFINES, LIBS = LIBS)
+
+Return('group')

@@ -1,0 +1,24 @@
+# SPDX-License-Identifier: GPL-2.0-only
+config DRM_CANAAN
+    tristate "DRM Support for Canaan K230 Display Controller"
+    depends on DRM
+    depends on OF
+    depends on COMMON_CLK
+    select DRM_KMS_HELPER
+    select DRM_KMS_CMA_HELPER
+    select DRM_GEM_CMA_HELPER
+    select VIDEOMODE_HELPERS
+    help
+        Choose this option to enable DRM on Canaan K230 chipset
+
+if DRM_CANAAN
+
+config DRM_CANAAN_DSI
+	tristate "Canaan K230 MIPI-DSI Controller Support"
+    select DRM_MIPI_DSI
+	help
+	  Choose this option if you want have an Canaan SoC with
+	  MIPI-DSI support. If M is selected the module will be called
+	  canaan_dsi.
+
+endif

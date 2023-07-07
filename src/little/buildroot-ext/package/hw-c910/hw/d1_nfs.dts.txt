@@ -1,0 +1,104 @@
+/dts-v1/;
+/ {
+	model = "Allwinner D1";
+	compatible = "allwinner,d1";
+	#address-cells = <2>;
+	#size-cells = <2>;
+
+	memory@0 {
+		device_type = "memory";
+		reg = <0x0 0x40200000 0x0 0x1f000000>;
+	};
+
+	cpus {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		timebase-frequency = <2400000>;
+		cpu@0 {
+			device_type = "cpu";
+			reg = <0>;
+			status = "okay";
+			compatible = "riscv";
+			riscv,isa = "rv64imafdcv";
+			mmu-type = "riscv,sv39";
+			cpu0_intc: interrupt-controller {
+				#interrupt-cells = <1>;
+				compatible = "riscv,cpu-intc";
+				interrupt-controller;
+			};
+		};
+	};
+
+	soc {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		compatible = "simple-bus";
+		ranges;
+
+		reset: reset-sample {
+			compatible = "thead,reset-sample";
+			plic-delegate = <0x0 0x101ffffc>;
+		};
+
+		clint0: clint@ffdc000000 {
+			compatible = "riscv,clint0";
+			interrupts-extended = <
+				&cpu0_intc  3 &cpu0_intc  7
+				>;
+			reg = <0x0 0x14000000 0x0 0x04000000>;
+			clint,has-no-64bit-mmio;
+		};
+
+		intc: interrupt-controller@ffd8000000 {
+			#interrupt-cells = <1>;
+			compatible = "riscv,plic0";
+			interrupt-controller;
+			interrupts-extended = <
+				&cpu0_intc  0xffffffff &cpu0_intc  9
+				>;
+			reg = <0x0 0x10000000 0x0 0x04000000>;
+			reg-names = "control";
+			riscv,max-priority = <7>;
+			riscv,ndev = <200>;
+		};
+
+		dummy_apb: apb-clock {
+			compatible = "fixed-clock";
+			clock-frequency = <24000000>;
+			clock-output-names = "dummy_apb";
+			#clock-cells = <0>;
+		};
+
+		serial@2500000 {
+			compatible = "snps,dw-apb-uart";
+			reg = <0x0 0x02500000 0x0 0x400>;
+			interrupt-parent = <&intc>;
+			interrupts = <18>;
+			clocks = <&dummy_apb>;
+			clock-names = "baudclk";
+			reg-shift = <2>;
+			reg-io-width = <4>;
+		};
+
+		eth@4500000 {
+			compatible = "allwinner,sunxi-gmac";
+			reg = <0x00 0x4500000 0x00 0x10000 0x00 0x3000030 0x00 0x04>;
+			interrupts-extended = <&intc 0x3e 0x04>;
+			interrupt-names = "gmacirq";
+			device_type = "gmac0";
+			phy-mode = "rgmii";
+			use_ephy25m = <0x01>;
+			tx-delay = <0x03>;
+			rx-delay = <0x03>;
+			gmac-power0;
+			gmac-power1;
+			gmac-power2;
+			status = "okay";
+		};
+	};
+
+	chosen {
+		bootargs = "console=ttyS0,115200 rootwait init=/sbin/init root=/dev/nfs rw nfsroot=192.168.101.200:/tmp/rootfs_nfs,v3,tcp,nolock ip=192.168.101.23";
+		stdout-path = "/soc/serial@2500000:115200";
+	};
+};

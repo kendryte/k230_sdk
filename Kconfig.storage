@@ -1,0 +1,125 @@
+
+
+menu "storage configurations"
+config SPI_NOR
+        bool "enable spi nor flash"
+        default y
+
+config SPI_NOR_CFG
+	string "chose spi nor genimage configuration"
+	depends on SPI_NOR=y
+
+config SPI_NAND
+        bool "enable spi nand flash"
+        default y
+
+config SPI_NAND_CFG
+	string "chose spi nand genimage configuration"
+	depends on SPI_NAND=y
+
+config SDCAED
+        bool "enable sd card"
+        default y
+
+config SPI_SDCARD_CFG
+	string "chose sd card genimage configuration"
+	depends on SDCARED=y
+
+config EMMC
+        bool "enable EMMC"
+        default y
+
+config SPI_EMMC_CFG
+	string "chose EMMC genimage configuration"
+	depends on EMMC=y
+
+
+
+
+menu  "spi nor partion config"
+
+        #quick boot
+        config SPI_NOR_QUICK_BOOT_CFG_BASE
+                hex "quick boot CFG base "
+                default 0x200000
+        config SPI_NOR_QUICK_BOOT_CFG_SIZE
+                hex "quick boot CFG size"
+                default 0x80000
+        config SPI_NOR_QUICK_BOOT_CFG_SUPPORT_BAKEUP
+                bool "support backup quick boot CFG "
+                default n
+  
+
+        #face database
+        config SPI_NOR_FACE_DB_CFG_BASE
+                hex "face db  base "
+                default 0x280000
+        config SPI_NOR_FACE_DB_CFG_SIZE
+                hex "face db size"
+                default 0x80000
+        config SPI_NOR_FACE_DB_CFG_SUPPORT_BAKEUP
+                bool "support backup face db "
+                default n
+
+
+        #sensor cfg
+        config SPI_NOR_SENSOR_CFG_CFG_BASE
+                hex "sensor cfg CFG base "
+                default 0x300000
+        config SPI_NOR_SENSOR_CFG_CFG_SIZE
+                hex "sensor cfg CFG size"
+                default 0x40000
+ 
+        #ai mode         
+        config SPI_NOR_AI_MODE_CFG_BASE
+                hex "ai mode CFG base "
+                default 0x340000
+        config SPI_NOR_AI_MODE_CFG_SIZE
+                hex "ai mode CFG size"
+                default 0x300000
+
+
+
+        #speckle
+        config SPI_NOR_SPECKLE_CFG_BASE
+                hex "speckle CFG base "
+                default 0x640000
+        config SPI_NOR_SPECKLE_CFG_SIZE
+                hex "speckle CFG size"
+                default 0x200000
+
+
+        config SPI_NOR_RTTK_BASE
+                hex "rtt kernel base "
+                default 0x840000
+        config SPI_NOR_RTTK_SIZE
+                hex "rtt kernel size"
+                default 0x1c0000
+        
+        config SPI_NOR_RTT_APP_BASE
+                hex "rtt  app base "
+                default 0xa00000
+        config SPI_NOR_RTT_APP_SIZE
+                hex "rtt  app size"
+                default 0x5c0000
+
+        config SPI_NOR_LK_BASE
+                hex "linux kernel base "
+                default 0xfc0000
+        config SPI_NOR_LK_SIZE
+                hex "linux kernel size"
+                default 0x700000
+
+        
+        config SPI_NOR_LR_BASE
+                hex "linux rootfs CFG base "
+                default 0x16c0000
+        config SPI_NOR_LR_SIZE
+                hex "linux rootfs CFG size"
+                default 0x900000
+
+endmenu  #"spi nor partion config"
+
+endmenu
+
+

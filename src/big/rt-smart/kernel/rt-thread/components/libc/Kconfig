@@ -1,0 +1,89 @@
+menu "POSIX layer and C standard library"
+
+config RT_USING_LIBC
+    bool "Enable libc APIs from toolchain"
+    default y
+
+if RT_USING_LIBC && RT_USING_LWP
+    choice
+        prompt "Select c standard library"
+        default RT_USING_MUSL
+        help
+            Select c standard library
+
+        config RT_USING_NEWLIB
+        bool "Use libc: newlib"
+
+        config RT_USING_MUSL
+        bool "Use libc: musl (libc.a/libm.a in RT-Thread)"
+
+    endchoice
+endif
+            
+if RT_USING_MUSL
+    config RT_USING_MLIB
+    bool "Use libc: mlib"
+    default n 
+endif
+
+config RT_USING_PTHREADS
+    bool "Enable pthreads APIs"
+    default n
+
+if RT_USING_PTHREADS
+    config PTHREAD_NUM_MAX
+    int "Maximum number of pthreads"
+    default 8
+endif
+
+if RT_USING_LIBC && RT_USING_DFS
+    config RT_USING_POSIX
+        bool "Enable POSIX layer for poll/select, stdin etc"
+        select RT_USING_DFS_DEVFS
+        default y
+
+    if RT_USING_POSIX
+    config RT_USING_POSIX_MMAP
+        bool "Enable mmap() API"
+        default n
+
+    config RT_USING_POSIX_GETLINE
+        bool "Enable getline()/getdelim() APIs"
+        default n
+
+    config RT_USING_POSIX_AIO
+        bool "Enable AIO"
+        default n
+
+    config RT_POSIX_AIO_THREAD_STACK_SIZE
+        int "Set posix aio thread stack size"
+        default 2048
+        depends on RT_USING_POSIX_AIO
+
+    config RT_USING_POSIX_CLOCKTIME
+        bool "Enable POSIX clock_time APIs"
+        default n
+    endif
+
+endif
+
+if RT_USING_LIBC
+    config RT_USING_MODULE
+        bool "Enable dynamic module with dlopen/dlsym/dlclose feature"
+        default n
+
+    if RT_USING_MODULE
+    config RT_USING_CUSTOM_DLMODULE
+        bool "Enable load dynamic module by custom"
+        default n
+    endif
+
+endif
+
+if RT_USING_LIBC != y
+        config RT_LIBC_USING_TIME
+        bool "Enable TIME FUNCTIONS WITHOUT COMPILER'S LIBC"
+        default y
+endif
+
+endmenu

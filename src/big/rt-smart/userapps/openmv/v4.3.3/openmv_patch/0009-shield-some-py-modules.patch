@@ -1,0 +1,62 @@
+From 5e2813e8666a0145851d034083189427108e3be6 Mon Sep 17 00:00:00 2001
+From: zhouquan <zhouquan@rt-thread.com>
+Date: Thu, 20 Oct 2022 15:29:37 +0800
+Subject: [PATCH 09/14] shield some py modules
+
+---
+ src/omv/modules/py_clock.c |  8 ++++----
+ src/omv/modules/py_fir.c   | 16 ++++++++++++++++
+ 2 files changed, 20 insertions(+), 4 deletions(-)
+
+diff --git a/src/omv/modules/py_clock.c b/src/omv/modules/py_clock.c
+index a684b54a..ace52051 100644
+--- a/src/omv/modules/py_clock.c
++++ b/src/omv/modules/py_clock.c
+@@ -84,9 +84,9 @@ STATIC const mp_rom_map_elem_t py_clock_locals_dict_table[] = {
+ STATIC MP_DEFINE_CONST_DICT(py_clock_locals_dict, py_clock_locals_dict_table);
+ 
+ const mp_obj_type_t py_clock_type = {
+-    { &mp_type_type },
+-    .name  = MP_QSTR_Clock,
+-    .print = py_clock_print,
+-    .make_new = py_clock_make_new,
++    {&mp_type_type},
++    .name        = MP_QSTR_Clock,
++    .print       = py_clock_print,
++    .make_new    = py_clock_make_new,
+     .locals_dict = (mp_obj_t)&py_clock_locals_dict,
+ };
+diff --git a/src/omv/modules/py_fir.c b/src/omv/modules/py_fir.c
+index 4f0e5cd3..a706ec8e 100644
+--- a/src/omv/modules/py_fir.c
++++ b/src/omv/modules/py_fir.c
+@@ -8,6 +8,9 @@
+  *
+  * FIR Python module.
+  */
++
++#if 0
++
+ #include "py/runtime.h"
+ #include "py/objlist.h"
+ 
+@@ -1278,3 +1281,16 @@ void py_fir_init0()
+ }
+ 
+ MP_REGISTER_MODULE(MP_QSTR_fir, fir_module, 1);
++
++#else
++#include "py/objlist.h"
++#include "py/runtime.h"
++
++const mp_obj_module_t fir_module = {
++    .base    = NULL,
++    .globals = NULL,
++};
++
++MP_REGISTER_MODULE(MP_QSTR_fir, fir_module, 1);
++
++#endif
+-- 
+2.33.1.windows.1
+

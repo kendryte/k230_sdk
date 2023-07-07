@@ -1,0 +1,4 @@
+config BR2_PACKAGE_AIW4211LV10
+	bool "aiw4211lv10"
+	help
+	  wifi aiw4211lv10 tools

@@ -1,0 +1,45 @@
+From d896eb65de1011563744600d8963c596cb5be08f Mon Sep 17 00:00:00 2001
+From: Guo Ren <ren_guo@c-sky.com>
+Date: Thu, 10 Oct 2019 16:43:00 +0800
+Subject: [PATCH 08/15] linux: Support csky uImage, zImage, Image
+
+Signed-off-by: Guo Ren <ren_guo@c-sky.com>
+Signed-off-by: Guo Ren <guoren@linux.alibaba.com>
+---
+ linux/Config.in | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/linux/Config.in b/linux/Config.in
+index 4010a9d..337bb17 100644
+--- a/linux/Config.in
++++ b/linux/Config.in
+@@ -215,7 +215,7 @@ config BR2_LINUX_KERNEL_UIMAGE
+ 	depends on BR2_arc || BR2_arm || BR2_armeb || \
+ 		   BR2_powerpc || BR2_powerpc64 || BR2_powerpc64le || \
+ 		   BR2_sh || BR2_mips || BR2_mipsel || \
+-		   BR2_mips64 || BR2_mips64el || BR2_xtensa
++		   BR2_mips64 || BR2_mips64el || BR2_xtensa || BR2_csky
+ 	select BR2_PACKAGE_HOST_UBOOT_TOOLS
+ 
+ config BR2_LINUX_KERNEL_APPENDED_UIMAGE
+@@ -233,7 +233,7 @@ config BR2_LINUX_KERNEL_ZIMAGE
+ 	bool "zImage"
+ 	depends on BR2_arm || BR2_armeb || BR2_powerpc || \
+ 		   BR2_powerpc64 || BR2_powerpc64le || BR2_sparc || \
+-		   BR2_sh || BR2_xtensa
++		   BR2_sh || BR2_xtensa || BR2_csky
+ 
+ config BR2_LINUX_KERNEL_ZIMAGE_EPAPR
+ 	bool "zImage.epapr"
+@@ -261,7 +261,7 @@ config BR2_LINUX_KERNEL_SIMPLEIMAGE
+ 
+ config BR2_LINUX_KERNEL_IMAGE
+ 	bool "Image"
+-	depends on BR2_aarch64 || BR2_riscv
++	depends on BR2_aarch64 || BR2_riscv || BR2_csky
+ 
+ config BR2_LINUX_KERNEL_LINUX_BIN
+ 	bool "linux.bin"
+-- 
+2.17.1
+

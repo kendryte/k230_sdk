@@ -1,0 +1,22 @@
+/* Copyright (c) 2023, Canaan Bright Sight Co., Ltd
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+*/
+
+/* soc power domain provider , please see k230_pm_domains.c
+    1. please see power_provider.dtsi and k230_pm_domains.c for provider. 
+       power domain exclude ax25m, because it cannot be opened when ax25m power down
+    2. power_consumer.dtsi define device's power-domains. 
+       drivers call pm_runtime_get(&dev) to enable powerdomain (use_count++),
+       and call pm_runtime_put(&dev) to disable powerdomain(if use_count-- == 0).
+       power domain is for runtime power manage.
+    3. for debug info, please cat /sys/kernel/debug/pm_genpd(mount -t debugfs none /sys/kernel/debug).
+*/
+
+#include <dt-bindings/soc/canaan,k230_pm_domains.h>
+
+&gpu {
+   power-domains = <&sysctl_power K230_PM_DOMAIN_DISP>;
+};

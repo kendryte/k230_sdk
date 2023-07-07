@@ -1,0 +1,115 @@
+From 08159c5c262ed40c3fa3dea033e3ba2a81b78a41 Mon Sep 17 00:00:00 2001
+From: Mao Han <han_mao@c-sky.com>
+Date: Wed, 9 Oct 2019 13:43:27 +0800
+Subject: [PATCH 06/15] package/uclibc: Add uclibc support for csky
+
+Signed-off-by: Mao Han <han_mao@c-sky.com>
+Signed-off-by: Guo Ren <guoren@linux.alibaba.com>
+---
+ package/uclibc/Config.in                |  1 +
+ package/uclibc/uClibc-ng.config         |  2 ++
+ package/uclibc/uclibc.mk                | 35 +++++++++++++++++++++++++
+ toolchain/toolchain-buildroot/Config.in |  2 +-
+ 4 files changed, 39 insertions(+), 1 deletion(-)
+
+diff --git a/package/uclibc/Config.in b/package/uclibc/Config.in
+index e59fef3..d735dc5 100644
+--- a/package/uclibc/Config.in
++++ b/package/uclibc/Config.in
+@@ -96,6 +96,7 @@ config BR2_UCLIBC_TARGET_ARCH
+ 	string
+ 	default "arc"	   if BR2_arcle || BR2_arceb
+ 	default "arm"	   if BR2_arm	|| BR2_armeb
++	default "csky"	   if BR2_csky
+ 	default "m68k"	   if BR2_m68k
+ 	default "microblaze"   if BR2_microblaze
+ 	default "mips"	   if BR2_mips || BR2_mipsel || BR2_mips64 || BR2_mips64el
+diff --git a/package/uclibc/uClibc-ng.config b/package/uclibc/uClibc-ng.config
+index 5beb2bd..9207429 100644
+--- a/package/uclibc/uClibc-ng.config
++++ b/package/uclibc/uClibc-ng.config
+@@ -40,3 +40,5 @@ DEVEL_PREFIX="/usr/"
+ UCLIBC_HAS_SSP=y
+ UCLIBC_BUILD_NOW=y
+ # DOSTRIP is not set
++UCLIBC_HAS_BACKTRACE=y
++SUPPORT_LD_DEBUG=y
+diff --git a/package/uclibc/uclibc.mk b/package/uclibc/uclibc.mk
+index 53983e8..6a4ccb1 100644
+--- a/package/uclibc/uclibc.mk
++++ b/package/uclibc/uclibc.mk
+@@ -4,9 +4,20 @@
+ #
+ ################################################################################
+ 
++ifeq ($(BR2_csky),y)
++UCLIBC_VERSION = bb379dc1fb1544998838e5a3451f1937ea66ab27
++UCLIBC_SOURCE = uClibc-ng-$(UCLIBC_VERSION).tar.gz
++UCLIBC_SITE = $(call github,c-sky,uclibc-ng,$(UCLIBC_VERSION))
++define SKIP_PATCH
++	rm package/uclibc/*.patch
++endef
++# UCLIBC_POST_EXTRACT_HOOKS += SKIP_PATCH
++else
+ UCLIBC_VERSION = 1.0.37
+ UCLIBC_SOURCE = uClibc-ng-$(UCLIBC_VERSION).tar.xz
+ UCLIBC_SITE = https://downloads.uclibc-ng.org/releases/$(UCLIBC_VERSION)
++endif
++
+ UCLIBC_LICENSE = LGPL-2.1+
+ UCLIBC_LICENSE_FILES = COPYING.LIB
+ UCLIBC_INSTALL_STAGING = YES
+@@ -121,6 +132,29 @@ endif
+ 
+ endif # arm
+ 
++#
++# C-SKY definitions
++#
++ifeq ($(UCLIBC_TARGET_ARCH),csky)
++ifeq ($(BR2_ck610),y)
++define UCLIBC_CSKY_ABI_CONFIG
++	$(SED) '/.*CSKY_ABI.*/d' $(@D)/.config
++	$(SED) '/^TARGET_SUBARCH.*/d' $(@D)/.config
++	$(call KCONFIG_ENABLE_OPT,CSKY_ABIV1,$(@D)/.config)
++	$(call KCONFIG_DISABLE_OPT,CSKY_ABIV2,$(@D)/.config)
++	$(call KCONFIG_SET_OPT,TARGET_SUBARCH,"cskyv1",$(@D)/.config)
++endef
++else
++define UCLIBC_CSKY_ABI_CONFIG
++	$(SED) '/.*CSKY_ABI.*/d' $(@D)/.config
++	$(SED) '/^TARGET_SUBARCH.*/d' $(@D)/.config
++	$(call KCONFIG_ENABLE_OPT,CSKY_ABIV2,$(@D)/.config)
++	$(call KCONFIG_DISABLE_OPT,CSKY_ABIV1,$(@D)/.config)
++	$(call KCONFIG_SET_OPT,TARGET_SUBARCH,"cskyv2",$(@D)/.config)
++endef
++endif
++endif
++
+ #
+ # m68k/coldfire definitions
+ #
+@@ -384,6 +418,7 @@ define UCLIBC_KCONFIG_FIXUP_CMDS
+ 	$(UCLIBC_ARM_ABI_CONFIG)
+ 	$(UCLIBC_ARM_BINFMT_FLAT)
+ 	$(UCLIBC_ARM_NO_CONTEXT_FUNCS)
++	$(UCLIBC_CSKY_ABI_CONFIG)
+ 	$(UCLIBC_M68K_BINFMT_FLAT)
+ 	$(UCLIBC_MIPS_ABI_CONFIG)
+ 	$(UCLIBC_MIPS_NAN_CONFIG)
+diff --git a/toolchain/toolchain-buildroot/Config.in b/toolchain/toolchain-buildroot/Config.in
+index 4004c0e..3dceb4c 100644
+--- a/toolchain/toolchain-buildroot/Config.in
++++ b/toolchain/toolchain-buildroot/Config.in
+@@ -33,7 +33,7 @@ config BR2_TOOLCHAIN_BUILDROOT_UCLIBC
+ 		   BR2_mips    || BR2_mipsel || BR2_mips64 || BR2_mips64el || \
+ 		   BR2_or1k    || BR2_powerpc || BR2_RISCV_64 || BR2_sh2a   || \
+ 		   BR2_sh4     || BR2_sh4eb   || BR2_sparc || BR2_xtensa || \
+-		   BR2_x86_64
++		   BR2_x86_64  || BR2_csky
+ 	select BR2_TOOLCHAIN_USES_UCLIBC
+ 	help
+ 	  This option selects uClibc-ng as the C library for the
+-- 
+2.17.1
+

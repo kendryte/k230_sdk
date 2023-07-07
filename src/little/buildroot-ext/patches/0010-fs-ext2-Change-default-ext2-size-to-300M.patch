@@ -1,0 +1,27 @@
+From 5b927bcb2388c2a39b8857c5754b540d88068cc2 Mon Sep 17 00:00:00 2001
+From: Mao Han <han_mao@c-sky.com>
+Date: Wed, 13 Nov 2019 10:44:22 +0800
+Subject: [PATCH 10/15] fs/ext2: Change default ext2 size to 300M
+
+Signed-off-by: Mao Han <han_mao@c-sky.com>
+Signed-off-by: Guo Ren <guoren@linux.alibaba.com>
+---
+ fs/ext2/Config.in | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/fs/ext2/Config.in b/fs/ext2/Config.in
+index 333ead9..9190ec7 100644
+--- a/fs/ext2/Config.in
++++ b/fs/ext2/Config.in
+@@ -48,7 +48,7 @@ config BR2_TARGET_ROOTFS_EXT2_LABEL
+ config BR2_TARGET_ROOTFS_EXT2_SIZE
+ 	string "exact size"
+ 	default BR2_TARGET_ROOTFS_EXT2_BLOCKS if BR2_TARGET_ROOTFS_EXT2_BLOCKS_WRAP # legacy 2017.08
+-	default "60M"
++	default "500M"
+ 	help
+ 	  The size of the filesystem image. If it does not have a
+ 	  suffix, it is interpreted as power-of-two kilobytes. If it is
+-- 
+2.17.1
+

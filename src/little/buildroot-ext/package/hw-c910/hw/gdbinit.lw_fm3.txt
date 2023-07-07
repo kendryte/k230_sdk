@@ -1,0 +1,47 @@
+set confirm off
+set height 0
+
+# Enable dcache snoop
+set $msmpr = 1
+
+# Invalidate & Clear IBP BTB BHT ICache & DCache
+set $mcor = 0x70013
+
+# Enable L2 Cache
+set $mccr2 = 0xe0010009
+
+# Enable L1 Cache
+set $mhcr = 0x11ff
+
+# Enable CPU Features
+set $mxstatus = 0x638000
+set $mhint = 0x16e30c
+
+# Address definitions
+set $opensbi_addr = 0xa0000000
+set $vmlinux_addr = $opensbi_addr + 0x00200000
+set $rootfs_addr  = $opensbi_addr + 0x04000000
+set $dtb_addr  = $rootfs_addr - 0x00100000
+set $dyn_info_addr  = $rootfs_addr - 0x40
+
+# Load kernel & rootfs
+restore ../Image binary $vmlinux_addr
+restore ../rootfs.cpio.gz binary $rootfs_addr
+
+# Load dtb
+restore hw.dtb binary $dtb_addr
+set $a1 = $dtb_addr
+set $a2 = $dyn_info_addr
+
+# Prepare fw_dynamic params
+set *(unsigned long *)($dyn_info_addr) = 0x4942534f
+set *(unsigned long *)($dyn_info_addr + 8) = 0x1
+set *(unsigned long *)($dyn_info_addr + 16) = $vmlinux_addr
+set *(unsigned long *)($dyn_info_addr + 24) = 0x1
+set *(unsigned long *)($dyn_info_addr + 32) = 0x0
+set *(unsigned long *)($dyn_info_addr + 48) = 0x0
+
+# Load opensbi
+restore ../fw_dynamic.bin binary $opensbi_addr
+
+set $pc = $opensbi_addr

@@ -1,0 +1,5 @@
+config BR2_PACKAGE_I2C_TOOL
+	bool "i2c-tool"
+	default y
+	help
+		i2c-tools.sh

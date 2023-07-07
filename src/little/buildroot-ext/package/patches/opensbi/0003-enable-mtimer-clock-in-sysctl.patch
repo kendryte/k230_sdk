@@ -1,0 +1,15 @@
+Index: opensbi-89182b257c8798e15e4c685c1af0c2862d528d2a/platform/generic/platform.c
+===================================================================
+--- opensbi-89182b257c8798e15e4c685c1af0c2862d528d2a.orig/platform/generic/platform.c
++++ opensbi-89182b257c8798e15e4c685c1af0c2862d528d2a/platform/generic/platform.c
+@@ -77,6 +77,10 @@ unsigned long fw_platform_init(unsigned
+ 	u32 hartid, hart_count = 0;
+ 	int rc, root_offset, cpus_offset, cpu_offset, len;
+ 
++        (*(volatile uint32_t *)((size_t)(0x91108020))) = (1);
++        (*(volatile uint32_t *)((size_t)(0x91108030))) = (1);
++
++
+ 	root_offset = fdt_path_offset(fdt, "/");
+ 	if (root_offset < 0)
+ 		goto fail;

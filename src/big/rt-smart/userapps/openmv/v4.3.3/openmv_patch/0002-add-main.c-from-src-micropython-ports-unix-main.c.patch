@@ -1,0 +1,1718 @@
+From 80064583b7e3f6e2c95654fb16e8e732ccd0b17b Mon Sep 17 00:00:00 2001
+From: zhouquan <zhouquan@rt-thread.com>
+Date: Tue, 18 Oct 2022 09:58:14 +0800
+Subject: [PATCH 02/14] add main.c (from src/micropython/ports/unix/main.c) add
+ omv_portconfig (from src/omv/ports/rp2) add .lds file add MAIX3 (from
+ src/omv/boards/OPENMV4)
+
+---
+ src/omv/boards/MAIX3/imlib_config.h     | 159 +++++
+ src/omv/boards/MAIX3/manifest.py        |  12 +
+ src/omv/boards/MAIX3/omv_boardconfig.h  | 467 +++++++++++++++
+ src/omv/boards/MAIX3/omv_boardconfig.mk |  21 +
+ src/omv/boards/MAIX3/omv_bootconfig.h   |  29 +
+ src/omv/boards/MAIX3/ulab_config.h      |  12 +
+ src/omv/ports/unix/main.c               | 759 ++++++++++++++++++++++++
+ src/omv/ports/unix/omv_portconfig.h     |  23 +
+ src/omv/ports/unix/omv_portconfig.mk    |  33 ++
+ src/omv/ports/unix/unix.lds             | 110 ++++
+ 10 files changed, 1625 insertions(+)
+ create mode 100644 src/omv/boards/MAIX3/imlib_config.h
+ create mode 100644 src/omv/boards/MAIX3/manifest.py
+ create mode 100644 src/omv/boards/MAIX3/omv_boardconfig.h
+ create mode 100755 src/omv/boards/MAIX3/omv_boardconfig.mk
+ create mode 100644 src/omv/boards/MAIX3/omv_bootconfig.h
+ create mode 100644 src/omv/boards/MAIX3/ulab_config.h
+ create mode 100644 src/omv/ports/unix/main.c
+ create mode 100644 src/omv/ports/unix/omv_portconfig.h
+ create mode 100644 src/omv/ports/unix/omv_portconfig.mk
+ create mode 100644 src/omv/ports/unix/unix.lds
+
+diff --git a/src/omv/boards/MAIX3/imlib_config.h b/src/omv/boards/MAIX3/imlib_config.h
+new file mode 100644
+index 00000000..e8943aaf
+--- /dev/null
++++ b/src/omv/boards/MAIX3/imlib_config.h
+@@ -0,0 +1,159 @@
++/*
++ * This file is part of the OpenMV project.
++ *
++ * Copyright (c) 2013-2021 Ibrahim Abdelkader <iabdalkader@openmv.io>
++ * Copyright (c) 2013-2021 Kwabena W. Agyeman <kwagyeman@openmv.io>
++ *
++ * This work is licensed under the MIT license, see the file LICENSE for details.
++ *
++ * Image library configuration.
++ */
++#ifndef __IMLIB_CONFIG_H__
++#define __IMLIB_CONFIG_H__
++
++// Enable Image I/O
++#define IMLIB_ENABLE_IMAGE_IO
++
++// Enable Image File I/O
++#define IMLIB_ENABLE_IMAGE_FILE_IO
++
++// Enable LAB LUT
++#define IMLIB_ENABLE_LAB_LUT
++
++// Enable YUV LUT
++//#define IMLIB_ENABLE_YUV_LUT
++
++// Enable mean pooling
++#define IMLIB_ENABLE_MEAN_POOLING
++
++// Enable midpoint pooling
++#define IMLIB_ENABLE_MIDPOINT_POOLING
++
++// Enable binary ops
++#define IMLIB_ENABLE_BINARY_OPS
++
++// Enable math ops
++#define IMLIB_ENABLE_MATH_OPS
++
++// Enable flood_fill()
++#define IMLIB_ENABLE_FLOOD_FILL
++
++// Enable mean()
++#define IMLIB_ENABLE_MEAN
++
++// Enable median()
++#define IMLIB_ENABLE_MEDIAN
++
++// Enable mode()
++#define IMLIB_ENABLE_MODE
++
++// Enable midpoint()
++#define IMLIB_ENABLE_MIDPOINT
++
++// Enable morph()
++#define IMLIB_ENABLE_MORPH
++
++// Enable Gaussian
++#define IMLIB_ENABLE_GAUSSIAN
++
++// Enable Laplacian
++#define IMLIB_ENABLE_LAPLACIAN
++
++// Enable bilateral()
++#define IMLIB_ENABLE_BILATERAL
++
++// Enable cartoon()
++// #define IMLIB_ENABLE_CARTOON
++
++// Enable linpolar()
++#define IMLIB_ENABLE_LINPOLAR
++
++// Enable logpolar()
++#define IMLIB_ENABLE_LOGPOLAR
++
++// Enable lens_corr()
++#define IMLIB_ENABLE_LENS_CORR
++
++// Enable rotation_corr()
++#define IMLIB_ENABLE_ROTATION_CORR
++
++// Enable phasecorrelate()
++#if defined(IMLIB_ENABLE_ROTATION_CORR)
++#define IMLIB_ENABLE_FIND_DISPLACEMENT
++#endif
++
++// Enable get_similarity()
++#define IMLIB_ENABLE_GET_SIMILARITY
++
++// Enable find_lines()
++#define IMLIB_ENABLE_FIND_LINES
++
++// Enable find_line_segments()
++#define IMLIB_ENABLE_FIND_LINE_SEGMENTS
++
++// Enable find_circles()
++#define IMLIB_ENABLE_FIND_CIRCLES
++
++// Enable find_rects()
++#define IMLIB_ENABLE_FIND_RECTS
++
++// Enable find_qrcodes() (14 KB)
++#define IMLIB_ENABLE_QRCODES
++
++// Enable find_apriltags() (64 KB)
++#define IMLIB_ENABLE_APRILTAGS
++
++// Enable fine find_apriltags() - (8-way connectivity versus 4-way connectivity)
++// #define IMLIB_ENABLE_FINE_APRILTAGS
++
++// Enable high res find_apriltags() - uses more RAM
++// #define IMLIB_ENABLE_HIGH_RES_APRILTAGS
++
++// Enable find_datamatrices() (26 KB)
++#define IMLIB_ENABLE_DATAMATRICES
++
++// Enable find_barcodes() (42 KB)
++#define IMLIB_ENABLE_BARCODES
++
++// Enable CMSIS NN
++// #if !defined(CUBEAI)
++// #define IMLIB_ENABLE_CNN
++// #endif
++
++// Enable Tensor Flow
++#if !defined(CUBEAI)
++#define IMLIB_ENABLE_TF
++#endif
++
++// Enable FAST (20+ KBs).
++// #define IMLIB_ENABLE_FAST
++
++// Enable find_template()
++#define IMLIB_FIND_TEMPLATE
++
++// Enable find_lbp()
++#define IMLIB_ENABLE_FIND_LBP
++
++// Enable find_keypoints()
++#define IMLIB_ENABLE_FIND_KEYPOINTS
++
++// Enable load, save and match descriptor
++#define IMLIB_ENABLE_DESCRIPTOR
++
++// Enable find_hog()
++// #define IMLIB_ENABLE_HOG
++
++// Enable selective_search()
++// #define IMLIB_ENABLE_SELECTIVE_SEARCH
++
++// Enable STM32 DMA2D
++#define IMLIB_ENABLE_DMA2D
++
++// Enable PNG encoder/decoder
++#define IMLIB_ENABLE_PNG_ENCODER
++#define IMLIB_ENABLE_PNG_DECODER
++
++// Stereo Imaging
++// #define IMLIB_ENABLE_STEREO_DISPARITY
++
++#endif //__IMLIB_CONFIG_H__
+diff --git a/src/omv/boards/MAIX3/manifest.py b/src/omv/boards/MAIX3/manifest.py
+new file mode 100644
+index 00000000..05cc366a
+--- /dev/null
++++ b/src/omv/boards/MAIX3/manifest.py
+@@ -0,0 +1,12 @@
++include("$(MPY_DIR)/extmod/uasyncio/manifest.py")
++freeze ("$(MPY_LIB_DIR)/", "bno055.py")
++freeze ("$(MPY_LIB_DIR)/", "modbus.py")
++freeze ("$(MPY_LIB_DIR)/", "mqtt.py")
++freeze ("$(MPY_LIB_DIR)/", "mutex.py")
++freeze ("$(MPY_LIB_DIR)/", "pid.py")
++freeze ("$(MPY_LIB_DIR)/", "rpc.py")
++freeze ("$(MPY_LIB_DIR)/", "rtsp.py")
++freeze ("$(MPY_LIB_DIR)/", "ssd1306.py")
++freeze ("$(MPY_LIB_DIR)/", "tb6612.py")
++freeze ("$(MPY_LIB_DIR)/", "vl53l1x.py")
++freeze ("$(MPY_LIB_DIR)/", "urequests.py")
+diff --git a/src/omv/boards/MAIX3/omv_boardconfig.h b/src/omv/boards/MAIX3/omv_boardconfig.h
+new file mode 100644
+index 00000000..88da5b97
+--- /dev/null
++++ b/src/omv/boards/MAIX3/omv_boardconfig.h
+@@ -0,0 +1,467 @@
++/*
++ * This file is part of the OpenMV project.
++ *
++ * Copyright (c) 2013-2021 Ibrahim Abdelkader <iabdalkader@openmv.io>
++ * Copyright (c) 2013-2021 Kwabena W. Agyeman <kwagyeman@openmv.io>
++ *
++ * This work is licensed under the MIT license, see the file LICENSE for details.
++ *
++ * Board configuration and pin definitions.
++ */
++#ifndef __OMV_BOARDCONFIG_H__
++#define __OMV_BOARDCONFIG_H__
++
++// Architecture info
++#define OMV_ARCH_STR            "OMV4 H7 1024" // 33 chars max
++#define OMV_BOARD_TYPE          "H7"
++#define OMV_UNIQUE_ID_ADDR      0x1FF1E800
++#define OMV_UNIQUE_ID_SIZE      3 // 3 words
++
++// Needed by the SWD JTAG testrig - located at the bottom of the frame buffer stack.
++#define OMV_SELF_TEST_SWD_ADDR  MAIN_FB()->pixfmt
++
++#define OMV_XCLK_MCO            (0U)
++#define OMV_XCLK_TIM            (1U)
++
++// Sensor external clock source.
++#define OMV_XCLK_SOURCE         (OMV_XCLK_TIM)
++
++// Sensor external clock timer frequency.
++#define OMV_XCLK_FREQUENCY      (12000000)
++
++// Sensor PLL register value.
++#define OMV_OV7725_PLL_CONFIG   (0x41)  // x4
++
++// Sensor Banding Filter Value
++#define OMV_OV7725_BANDING      (0x7F)
++
++// OV5640 Sensor Settings
++#define OMV_OV5640_XCLK_FREQ    (24000000)
++#define OMV_OV5640_PLL_CTRL2    (0x64)
++#define OMV_OV5640_PLL_CTRL3    (0x13)
++#define OMV_OV5640_REV_Y_CHECK  (1)
++#define OMV_OV5640_REV_Y_FREQ   (25000000)
++#define OMV_OV5640_REV_Y_CTRL2  (0x54)
++#define OMV_OV5640_REV_Y_CTRL3  (0x13)
++
++// Enable hardware JPEG
++#define OMV_HARDWARE_JPEG       (1)
++
++// Enable MDMA sensor offload.
++#define OMV_ENABLE_SENSOR_MDMA  (1)
++
++// Enable sensor drivers
++#define OMV_ENABLE_OV2640       (1)
++#define OMV_ENABLE_OV5640       (1)
++#define OMV_ENABLE_OV7670       (0)
++#define OMV_ENABLE_OV7690       (1)
++#define OMV_ENABLE_OV7725       (1)
++#define OMV_ENABLE_OV9650       (1)
++#define OMV_ENABLE_MT9M114      (1)
++#define OMV_ENABLE_MT9V0XX      (1)
++#define OMV_ENABLE_LEPTON       (1)
++#define OMV_ENABLE_HM01B0       (0)
++#define OMV_ENABLE_PAJ6100      (1)
++#define OMV_ENABLE_FROGEYE2020  (1)
++
++// Set which OV767x sensor is used
++#define OMV_OV7670_VERSION      (70)
++
++// OV7670 clock divider
++#define OMV_OV7670_CLKRC        (0)
++
++// Enable sensor features
++#define OMV_ENABLE_OV5640_AF    (0)
++
++// Enable WiFi debug
++#define OMV_ENABLE_WIFIDBG      (1)
++
++// Enable self-tests on first boot
++#define OMV_ENABLE_SELFTEST     (1)
++
++// If buffer size is bigger than this threshold, the quality is reduced.
++// This is only used for JPEG images sent to the IDE not normal compression.
++#define JPEG_QUALITY_THRESH     (320*240*2)
++
++// Low and high JPEG QS.
++#define JPEG_QUALITY_LOW        50
++#define JPEG_QUALITY_HIGH       90
++
++// FB Heap Block Size
++#define OMV_UMM_BLOCK_SIZE      16
++
++// Core VBAT for selftests
++#define OMV_CORE_VBAT           "3.3"
++
++// USB IRQn.
++#define OMV_USB_IRQN            (OTG_FS_IRQn)
++
++//PLL1 480MHz/48MHz for USB, SDMMC and FDCAN
++#define OMV_OSC_PLL1M           (3)
++#define OMV_OSC_PLL1N           (240)
++#define OMV_OSC_PLL1P           (2)
++#define OMV_OSC_PLL1Q           (20)
++#define OMV_OSC_PLL1R           (2)
++#define OMV_OSC_PLL1VCI         (RCC_PLL1VCIRANGE_2)
++#define OMV_OSC_PLL1VCO         (RCC_PLL1VCOWIDE)
++#define OMV_OSC_PLL1FRAC        (0)
++
++// PLL2 200MHz for FMC and QSPI.
++#define OMV_OSC_PLL2M           (3)
++#define OMV_OSC_PLL2N           (100)
++#define OMV_OSC_PLL2P           (2)
++#define OMV_OSC_PLL2Q           (2)
++#define OMV_OSC_PLL2R           (2)
++#define OMV_OSC_PLL2VCI         (RCC_PLL2VCIRANGE_2)
++#define OMV_OSC_PLL2VCO         (RCC_PLL2VCOWIDE)
++#define OMV_OSC_PLL2FRAC        (0)
++
++// PLL3 160MHz for ADC and SPI123
++#define OMV_OSC_PLL3M           (3)
++#define OMV_OSC_PLL3N           (80)
++#define OMV_OSC_PLL3P           (2)
++#define OMV_OSC_PLL3Q           (2)
++#define OMV_OSC_PLL3R           (2)
++#define OMV_OSC_PLL3VCI         (RCC_PLL3VCIRANGE_2)
++#define OMV_OSC_PLL3VCO         (RCC_PLL3VCOWIDE)
++#define OMV_OSC_PLL3FRAC        (0)
++
++// Clock Sources
++#define OMV_OSC_PLL_CLKSOURCE       RCC_PLLSOURCE_HSE
++#define OMV_OSC_USB_CLKSOURCE       RCC_USBCLKSOURCE_HSI48
++#define OMV_OSC_RNG_CLKSOURCE       RCC_RNGCLKSOURCE_HSI48
++#define OMV_OSC_ADC_CLKSOURCE       RCC_ADCCLKSOURCE_PLL3
++#define OMV_OSC_SPI123_CLKSOURCE    RCC_SPI123CLKSOURCE_PLL3
++
++// HSE/HSI/CSI State
++#define OMV_OSC_HSE_STATE       (RCC_HSE_ON)
++#define OMV_OSC_HSI48_STATE     (RCC_HSI48_ON)
++
++// Flash Latency
++#define OMV_FLASH_LATENCY       (FLASH_LATENCY_2)
++
++// Power supply configuration
++#define OMV_PWR_SUPPLY          (PWR_LDO_SUPPLY)
++
++// Linker script constants (see the linker script template stm32fxxx.ld.S).
++// Note: fb_alloc is a stack-based, dynamically allocated memory on FB.
++// The maximum available fb_alloc memory = FB_ALLOC_SIZE + FB_SIZE - (w*h*bpp).
++#define OMV_FFS_MEMORY          DTCM        // Flash filesystem cache memory
++#define OMV_MAIN_MEMORY         SRAM1       // data, bss and heap memory
++#define OMV_STACK_MEMORY        ITCM        // stack memory
++#define OMV_DMA_MEMORY          SRAM2       // DMA buffers memory.
++#define OMV_FB_MEMORY           AXI_SRAM    // Framebuffer, fb_alloc
++#define OMV_JPEG_MEMORY         SRAM3       // JPEG buffer memory.
++#define OMV_VOSPI_MEMORY        SRAM4       // VoSPI buffer memory.
++
++#define OMV_FB_SIZE             (400K)      // FB memory: header + VGA/GS image
++#define OMV_FB_ALLOC_SIZE       (100K)      // minimum fb alloc size
++#define OMV_STACK_SIZE          (64K)
++#define OMV_HEAP_SIZE           (229K)
++
++#define OMV_LINE_BUF_SIZE       (5 * 1024)  // Image line buffer.
++#define OMV_MSC_BUF_SIZE        (2K)        // USB MSC bot data
++#define OMV_VFS_BUF_SIZE        (1K)        // VFS sturct + FATFS file buffer (624 bytes)
++#define OMV_FIR_LEPTON_BUF_SIZE (1K)        // FIR Lepton Packet Double Buffer (328 bytes)
++#define OMV_JPEG_BUF_SIZE       (32 * 1024) // IDE JPEG buffer (header + data).
++
++#define OMV_TEXT_ORIGIN         0x08040000
++#define OMV_TEXT_LENGTH         1792K
++#define OMV_DTCM_ORIGIN         0x20000000  // Note accessible by CPU and MDMA only.
++#define OMV_DTCM_LENGTH         128K
++#define OMV_ITCM_ORIGIN         0x00000000
++#define OMV_ITCM_LENGTH         64K
++#define OMV_SRAM1_ORIGIN        0x30000000
++#define OMV_SRAM1_LENGTH        240K
++#define OMV_SRAM2_ORIGIN        0x3003C000  // 16KB of SRAM1
++#define OMV_SRAM2_LENGTH        16K
++#define OMV_SRAM3_ORIGIN        0x30040000
++#define OMV_SRAM3_LENGTH        32K
++#define OMV_SRAM4_ORIGIN        0x38000000
++#define OMV_SRAM4_LENGTH        64K
++#define OMV_AXI_SRAM_ORIGIN     0x24000000
++#define OMV_AXI_SRAM_LENGTH     512K
++
++// Domain 1 DMA buffers region.
++#define OMV_DMA_MEMORY_D1       AXI_SRAM
++#define OMV_DMA_MEMORY_D1_SIZE  (8*1024) // Reserved memory for DMA buffers
++#define OMV_DMA_REGION_D1_BASE  (OMV_AXI_SRAM_ORIGIN+(500*1024))
++#define OMV_DMA_REGION_D1_SIZE  MPU_REGION_SIZE_8KB
++
++// Domain 2 DMA buffers region.
++#define OMV_DMA_MEMORY_D2       SRAM2
++#define OMV_DMA_MEMORY_D2_SIZE  (6*1024) // Reserved memory for DMA buffers
++#define OMV_DMA_REGION_D2_BASE  (OMV_SRAM2_ORIGIN+(0*1024))
++#define OMV_DMA_REGION_D2_SIZE  MPU_REGION_SIZE_16KB
++
++// Domain 3 DMA buffers region.
++//#define OMV_DMA_MEMORY_D3       SRAM4
++//#define OMV_DMA_REGION_D3_BASE  (OMV_SRAM4_ORIGIN+(0*1024))
++//#define OMV_DMA_REGION_D3_SIZE  MPU_REGION_SIZE_64KB
++
++// AXI QoS - Low-High (0:15) - default 0
++#define OMV_AXI_QOS_MDMA_R_PRI  15 // Max pri to move data.
++#define OMV_AXI_QOS_MDMA_W_PRI  15 // Max pri to move data.
++
++// Image sensor I2C
++#define ISC_I2C                 (I2C1)
++#define ISC_I2C_ID              (1)
++#define ISC_I2C_AF              (GPIO_AF4_I2C1)
++#define ISC_I2C_CLK_ENABLE()    __I2C1_CLK_ENABLE()
++#define ISC_I2C_CLK_DISABLE()   __I2C1_CLK_DISABLE()
++#define ISC_I2C_SCL_PORT        (GPIOB)
++#define ISC_I2C_SCL_PIN         (GPIO_PIN_8)
++#define ISC_I2C_SDA_PORT        (GPIOB)
++#define ISC_I2C_SDA_PIN         (GPIO_PIN_9)
++#define ISC_I2C_SPEED           (CAMBUS_SPEED_STANDARD)
++#define ISC_I2C_FORCE_RESET()   __HAL_RCC_I2C1_FORCE_RESET()
++#define ISC_I2C_RELEASE_RESET() __HAL_RCC_I2C1_RELEASE_RESET()
++
++/* FIR I2C */
++#define FIR_I2C                 (I2C2)
++#define FIR_I2C_ID              (2)
++#define FIR_I2C_AF              (GPIO_AF4_I2C2)
++#define FIR_I2C_CLK_ENABLE()    __I2C2_CLK_ENABLE()
++#define FIR_I2C_CLK_DISABLE()   __I2C2_CLK_DISABLE()
++#define FIR_I2C_SCL_PORT        (GPIOB)
++#define FIR_I2C_SCL_PIN         (GPIO_PIN_10)
++#define FIR_I2C_SDA_PORT        (GPIOB)
++#define FIR_I2C_SDA_PIN         (GPIO_PIN_11)
++#define FIR_I2C_SPEED           (CAMBUS_SPEED_FULL)
++#define FIR_I2C_FORCE_RESET()   __HAL_RCC_I2C2_FORCE_RESET()
++#define FIR_I2C_RELEASE_RESET() __HAL_RCC_I2C2_RELEASE_RESET()
++
++/* DCMI */
++#define DCMI_TIM                (TIM1)
++#define DCMI_TIM_PIN            (GPIO_PIN_8)
++#define DCMI_TIM_PORT           (GPIOA)
++#define DCMI_TIM_AF             (GPIO_AF1_TIM1)
++#define DCMI_TIM_CHANNEL        (TIM_CHANNEL_1)
++#define DCMI_TIM_CLK_ENABLE()   __TIM1_CLK_ENABLE()
++#define DCMI_TIM_CLK_DISABLE()  __TIM1_CLK_DISABLE()
++#define DCMI_TIM_PCLK_FREQ()    HAL_RCC_GetPCLK2Freq()
++
++#define DCMI_RESET_PIN          (GPIO_PIN_10)
++#define DCMI_RESET_PORT         (GPIOA)
++
++#define DCMI_PWDN_PIN           (GPIO_PIN_7)
++#define DCMI_PWDN_PORT          (GPIOD)
++
++#define DCMI_FSYNC_PIN          (GPIO_PIN_4)
++#define DCMI_FSYNC_PORT         (GPIOB)
++
++#define DCMI_D0_PIN             (GPIO_PIN_6)
++#define DCMI_D1_PIN             (GPIO_PIN_7)
++#define DCMI_D2_PIN             (GPIO_PIN_0)
++#define DCMI_D3_PIN             (GPIO_PIN_1)
++#define DCMI_D4_PIN             (GPIO_PIN_4)
++#define DCMI_D5_PIN             (GPIO_PIN_6)
++#define DCMI_D6_PIN             (GPIO_PIN_5)
++#define DCMI_D7_PIN             (GPIO_PIN_6)
++
++#define DCMI_D0_PORT            (GPIOC)
++#define DCMI_D1_PORT            (GPIOC)
++#define DCMI_D2_PORT            (GPIOE)
++#define DCMI_D3_PORT            (GPIOE)
++#define DCMI_D4_PORT            (GPIOE)
++#define DCMI_D5_PORT            (GPIOB)
++#define DCMI_D6_PORT            (GPIOE)
++#define DCMI_D7_PORT            (GPIOE)
++
++#define DCMI_HSYNC_PIN          (GPIO_PIN_4)
++#define DCMI_VSYNC_PIN          (GPIO_PIN_7)
++#define DCMI_PXCLK_PIN          (GPIO_PIN_6)
++
++#define DCMI_HSYNC_PORT         (GPIOA)
++#define DCMI_VSYNC_PORT         (GPIOB)
++#define DCMI_PXCLK_PORT         (GPIOA)
++
++#define DCMI_RESET_LOW()        HAL_GPIO_WritePin(DCMI_RESET_PORT, DCMI_RESET_PIN, GPIO_PIN_RESET)
++#define DCMI_RESET_HIGH()       HAL_GPIO_WritePin(DCMI_RESET_PORT, DCMI_RESET_PIN, GPIO_PIN_SET)
++
++#define DCMI_PWDN_LOW()         HAL_GPIO_WritePin(DCMI_PWDN_PORT, DCMI_PWDN_PIN, GPIO_PIN_RESET)
++#define DCMI_PWDN_HIGH()        HAL_GPIO_WritePin(DCMI_PWDN_PORT, DCMI_PWDN_PIN, GPIO_PIN_SET)
++
++#define DCMI_FSYNC_LOW()        HAL_GPIO_WritePin(DCMI_FSYNC_PORT, DCMI_FSYNC_PIN, GPIO_PIN_RESET)
++#define DCMI_FSYNC_HIGH()       HAL_GPIO_WritePin(DCMI_FSYNC_PORT, DCMI_FSYNC_PIN, GPIO_PIN_SET)
++
++#define DCMI_VSYNC_EXTI_IRQN    (EXTI9_5_IRQn)
++#define DCMI_VSYNC_EXTI_LINE    (7)
++#define DCMI_VSYNC_EXTI_GPIO    (EXTI_GPIOB)
++#define DCMI_VSYNC_EXTI_SHARED  (0)
++
++#define WINC_SPI                (SPI2)
++#define WINC_SPI_AF             (GPIO_AF5_SPI2)
++#define WINC_SPI_TIMEOUT        (1000)
++// SPI1/2/3 clock source is PLL2 (160MHz/4 == 40MHz).
++#define WINC_SPI_PRESCALER      (SPI_BAUDRATEPRESCALER_4)
++#define WINC_SPI_CLK_ENABLE()   __HAL_RCC_SPI2_CLK_ENABLE()
++
++#define WINC_SPI_SCLK_PIN       (GPIO_PIN_13)
++#define WINC_SPI_MISO_PIN       (GPIO_PIN_14)
++#define WINC_SPI_MOSI_PIN       (GPIO_PIN_15)
++
++#define WINC_SPI_SCLK_PORT      (GPIOB)
++#define WINC_SPI_MISO_PORT      (GPIOB)
++#define WINC_SPI_MOSI_PORT      (GPIOB)
++
++#define WINC_EN_PIN             (GPIO_PIN_5)
++#define WINC_CS_PIN             (GPIO_PIN_12)
++#define WINC_RST_PIN            (GPIO_PIN_12)
++#define WINC_IRQ_PIN            (pin_D13)
++
++#define WINC_EN_PORT            (GPIOA)
++#define WINC_CS_PORT            (GPIOB)
++#define WINC_RST_PORT           (GPIOD)
++
++#define WINC_CS_LOW()           HAL_GPIO_WritePin(WINC_CS_PORT, WINC_CS_PIN, GPIO_PIN_RESET)
++#define WINC_CS_HIGH()          HAL_GPIO_WritePin(WINC_CS_PORT, WINC_CS_PIN, GPIO_PIN_SET)
++
++#define SOFT_I2C_PORT                GPIOB
++#define SOFT_I2C_SIOC_PIN            GPIO_PIN_10
++#define SOFT_I2C_SIOD_PIN            GPIO_PIN_11
++
++#define SOFT_I2C_SIOC_H()            HAL_GPIO_WritePin(SOFT_I2C_PORT, SOFT_I2C_SIOC_PIN, GPIO_PIN_SET)
++#define SOFT_I2C_SIOC_L()            HAL_GPIO_WritePin(SOFT_I2C_PORT, SOFT_I2C_SIOC_PIN, GPIO_PIN_RESET)
++
++#define SOFT_I2C_SIOD_H()            HAL_GPIO_WritePin(SOFT_I2C_PORT, SOFT_I2C_SIOD_PIN, GPIO_PIN_SET)
++#define SOFT_I2C_SIOD_L()            HAL_GPIO_WritePin(SOFT_I2C_PORT, SOFT_I2C_SIOD_PIN, GPIO_PIN_RESET)
++
++#define SOFT_I2C_SIOD_READ()         HAL_GPIO_ReadPin (SOFT_I2C_PORT, SOFT_I2C_SIOD_PIN)
++#define SOFT_I2C_SIOD_WRITE(bit)     HAL_GPIO_WritePin(SOFT_I2C_PORT, SOFT_I2C_SIOD_PIN, bit);
++
++#define SOFT_I2C_SPIN_DELAY          64
++
++#define ISC_SPI                     (SPI3)
++// SPI1/2/3 clock source is PLL3 (160MHz/8 == 20MHz) - Minimum (164*240*8*27 = 8,501,760Hz)
++#define ISC_SPI_PRESCALER           (SPI_BAUDRATEPRESCALER_8)
++
++#define ISC_SPI_IRQn                (SPI3_IRQn)
++#define ISC_SPI_IRQHandler          (SPI3_IRQHandler)
++
++#define ISC_SPI_DMA_IRQn            (DMA1_Stream0_IRQn)
++#define ISC_SPI_DMA_STREAM          (DMA1_Stream0)
++
++#define ISC_SPI_DMA_REQUEST         (DMA_REQUEST_SPI3_RX)
++#define ISC_SPI_DMA_IRQHandler      (DMA1_Stream0_IRQHandler)
++
++#define ISC_SPI_RESET()             __HAL_RCC_SPI3_FORCE_RESET()
++#define ISC_SPI_RELEASE()           __HAL_RCC_SPI3_RELEASE_RESET()
++
++#define ISC_SPI_CLK_ENABLE()        __HAL_RCC_SPI3_CLK_ENABLE()
++#define ISC_SPI_CLK_DISABLE()       __HAL_RCC_SPI3_CLK_DISABLE()
++
++#define ISC_SPI_SCLK_AF             (GPIO_AF6_SPI3)
++#define ISC_SPI_MISO_AF             (GPIO_AF6_SPI3)
++#define ISC_SPI_MOSI_AF             (GPIO_AF7_SPI3)
++#define ISC_SPI_SSEL_AF             (GPIO_AF6_SPI3)
++
++#define ISC_SPI_SCLK_PIN            (GPIO_PIN_3)
++#define ISC_SPI_MISO_PIN            (GPIO_PIN_4)
++#define ISC_SPI_MOSI_PIN            (GPIO_PIN_5)
++#define ISC_SPI_SSEL_PIN            (GPIO_PIN_15)
++
++#define ISC_SPI_SCLK_PORT           (GPIOB)
++#define ISC_SPI_MISO_PORT           (GPIOB)
++#define ISC_SPI_MOSI_PORT           (GPIOB)
++#define ISC_SPI_SSEL_PORT           (GPIOA)
++
++// The IMU sensor is on the same SPI bus pins as the camera module interface
++// SPI bus. While the buses overlap both devices will never be in-use at once.
++
++#define IMU_CHIP_LSM6DS3            (1)
++#define IMU_SPI                     (SPI1)
++#define IMU_SPI_AF                  (GPIO_AF5_SPI1)
++// SPI1/2/3 clock source is PLL2 (160MHz/16 == 10MHz).
++#define IMU_SPI_PRESCALER           (SPI_BAUDRATEPRESCALER_16)
++
++#define IMU_SPI_RESET()             __HAL_RCC_SPI1_FORCE_RESET()
++#define IMU_SPI_RELEASE()           __HAL_RCC_SPI1_RELEASE_RESET()
++
++#define IMU_SPI_CLK_ENABLE()        __HAL_RCC_SPI1_CLK_ENABLE()
++#define IMU_SPI_CLK_DISABLE()       __HAL_RCC_SPI1_CLK_DISABLE()
++
++#define IMU_SPI_SCLK_PIN            (GPIO_PIN_3)
++#define IMU_SPI_MISO_PIN            (GPIO_PIN_4)
++#define IMU_SPI_MOSI_PIN            (GPIO_PIN_5)
++#define IMU_SPI_SSEL_PIN            (GPIO_PIN_15)
++
++#define IMU_SPI_SCLK_PORT           (GPIOB)
++#define IMU_SPI_MISO_PORT           (GPIOB)
++#define IMU_SPI_MOSI_PORT           (GPIOB)
++#define IMU_SPI_SSEL_PORT           (GPIOA)
++
++// SPI LCD Interface
++#define OMV_SPI_LCD_CONTROLLER              (&spi_obj[1])
++#define OMV_SPI_LCD_CONTROLLER_INSTANCE     (SPI2)
++
++#define OMV_SPI_LCD_MOSI_PIN                (GPIO_PIN_15)
++#define OMV_SPI_LCD_MOSI_PORT               (GPIOB)
++#define OMV_SPI_LCD_MOSI_ALT                (GPIO_AF5_SPI2)
++
++#define OMV_SPI_LCD_MISO_PIN                (GPIO_PIN_14)
++#define OMV_SPI_LCD_MISO_PORT               (GPIOB)
++#define OMV_SPI_LCD_MISO_ALT                (GPIO_AF5_SPI2)
++
++#define OMV_SPI_LCD_SCLK_PIN                (GPIO_PIN_13)
++#define OMV_SPI_LCD_SCLK_PORT               (GPIOB)
++#define OMV_SPI_LCD_SCLK_ALT                (GPIO_AF5_SPI2)
++
++#define OMV_SPI_LCD_RST_PIN                 (GPIO_PIN_12)
++#define OMV_SPI_LCD_RST_PORT                (GPIOD)
++#define OMV_SPI_LCD_RST_OFF()               HAL_GPIO_WritePin(OMV_SPI_LCD_RST_PORT, OMV_SPI_LCD_RST_PIN, GPIO_PIN_SET)
++#define OMV_SPI_LCD_RST_ON()                HAL_GPIO_WritePin(OMV_SPI_LCD_RST_PORT, OMV_SPI_LCD_RST_PIN, GPIO_PIN_RESET)
++
++#define OMV_SPI_LCD_RS_PIN                  (GPIO_PIN_13)
++#define OMV_SPI_LCD_RS_PORT                 (GPIOD)
++#define OMV_SPI_LCD_RS_OFF()                HAL_GPIO_WritePin(OMV_SPI_LCD_RS_PORT, OMV_SPI_LCD_RS_PIN, GPIO_PIN_SET)
++#define OMV_SPI_LCD_RS_ON()                 HAL_GPIO_WritePin(OMV_SPI_LCD_RS_PORT, OMV_SPI_LCD_RS_PIN, GPIO_PIN_RESET)
++
++#define OMV_SPI_LCD_CS_PIN                  (GPIO_PIN_12)
++#define OMV_SPI_LCD_CS_PORT                 (GPIOB)
++#define OMV_SPI_LCD_CS_HIGH()               HAL_GPIO_WritePin(OMV_SPI_LCD_CS_PORT, OMV_SPI_LCD_CS_PIN, GPIO_PIN_SET)
++#define OMV_SPI_LCD_CS_LOW()                HAL_GPIO_WritePin(OMV_SPI_LCD_CS_PORT, OMV_SPI_LCD_CS_PIN, GPIO_PIN_RESET)
++
++#define OMV_SPI_LCD_BL_PIN                  (GPIO_PIN_5)
++#define OMV_SPI_LCD_BL_PORT                 (GPIOA)
++#define OMV_SPI_LCD_BL_ON()                 HAL_GPIO_WritePin(OMV_SPI_LCD_BL_PORT, OMV_SPI_LCD_BL_PIN, GPIO_PIN_SET)
++#define OMV_SPI_LCD_BL_OFF()                HAL_GPIO_WritePin(OMV_SPI_LCD_BL_PORT, OMV_SPI_LCD_BL_PIN, GPIO_PIN_RESET)
++
++#define OMV_SPI_LCD_BL_DAC                  (DAC1)
++#define OMV_SPI_LCD_BL_DAC_CHANNEL          (DAC_CHANNEL_2)
++#define OMV_SPI_LCD_BL_DAC_CLK_ENABLE()     __HAL_RCC_DAC12_CLK_ENABLE()
++#define OMV_SPI_LCD_BL_DAC_CLK_DISABLE()    __HAL_RCC_DAC12_CLK_DISABLE()
++#define OMV_SPI_LCD_BL_DAC_FORCE_RESET()    __HAL_RCC_DAC12_FORCE_RESET()
++#define OMV_SPI_LCD_BL_DAC_RELEASE_RESET()  __HAL_RCC_DAC12_RELEASE_RESET()
++
++// FIR Module
++#define OMV_ENABLE_FIR_MLX90621             (1)
++#define OMV_ENABLE_FIR_MLX90640             (1)
++#define OMV_ENABLE_FIR_MLX90641             (1)
++#define OMV_ENABLE_FIR_AMG8833              (1)
++#define OMV_ENABLE_FIR_LEPTON               (1)
++
++// FIR Lepton
++#define OMV_FIR_LEPTON_I2C_BUS              (FIR_I2C_ID)
++#define OMV_FIR_LEPTON_I2C_BUS_SPEED        (FIR_I2C_SPEED)
++#define OMV_FIR_LEPTON_CONTROLLER           (&spi_obj[1])
++#define OMV_FIR_LEPTON_CONTROLLER_INSTANCE  (SPI2)
++
++#define OMV_FIR_LEPTON_MOSI_PIN             (GPIO_PIN_15)
++#define OMV_FIR_LEPTON_MOSI_PORT            (GPIOB)
++#define OMV_FIR_LEPTON_MOSI_ALT             (GPIO_AF5_SPI2)
++
++#define OMV_FIR_LEPTON_MISO_PIN             (GPIO_PIN_14)
++#define OMV_FIR_LEPTON_MISO_PORT            (GPIOB)
++#define OMV_FIR_LEPTON_MISO_ALT             (GPIO_AF5_SPI2)
++
++#define OMV_FIR_LEPTON_SCLK_PIN             (GPIO_PIN_13)
++#define OMV_FIR_LEPTON_SCLK_PORT            (GPIOB)
++#define OMV_FIR_LEPTON_SCLK_ALT             (GPIO_AF5_SPI2)
++
++#define OMV_FIR_LEPTON_CS_PIN               (GPIO_PIN_12)
++#define OMV_FIR_LEPTON_CS_PORT              (GPIOB)
++#define OMV_FIR_LEPTON_CS_HIGH()            HAL_GPIO_WritePin(OMV_FIR_LEPTON_CS_PORT, OMV_FIR_LEPTON_CS_PIN, GPIO_PIN_SET)
++#define OMV_FIR_LEPTON_CS_LOW()             HAL_GPIO_WritePin(OMV_FIR_LEPTON_CS_PORT, OMV_FIR_LEPTON_CS_PIN, GPIO_PIN_RESET)
++
++#endif //__OMV_BOARDCONFIG_H__
+diff --git a/src/omv/boards/MAIX3/omv_boardconfig.mk b/src/omv/boards/MAIX3/omv_boardconfig.mk
+new file mode 100755
+index 00000000..6da435b2
+--- /dev/null
++++ b/src/omv/boards/MAIX3/omv_boardconfig.mk
+@@ -0,0 +1,21 @@
++MCU=STM32H743xx
++CPU=cortex-m7
++FPU=fpv5-sp-d16
++PORT=stm32
++HAL_DIR=hal/stm32/h7
++ARM_MATH=ARM_MATH_CM7
++HAL_INC='<stm32h7xx_hal.h>'
++CFLAGS_MCU=MCU_SERIES_H7
++OMV_BOARD_EXTRA_CFLAGS=-DUSE_USB_FS
++VECT_TAB_OFFSET=0x40000
++MAIN_APP_ADDR=0x08040000
++OMV_HSE_VALUE=12000000
++DFU_DEVICE=0x0483:0xdf11
++OMV_ENABLE_BL=1
++OMV_ENABLE_UVC=1
++MICROPY_PY_SENSOR = 1
++MICROPY_PY_ULAB = 1
++MICROPY_PY_WINC1500 = 1
++MICROPY_PY_LCD = 1
++MICROPY_PY_TV = 1
++MICROPY_PY_BUZZER = 0
+diff --git a/src/omv/boards/MAIX3/omv_bootconfig.h b/src/omv/boards/MAIX3/omv_bootconfig.h
+new file mode 100644
+index 00000000..60a0657b
+--- /dev/null
++++ b/src/omv/boards/MAIX3/omv_bootconfig.h
+@@ -0,0 +1,29 @@
++/*
++ * This file is part of the OpenMV project.
++ *
++ * Copyright (c) 2013-2022 Ibrahim Abdelkader <iabdalkader@openmv.io>
++ * Copyright (c) 2013-2022 Kwabena W. Agyeman <kwagyeman@openmv.io>
++ *
++ * This work is licensed under the MIT license, see the file LICENSE for details.
++ *
++ * Board configuration and pin definitions.
++ */
++#ifndef __OMV_BOOTCONFIG_H__
++#define __OMV_BOOTCONFIG_H__
++
++// Bootloader version.
++#define OMV_BOOT_VERSION            (0xABCD0003)
++
++// Bootloader LED GPIO config.
++#define OMV_BOOT_LED_PIN            (GPIO_PIN_1)
++#define OMV_BOOT_LED_PORT           (GPIOC)
++
++// Flash layout for the bootloader.
++// Flash FS sector, main FW sector, max sector.
++#define OMV_BOOT_FLASH_LAYOUT       {1, 2, 15}
++
++// Flash configuration.
++#define OMV_BOOT_FLASH_ORIGIN       0x08000000
++#define OMV_BOOT_FLASH_LENGTH       128K
++
++#endif //__OMV_BOOTCONFIG_H__
+diff --git a/src/omv/boards/MAIX3/ulab_config.h b/src/omv/boards/MAIX3/ulab_config.h
+new file mode 100644
+index 00000000..21f758a2
+--- /dev/null
++++ b/src/omv/boards/MAIX3/ulab_config.h
+@@ -0,0 +1,12 @@
++/*
++ * This file is part of the OpenMV project.
++ * Copyright (c) 2013-2016 Kwabena W. Agyeman <kwagyeman@openmv.io>
++ * This work is licensed under the MIT license, see the file LICENSE for details.
++ *
++ * Ulab config file.
++ *
++ */
++#ifndef __ULAB_CONFIG_H__
++#define __ULAB_CONFIG_H__
++// Override ulab defaults here.
++#endif //__ULAB_CONFIG_H__
+diff --git a/src/omv/ports/unix/main.c b/src/omv/ports/unix/main.c
+new file mode 100644
+index 00000000..b2790791
+--- /dev/null
++++ b/src/omv/ports/unix/main.c
+@@ -0,0 +1,759 @@
++/*
++ * This file is part of the MicroPython project, http://micropython.org/
++ *
++ * The MIT License (MIT)
++ *
++ * Copyright (c) 2013, 2014 Damien P. George
++ * Copyright (c) 2014-2017 Paul Sokolovsky
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a copy
++ * of this software and associated documentation files (the "Software"), to deal
++ * in the Software without restriction, including without limitation the rights
++ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++ * copies of the Software, and to permit persons to whom the Software is
++ * furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be included in
++ * all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
++ * THE SOFTWARE.
++ */
++
++#include <stdint.h>
++#include <stdbool.h>
++#include <stdio.h>
++#include <string.h>
++#include <stdlib.h>
++#include <stdarg.h>
++#include <unistd.h>
++#include <ctype.h>
++#include <sys/stat.h>
++#include <sys/types.h>
++#include <errno.h>
++#include <signal.h>
++
++#include "py/compile.h"
++#include "py/runtime.h"
++#include "py/builtin.h"
++#include "py/repl.h"
++#include "py/gc.h"
++#include "py/stackctrl.h"
++#include "py/mphal.h"
++#include "py/mpthread.h"
++#include "extmod/misc.h"
++#include "extmod/vfs.h"
++#include "extmod/vfs_posix.h"
++#include "genhdr/mpversion.h"
++#include "input.h"
++
++// Command line options, with their defaults
++STATIC bool compile_only = false;
++STATIC uint emit_opt = MP_EMIT_OPT_NONE;
++
++#if MICROPY_ENABLE_GC
++// Heap size of GC heap (if enabled)
++// Make it larger on a 64 bit machine, because pointers are larger.
++long heap_size = 1024 * 1024 * (sizeof(mp_uint_t) / 4);
++#endif
++
++STATIC void stderr_print_strn(void *env, const char *str, size_t len) {
++    (void)env;
++    ssize_t ret;
++    MP_HAL_RETRY_SYSCALL(ret, write(STDERR_FILENO, str, len), {});
++    mp_uos_dupterm_tx_strn(str, len);
++}
++
++const mp_print_t mp_stderr_print = {NULL, stderr_print_strn};
++
++#define FORCED_EXIT (0x100)
++// If exc is SystemExit, return value where FORCED_EXIT bit set,
++// and lower 8 bits are SystemExit value. For all other exceptions,
++// return 1.
++STATIC int handle_uncaught_exception(mp_obj_base_t *exc) {
++    // check for SystemExit
++    if (mp_obj_is_subclass_fast(MP_OBJ_FROM_PTR(exc->type), MP_OBJ_FROM_PTR(&mp_type_SystemExit))) {
++        // None is an exit value of 0; an int is its value; anything else is 1
++        mp_obj_t exit_val = mp_obj_exception_get_value(MP_OBJ_FROM_PTR(exc));
++        mp_int_t val = 0;
++        if (exit_val != mp_const_none && !mp_obj_get_int_maybe(exit_val, &val)) {
++            val = 1;
++        }
++        return FORCED_EXIT | (val & 255);
++    }
++
++    // Report all other exceptions
++    mp_obj_print_exception(&mp_stderr_print, MP_OBJ_FROM_PTR(exc));
++    return 1;
++}
++
++#define LEX_SRC_STR (1)
++#define LEX_SRC_VSTR (2)
++#define LEX_SRC_FILENAME (3)
++#define LEX_SRC_STDIN (4)
++
++// Returns standard error codes: 0 for success, 1 for all other errors,
++// except if FORCED_EXIT bit is set then script raised SystemExit and the
++// value of the exit is in the lower 8 bits of the return value
++STATIC int execute_from_lexer(int source_kind, const void *source, mp_parse_input_kind_t input_kind, bool is_repl) {
++    mp_hal_set_interrupt_char(CHAR_CTRL_C);
++
++    nlr_buf_t nlr;
++    if (nlr_push(&nlr) == 0) {
++        // create lexer based on source kind
++        mp_lexer_t *lex;
++        if (source_kind == LEX_SRC_STR) {
++            const char *line = source;
++            lex = mp_lexer_new_from_str_len(MP_QSTR__lt_stdin_gt_, line, strlen(line), false);
++        } else if (source_kind == LEX_SRC_VSTR) {
++            const vstr_t *vstr = source;
++            lex = mp_lexer_new_from_str_len(MP_QSTR__lt_stdin_gt_, vstr->buf, vstr->len, false);
++        } else if (source_kind == LEX_SRC_FILENAME) {
++            lex = mp_lexer_new_from_file((const char *)source);
++        } else { // LEX_SRC_STDIN
++            lex = mp_lexer_new_from_fd(MP_QSTR__lt_stdin_gt_, 0, false);
++        }
++
++        qstr source_name = lex->source_name;
++
++        #if MICROPY_PY___FILE__
++        if (input_kind == MP_PARSE_FILE_INPUT) {
++            mp_store_global(MP_QSTR___file__, MP_OBJ_NEW_QSTR(source_name));
++        }
++        #endif
++
++        mp_parse_tree_t parse_tree = mp_parse(lex, input_kind);
++
++        #if defined(MICROPY_UNIX_COVERAGE)
++        // allow to print the parse tree in the coverage build
++        if (mp_verbose_flag >= 3) {
++            printf("----------------\n");
++            mp_parse_node_print(&mp_plat_print, parse_tree.root, 0);
++            printf("----------------\n");
++        }
++        #endif
++
++        mp_obj_t module_fun = mp_compile(&parse_tree, source_name, is_repl);
++
++        if (!compile_only) {
++            // execute it
++            mp_call_function_0(module_fun);
++        }
++
++        mp_hal_set_interrupt_char(-1);
++        mp_handle_pending(true);
++        nlr_pop();
++        return 0;
++
++    } else {
++        // uncaught exception
++        mp_hal_set_interrupt_char(-1);
++        mp_handle_pending(false);
++        return handle_uncaught_exception(nlr.ret_val);
++    }
++}
++
++#if MICROPY_USE_READLINE == 1
++#include "shared/readline/readline.h"
++#else
++STATIC char *strjoin(const char *s1, int sep_char, const char *s2) {
++    int l1 = strlen(s1);
++    int l2 = strlen(s2);
++    char *s = malloc(l1 + l2 + 2);
++    memcpy(s, s1, l1);
++    if (sep_char != 0) {
++        s[l1] = sep_char;
++        l1 += 1;
++    }
++    memcpy(s + l1, s2, l2);
++    s[l1 + l2] = 0;
++    return s;
++}
++#endif
++
++STATIC int do_repl(void) {
++    mp_hal_stdout_tx_str("MicroPython " MICROPY_GIT_TAG " on " MICROPY_BUILD_DATE "; "
++        MICROPY_PY_SYS_PLATFORM " version\nUse Ctrl-D to exit, Ctrl-E for paste mode\n");
++
++    #if MICROPY_USE_READLINE == 1
++
++    // use MicroPython supplied readline
++
++    vstr_t line;
++    vstr_init(&line, 16);
++    for (;;) {
++        mp_hal_stdio_mode_raw();
++
++    input_restart:
++        vstr_reset(&line);
++        int ret = readline(&line, ">>> ");
++        mp_parse_input_kind_t parse_input_kind = MP_PARSE_SINGLE_INPUT;
++
++        if (ret == CHAR_CTRL_C) {
++            // cancel input
++            mp_hal_stdout_tx_str("\r\n");
++            goto input_restart;
++        } else if (ret == CHAR_CTRL_D) {
++            // EOF
++            printf("\n");
++            mp_hal_stdio_mode_orig();
++            vstr_clear(&line);
++            return 0;
++        } else if (ret == CHAR_CTRL_E) {
++            // paste mode
++            mp_hal_stdout_tx_str("\npaste mode; Ctrl-C to cancel, Ctrl-D to finish\n=== ");
++            vstr_reset(&line);
++            for (;;) {
++                char c = mp_hal_stdin_rx_chr();
++                if (c == CHAR_CTRL_C) {
++                    // cancel everything
++                    mp_hal_stdout_tx_str("\n");
++                    goto input_restart;
++                } else if (c == CHAR_CTRL_D) {
++                    // end of input
++                    mp_hal_stdout_tx_str("\n");
++                    break;
++                } else {
++                    // add char to buffer and echo
++                    vstr_add_byte(&line, c);
++                    if (c == '\r') {
++                        mp_hal_stdout_tx_str("\n=== ");
++                    } else {
++                        mp_hal_stdout_tx_strn(&c, 1);
++                    }
++                }
++            }
++            parse_input_kind = MP_PARSE_FILE_INPUT;
++        } else if (line.len == 0) {
++            if (ret != 0) {
++                printf("\n");
++            }
++            goto input_restart;
++        } else {
++            // got a line with non-zero length, see if it needs continuing
++            while (mp_repl_continue_with_input(vstr_null_terminated_str(&line))) {
++                vstr_add_byte(&line, '\n');
++                ret = readline(&line, "... ");
++                if (ret == CHAR_CTRL_C) {
++                    // cancel everything
++                    printf("\n");
++                    goto input_restart;
++                } else if (ret == CHAR_CTRL_D) {
++                    // stop entering compound statement
++                    break;
++                }
++            }
++        }
++
++        mp_hal_stdio_mode_orig();
++
++        ret = execute_from_lexer(LEX_SRC_VSTR, &line, parse_input_kind, true);
++        if (ret & FORCED_EXIT) {
++            return ret;
++        }
++    }
++
++    #else
++
++    // use simple readline
++
++    for (;;) {
++        char *line = prompt(">>> ");
++        if (line == NULL) {
++            // EOF
++            return 0;
++        }
++        while (mp_repl_continue_with_input(line)) {
++            char *line2 = prompt("... ");
++            if (line2 == NULL) {
++                break;
++            }
++            char *line3 = strjoin(line, '\n', line2);
++            free(line);
++            free(line2);
++            line = line3;
++        }
++
++        int ret = execute_from_lexer(LEX_SRC_STR, line, MP_PARSE_SINGLE_INPUT, true);
++        if (ret & FORCED_EXIT) {
++            return ret;
++        }
++        free(line);
++    }
++
++    #endif
++}
++
++STATIC int do_file(const char *file) {
++    return execute_from_lexer(LEX_SRC_FILENAME, file, MP_PARSE_FILE_INPUT, false);
++}
++
++STATIC int do_str(const char *str) {
++    return execute_from_lexer(LEX_SRC_STR, str, MP_PARSE_FILE_INPUT, false);
++}
++
++STATIC void print_help(char **argv) {
++    printf(
++        "usage: %s [<opts>] [-X <implopt>] [-c <command> | -m <module> | <filename>]\n"
++        "Options:\n"
++        "-h : print this help message\n"
++        "-i : enable inspection via REPL after running command/module/file\n"
++        #if MICROPY_DEBUG_PRINTERS
++        "-v : verbose (trace various operations); can be multiple\n"
++        #endif
++        "-O[N] : apply bytecode optimizations of level N\n"
++        "\n"
++        "Implementation specific options (-X):\n", argv[0]
++        );
++    int impl_opts_cnt = 0;
++    printf(
++        "  compile-only                 -- parse and compile only\n"
++        #if MICROPY_EMIT_NATIVE
++        "  emit={bytecode,native,viper} -- set the default code emitter\n"
++        #else
++        "  emit=bytecode                -- set the default code emitter\n"
++        #endif
++        );
++    impl_opts_cnt++;
++    #if MICROPY_ENABLE_GC
++    printf(
++        "  heapsize=<n>[w][K|M] -- set the heap size for the GC (default %ld)\n"
++        , heap_size);
++    impl_opts_cnt++;
++    #endif
++
++    if (impl_opts_cnt == 0) {
++        printf("  (none)\n");
++    }
++}
++
++STATIC int invalid_args(void) {
++    fprintf(stderr, "Invalid command line arguments. Use -h option for help.\n");
++    return 1;
++}
++
++// Process options which set interpreter init options
++STATIC void pre_process_options(int argc, char **argv) {
++    for (int a = 1; a < argc; a++) {
++        if (argv[a][0] == '-') {
++            if (strcmp(argv[a], "-c") == 0 || strcmp(argv[a], "-m") == 0) {
++                break; // Everything after this is a command/module and arguments for it
++            }
++            if (strcmp(argv[a], "-h") == 0) {
++                print_help(argv);
++                exit(0);
++            }
++            if (strcmp(argv[a], "-X") == 0) {
++                if (a + 1 >= argc) {
++                    exit(invalid_args());
++                }
++                if (0) {
++                } else if (strcmp(argv[a + 1], "compile-only") == 0) {
++                    compile_only = true;
++                } else if (strcmp(argv[a + 1], "emit=bytecode") == 0) {
++                    emit_opt = MP_EMIT_OPT_BYTECODE;
++                #if MICROPY_EMIT_NATIVE
++                } else if (strcmp(argv[a + 1], "emit=native") == 0) {
++                    emit_opt = MP_EMIT_OPT_NATIVE_PYTHON;
++                } else if (strcmp(argv[a + 1], "emit=viper") == 0) {
++                    emit_opt = MP_EMIT_OPT_VIPER;
++                #endif
++                #if MICROPY_ENABLE_GC
++                } else if (strncmp(argv[a + 1], "heapsize=", sizeof("heapsize=") - 1) == 0) {
++                    char *end;
++                    heap_size = strtol(argv[a + 1] + sizeof("heapsize=") - 1, &end, 0);
++                    // Don't bring unneeded libc dependencies like tolower()
++                    // If there's 'w' immediately after number, adjust it for
++                    // target word size. Note that it should be *before* size
++                    // suffix like K or M, to avoid confusion with kilowords,
++                    // etc. the size is still in bytes, just can be adjusted
++                    // for word size (taking 32bit as baseline).
++                    bool word_adjust = false;
++                    if ((*end | 0x20) == 'w') {
++                        word_adjust = true;
++                        end++;
++                    }
++                    if ((*end | 0x20) == 'k') {
++                        heap_size *= 1024;
++                    } else if ((*end | 0x20) == 'm') {
++                        heap_size *= 1024 * 1024;
++                    } else {
++                        // Compensate for ++ below
++                        --end;
++                    }
++                    if (*++end != 0) {
++                        goto invalid_arg;
++                    }
++                    if (word_adjust) {
++                        heap_size = heap_size * MP_BYTES_PER_OBJ_WORD / 4;
++                    }
++                    // If requested size too small, we'll crash anyway
++                    if (heap_size < 700) {
++                        goto invalid_arg;
++                    }
++                #endif
++                } else {
++                invalid_arg:
++                    exit(invalid_args());
++                }
++                a++;
++            }
++        } else {
++            break; // Not an option but a file
++        }
++    }
++}
++
++STATIC void set_sys_argv(char *argv[], int argc, int start_arg) {
++    for (int i = start_arg; i < argc; i++) {
++        mp_obj_list_append(mp_sys_argv, MP_OBJ_NEW_QSTR(qstr_from_str(argv[i])));
++    }
++}
++
++#ifdef _WIN32
++#define PATHLIST_SEP_CHAR ';'
++#else
++#define PATHLIST_SEP_CHAR ':'
++#endif
++
++MP_NOINLINE int main_(int argc, char **argv);
++
++int main(int argc, char **argv) {
++    #if MICROPY_PY_THREAD
++    mp_thread_init();
++    #endif
++    // We should capture stack top ASAP after start, and it should be
++    // captured guaranteedly before any other stack variables are allocated.
++    // For this, actual main (renamed main_) should not be inlined into
++    // this function. main_() itself may have other functions inlined (with
++    // their own stack variables), that's why we need this main/main_ split.
++    mp_stack_ctrl_init();
++    return main_(argc, argv);
++}
++
++MP_NOINLINE int main_(int argc, char **argv) {
++    #ifdef SIGPIPE
++    // Do not raise SIGPIPE, instead return EPIPE. Otherwise, e.g. writing
++    // to peer-closed socket will lead to sudden termination of MicroPython
++    // process. SIGPIPE is particularly nasty, because unix shell doesn't
++    // print anything for it, so the above looks like completely sudden and
++    // silent termination for unknown reason. Ignoring SIGPIPE is also what
++    // CPython does. Note that this may lead to problems using MicroPython
++    // scripts as pipe filters, but again, that's what CPython does. So,
++    // scripts which want to follow unix shell pipe semantics (where SIGPIPE
++    // means "pipe was requested to terminate, it's not an error"), should
++    // catch EPIPE themselves.
++    signal(SIGPIPE, SIG_IGN);
++    #endif
++
++    // Define a reasonable stack limit to detect stack overflow.
++    mp_uint_t stack_limit = 40000 * (sizeof(void *) / 4);
++    #if defined(__arm__) && !defined(__thumb2__)
++    // ARM (non-Thumb) architectures require more stack.
++    stack_limit *= 2;
++    #endif
++    mp_stack_set_limit(stack_limit);
++
++    pre_process_options(argc, argv);
++
++    #if MICROPY_ENABLE_GC
++    char *heap = malloc(heap_size);
++    gc_init(heap, heap + heap_size);
++    #endif
++
++    #if MICROPY_ENABLE_PYSTACK
++    static mp_obj_t pystack[1024];
++    mp_pystack_init(pystack, &pystack[MP_ARRAY_SIZE(pystack)]);
++    #endif
++
++    mp_init();
++
++    #if MICROPY_EMIT_NATIVE
++    // Set default emitter options
++    MP_STATE_VM(default_emit_opt) = emit_opt;
++    #else
++    (void)emit_opt;
++    #endif
++
++    #if MICROPY_VFS_POSIX
++    {
++        // Mount the host FS at the root of our internal VFS
++        mp_obj_t args[2] = {
++            mp_type_vfs_posix.make_new(&mp_type_vfs_posix, 0, 0, NULL),
++            MP_OBJ_NEW_QSTR(MP_QSTR__slash_),
++        };
++        mp_vfs_mount(2, args, (mp_map_t *)&mp_const_empty_map);
++        MP_STATE_VM(vfs_cur) = MP_STATE_VM(vfs_mount_table);
++    }
++    #endif
++
++    char *home = getenv("HOME");
++    char *path = getenv("MICROPYPATH");
++    if (path == NULL) {
++        path = MICROPY_PY_SYS_PATH_DEFAULT;
++    }
++    size_t path_num = 1; // [0] is for current dir (or base dir of the script)
++    if (*path == PATHLIST_SEP_CHAR) {
++        path_num++;
++    }
++    for (char *p = path; p != NULL; p = strchr(p, PATHLIST_SEP_CHAR)) {
++        path_num++;
++        if (p != NULL) {
++            p++;
++        }
++    }
++    mp_obj_list_init(MP_OBJ_TO_PTR(mp_sys_path), path_num);
++    mp_obj_t *path_items;
++    mp_obj_list_get(mp_sys_path, &path_num, &path_items);
++    path_items[0] = MP_OBJ_NEW_QSTR(MP_QSTR_);
++    {
++        char *p = path;
++        for (mp_uint_t i = 1; i < path_num; i++) {
++            char *p1 = strchr(p, PATHLIST_SEP_CHAR);
++            if (p1 == NULL) {
++                p1 = p + strlen(p);
++            }
++            if (p[0] == '~' && p[1] == '/' && home != NULL) {
++                // Expand standalone ~ to $HOME
++                int home_l = strlen(home);
++                vstr_t vstr;
++                vstr_init(&vstr, home_l + (p1 - p - 1) + 1);
++                vstr_add_strn(&vstr, home, home_l);
++                vstr_add_strn(&vstr, p + 1, p1 - p - 1);
++                path_items[i] = mp_obj_new_str_from_vstr(&mp_type_str, &vstr);
++            } else {
++                path_items[i] = mp_obj_new_str_via_qstr(p, p1 - p);
++            }
++            p = p1 + 1;
++        }
++    }
++
++    mp_obj_list_init(MP_OBJ_TO_PTR(mp_sys_argv), 0);
++
++    #if defined(MICROPY_UNIX_COVERAGE)
++    {
++        MP_DECLARE_CONST_FUN_OBJ_0(extra_coverage_obj);
++        MP_DECLARE_CONST_FUN_OBJ_0(extra_cpp_coverage_obj);
++        mp_store_global(MP_QSTR_extra_coverage, MP_OBJ_FROM_PTR(&extra_coverage_obj));
++        mp_store_global(MP_QSTR_extra_cpp_coverage, MP_OBJ_FROM_PTR(&extra_cpp_coverage_obj));
++    }
++    #endif
++
++    // Here is some example code to create a class and instance of that class.
++    // First is the Python, then the C code.
++    //
++    // class TestClass:
++    //     pass
++    // test_obj = TestClass()
++    // test_obj.attr = 42
++    //
++    // mp_obj_t test_class_type, test_class_instance;
++    // test_class_type = mp_obj_new_type(qstr_from_str("TestClass"), mp_const_empty_tuple, mp_obj_new_dict(0));
++    // mp_store_name(qstr_from_str("test_obj"), test_class_instance = mp_call_function_0(test_class_type));
++    // mp_store_attr(test_class_instance, qstr_from_str("attr"), mp_obj_new_int(42));
++
++    /*
++    printf("bytes:\n");
++    printf("    total %d\n", m_get_total_bytes_allocated());
++    printf("    cur   %d\n", m_get_current_bytes_allocated());
++    printf("    peak  %d\n", m_get_peak_bytes_allocated());
++    */
++
++    const int NOTHING_EXECUTED = -2;
++    int ret = NOTHING_EXECUTED;
++    bool inspect = false;
++    for (int a = 1; a < argc; a++) {
++        if (argv[a][0] == '-') {
++            if (strcmp(argv[a], "-i") == 0) {
++                inspect = true;
++            } else if (strcmp(argv[a], "-c") == 0) {
++                if (a + 1 >= argc) {
++                    return invalid_args();
++                }
++                set_sys_argv(argv, a + 1, a); // The -c becomes first item of sys.argv, as in CPython
++                set_sys_argv(argv, argc, a + 2); // Then what comes after the command
++                ret = do_str(argv[a + 1]);
++                break;
++            } else if (strcmp(argv[a], "-m") == 0) {
++                if (a + 1 >= argc) {
++                    return invalid_args();
++                }
++                mp_obj_t import_args[4];
++                import_args[0] = mp_obj_new_str(argv[a + 1], strlen(argv[a + 1]));
++                import_args[1] = import_args[2] = mp_const_none;
++                // Ask __import__ to handle imported module specially - set its __name__
++                // to __main__, and also return this leaf module, not top-level package
++                // containing it.
++                import_args[3] = mp_const_false;
++                // TODO: https://docs.python.org/3/using/cmdline.html#cmdoption-m :
++                // "the first element of sys.argv will be the full path to
++                // the module file (while the module file is being located,
++                // the first element will be set to "-m")."
++                set_sys_argv(argv, argc, a + 1);
++
++                mp_obj_t mod;
++                nlr_buf_t nlr;
++
++                // Allocating subpkg_tried on the stack can lead to compiler warnings about this
++                // variable being clobbered when nlr is implemented using setjmp/longjmp.  Its
++                // value must be preserved across calls to setjmp/longjmp.
++                static bool subpkg_tried;
++                subpkg_tried = false;
++
++            reimport:
++                if (nlr_push(&nlr) == 0) {
++                    mod = mp_builtin___import__(MP_ARRAY_SIZE(import_args), import_args);
++                    nlr_pop();
++                } else {
++                    // uncaught exception
++                    return handle_uncaught_exception(nlr.ret_val) & 0xff;
++                }
++
++                if (mp_obj_is_package(mod) && !subpkg_tried) {
++                    subpkg_tried = true;
++                    vstr_t vstr;
++                    int len = strlen(argv[a + 1]);
++                    vstr_init(&vstr, len + sizeof(".__main__"));
++                    vstr_add_strn(&vstr, argv[a + 1], len);
++                    vstr_add_strn(&vstr, ".__main__", sizeof(".__main__") - 1);
++                    import_args[0] = mp_obj_new_str_from_vstr(&mp_type_str, &vstr);
++                    goto reimport;
++                }
++
++                ret = 0;
++                break;
++            } else if (strcmp(argv[a], "-X") == 0) {
++                a += 1;
++            #if MICROPY_DEBUG_PRINTERS
++            } else if (strcmp(argv[a], "-v") == 0) {
++                mp_verbose_flag++;
++            #endif
++            } else if (strncmp(argv[a], "-O", 2) == 0) {
++                if (unichar_isdigit(argv[a][2])) {
++                    MP_STATE_VM(mp_optimise_value) = argv[a][2] & 0xf;
++                } else {
++                    MP_STATE_VM(mp_optimise_value) = 0;
++                    for (char *p = argv[a] + 1; *p && *p == 'O'; p++, MP_STATE_VM(mp_optimise_value)++) {;
++                    }
++                }
++            } else {
++                return invalid_args();
++            }
++        } else {
++            char *pathbuf = malloc(PATH_MAX);
++            char *basedir = realpath(argv[a], pathbuf);
++            if (basedir == NULL) {
++                mp_printf(&mp_stderr_print, "%s: can't open file '%s': [Errno %d] %s\n", argv[0], argv[a], errno, strerror(errno));
++                // CPython exits with 2 in such case
++                ret = 2;
++                break;
++            }
++
++            // Set base dir of the script as first entry in sys.path.
++            char *p = strrchr(basedir, '/');
++            path_items[0] = mp_obj_new_str_via_qstr(basedir, p - basedir);
++            free(pathbuf);
++
++            set_sys_argv(argv, argc, a);
++            ret = do_file(argv[a]);
++            break;
++        }
++    }
++
++    const char *inspect_env = getenv("MICROPYINSPECT");
++    if (inspect_env && inspect_env[0] != '\0') {
++        inspect = true;
++    }
++    if (ret == NOTHING_EXECUTED || inspect) {
++        if (isatty(0) || inspect) {
++            prompt_read_history();
++            ret = do_repl();
++            prompt_write_history();
++        } else {
++            ret = execute_from_lexer(LEX_SRC_STDIN, NULL, MP_PARSE_FILE_INPUT, false);
++        }
++    }
++
++    #if MICROPY_PY_SYS_SETTRACE
++    MP_STATE_THREAD(prof_trace_callback) = MP_OBJ_NULL;
++    #endif
++
++    #if MICROPY_PY_SYS_ATEXIT
++    // Beware, the sys.settrace callback should be disabled before running sys.atexit.
++    if (mp_obj_is_callable(MP_STATE_VM(sys_exitfunc))) {
++        mp_call_function_0(MP_STATE_VM(sys_exitfunc));
++    }
++    #endif
++
++    #if MICROPY_PY_MICROPYTHON_MEM_INFO
++    if (mp_verbose_flag) {
++        mp_micropython_mem_info(0, NULL);
++    }
++    #endif
++
++    #if MICROPY_PY_BLUETOOTH
++    void mp_bluetooth_deinit(void);
++    mp_bluetooth_deinit();
++    #endif
++
++    #if MICROPY_PY_THREAD
++    mp_thread_deinit();
++    #endif
++
++    #if defined(MICROPY_UNIX_COVERAGE)
++    gc_sweep_all();
++    #endif
++
++    mp_deinit();
++
++    #if MICROPY_ENABLE_GC && !defined(NDEBUG)
++    // We don't really need to free memory since we are about to exit the
++    // process, but doing so helps to find memory leaks.
++    free(heap);
++    #endif
++
++    // printf("total bytes = %d\n", m_get_total_bytes_allocated());
++    return ret & 0xff;
++}
++
++#if !MICROPY_VFS
++uint mp_import_stat(const char *path) {
++    struct stat st;
++    if (stat(path, &st) == 0) {
++        if (S_ISDIR(st.st_mode)) {
++            return MP_IMPORT_STAT_DIR;
++        } else if (S_ISREG(st.st_mode)) {
++            return MP_IMPORT_STAT_FILE;
++        }
++    }
++    return MP_IMPORT_STAT_NO_EXIST;
++}
++
++#if MICROPY_PY_IO
++// Factory function for I/O stream classes, only needed if generic VFS subsystem isn't used.
++// Note: buffering and encoding are currently ignored.
++mp_obj_t mp_builtin_open(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kwargs) {
++    enum { ARG_file, ARG_mode };
++    STATIC const mp_arg_t allowed_args[] = {
++        { MP_QSTR_file, MP_ARG_OBJ | MP_ARG_REQUIRED, {.u_rom_obj = MP_ROM_NONE} },
++        { MP_QSTR_mode, MP_ARG_OBJ, {.u_obj = MP_OBJ_NEW_QSTR(MP_QSTR_r)} },
++        { MP_QSTR_buffering, MP_ARG_INT, {.u_int = -1} },
++        { MP_QSTR_encoding, MP_ARG_OBJ, {.u_rom_obj = MP_ROM_NONE} },
++    };
++    mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
++    mp_arg_parse_all(n_args, pos_args, kwargs, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
++    return mp_vfs_posix_file_open(&mp_type_textio, args[ARG_file].u_obj, args[ARG_mode].u_obj);
++}
++MP_DEFINE_CONST_FUN_OBJ_KW(mp_builtin_open_obj, 1, mp_builtin_open);
++#endif
++#endif
++
++void nlr_jump_fail(void *val) {
++    fprintf(stderr, "FATAL: uncaught NLR %p\n", val);
++    exit(1);
++}
+diff --git a/src/omv/ports/unix/omv_portconfig.h b/src/omv/ports/unix/omv_portconfig.h
+new file mode 100644
+index 00000000..5041c9a7
+--- /dev/null
++++ b/src/omv/ports/unix/omv_portconfig.h
+@@ -0,0 +1,23 @@
++/*
++ * This file is part of the OpenMV project.
++ *
++ * Copyright (c) 2013-2021 Ibrahim Abdelkader <iabdalkader@openmv.io>
++ * Copyright (c) 2013-2021 Kwabena W. Agyeman <kwagyeman@openmv.io>
++ *
++ * This work is licensed under the MIT license, see the file LICENSE for details.
++ *
++ * OpenMV RP2 port abstraction layer.
++ */
++#ifndef __OMV_PORTCONFIG_H__
++#define __OMV_PORTCONFIG_H__
++
++#include "pico/stdlib.h"
++#include "hardware/i2c.h"
++
++// omv_gpio_t definition
++typedef uint32_t omv_gpio_t;
++
++// cambus/i2c definition
++typedef i2c_inst_t *omv_cambus_t;
++
++#endif // __OMV_PORTCONFIG_H__
+diff --git a/src/omv/ports/unix/omv_portconfig.mk b/src/omv/ports/unix/omv_portconfig.mk
+new file mode 100644
+index 00000000..19a7b7c1
+--- /dev/null
++++ b/src/omv/ports/unix/omv_portconfig.mk
+@@ -0,0 +1,33 @@
++# This file is part of the OpenMV project.
++#
++# Copyright (c) 2013-2019 Ibrahim Abdelkader <iabdalkader@openmv.io>
++# Copyright (c) 2013-2019 Kwabena W. Agyeman <kwagyeman@openmv.io>
++#
++# This work is licensed under the MIT license, see the file LICENSE for details.
++#
++# RP2 Makefile.
++# This just invokes make in MicroPython RP2 port with OpenMV's cmake arg.
++
++export PORT
++export TARGET
++export TOP_DIR
++export CC=
++export CXX=
++
++# Note this overrides USER_C_MODULES.
++MICROPY_ARGS += BOARD=$(TARGET) FROZEN_MANIFEST=$(FROZEN_MANIFEST)\
++                BUILD=$(BUILD)/rp2 USER_C_MODULES="" \
++                OMV_CMAKE=$(TOP_DIR)/$(OMV_DIR)/ports/$(PORT)/omv_portconfig.cmake
++
++###################################################
++all: $(OPENMV)
++
++$(FIRMWARE):
++	$(MAKE)  -C $(MICROPY_DIR)/ports/$(PORT) $(MICROPY_ARGS)
++
++# This target generates the firmware image.
++$(OPENMV): $(FIRMWARE)
++	$(SIZE) $(FW_DIR)/$(FIRMWARE).elf
++
++size:
++	$(SIZE) --format=SysV $(FW_DIR)/$(FIRMWARE).elf
+diff --git a/src/omv/ports/unix/unix.lds b/src/omv/ports/unix/unix.lds
+new file mode 100644
+index 00000000..a5d5298b
+--- /dev/null
++++ b/src/omv/ports/unix/unix.lds
+@@ -0,0 +1,110 @@
++/*
++ * Copyright (c) 2006-2020, RT-Thread Development Team
++ *
++ * SPDX-License-Identifier: Apache-2.0
++ *
++ * Change Logs:
++ * Date           Author       Notes
++ * 2020/12/12     bernard      The first version
++ */
++
++OUTPUT_ARCH( "riscv" )
++
++ENTRY(_start)
++SECTIONS
++{
++    /*
++     * 64bit userspace: 0x200000000 (default)
++     * 32bit userspace: 0xD0000000
++     */
++    . = 0x200000000;
++
++    .text : 
++    {
++        __text_start__ = .;
++        *(.start);
++        *(.text)                        /* remaining code */
++
++        KEEP(*(.init))
++        KEEP(*(.fini))
++        
++        /* .ctors */
++        *crtbegin.o(.ctors)
++        *crtbegin?.o(.ctors)
++        *(EXCLUDE_FILE(*crtend?.o *crtend.o) .ctors)
++        *(SORT(.ctors.*))
++        *(.ctors)
++
++        /* .dtors */
++        *crtbegin.o(.dtors)
++        *crtbegin?.o(.dtors)
++        *(EXCLUDE_FILE(*crtend?.o *crtend.o) .dtors)
++        *(SORT(.dtors.*))
++        *(.dtors)
++
++        *(.rodata)                      /* read-only data (constants) */
++        
++        KEEP(*(.eh_frame*))
++
++        . = ALIGN(8);
++        _etext = .;
++        __text_end__ = .;
++    }
++    
++    . = ALIGN(0x1000);  /* must define page align after .text */
++    
++    .plt :
++    {
++        *(*.plt)
++    }
++    .got :
++    {
++        __got_start__ = .;
++        *(*.got)
++        __got_end__ = .;
++    }
++
++    data :
++    {
++        __data_start__ = .;
++
++        *(vtable)
++        *(.data*)
++
++        . = ALIGN(8);
++        /* preinit data */
++        PROVIDE_HIDDEN (__preinit_array_start = .);
++        KEEP(*(.preinit_array))
++        PROVIDE_HIDDEN (__preinit_array_end = .);
++
++        . = ALIGN(8);
++        /* init data */
++        PROVIDE_HIDDEN (__init_array_start = .);
++        KEEP(*(SORT(.init_array.*)))
++        KEEP(*(.init_array))
++        PROVIDE_HIDDEN (__init_array_end = .);
++
++        . = ALIGN(8);
++        /* finit data */
++        PROVIDE_HIDDEN (__fini_array_start = .);
++        KEEP(*(SORT(.fini_array.*)))
++        KEEP(*(.fini_array))
++        PROVIDE_HIDDEN (__fini_array_end = .);
++
++        . = ALIGN(8);
++        /* All data end */
++        __data_end__ = .;
++    }
++
++    bss :
++    {
++        __bss_start__ = .;
++        *(.bss*)
++        *(COMMON)
++        *(.stack)
++        __bss_end__ = .;
++    }
++    
++    _end = .;
++}
++
+-- 
+2.33.1.windows.1
+

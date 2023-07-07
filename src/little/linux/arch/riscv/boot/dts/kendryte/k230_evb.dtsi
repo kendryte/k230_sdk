@@ -1,0 +1,473 @@
+/* Copyright (c) 2023, Canaan Bright Sight Co., Ltd
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+*/
+/dts-v1/;
+
+#include <dt-bindings/interrupt-controller/irq.h>
+
+/ {
+	model = "T-HEAD c910 ice";
+	compatible = "thead,c910_ice";
+	#address-cells = <2>;
+	#size-cells = <2>;
+
+	memory@0 {
+		device_type = "memory";
+		reg = <0x0 0x8200000 0x0 0x7dff000>;  /*linux memory config*/
+    };
+
+	cpus {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		timebase-frequency = <27000000>;
+		cpu@0 {
+			device_type = "cpu";
+			reg = <0>;
+			status = "okay";
+			compatible = "riscv";
+			riscv,isa = "rv64imafdcvxthead";
+			mmu-type = "riscv,sv39";
+			cpu0_intc: interrupt-controller {
+				#interrupt-cells = <1>;
+				compatible = "riscv,cpu-intc";
+				interrupt-controller;
+			};
+		};
+		
+	};
+
+	soc {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		compatible = "simple-bus";
+		ranges;
+
+
+		clint0: clint@f04000000 {
+			compatible = "riscv,clint0";
+			interrupts-extended = <
+				&cpu0_intc  3 &cpu0_intc  7				
+				>;
+			reg = <0xf 0x04000000 0x0 0x04000000>;
+			clint,has-no-64bit-mmio;
+		};
+
+		intc: interrupt-controller@f00000000 {
+			#interrupt-cells = <1>;
+			compatible = "riscv,plic0";
+			interrupt-controller;
+			interrupts-extended = <
+				&cpu0_intc  0xffffffff &cpu0_intc  9				
+				>;
+			reg = <0xf 0x00000000 0x0 0x04000000>;
+			reg-names = "control";
+			riscv,max-priority = <7>;
+			riscv,ndev = <200>;
+		};
+
+		dummy_apb: apb-clock {
+			compatible = "fixed-clock";
+			clock-frequency = <50000000>;
+			clock-output-names = "dummy_apb";
+			#clock-cells = <0>;
+		};
+
+		dummy_sd: apb-sdclock {
+			compatible = "fixed-clock";
+			clock-frequency = <100000000>;
+			clock-output-names = "dummy_sd";
+			#clock-cells = <0>;
+		};
+
+		serial@91400000 {
+			compatible = "snps,dw-apb-uart";
+			reg = <0x0 0x91400000 0x0 0x1000>;
+			interrupt-parent = <&intc>;
+			interrupts = <16>;
+			clock-frequency = <50000000>;
+			clocks = <&dummy_apb>;
+			clock-names = "baudclk";
+			reg-shift = <2>;
+			reg-io-width = <4>;
+			current-speed = <115200>;
+		};
+
+		emmc: sdhci0@91580000 {
+			compatible = "snps,dwcmshc-sdhci";
+			reg = <0x0 0x91580000 0x0 0x1000>;
+			interrupt-parent = <&intc>;
+			interrupts = <142>;
+			interrupt-names = "sdhci0irq";
+			max-frequency = <200000000>;
+			bus-width = <8>;
+			//cd-gpios = <>;
+			//cap-mmc-highspeed;
+			mmc-hs200-1_8v;
+			sdhci,auto-cmd12;
+			status = "okay";
+		};
+
+		sdcard: sdhci1@91581000 {
+			compatible = "snps,dwcmshc-sdhci";
+			reg = <0x0 0x91581000 0x0 0x1000>;
+			interrupt-parent = <&intc>;
+			interrupts = <144>;
+			interrupt-names = "sdhci1irq";
+			clocks = <&dummy_sd>,<&dummy_sd>;
+			clock-names = "core", "bus";
+			max-frequency = <50000000>;
+			bus-width = <4>;
+			//cd-gpios = <>;
+			no-1-8-v;
+			cap-sd-highspeed;
+			sdhci,auto-cmd12;
+			status = "okay";
+		};
+
+		spi0: spi@91584000 {
+			compatible = "snps,dwc-ssi-1.01a";
+			reg = <0x0 0x91584000 0x0 0x1000>;
+			#address-cells = <1>;
+			#size-cells = <1>;
+			interrupt-parent = <&intc>;
+			interrupts = <146>,<148>,<153>;
+			interrupt-names = "spi_txe","spi_rxf","spi_done";
+			rx-sample-delay-ns = <5>;
+			num-cs = <1>;
+			reg-io-width = <4>;
+			spi-flash@0 {
+				compatible = "jedec,spi-nor";
+				//compatible = "spi-nand";
+				//compatible = "rohm,dh2228fv";
+				#address-cells = <1>;
+            	#size-cells = <1>;
+				reg = <0>;
+				spi-max-frequency = <100000000>;
+				spi-tx-bus-width = <8>;
+				spi-rx-bus-width = <8>;
+				status = "okay";
+				partitions {
+					compatible = "fixed-partitions";
+					#address-cells = <1>;
+					#size-cells = <1>;
+
+					partition@0 {
+						/* spl boot */
+						reg = <0x0 0x00080000>;
+						label = "spl_boot";
+					};
+
+					partition@80000 {
+						/* normal boot */
+						reg = <0x00080000 0x00180000>;
+						label = "uboot";
+					};
+
+					partition@200000 {
+						reg = <0x200000 0x80000>;
+						label = "quick_boot_cfg ";
+					};
+					partition@280000 {
+						reg = <0x280000 0x80000>;
+						label = "face_db";
+					};
+					partition@300000 {
+						reg = <0x300000 0x40000>;
+						label = "sensor_cfg";
+					};
+					partition@640000 {
+						reg = <0x640000 0x200000>;
+						label = "speckle";
+					};
+
+					partition@a00000 {
+						reg = <0xa00000 0x5c0000>;
+						label = "rtt";
+					};
+					partition@fc0000 {
+						reg = <0xfc0000 0x700000>;
+						label = "linux";
+					};
+					partition@16c0000 {
+						reg = <0x16c0000 0x900000>;
+						label = "rootfs";
+					};
+
+					partition@2000000 {
+						/* 32MB for  update image*/
+						reg = <0 0x2000000>;
+						label = "all_flash";
+					};
+				};
+			};
+		};
+
+		spi1: spi@91582000 {
+			compatible = "snps,dwc-ssi-1.01a";
+			reg = <0x0 0x91582000 0x0 0x1000>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			interrupt-parent = <&intc>;
+			interrupts = <155>,<157>,<162>;
+			interrupt-names = "spi_txe","spi_rxf","spi_done";
+			num-cs = <1>;
+			reg-io-width = <4>;
+			spi-nand@0 {
+				compatible = "spi-nand";
+				//compatible = "rohm,dh2228fv";
+				reg = <0>;
+				spi-max-frequency = <25000000>;
+				spi-tx-bus-width = <4>;
+				spi-rx-bus-width = <4>;
+				status = "disabled";
+			};
+		};
+
+		ipcm: ipcm@91104000 {
+			compatible = "canaan,ipcm-interrupt";
+			reg = <0x0 0x91104000 0x0 0x1000>;
+			interrupt-parent = <&intc>;
+			interrupts = <109>,<110>,<111>,<112>;
+			clocks = <&dummy_apb>;
+			status = "okay";
+		};
+
+		pmu: pmu@0x91000000 {
+			compatible = "kendryte, k230-pmu";
+			reg = <0x0 0x91000000 0x0 0xb0>;
+			interrupt-parent = <&intc>;
+			interrupts = <175>;
+			status = "disabled";
+			/*
+			int0 {
+				force-powerdown-value = <320000>;
+				power-event-value = <96000>;
+				debounce-value = <256>;
+				type = <IRQ_TYPE_EDGE_RISING>;
+				wakeup;
+				event;
+			};
+			int1 {
+				debounce-value = <256>;
+				edge-cnt-type = <IRQ_TYPE_EDGE_RISING>;
+				edge-cnt-value = <1>;
+				edge-cnt-wakeup;
+				edge-cnt-event;
+				type = <IRQ_TYPE_EDGE_RISING>;
+				wakeup;
+				event;
+			};
+			int2 {
+				debounce-value = <256>;
+				type = <IRQ_TYPE_EDGE_RISING>;
+				wakeup;
+				event;
+			};
+			int3 {
+				debounce-value = <256>;
+				type = <IRQ_TYPE_EDGE_RISING>;
+				wakeup;
+				event;
+			};
+			int4 {
+				type = <IRQ_TYPE_EDGE_FALLING>;
+				wakeup;
+				event;
+			};
+			int5 {
+				type = <IRQ_TYPE_EDGE_RISING>;
+				wakeup;
+				event;
+			};
+			rtc {
+				alarm-wakeup;
+				alarm-event;
+				tick-wakeup;
+				tick-event;
+			};
+			*/
+		};
+
+		gpu: gpu@90800000 {
+			compatible = "verisilicon,gc8000ul";
+			reg = <0x0 0x90800000 0x0 0x4000>;
+			interrupt-parent = <&intc>;
+			interrupts = <135>;
+		};
+
+		i2c0: i2c@91405000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "snps,designware-i2c";
+			reg = <0x0 0x91405000 0x0 0x1000>;
+			interrupt-parent    = <&intc>;
+			interrupts          = <21>;
+			clock-frequency = <100000>;
+
+			status = "okay";
+
+			tmp103: tmp103@70{
+				compatible = "tmp103";
+				reg = <0x70>;
+			};
+		};
+
+		i2c4: i2c@91409000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "snps,designware-i2c";
+			reg = <0x0 0x91409000 0x0 0x1000>;
+			interrupt-parent    = <&intc>;
+			interrupts          = <25>;
+			clock-frequency = <100000>;
+			status = "okay";
+		};
+
+		usbotg0: usb-otg@91500000 {
+			compatible = "kendryte,k230-otg";
+			reg = <0x0 0x91500000 0x0 0x10000>;
+			interrupt-parent = <&intc>;
+			interrupts = <173>;
+			g-rx-fifo-size = <512>;
+			g-np-tx-fifo-size = <64>;
+			g-tx-fifo-size = <512 1024 64 64 64 64>;
+			dr_mode = "otg";
+			otg-rev = <0x200>;
+			status = "okay";
+		};
+
+		usbotg1: usb-otg@91540000 {
+			compatible = "kendryte,k230-otg";
+			reg = <0x0 0x91540000 0x0 0x10000>;
+			interrupt-parent = <&intc>;
+			interrupts = <174>;
+			g-rx-fifo-size = <512>;
+			g-np-tx-fifo-size = <64>;
+			g-tx-fifo-size = <512 1024 64 64 64 64>;
+			dr_mode = "otg";
+			otg-rev = <0x200>;
+		};
+
+		sysctl: sysctl {
+			status					= "okay";	
+			#address-cells 			= <2>;
+			#size-cells 			= <2>;
+			compatible 				= "simple-bus";
+			ranges;
+
+			sysctl_clock: sysctl_clock@91100000 {
+				status              = "okay";
+				compatible 			= "simple-bus";
+				reg                 = <0x0 0x91100000 0x0 0x1000>;
+			};
+			sysctl_reset: sysctl_reset@91101000 {
+				status              = "okay";
+				compatible 			= "simple-bus";
+				reg                 = <0x0 0x91101000 0x0 0x1000>;
+			};
+			sysctl_boot: sysctl_boot@91102000 {
+				status              = "okay";
+				compatible 			= "simple-bus";
+				reg                 = <0x0 0x91102000 0x0 0x1000>;
+			};
+			sysctl_power: sysctl_power@91103000 {
+				status              = "okay";
+				compatible 			= "simple-bus";
+				reg                 = <0x0 0x91103000 0x0 0x1000>;
+			};
+		};
+
+		security: security {
+			status              	= "okay";
+			compatible          	= "simple-bus";
+			#address-cells      	= <2>;
+			#size-cells         	= <2>;
+			ranges;
+
+			trng: trng@91213000 {
+				status              = "okay";
+				compatible          = "canaan,k230-rng";
+				reg                 = <0x0 0x91213000 0x0 0x2AC>;
+			};
+
+			otp: otp@91214000 {
+				status              = "okay";
+				compatible          = "canaan,k230-otp";
+				reg                 = <0x0 0x91214000 0x0 0xC00>;
+			};
+		};
+
+		tsensor: tsensor@91107000 {
+			status					= "okay";
+			compatible				= "canaan,k230-tsensor";
+			reg						= <0x0 0x91107000 0x0 0x800>;
+			hardlock				= <2>;
+		};
+
+		hardlock: canaan-hardlock@91104000 {
+			compatible = "canaan,k230-hardlock";
+			reg = <0x0 0x91104000 0x0 0x01000>;
+		};
+
+		watchdog0: wdt0@91106000 {
+			compatible = "snps,dw-wdt";
+			reg = <0x0 0x91106000 0x0 0x800>;
+			interrupts = <107>;
+		};
+
+		display: display-subsystem {
+			compatible = "canaan,display-subsystem";
+			ports = <&vo_out>;
+			status = "okay";
+		};
+
+		vo: vo@90840000 {
+			compatible = "canaan,k230-vo";
+			reg = <0x0 0x90840000 0x0 0x10000 >;
+			interrupt-parent = <&intc>;
+			interrupts = <133>;
+			status = "okay";
+
+			vo_out: port {
+				#address-cells = <1>;
+				#size-cells = <0>;
+			};
+		};
+
+		dsi: dsi@90850000 {
+			compatible = "canaan,k230-mipi-dsi";
+			reg = <0x0 0x90850000 0x0 0x1000>;
+			status = "okay";
+
+			panel@0 {
+				compatible = "canaan,hx8399";
+				reg = <0>;
+				panel-width-mm = <68>;
+				panel-height-mm = <120>;
+
+				display-timings {
+					timing-0 {
+						clock-frequency = <78529500>;
+						hactive = <1080>;
+						vactive = <1920>;
+						hfront-porch = <230>;
+						hback-porch = <20>;
+						hsync-len = <20>;
+						vfront-porch = <5>;
+						vback-porch = <8>;
+						vsync-len = <6>;
+					};
+				};
+			};
+		};
+
+	};
+
+	chosen {
+		bootargs = "console=ttyS0,115200  crashkernel=256M-:128M earlycon=sbi";
+		stdout-path = "/soc/serial@91400000:115200";
+	};
+};

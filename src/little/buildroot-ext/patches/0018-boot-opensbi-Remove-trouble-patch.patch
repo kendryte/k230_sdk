@@ -1,0 +1,56 @@
+From e6fcf5540c3baf84f7e26300825c8d8277bb7452 Mon Sep 17 00:00:00 2001
+From: Liu Yibin <jiulong@linux.alibaba.com>
+Date: Tue, 2 Feb 2021 21:56:31 +0800
+Subject: [PATCH] boot/opensbi: Remove trouble patch
+
+---
+ ...Makefile-Don-t-specify-mabi-or-march.patch | 37 -------------------
+ 1 file changed, 37 deletions(-)
+ delete mode 100644 boot/opensbi/0001-Makefile-Don-t-specify-mabi-or-march.patch
+
+diff --git a/boot/opensbi/0001-Makefile-Don-t-specify-mabi-or-march.patch b/boot/opensbi/0001-Makefile-Don-t-specify-mabi-or-march.patch
+deleted file mode 100644
+index 5f554a6..0000000
+--- a/boot/opensbi/0001-Makefile-Don-t-specify-mabi-or-march.patch
++++ /dev/null
+@@ -1,37 +0,0 @@
+-From f5871e1f3650d6c8a032928cb5d8ca00c275c377 Mon Sep 17 00:00:00 2001
+-From: Alistair Francis <alistair.francis@wdc.com>
+-Date: Fri, 15 Feb 2019 14:57:41 -0800
+-Subject: [PATCH] Makefile: Don't specify mabi or march
+-
+-To avoid
+-    can't link double-float modules with soft-float modules
+-errors when building 32-bit openSBI don't specify mabi or march.
+-
+-Signed-off-by: Alistair Francis <alistair.francis@wdc.com>
+----
+- Makefile | 2 --
+- 1 file changed, 2 deletions(-)
+-
+-diff --git a/Makefile b/Makefile
+-index ae68f55..10851fc 100644
+---- a/Makefile
+-+++ b/Makefile
+-@@ -145,7 +145,6 @@ GENFLAGS	+=	$(firmware-genflags-y)
+- CFLAGS		=	-g -Wall -Werror -nostdlib -fno-strict-aliasing -O2
+- CFLAGS		+=	-fno-omit-frame-pointer -fno-optimize-sibling-calls
+- CFLAGS		+=	-mno-save-restore -mstrict-align
+--CFLAGS		+=	-mabi=$(PLATFORM_RISCV_ABI) -march=$(PLATFORM_RISCV_ISA)
+- CFLAGS		+=	-mcmodel=$(PLATFORM_RISCV_CODE_MODEL)
+- CFLAGS		+=	$(GENFLAGS)
+- CFLAGS		+=	$(platform-cflags-y)
+-@@ -158,7 +157,6 @@ CPPFLAGS	+=	$(firmware-cppflags-y)
+- ASFLAGS		=	-g -Wall -nostdlib -D__ASSEMBLY__
+- ASFLAGS		+=	-fno-omit-frame-pointer -fno-optimize-sibling-calls
+- ASFLAGS		+=	-mno-save-restore -mstrict-align
+--ASFLAGS		+=	-mabi=$(PLATFORM_RISCV_ABI) -march=$(PLATFORM_RISCV_ISA)
+- ASFLAGS		+=	-mcmodel=$(PLATFORM_RISCV_CODE_MODEL)
+- ASFLAGS		+=	$(GENFLAGS)
+- ASFLAGS		+=	$(platform-asflags-y)
+--- 
+-2.20.1
+-
+-- 
+2.17.1
+

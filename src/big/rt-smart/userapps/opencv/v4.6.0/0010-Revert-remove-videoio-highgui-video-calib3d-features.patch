@@ -1,0 +1,27 @@
+From ec7d08cdbd5c68670b86e781cdeef165d5c8ee26 Mon Sep 17 00:00:00 2001
+From: zhouquan <zhouquan@rt-thread.com>
+Date: Thu, 5 Jan 2023 17:08:13 +0800
+Subject: [PATCH 10/14] Revert "remove videoio highgui video calib3d features2d
+ objdetect dnn ml flann photo stitching modules from cmake"
+
+This reverts commit d04900b6e4e45b9c347a51d7eedc48aa0bb8ff9e.
+---
+ cmake/OpenCVModule.cmake | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/cmake/OpenCVModule.cmake b/cmake/OpenCVModule.cmake
+index 270f83fcc9..9981620f25 100644
+--- a/cmake/OpenCVModule.cmake
++++ b/cmake/OpenCVModule.cmake
+@@ -398,7 +398,7 @@ macro(ocv_register_modules)
+   endforeach()
+   ocv_list_sort(OPENCV_MODULES_MAIN)
+   ocv_list_sort(OPENCV_MODULES_EXTRA)
+-  set(FIXED_ORDER_MODULES core imgproc imgcodecs)
++  set(FIXED_ORDER_MODULES core imgproc imgcodecs videoio highgui video calib3d features2d objdetect dnn ml flann photo stitching)
+   list(REMOVE_ITEM OPENCV_MODULES_MAIN ${FIXED_ORDER_MODULES})
+   set(OPENCV_MODULES_MAIN ${FIXED_ORDER_MODULES} ${OPENCV_MODULES_MAIN})
+ 
+-- 
+2.34.1
+

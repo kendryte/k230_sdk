@@ -1,0 +1,12 @@
+# Set gdb environment
+set height 0
+
+# Don't confirm when quit
+set confirm off
+
+# Setup clock and ddr
+#file u-boot-spl.lw
+#load
+#c
+set $pmpaddr0=0x1fffffffff
+set $pmpcfg0=0x9f

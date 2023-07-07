@@ -1,0 +1,7 @@
+config BR2_PACKAGE_WDT_TEST
+	bool "watchdog test"
+	help
+	  k230 watchdog demo for test
+
+
+

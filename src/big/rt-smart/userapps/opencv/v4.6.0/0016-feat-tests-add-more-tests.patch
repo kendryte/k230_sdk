@@ -1,0 +1,688 @@
+From d34b2197389453e32140846dd8e79c2f1aabc835 Mon Sep 17 00:00:00 2001
+From: yechang <yechang@rt-thread.com>
+Date: Thu, 23 Feb 2023 23:09:02 +0800
+Subject: [PATCH 16/17] =?UTF-8?q?=E2=9C=A8=20feat(tests):=20add=20more=20t?=
+ =?UTF-8?q?ests?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ .../28_opencv_calcHist/28_opencv_calcHist.cpp | 79 ++++++++++++++++
+ tests/28_opencv_calcHist/SConscript           | 30 ++++++
+ tests/28_opencv_calcHist/SConstruct           |  8 ++
+ .../29_opencv_findContours.cpp                | 63 +++++++++++++
+ tests/29_opencv_findContours/SConscript       | 30 ++++++
+ tests/29_opencv_findContours/SConstruct       |  8 ++
+ .../30_opencv_boundingRect.cpp                | 69 ++++++++++++++
+ tests/30_opencv_boundingRect/SConscript       | 30 ++++++
+ tests/30_opencv_boundingRect/SConstruct       |  8 ++
+ .../31_opencv_minAreaRect.cpp                 | 61 +++++++++++++
+ tests/31_opencv_minAreaRect/SConscript        | 30 ++++++
+ tests/31_opencv_minAreaRect/SConstruct        |  8 ++
+ .../32_opencv_fillPoly/32_opencv_fillPoly.cpp | 91 +++++++++++++++++++
+ tests/32_opencv_fillPoly/SConscript           | 30 ++++++
+ tests/32_opencv_fillPoly/SConstruct           |  8 ++
+ 15 files changed, 553 insertions(+)
+ create mode 100644 tests/28_opencv_calcHist/28_opencv_calcHist.cpp
+ create mode 100644 tests/28_opencv_calcHist/SConscript
+ create mode 100644 tests/28_opencv_calcHist/SConstruct
+ create mode 100644 tests/29_opencv_findContours/29_opencv_findContours.cpp
+ create mode 100644 tests/29_opencv_findContours/SConscript
+ create mode 100644 tests/29_opencv_findContours/SConstruct
+ create mode 100644 tests/30_opencv_boundingRect/30_opencv_boundingRect.cpp
+ create mode 100644 tests/30_opencv_boundingRect/SConscript
+ create mode 100644 tests/30_opencv_boundingRect/SConstruct
+ create mode 100644 tests/31_opencv_minAreaRect/31_opencv_minAreaRect.cpp
+ create mode 100644 tests/31_opencv_minAreaRect/SConscript
+ create mode 100644 tests/31_opencv_minAreaRect/SConstruct
+ create mode 100644 tests/32_opencv_fillPoly/32_opencv_fillPoly.cpp
+ create mode 100644 tests/32_opencv_fillPoly/SConscript
+ create mode 100644 tests/32_opencv_fillPoly/SConstruct
+
+diff --git a/tests/28_opencv_calcHist/28_opencv_calcHist.cpp b/tests/28_opencv_calcHist/28_opencv_calcHist.cpp
+new file mode 100644
+index 0000000000..e1741cf29f
+--- /dev/null
++++ b/tests/28_opencv_calcHist/28_opencv_calcHist.cpp
+@@ -0,0 +1,79 @@
++/*
++ * Copyright (c) 2006-2021, RT-Thread Development Team
++ *
++ * SPDX-License-Identifier: Apache-2.0
++ *
++ * Change Logs:
++ * Date           Author       Notes
++ * 2023/02/21     YeC          The first version
++ *
++ * @brief  Test for OpenCV/calcHist.
++ * All the classes tested in this file are summarized as below:
++ * --calcHist
++ */
++
++#include<opencv2/opencv.hpp>
++#include<iostream>
++#include<vector>
++using namespace std;
++using namespace cv;
++int main()
++{
++	Mat src = imread("./a.jpg");
++	if (src.empty()) 
++	{
++		cout << "no picture" << endl;
++		return -1;
++	}
++	//imshow("lena",src);
++	vector<Mat> all_channel;
++	split(src,all_channel); //split函数将图像的三通道分别提取出来，放到all_channel数组里面
++	
++	//定义参数变量
++	const int bin = 256;
++	float bin_range[2] = { 0,255 };
++	const float* ranges[1] = { bin_range };//这样做只是方便下面clacHist函数的传参
++	
++	//定义变量来存储直方图数据
++	Mat b_hist;
++	Mat g_hist;
++	Mat r_hist;
++	
++	//计算得到直方图数据
++	calcHist(&all_channel[0], 1, 0, Mat(), b_hist, 1, &bin, ranges, true, false);
++	calcHist(&all_channel[1], 1, 0, Mat(), g_hist, 1, &bin, ranges, true, false);
++	calcHist(&all_channel[2], 1, 0, Mat(), r_hist, 1, &bin, ranges, true, false);
++
++	//设置直方图画布的参数
++	int hist_w = 512;  
++	int hist_h = 400;
++	int bin_w = cvRound((double)hist_w/bin); //设置直方图中每一点的步长，通过hist_w/bin计算得出。cvRound()函数是“四舍五入”的作用。
++	Mat hist_canvas = Mat::zeros(hist_h, hist_w, CV_8UC3);
++	//直方图数据进行归一化。
++	normalize(b_hist, b_hist, 0, 255, NORM_MINMAX, -1, Mat());
++	normalize(g_hist, g_hist, 0, 255, NORM_MINMAX, -1, Mat());
++	normalize(r_hist, r_hist, 0, 255, NORM_MINMAX, -1, Mat());
++	//统计图绘制
++	Mat hist;
++	double max_val;
++	minMaxLoc(hist, 0, &max_val, 0, 0);//计算直方图的最大像素值
++	for (int i = 1; i < 256; i++)
++	{
++		//绘制蓝色分量直方图
++		line(hist_canvas, Point((i - 1)*bin_w, hist_h - cvRound(b_hist.at<float>(i - 1))),
++			Point((i)*bin_w, hist_h - cvRound(b_hist.at<float>(i))), Scalar(255, 0, 0),2);
++		//绘制绿色分量直方图
++		line(hist_canvas, Point((i - 1)*bin_w, hist_h - cvRound(g_hist.at<float>(i - 1))),
++			Point((i)*bin_w, hist_h - cvRound(g_hist.at<float>(i))), Scalar(0, 255, 0),2);
++		//绘制红色分量直方图
++		line(hist_canvas, Point((i - 1)*bin_w, hist_h - cvRound(r_hist.at<float>(i - 1))),
++			Point((i)*bin_w, hist_h - cvRound(r_hist.at<float>(i))), Scalar(0, 0, 255),2);
++	}
++	//展示到屏幕上
++	imwrite("lena_hist.jpg", hist_canvas);
++	//imshow("result",hist_canvas);
++	//waitKey(0);
++	//destroyAllWindows();
++	return 0;
++}
++
+diff --git a/tests/28_opencv_calcHist/SConscript b/tests/28_opencv_calcHist/SConscript
+new file mode 100644
+index 0000000000..744cb8de26
+--- /dev/null
++++ b/tests/28_opencv_calcHist/SConscript
+@@ -0,0 +1,30 @@
++# RT-Thread building script for component
++
++from building import *
++
++cwd = GetCurrentDir()
++src = Glob('*.cpp')
++CPPPATH = [cwd, '../install/include/opencv4']
++
++CPPDEFINES = [
++    'HAVE_CCONFIG_H',
++]
++group = DefineGroup('hello', src, 
++        depend = [''], 
++        CPPPATH = CPPPATH, 
++        CPPDEFINES = CPPDEFINES, 
++        LIBS=['atomic',
++              'opencv_core',
++              'stdc++',
++              'zlib',
++              'cxx',
++              'liblibjpeg-turbo',
++              'liblibopenjp2',
++              'liblibpng',
++              'liblibtiff',
++              'liblibwebp',
++              'opencv_imgproc',
++              'opencv_imgcodecs'],
++        LIBPATH=['../install/lib',
++                 '../install/lib/opencv4/3rdparty'])
++Return('group')
+diff --git a/tests/28_opencv_calcHist/SConstruct b/tests/28_opencv_calcHist/SConstruct
+new file mode 100644
+index 0000000000..cc7be46f9c
+--- /dev/null
++++ b/tests/28_opencv_calcHist/SConstruct
+@@ -0,0 +1,8 @@
++import os
++import sys
++
++# add building.py path
++sys.path = sys.path + [os.path.join('..','..','..','..','tools')]
++from building import *
++
++BuildApplication('28_opencv_calcHist', 'SConscript', usr_root = '../../../')
+diff --git a/tests/29_opencv_findContours/29_opencv_findContours.cpp b/tests/29_opencv_findContours/29_opencv_findContours.cpp
+new file mode 100644
+index 0000000000..e2820b9335
+--- /dev/null
++++ b/tests/29_opencv_findContours/29_opencv_findContours.cpp
+@@ -0,0 +1,63 @@
++/*
++ * Copyright (c) 2006-2021, RT-Thread Development Team
++ *
++ * SPDX-License-Identifier: Apache-2.0
++ *
++ * Change Logs:
++ * Date           Author       Notes
++ * 2023/02/21     YeC          The first version
++ *
++ * @brief  Test for OpenCV/findContours.
++ * All the classes tested in this file are summarized as below:
++ * --findContours
++ */
++
++#include <iostream>
++#include<opencv2/opencv.hpp>
++#include <opencv2/core/core.hpp>
++#include <opencv2/highgui/highgui.hpp>
++#include <opencv2/imgproc/imgproc.hpp>
++#include <opencv2/imgproc/imgproc_c.h>
++#include <stdlib.h>
++ 
++using namespace std;
++using namespace cv;
++ 
++int main()
++{
++    Mat src, grayImage, dstImage;
++    src = imread("./a.jpg");
++ 
++    //判断图像是否加载成功
++    if (src.empty())
++    {
++        cout << "图像加载失败" << endl;
++        return -1;
++    }
++ 
++    //imshow("lena", src);
++ 
++    //转换为灰度图并平滑滤波
++    cvtColor(src, grayImage, COLOR_BGR2GRAY);
++ 
++    //定义变量
++    vector<vector<Point>>contours;
++    vector<Vec4i>hierarchy;
++ 
++    grayImage = grayImage > 120;
++    findContours(grayImage, contours, hierarchy, CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE);
++ 
++    //绘制轮廓图
++    dstImage = Mat::zeros(grayImage.size(), CV_8UC3);
++    for (long unsigned int i = 0; i < hierarchy.size(); i++)
++    {
++        Scalar color = Scalar(rand() % 255, rand() % 255, rand() % 255);
++        drawContours(dstImage, contours, i, color, CV_FILLED, 8, hierarchy);
++    }
++    imwrite("lena_contours.jpg", dstImage);
++    //imshow("lena_contours", dstImage);
++    //waitKey(0);
++    //destroyAllWindows();
++    return 0;
++}
++
+diff --git a/tests/29_opencv_findContours/SConscript b/tests/29_opencv_findContours/SConscript
+new file mode 100644
+index 0000000000..744cb8de26
+--- /dev/null
++++ b/tests/29_opencv_findContours/SConscript
+@@ -0,0 +1,30 @@
++# RT-Thread building script for component
++
++from building import *
++
++cwd = GetCurrentDir()
++src = Glob('*.cpp')
++CPPPATH = [cwd, '../install/include/opencv4']
++
++CPPDEFINES = [
++    'HAVE_CCONFIG_H',
++]
++group = DefineGroup('hello', src, 
++        depend = [''], 
++        CPPPATH = CPPPATH, 
++        CPPDEFINES = CPPDEFINES, 
++        LIBS=['atomic',
++              'opencv_core',
++              'stdc++',
++              'zlib',
++              'cxx',
++              'liblibjpeg-turbo',
++              'liblibopenjp2',
++              'liblibpng',
++              'liblibtiff',
++              'liblibwebp',
++              'opencv_imgproc',
++              'opencv_imgcodecs'],
++        LIBPATH=['../install/lib',
++                 '../install/lib/opencv4/3rdparty'])
++Return('group')
+diff --git a/tests/29_opencv_findContours/SConstruct b/tests/29_opencv_findContours/SConstruct
+new file mode 100644
+index 0000000000..da11b1b8a9
+--- /dev/null
++++ b/tests/29_opencv_findContours/SConstruct
+@@ -0,0 +1,8 @@
++import os
++import sys
++
++# add building.py path
++sys.path = sys.path + [os.path.join('..','..','..','..','tools')]
++from building import *
++
++BuildApplication('29_opencv_findContours', 'SConscript', usr_root = '../../../')
+diff --git a/tests/30_opencv_boundingRect/30_opencv_boundingRect.cpp b/tests/30_opencv_boundingRect/30_opencv_boundingRect.cpp
+new file mode 100644
+index 0000000000..886c4bcd21
+--- /dev/null
++++ b/tests/30_opencv_boundingRect/30_opencv_boundingRect.cpp
+@@ -0,0 +1,69 @@
++/*
++ * Copyright (c) 2006-2021, RT-Thread Development Team
++ *
++ * SPDX-License-Identifier: Apache-2.0
++ *
++ * Change Logs:
++ * Date           Author       Notes
++ * 2023/02/21     YeC          The first version
++ *
++ * @brief  Test for OpenCV/findContours.
++ * All the classes tested in this file are summarized as below:
++ * --findContours
++ */
++
++#include "opencv2/highgui/highgui.hpp"
++#include "opencv2/imgproc/imgproc.hpp"
++#include <iostream>
++#include <stdio.h>
++#include <stdlib.h>
++
++using namespace cv;
++using namespace std;
++
++int main()
++{
++	//数据说明
++	Mat src;
++	Mat src_gray;
++	int thresh = 100;
++	RNG rng(12345);
++	Mat threshold_output;
++	vector<vector<Point> > contours;
++	vector<Vec4i> hierarchy;
++	src = imread("./a.jpg");	// 载入原图像, 返回3通道图像
++	cvtColor(src, src_gray, COLOR_BGR2GRAY);  // 转化成图像
++	blur(src_gray, src_gray, Size(30, 30));	  //图像进行平滑处理
++
++	// 使用Threshold检测边缘
++	threshold(src_gray, threshold_output, thresh, 255, THRESH_BINARY);
++	findContours(threshold_output, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE, Point(0, 0));  //找到轮廓
++
++	//多边形逼近轮廓 + 获取矩形和圆形边界框
++	vector<vector<Point> > contours_poly(contours.size());
++	vector<Rect> boundRect(contours.size());
++	vector<Point2f>center(contours.size());
++	vector<float>radius(contours.size());
++
++	for (long unsigned int i = 0; i < contours.size(); i++)
++	{
++		approxPolyDP(Mat(contours[i]), contours_poly[i], 3, true);
++		boundRect[i] = boundingRect(Mat(contours_poly[i]));
++		minEnclosingCircle(contours_poly[i], center[i], radius[i]);
++	}
++	
++	// 画多边形轮廓 + 包围的矩形框 + 圆形框
++	Mat drawing = Mat::zeros(threshold_output.size(), CV_8UC3);
++	for (long unsigned int i = 0; i< contours.size(); i++)
++	{
++		Scalar color = Scalar(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
++		drawContours(drawing, contours_poly, i, color, 1, 8, vector<Vec4i>(), 0, Point());
++		rectangle(drawing, boundRect[i].tl(), boundRect[i].br(), color, 2, 8, 0);
++		circle(drawing, center[i], (int)radius[i], color, 2, 8, 0);
++	}
++	imwrite("lena_boundingRect.jpg", drawing);
++
++	return(0);
++}
++
++
+diff --git a/tests/30_opencv_boundingRect/SConscript b/tests/30_opencv_boundingRect/SConscript
+new file mode 100644
+index 0000000000..744cb8de26
+--- /dev/null
++++ b/tests/30_opencv_boundingRect/SConscript
+@@ -0,0 +1,30 @@
++# RT-Thread building script for component
++
++from building import *
++
++cwd = GetCurrentDir()
++src = Glob('*.cpp')
++CPPPATH = [cwd, '../install/include/opencv4']
++
++CPPDEFINES = [
++    'HAVE_CCONFIG_H',
++]
++group = DefineGroup('hello', src, 
++        depend = [''], 
++        CPPPATH = CPPPATH, 
++        CPPDEFINES = CPPDEFINES, 
++        LIBS=['atomic',
++              'opencv_core',
++              'stdc++',
++              'zlib',
++              'cxx',
++              'liblibjpeg-turbo',
++              'liblibopenjp2',
++              'liblibpng',
++              'liblibtiff',
++              'liblibwebp',
++              'opencv_imgproc',
++              'opencv_imgcodecs'],
++        LIBPATH=['../install/lib',
++                 '../install/lib/opencv4/3rdparty'])
++Return('group')
+diff --git a/tests/30_opencv_boundingRect/SConstruct b/tests/30_opencv_boundingRect/SConstruct
+new file mode 100644
+index 0000000000..3a1dfa87b5
+--- /dev/null
++++ b/tests/30_opencv_boundingRect/SConstruct
+@@ -0,0 +1,8 @@
++import os
++import sys
++
++# add building.py path
++sys.path = sys.path + [os.path.join('..','..','..','..','tools')]
++from building import *
++
++BuildApplication('30_opencv_boundingRect', 'SConscript', usr_root = '../../../')
+diff --git a/tests/31_opencv_minAreaRect/31_opencv_minAreaRect.cpp b/tests/31_opencv_minAreaRect/31_opencv_minAreaRect.cpp
+new file mode 100644
+index 0000000000..e7ecd01a63
+--- /dev/null
++++ b/tests/31_opencv_minAreaRect/31_opencv_minAreaRect.cpp
+@@ -0,0 +1,61 @@
++/*
++ * Copyright (c) 2006-2021, RT-Thread Development Team
++ *
++ * SPDX-License-Identifier: Apache-2.0
++ *
++ * Change Logs:
++ * Date           Author       Notes
++ * 2023/02/21     YeC          The first version
++ *
++ * @brief  Test for OpenCV/findContours.
++ * All the classes tested in this file are summarized as below:
++ * --findContours
++ */
++
++#include<opencv2/opencv.hpp>
++
++using namespace cv;
++
++int main()
++{
++    Mat src, dst;
++    std::vector<std::vector<Point>>contours;
++    int area = 0, length = 0;
++    src = imread("./a.jpg");
++    if(src.empty())
++    {
++    printf("can not load image \n");
++    return -1;
++    }
++
++    dst = Mat::zeros(src.size(), CV_8UC3);
++    std::vector<Vec4i> hierarchy;
++    blur(src,dst,Size(3,3));
++    cvtColor(dst,dst,COLOR_BGR2GRAY);
++    Canny(dst, dst, 20, 80, 3, false);
++    findContours(dst, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE, Point(0, 0));
++
++    RNG rng(0);
++    std::vector<std::vector<Point>> contoursPloy(contours.size());
++    std::vector<RotatedRect> minRects(contours.size());
++
++    for(long unsigned int i = 0; i < contours.size(); i++)
++    {
++        if(contourArea(contours[i]) > area && arcLength(contours[i], false) > length)
++        {   
++            minRects[i] = minAreaRect(Mat(contours[i]));
++            Scalar color = Scalar(rng.uniform(0,255), rng.uniform(0,255), rng.uniform(0,255));
++            //drawContours(dst, contoursPloy, i, color, 1,8,vector<Vec4i>(), 0, Point(0, 0));
++            Point2f rectPoints[4];
++            minRects[i].points(rectPoints);
++            for (int j = 0; j < 4; j++)
++            {
++                line(src, rectPoints[j], rectPoints[(j+1)%4], color, 2, 8, 0);
++            }
++        }
++    }
++    imwrite("result.jpg", src);
++    //imshow("output",src);
++    //waitKey();
++    return 0;
++}
+diff --git a/tests/31_opencv_minAreaRect/SConscript b/tests/31_opencv_minAreaRect/SConscript
+new file mode 100644
+index 0000000000..744cb8de26
+--- /dev/null
++++ b/tests/31_opencv_minAreaRect/SConscript
+@@ -0,0 +1,30 @@
++# RT-Thread building script for component
++
++from building import *
++
++cwd = GetCurrentDir()
++src = Glob('*.cpp')
++CPPPATH = [cwd, '../install/include/opencv4']
++
++CPPDEFINES = [
++    'HAVE_CCONFIG_H',
++]
++group = DefineGroup('hello', src, 
++        depend = [''], 
++        CPPPATH = CPPPATH, 
++        CPPDEFINES = CPPDEFINES, 
++        LIBS=['atomic',
++              'opencv_core',
++              'stdc++',
++              'zlib',
++              'cxx',
++              'liblibjpeg-turbo',
++              'liblibopenjp2',
++              'liblibpng',
++              'liblibtiff',
++              'liblibwebp',
++              'opencv_imgproc',
++              'opencv_imgcodecs'],
++        LIBPATH=['../install/lib',
++                 '../install/lib/opencv4/3rdparty'])
++Return('group')
+diff --git a/tests/31_opencv_minAreaRect/SConstruct b/tests/31_opencv_minAreaRect/SConstruct
+new file mode 100644
+index 0000000000..1df3c0ccc5
+--- /dev/null
++++ b/tests/31_opencv_minAreaRect/SConstruct
+@@ -0,0 +1,8 @@
++import os
++import sys
++
++# add building.py path
++sys.path = sys.path + [os.path.join('..','..','..','..','tools')]
++from building import *
++
++BuildApplication('31_opencv_minAreaRect', 'SConscript', usr_root = '../../../')
+diff --git a/tests/32_opencv_fillPoly/32_opencv_fillPoly.cpp b/tests/32_opencv_fillPoly/32_opencv_fillPoly.cpp
+new file mode 100644
+index 0000000000..e95c25fd13
+--- /dev/null
++++ b/tests/32_opencv_fillPoly/32_opencv_fillPoly.cpp
+@@ -0,0 +1,91 @@
++/*
++ * Copyright (c) 2006-2021, RT-Thread Development Team
++ *
++ * SPDX-License-Identifier: Apache-2.0
++ *
++ * Change Logs:
++ * Date           Author       Notes
++ * 2023/02/21     YeC          The first version
++ *
++ * @brief  Test for OpenCV/findContours.
++ * All the classes tested in this file are summarized as below:
++ * --findContours
++ */
++
++#include <opencv2/opencv.hpp>
++#include <vector>
++using namespace cv;
++using namespace std;
++
++#define w 400
++
++void MyPolygon(Mat img);
++
++void MyFilledCircle(Mat img, Point center)
++{
++	circle(img,
++		center,
++		w / 32,
++		Scalar(0, 0, 255),
++		FILLED,
++		LINE_8);
++}
++
++void MyPolygon(Mat img)
++{
++	int lineType = LINE_8;
++	Point rook_points[1][20];
++	rook_points[0][0] = Point(w / 4, 7 * w / 8);
++	rook_points[0][1] = Point(3 * w / 4, 7 * w / 8);
++	rook_points[0][2] = Point(3 * w / 4, 13 * w / 16);
++	rook_points[0][3] = Point(11 * w / 16, 13 * w / 16);
++	rook_points[0][4] = Point(19 * w / 32, 3 * w / 8);
++	rook_points[0][5] = Point(3 * w / 4, 3 * w / 8);
++	rook_points[0][6] = Point(3 * w / 4, w / 8);
++	rook_points[0][7] = Point(26 * w / 40, w / 8);
++	rook_points[0][8] = Point(26 * w / 40, w / 4);
++	rook_points[0][9] = Point(22 * w / 40, w / 4);
++	rook_points[0][10] = Point(22 * w / 40, w / 8);
++	rook_points[0][11] = Point(18 * w / 40, w / 8);
++	rook_points[0][12] = Point(18 * w / 40, w / 4);
++	rook_points[0][13] = Point(14 * w / 40, w / 4);
++	rook_points[0][14] = Point(14 * w / 40, w / 8);
++	rook_points[0][15] = Point(w / 4, w / 8);
++	rook_points[0][16] = Point(w / 4, 3 * w / 8);
++	rook_points[0][17] = Point(13 * w / 32, 3 * w / 8);
++	rook_points[0][18] = Point(5 * w / 16, 13 * w / 16);
++	rook_points[0][19] = Point(w / 4, 13 * w / 16);
++	const Point* ppt[1] = { rook_points[0] };
++	int npt[] = { 20 };
++
++	imwrite("image.jpg",img);
++
++	fillPoly(img,
++		ppt,
++		npt,
++		1,
++		Scalar(0, 192, 255),
++		lineType);
++}
++
++
++int main()
++{
++	string rook_window = "Drawing 2: Rook";
++	Mat rook_image = Mat::zeros(w, w, CV_8UC3);
++
++	//画棋子
++	MyPolygon(rook_image);
++
++	//保存
++	imwrite("rook_image.jpg", rook_image);
++	//显示
++	//imshow(rook_window, rook_image);
++	//moveWindow(rook_window, w, 200);
++	//waitKey(0);
++    return 0;
++}
++
++
++
++
+diff --git a/tests/32_opencv_fillPoly/SConscript b/tests/32_opencv_fillPoly/SConscript
+new file mode 100644
+index 0000000000..744cb8de26
+--- /dev/null
++++ b/tests/32_opencv_fillPoly/SConscript
+@@ -0,0 +1,30 @@
++# RT-Thread building script for component
++
++from building import *
++
++cwd = GetCurrentDir()
++src = Glob('*.cpp')
++CPPPATH = [cwd, '../install/include/opencv4']
++
++CPPDEFINES = [
++    'HAVE_CCONFIG_H',
++]
++group = DefineGroup('hello', src, 
++        depend = [''], 
++        CPPPATH = CPPPATH, 
++        CPPDEFINES = CPPDEFINES, 
++        LIBS=['atomic',
++              'opencv_core',
++              'stdc++',
++              'zlib',
++              'cxx',
++              'liblibjpeg-turbo',
++              'liblibopenjp2',
++              'liblibpng',
++              'liblibtiff',
++              'liblibwebp',
++              'opencv_imgproc',
++              'opencv_imgcodecs'],
++        LIBPATH=['../install/lib',
++                 '../install/lib/opencv4/3rdparty'])
++Return('group')
+diff --git a/tests/32_opencv_fillPoly/SConstruct b/tests/32_opencv_fillPoly/SConstruct
+new file mode 100644
+index 0000000000..299e5ad1d3
+--- /dev/null
++++ b/tests/32_opencv_fillPoly/SConstruct
+@@ -0,0 +1,8 @@
++import os
++import sys
++
++# add building.py path
++sys.path = sys.path + [os.path.join('..','..','..','..','tools')]
++from building import *
++
++BuildApplication('32_opencv_fillPoly', 'SConscript', usr_root = '../../../')
+-- 
+2.34.1
+

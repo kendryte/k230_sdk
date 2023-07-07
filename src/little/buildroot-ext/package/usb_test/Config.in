@@ -1,0 +1,5 @@
+config BR2_PACKAGE_USB_TEST
+	bool "usb_test"
+	default y
+	help
+		for usb test.

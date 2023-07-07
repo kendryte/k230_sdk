@@ -1,0 +1,640 @@
+From 2a75cfd5f0e636938fe45597c3578ded721e87a3 Mon Sep 17 00:00:00 2001
+From: zhouquan <zhouquan@rt-thread.com>
+Date: Fri, 21 Oct 2022 19:32:22 +0800
+Subject: [PATCH 11/14] add posix file api
+
+---
+ src/omv/common/ff_wrapper.c      | 277 +++++++++++++++++++++++++++++++
+ src/omv/common/ff_wrapper.h      |  71 ++++++++
+ src/omv/common/ini.c             |  34 ++--
+ src/omv/imlib/imlib.h            |   2 +
+ src/omv/ports/unix/omvhal-file.c |  95 +++++++++++
+ src/omv/ports/unix/omvhaldef.h   |  32 ++++
+ src/omv/ports/unix/omvhalfile.h  |  27 +++
+ 7 files changed, 522 insertions(+), 16 deletions(-)
+ create mode 100644 src/omv/ports/unix/omvhal-file.c
+ create mode 100644 src/omv/ports/unix/omvhaldef.h
+ create mode 100644 src/omv/ports/unix/omvhalfile.h
+
+diff --git a/src/omv/common/ff_wrapper.c b/src/omv/common/ff_wrapper.c
+index 6a62c4da..8d6af7c3 100644
+--- a/src/omv/common/ff_wrapper.c
++++ b/src/omv/common/ff_wrapper.c
+@@ -6,6 +6,9 @@
+  * File System Helper Functions
+  *
+  */
++
++#if 0
++
+ #include "imlib_config.h"
+ #if defined(IMLIB_ENABLE_IMAGE_FILE_IO)
+ 
+@@ -492,3 +495,277 @@ void write_data(FIL *fp, const void *data, UINT size)
+     }
+ }
+ #endif //IMLIB_ENABLE_IMAGE_FILE_IO
++
++#else
++#include <stdio.h>
++#include <string.h>
++
++// #include "systick.h"
++#include "common.h"
++#include "fb_alloc.h"
++#include "ff_wrapper.h"
++#include "py/gc.h"
++#include "py/lexer.h"
++#include "py/misc.h"
++#include "py/mpconfig.h"
++#include "py/nlr.h"
++#include "py/obj.h"
++#include "py/objtuple.h"
++#include "py/parse.h"
++#include "py/qstr.h"
++#include "py/runtime.h"
++#include "py/stream.h"
++
++const char *ffs_strerror(int res)
++{
++    return "";
++}
++
++int f_open_helper(omvhal_fil_t *fp, const char *path, int mode)
++{
++    return omvhal_f_open(fp, path, mode);
++}
++
++NORETURN static void ff_fail(omvhal_fil_t *fp, int res)
++{
++    if (fp)
++        omvhal_f_close(fp);
++    nlr_raise(mp_obj_new_exception_msg(&mp_type_OSError, ffs_strerror(res)));
++}
++
++NORETURN static void ff_read_fail(omvhal_fil_t *fp)
++{
++    if (fp)
++        omvhal_f_close(fp);
++    nlr_raise(mp_obj_new_exception_msg(&mp_type_OSError, "Failed to read requested bytes!"));
++}
++
++NORETURN static void ff_write_fail(omvhal_fil_t *fp)
++{
++    if (fp)
++        omvhal_f_close(fp);
++    nlr_raise(mp_obj_new_exception_msg(&mp_type_OSError, "Failed to write requested bytes!"));
++}
++
++NORETURN static void ff_expect_fail(omvhal_fil_t *fp)
++{
++    if (fp)
++        omvhal_f_close(fp);
++    nlr_raise(mp_obj_new_exception_msg(&mp_type_OSError, "Unexpected value read!"));
++}
++
++void ff_unsupported_format(omvhal_fil_t *fp)
++{
++    if (fp)
++        omvhal_f_close(fp);
++    nlr_raise(mp_obj_new_exception_msg(&mp_type_OSError, "Unsupported format!"));
++}
++
++void ff_file_corrupted(omvhal_fil_t *fp)
++{
++    if (fp)
++        omvhal_f_close(fp);
++    nlr_raise(mp_obj_new_exception_msg(&mp_type_OSError, "File corrupted!"));
++}
++
++void ff_not_equal(omvhal_fil_t *fp)
++{
++    if (fp)
++        omvhal_f_close(fp);
++    nlr_raise(mp_obj_new_exception_msg(&mp_type_OSError, "Images not equal!"));
++}
++
++void ff_no_intersection(omvhal_fil_t *fp)
++{
++    if (fp)
++        omvhal_f_close(fp);
++    nlr_raise(mp_obj_new_exception_msg(&mp_type_OSError, "No intersection!"));
++}
++
++void file_read_open(omvhal_fil_t *fp, const char *path)
++{
++    int res = f_open_helper(fp, path, FA_READ | FA_OPEN_EXISTING);
++    if (res != 0)
++        ff_fail(fp, res);
++}
++
++void file_write_open(omvhal_fil_t *fp, const char *path)
++{
++    int res = f_open_helper(fp, path, FA_WRITE | FA_CREATE_ALWAYS);
++    if (res != 0)
++        ff_fail(fp, res);
++}
++
++void file_close(omvhal_fil_t *fp)
++{
++    int res = omvhal_f_close(fp);
++    if (res != FR_OK)
++        ff_fail(fp, res);
++}
++
++void file_seek(omvhal_fil_t *fp, uint32_t offset)
++{
++    int res = omvhal_f_lseek(fp, offset);
++    if (res != FR_OK)
++        ff_fail(fp, res);
++}
++
++// When a sector boundary is encountered while writing a file and there are
++// more than 512 bytes left to write FatFs will detect that it can bypass
++// its internal write buffer and pass the data buffer passed to it directly
++// to the disk write function. However, the disk write function needs the
++// buffer to be aligned to a 4-byte boundary. FatFs doesn't know this and
++// will pass an unaligned buffer if we don't fix the issue. To fix this problem
++// we use a temporary buffer to fix the alignment and to speed everything up.
++
++// We use this temporary buffer for both reads and writes. The buffer allows us
++// to do multi-block reads and writes which signifcantly speed things up.
++
++static uint32_t file_buffer_offset  = 0;
++static uint8_t *file_buffer_pointer = 0;
++static uint32_t file_buffer_size    = 0;
++static uint32_t file_buffer_index   = 0;
++
++void file_buffer_init0()
++{
++    file_buffer_offset  = 0;
++    file_buffer_pointer = 0;
++    file_buffer_size    = 0;
++    file_buffer_index   = 0;
++}
++
++static void file_fill(omvhal_fil_t *fp) {}
++
++static void file_flush(omvhal_fil_t *fp) {}
++
++uint32_t file_tell_w_buf(omvhal_fil_t *fp) {}
++
++uint32_t file_size_w_buf(omvhal_fil_t *fp) {}
++
++void file_buffer_on(omvhal_fil_t *fp) {}
++
++void file_buffer_off(omvhal_fil_t *fp) {}
++
++void read_byte(omvhal_fil_t *fp, uint8_t *value)
++{
++    uint32_t bytes;
++    int      res = omvhal_f_read(fp, value, sizeof(*value), &bytes);
++    if (res != FR_OK)
++        ff_fail(fp, res);
++    if (bytes != sizeof(*value))
++        ff_read_fail(fp);
++}
++
++void read_byte_expect(omvhal_fil_t *fp, uint8_t value)
++{
++    uint8_t compare;
++    read_byte(fp, &compare);
++    if (value != compare)
++        ff_expect_fail(fp);
++}
++
++void read_byte_ignore(omvhal_fil_t *fp)
++{
++    uint8_t trash;
++    read_byte(fp, &trash);
++}
++
++void read_word(omvhal_fil_t *fp, uint16_t *value)
++{
++    uint32_t bytes;
++    int      res = omvhal_f_read(fp, value, sizeof(*value), &bytes);
++    if (res != FR_OK)
++        ff_fail(fp, res);
++    if (bytes != sizeof(*value))
++        ff_read_fail(fp);
++}
++
++void read_word_expect(omvhal_fil_t *fp, uint16_t value)
++{
++    uint16_t compare;
++    read_word(fp, &compare);
++    if (value != compare)
++        ff_expect_fail(fp);
++}
++
++void read_word_ignore(omvhal_fil_t *fp)
++{
++    uint16_t trash;
++    read_word(fp, &trash);
++}
++
++void read_long(omvhal_fil_t *fp, uint32_t *value)
++{
++    uint32_t bytes;
++    int      res = omvhal_f_read(fp, value, sizeof(*value), &bytes);
++    if (res != FR_OK)
++        ff_fail(fp, res);
++    if (bytes != sizeof(*value))
++        ff_read_fail(fp);
++}
++
++void read_long_expect(omvhal_fil_t *fp, uint32_t value)
++{
++    uint32_t compare;
++    read_long(fp, &compare);
++    if (value != compare)
++        ff_expect_fail(fp);
++}
++
++void read_long_ignore(omvhal_fil_t *fp)
++{
++    uint32_t trash;
++    read_long(fp, &trash);
++}
++
++void read_data(omvhal_fil_t *fp, void *data, uint32_t size)
++{
++    uint32_t bytes;
++    int      res = omvhal_f_read(fp, data, size, &bytes);
++    if (res != FR_OK)
++        ff_fail(fp, res);
++    if (bytes != size)
++        ff_read_fail(fp);
++}
++
++void write_byte(omvhal_fil_t *fp, uint8_t value)
++{
++    uint32_t bytes;
++    int      res = omvhal_f_write(fp, &value, sizeof(value), &bytes);
++    if (res != FR_OK)
++        ff_fail(fp, res);
++    if (bytes != sizeof(value))
++        ff_write_fail(fp);
++}
++
++void write_word(omvhal_fil_t *fp, uint16_t value)
++{
++    uint32_t bytes;
++    int      res = omvhal_f_write(fp, &value, sizeof(value), &bytes);
++    if (res != FR_OK)
++        ff_fail(fp, res);
++    if (bytes != sizeof(value))
++        ff_write_fail(fp);
++}
++
++void write_long(omvhal_fil_t *fp, uint32_t value)
++{
++    uint32_t bytes;
++    int      res = omvhal_f_write(fp, &value, sizeof(value), &bytes);
++    if (res != FR_OK)
++        ff_fail(fp, res);
++    if (bytes != sizeof(value))
++        ff_write_fail(fp);
++}
++
++void write_data(omvhal_fil_t *fp, const void *data, uint32_t size)
++{
++    uint32_t bytes;
++    int      res = omvhal_f_write(fp, data, size, &bytes);
++    if (res != FR_OK)
++        ff_fail(fp, res);
++    if (bytes != size)
++        ff_write_fail(fp);
++}
++
++#endif
+diff --git a/src/omv/common/ff_wrapper.h b/src/omv/common/ff_wrapper.h
+index ce3421c2..6fc46778 100644
+--- a/src/omv/common/ff_wrapper.h
++++ b/src/omv/common/ff_wrapper.h
+@@ -8,8 +8,31 @@
+  */
+ #ifndef __FF_WRAPPER_H__
+ #define __FF_WRAPPER_H__
++#if 0
++
+ #include <stdint.h>
+ #include <ff.h>
++
++typedef struct
++{
++    FFOBJID obj;   /* Object identifier (must be the 1st member to detect invalid object pointer) */
++    BYTE    flag;  /* File status flags */
++    BYTE    err;   /* Abort flag (error code) */
++    FSIZE_t fptr;  /* File read/write pointer (Zeroed on file open) */
++    DWORD   clust; /* Current cluster of fpter (invalid when fptr is 0) */
++    DWORD   sect;  /* Sector number appearing in buf[] (0:invalid) */
++#if !FF_FS_READONLY
++    DWORD dir_sect; /* Sector number containing the directory entry (not used at exFAT) */
++    BYTE *dir_ptr;  /* Pointer to the directory entry in the win[] (not used at exFAT) */
++#endif
++#if FF_USE_FASTSEEK
++    DWORD *cltbl; /* Pointer to the cluster link map table (nulled on open, set by application) */
++#endif
++#if !FF_FS_TINY
++    BYTE buf[FF_MAX_SS]; /* File private data read/write window */
++#endif
++} file_t;
++
+ extern const char *ffs_strerror(FRESULT res);
+ 
+ //OOFATFS wrappers
+@@ -54,4 +77,52 @@ void write_byte(FIL *fp, uint8_t value);
+ void write_word(FIL *fp, uint16_t value);
+ void write_long(FIL *fp, uint32_t value);
+ void write_data(FIL *fp, const void *data, UINT size);
++
++#else
++
++#include "omvhalfile.h"
++
++#define FA_WRITE         0x01
++#define FA_CREATE_ALWAYS 0x02
++#define FA_READ          0x04
++#define FA_OPEN_EXISTING 0x08
++
++const char *ffs_strerror(int res);
++
++int f_open_helper(omvhal_fil_t *fp, const char *path, int mode);
++
++void ff_unsupported_format(omvhal_fil_t *fp);
++void ff_file_corrupted(omvhal_fil_t *fp);
++void ff_not_equal(omvhal_fil_t *fp);
++void ff_no_intersection(omvhal_fil_t *fp);
++void file_read_open(omvhal_fil_t *fp, const char *path);
++void file_write_open(omvhal_fil_t *fp, const char *path);
++void file_close(omvhal_fil_t *fp);
++void file_seek(omvhal_fil_t *fp, uint32_t offset);
++void file_truncate(omvhal_fil_t *fp);
++void file_sync(omvhal_fil_t *fp);
++
++// File buffer functions.
++void     file_buffer_init0();
++void     file_buffer_on(omvhal_fil_t *fp);   // does fb_alloc_all
++uint32_t file_tell_w_buf(omvhal_fil_t *fp);  // valid between on and off
++uint32_t file_size_w_buf(omvhal_fil_t *fp);  // valid between on and off
++void     file_buffer_off(omvhal_fil_t *fp);  // does fb_free
++void     read_byte(omvhal_fil_t *fp, uint8_t *value);
++void     read_byte_expect(omvhal_fil_t *fp, uint8_t value);
++void     read_byte_ignore(omvhal_fil_t *fp);
++void     read_word(omvhal_fil_t *fp, uint16_t *value);
++void     read_word_expect(omvhal_fil_t *fp, uint16_t value);
++void     read_word_ignore(omvhal_fil_t *fp);
++void     read_long(omvhal_fil_t *fp, uint32_t *value);
++void     read_long_expect(omvhal_fil_t *fp, uint32_t value);
++void     read_long_ignore(omvhal_fil_t *fp);
++void     read_data(omvhal_fil_t *fp, void *data, uint32_t size);
++void     write_byte(omvhal_fil_t *fp, uint8_t value);
++void     write_word(omvhal_fil_t *fp, uint16_t value);
++void     write_long(omvhal_fil_t *fp, uint32_t value);
++void     write_data(omvhal_fil_t *fp, const void *data, uint32_t size);
++
++#endif
++
+ #endif /* __FF_WRAPPER_H__ */
+diff --git a/src/omv/common/ini.c b/src/omv/common/ini.c
+index 7f5702e0..f1d8dd42 100644
+--- a/src/omv/common/ini.c
++++ b/src/omv/common/ini.c
+@@ -178,12 +178,13 @@ bool ini_is_true(const char *value)
+ int
+ ini_fgetc(FIL *fp)
+ {
+-    char c;
+-    UINT b;
++    // char c;
++    // UINT b;
+ 
+-    if (f_read (fp, &c, 1, &b) != FR_OK || b != 1)
+-        return (EOF);
+-    return (c);
++    // if (f_read (fp, &c, 1, &b) != FR_OK || b != 1)
++    //     return (EOF);
++    // return (c);
++    return 0;
+ }
+ 
+ /*
+@@ -460,17 +461,18 @@ int ini_parse_file(FIL* file, ini_handler handler, void* user)
+ /* See documentation in header file. */
+ int ini_parse(FATFS *fs, const char* filename, ini_handler handler, void* user)
+ {
+-    FIL file;
+-    int error;
+-
+-    FRESULT res = f_open(fs, &file, filename, FA_READ | FA_OPEN_EXISTING);
+-    if (res != FR_OK)
+-        return -1;
+-    error = ini_parse_file(&file, handler, user);
+-    res = f_close(&file);
+-    if (res != FR_OK)
+-        return -1;
+-    return error;
++    // FIL file;
++    // int error;
++
++    // FRESULT res = f_open(fs, &file, filename, FA_READ | FA_OPEN_EXISTING);
++    // if (res != FR_OK)
++    //     return -1;
++    // error = ini_parse_file(&file, handler, user);
++    // res = f_close(&file);
++    // if (res != FR_OK)
++    //     return -1;
++    // return error;
++    return 0;
+ }
+ 
+ /* An ini_reader function to read the next line from a string buffer. This
+diff --git a/src/omv/imlib/imlib.h b/src/omv/imlib/imlib.h
+index 9f30b6bb..e6688fed 100644
+--- a/src/omv/imlib/imlib.h
++++ b/src/omv/imlib/imlib.h
+@@ -29,6 +29,8 @@
+ #include "imlib_config.h"
+ #include "omv_boardconfig.h"
+ 
++#include "ff_wrapper.h"
++
+ #ifndef M_PI
+ #define M_PI    3.14159265f
+ #define M_PI_2  1.57079632f
+diff --git a/src/omv/ports/unix/omvhal-file.c b/src/omv/ports/unix/omvhal-file.c
+new file mode 100644
+index 00000000..806d0112
+--- /dev/null
++++ b/src/omv/ports/unix/omvhal-file.c
+@@ -0,0 +1,95 @@
++#include "ff_wrapper.h"
++
++#include <fcntl.h>
++#include <sys/stat.h>
++#include <sys/types.h>
++#include <unistd.h>
++
++int omvhal_f_open(omvhal_fil_t *f, const char *path, int mode)
++{
++    uint32_t oflag = 0;
++    int      ret   = 0;
++
++    if (mode & FA_WRITE)
++        oflag |= O_WRONLY;
++    if (mode & FA_READ)
++        oflag |= O_RDONLY;
++    if (mode & FA_CREATE_ALWAYS)
++        oflag |= O_CREAT;
++
++    f->fd = open(path, oflag);
++
++    if (f->fd < 0)
++        ret = -1;
++
++    return ret;
++}
++
++int omvhal_f_close(omvhal_fil_t *f)
++{
++    close(f->fd);
++
++    return 0;
++}
++
++int omvhal_f_write(omvhal_fil_t *fp, const void *buff, uint32_t btw, uint32_t *bw)
++{
++    int ret;
++
++    ret = write(fp->fd, buff, btw);
++    if (bw)
++        *bw = ret;
++    if (ret == btw)
++        ret = 0;
++
++    return ret;
++}
++
++int omvhal_f_read(omvhal_fil_t *fp, void *buff, uint32_t btr, uint32_t *br)
++{
++    int ret;
++
++    ret = read(fp->fd, buff, btr);
++    if (br)
++        *br = ret;
++    if (ret == btr)
++        ret = 0;
++
++    return ret;
++}
++
++int omvhal_f_eof(omvhal_fil_t *fp)
++{
++    struct stat st;
++    uint32_t    pos;
++
++    fstat(fp->fd, &st);
++    pos = lseek(fp->fd, 0, SEEK_CUR);
++
++    return (pos >= st.st_size);
++}
++
++uint32_t omvhal_f_size(omvhal_fil_t *fp)
++{
++    struct stat st;
++
++    fstat(fp->fd, &st);
++
++    return st.st_size;
++}
++
++uint32_t omvhal_f_tell(omvhal_fil_t *fp)
++{
++    return lseek(fp->fd, 0, SEEK_CUR);
++}
++
++int omvhal_f_lseek(omvhal_fil_t *fp, uint32_t offset)
++{
++    int ret;
++
++    ret = lseek(fp->fd, offset, SEEK_SET);
++    if (ret == offset)
++        ret = 0;
++
++    return ret;
++}
+diff --git a/src/omv/ports/unix/omvhaldef.h b/src/omv/ports/unix/omvhaldef.h
+new file mode 100644
+index 00000000..6a3266d0
+--- /dev/null
++++ b/src/omv/ports/unix/omvhaldef.h
+@@ -0,0 +1,32 @@
++#ifndef __OMVHALDEF_H
++#define __OMVHALDEF_H
++
++#include <stdint.h>
++
++typedef struct
++{
++    unsigned char reg_len;
++    int pixformat;
++    uint32_t width;
++    uint32_t height;
++} omvhal_cambus_t;
++
++typedef struct
++{
++    int lock;
++    uint32_t tid;
++} omvhal_mutex_t;
++
++typedef struct
++{
++    void *dev;
++    unsigned char *fb;
++    unsigned short width, height;
++} ovmhal_lcd_t;
++
++typedef struct
++{
++    int fd;
++} omvhal_fil_t;
++
++#endif
+diff --git a/src/omv/ports/unix/omvhalfile.h b/src/omv/ports/unix/omvhalfile.h
+new file mode 100644
+index 00000000..61c8a674
+--- /dev/null
++++ b/src/omv/ports/unix/omvhalfile.h
+@@ -0,0 +1,27 @@
++#ifndef __OMVHALFILE_H
++#define __OMVHALFILE_H
++#include "omvhaldef.h"
++#include <ff.h>
++
++#define FIL     omvhal_fil_t
++#define FRESULT int
++#define UINT    uint32_t
++#define FR_OK   0
++
++#define f_tell  omvhal_f_tell
++#define f_size  omvhal_f_size
++#define f_write omvhal_f_write
++#define f_read  omvhal_f_read
++#define f_close omvhal_f_close
++#define f_eof   omvhal_f_eof
++
++int      omvhal_f_open(omvhal_fil_t *f, const char *path, int mode);
++int      omvhal_f_close(omvhal_fil_t *f);
++int      omvhal_f_write(omvhal_fil_t *fp, const void *buff, uint32_t btw, uint32_t *bw);
++int      omvhal_f_read(omvhal_fil_t *fp, void *buff, uint32_t btr, uint32_t *br);
++int      omvhal_f_eof(omvhal_fil_t *fp);
++uint32_t omvhal_f_size(omvhal_fil_t *fp);
++uint32_t omvhal_f_tell(omvhal_fil_t *fp);
++int      omvhal_f_lseek(omvhal_fil_t *fp, uint32_t offset);
++
++#endif
+-- 
+2.33.1.windows.1
+

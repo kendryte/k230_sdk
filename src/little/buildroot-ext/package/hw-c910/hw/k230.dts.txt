@@ -1,0 +1,97 @@
+/dts-v1/;
+/ {
+	model = "T-HEAD c910 ice";
+	compatible = "thead,c910_ice";
+	#address-cells = <2>;
+	#size-cells = <2>;
+
+	memory@0 {
+		device_type = "memory";
+		reg = <0x0 0x00000 0x0 0x80000000>;
+	};
+
+	cpus {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		timebase-frequency = <8000000>;
+		cpu@0 {
+			device_type = "cpu";
+			reg = <0>;
+			status = "okay";
+			compatible = "riscv";
+			riscv,isa = "rv64imafdcvxthead";
+			mmu-type = "riscv,sv39";
+			cpu0_intc: interrupt-controller {
+				#interrupt-cells = <1>;
+				compatible = "riscv,cpu-intc";
+				interrupt-controller;
+			};
+		};
+		
+	};
+
+	soc {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		compatible = "simple-bus";
+		ranges;
+
+
+		clint0: clint@f04000000 {
+			compatible = "riscv,clint0";
+			interrupts-extended = <
+				&cpu0_intc  3 &cpu0_intc  7				
+				>;
+			reg = <0xf 0x04000000 0x0 0x04000000>;
+			clint,has-no-64bit-mmio;
+		};
+
+		intc: interrupt-controller@f00000000 {
+			#interrupt-cells = <1>;
+			compatible = "riscv,plic0";
+			interrupt-controller;
+			interrupts-extended = <
+				&cpu0_intc  0xffffffff &cpu0_intc  9				
+				>;
+			reg = <0xf 0x00000000 0x0 0x04000000>;
+			reg-names = "control";
+			riscv,max-priority = <7>;
+			riscv,ndev = <200>;
+		};
+
+		dummy_apb: apb-clock {
+			compatible = "fixed-clock";
+			clock-frequency = <25000000>;
+			clock-output-names = "dummy_apb";
+			#clock-cells = <0>;
+		};
+
+		serial@91400000 {
+			compatible = "snps,dw-apb-uart";
+			reg = <0x0 0x91400000 0x0 0x1000>;
+			interrupt-parent = <&intc>;
+			interrupts = <16>;
+			clock-frequency = <25000000>;
+			clocks = <&dummy_apb>;
+			clock-names = "baudclk";
+			reg-shift = <2>;
+			reg-io-width = <4>;
+			current-speed = <115200>;
+		};
+
+		pmu: pmu {
+			interrupt-parent = <&cpu0_intc>;
+			interrupts = <17>;
+			compatible = "thead,c900_pmu";
+		};
+
+
+	};
+
+	chosen {
+		bootargs = "console=ttyS0,115200  crashkernel=256M-:128M earlycon=sbi";
+		linux,initrd-start = <0x0 0x4000000>;
+		linux,initrd-end = <0x0 0x0>;
+		stdout-path = "/soc/serial@91400000:115200";
+	};
+};

@@ -1,0 +1,27 @@
+From e063f5a95865e9261e0f5b316df283974211c84a Mon Sep 17 00:00:00 2001
+From: zhouquan <zhouquan@rt-thread.com>
+Date: Fri, 21 Oct 2022 21:12:47 +0800
+Subject: [PATCH 13/14] fix a path bug
+
+---
+ src/omv/ports/unix/main.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/src/omv/ports/unix/main.c b/src/omv/ports/unix/main.c
+index 26da3d86..4708ccc9 100644
+--- a/src/omv/ports/unix/main.c
++++ b/src/omv/ports/unix/main.c
+@@ -646,7 +646,9 @@ MP_NOINLINE int main_(int argc, char **argv) {
+             }
+         } else {
+             char *pathbuf = malloc(PATH_MAX);
+-            char *basedir = realpath(argv[a], pathbuf);
++            // char *basedir = realpath(argv[a], pathbuf);
++            strcpy(pathbuf, argv[a]);
++            char *basedir = pathbuf;
+             if (basedir == NULL) {
+                 mp_printf(&mp_stderr_print, "%s: can't open file '%s': [Errno %d] %s\n", argv[0], argv[a], errno, strerror(errno));
+                 // CPython exits with 2 in such case
+-- 
+2.33.1.windows.1
+

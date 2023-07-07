@@ -1,0 +1,25 @@
+From 862ed7fc87288029aff10311b71b629d210c349c Mon Sep 17 00:00:00 2001
+From: wangjianxin <wangjianxin@canaan-creative.com>
+Date: Wed, 16 Nov 2022 10:41:15 +0800
+Subject: [PATCH] FW_TEXT_START=0x00000000
+
+---
+ platform/generic/config.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/platform/generic/config.mk b/platform/generic/config.mk
+index 8151974..197f505 100644
+--- a/platform/generic/config.mk
++++ b/platform/generic/config.mk
+@@ -18,7 +18,7 @@ platform-runcmd = qemu-system-riscv$(PLATFORM_RISCV_XLEN) -M virt -m 256M \
+   -nographic -bios $(build_dir)/platform/generic/firmware/fw_payload.elf
+ 
+ # Blobs to build
+-FW_TEXT_START=0x80000000
++FW_TEXT_START=0x00000000
+ FW_DYNAMIC=y
+ FW_JUMP=y
+ ifeq ($(PLATFORM_RISCV_XLEN), 32)
+-- 
+2.17.1
+

@@ -1,0 +1,19 @@
+# RT-Thread building script for component
+
+from building import *
+
+cwd = GetCurrentDir()
+src = Glob('*.cpp')
+CPPPATH = [cwd]
+
+CPPDEFINES = [
+    'HAVE_CCONFIG_H',
+]
+group = DefineGroup('cpp',
+                    src,
+                    depend=[''],
+                    CPPPATH=CPPPATH,
+                    CPPDEFINES=CPPDEFINES,
+                    LIBS=['atomic', 'cxx', 'stdc++', 'pthread'])
+
+Return('group')

@@ -1,0 +1,55 @@
+/* Copyright (c) 2023, Canaan Bright Sight Co., Ltd
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+*/
+
+/* There are two methods for clock configuration.Please used methord B for drivers.
+
+    Method A (for example:debufs):
+    1. clk = clk_get(NULL, clk_name);       ---> clk_name is defined in the clock_provider.dtsi
+    2. clk_set_rate(clk,rate); clk_disable(clk); clk_set_parent(clk,clk_parent); etc.
+    3. clk_put(clk);
+
+    Method B (for example:emac and other drivers):
+    1. clock_consumer.dtsi:
+        &emac {
+            clocks      = <&refclk>, <&refclk>, <&refclk>, <&refclk>, <&refclk>, <&refclk>;         -->clocks is defined in the clock_provider.dtsi
+            clock-names = "hclk", "pclk", "ether_clk", "tx_clk", "rx_clk", "tsu_clk";               -->clock-names only index
+        };
+    2. C code:
+        clk = clk_get(device, clk_name);     ---> device is platform_device->device, clk_name is clocks-names item(hclk, pclk etc.)
+        clk_set_rate(clk,rate); clk_disable(clk); clk_set_parent(clk,clk_parent); etc.
+        clk_put(clk);
+*/
+
+&gpu {
+    clocks = <&disp_gpu>;
+    clock-names = "vglite";
+};
+
+&emmc {
+    clocks = <&sd0_cclk_gate>,<&sd0_cclk_gate>;
+    clock-names = "core", "bus";
+};
+
+&spi0 {
+    clocks = <&ssi0_clk>;
+};
+
+&spi1 {
+    clocks = <&ssi1_clk>;
+};
+
+&i2c0 {
+    clocks = <&i2c0_clk>;
+};
+
+&i2c4 {
+    clocks = <&i2c4_clk>;
+};
+
+&watchdog0 {
+    clocks = <&wdt0>;
+};

@@ -1,0 +1,53 @@
+From 521eb42225a52fd2b018bf1acfdd31793d4fccdb Mon Sep 17 00:00:00 2001
+From: Mao Han <han_mao@c-sky.com>
+Date: Tue, 24 Dec 2019 13:17:52 +0800
+Subject: [PATCH 12/15] toolchain: fix compiling for external toolchain with
+ multi-arch folder structure
+
+Signed-off-by: Mao Han <han_mao@c-sky.com>
+Co-developed-by: Chen Hongdeng <hongdeng_chen@c-sky.com>
+Co-developed-by: Qu Xianmiao <xianmiao_qu@c-sky.com>
+Signed-off-by: Guo Ren <guoren@linux.alibaba.com>
+---
+ toolchain/helpers.mk                                  | 11 ++++++++---
+ .../toolchain-external/pkg-toolchain-external.mk      |  2 ++
+ 2 files changed, 10 insertions(+), 3 deletions(-)
+
+diff --git a/toolchain/helpers.mk b/toolchain/helpers.mk
+index 17bc159..ee21e51 100644
+--- a/toolchain/helpers.mk
++++ b/toolchain/helpers.mk
+@@ -135,9 +135,14 @@ copy_toolchain_sysroot = \
+ 			$(call simplify_symlink,$$i,$(STAGING_DIR)) ; \
+ 		done ; \
+ 	fi ; \
+-	if [ ! -e $(STAGING_DIR)/lib/ld*.so.* ]; then \
+-		if [ -e $${ARCH_SYSROOT_DIR}/lib/ld*.so.* ]; then \
+-			cp -a $${ARCH_SYSROOT_DIR}/lib/ld*.so.* $(STAGING_DIR)/lib/ ; \
++	if [ "$(TOOLCHAIN_EXTERNAL_READELF)" != "" ]; then \
++		LD_NAME=`$(TOOLCHAIN_EXTERNAL_READELF) -d $${ARCH_SYSROOT_DIR}$${ARCH_LIB_DIR}/libc-*.so|grep ld-linux|grep so|awk '{print $$NF}'|sed "s/\[//g"|sed "s/\]//g"`; \
++	else \
++		LD_NAME="ld*.so.*"; \
++	fi; \
++	if [ ! -e $(STAGING_DIR)/lib/$${LD_NAME} ]; then \
++		if [ -e $${ARCH_SYSROOT_DIR}/lib/$${LD_NAME} ]; then \
++			cp -a $${ARCH_SYSROOT_DIR}/lib/$${LD_NAME} $(STAGING_DIR)/lib/ ; \
+ 		fi ; \
+ 	fi ; \
+ 	if [ `readlink -f $${SYSROOT_DIR}` != `readlink -f $${ARCH_SYSROOT_DIR}` ] ; then \
+diff --git a/toolchain/toolchain-external/pkg-toolchain-external.mk b/toolchain/toolchain-external/pkg-toolchain-external.mk
+index 6d91cb5..943371e 100644
+--- a/toolchain/toolchain-external/pkg-toolchain-external.mk
++++ b/toolchain/toolchain-external/pkg-toolchain-external.mk
+@@ -463,6 +463,8 @@ create_lib_symlinks = \
+ 	ARCH_LIB_DIR="$(call toolchain_find_libdir,$(TOOLCHAIN_EXTERNAL_CC) $(TOOLCHAIN_EXTERNAL_CFLAGS))" ; \
+ 	if [ ! -e "$${DESTDIR}/$${ARCH_LIB_DIR}" -a ! -e "$${DESTDIR}/usr/$${ARCH_LIB_DIR}" ]; then \
+ 		relpath="$(call relpath_prefix,$${ARCH_LIB_DIR})" ; \
++		mkdir -p `dirname "$${DESTDIR}/$${ARCH_LIB_DIR}"` ; \
++		mkdir -p `dirname "$${DESTDIR}/usr/$${ARCH_LIB_DIR}"` ; \
+ 		ln -snf $${relpath}lib "$${DESTDIR}/$${ARCH_LIB_DIR}" ; \
+ 		ln -snf $${relpath}lib "$${DESTDIR}/usr/$${ARCH_LIB_DIR}" ; \
+ 	fi
+-- 
+2.17.1
+

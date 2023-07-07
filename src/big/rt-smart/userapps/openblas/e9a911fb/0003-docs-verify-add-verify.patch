@@ -1,0 +1,23 @@
+From ad5388847e24eeb56a4d9bbfe311127e7614ecc5 Mon Sep 17 00:00:00 2001
+From: zhouquan <zhouquan@rt-thread.com>
+Date: Sat, 10 Dec 2022 13:48:29 +0800
+Subject: [PATCH 3/3] =?UTF-8?q?=F0=9F=93=83=20docs(verify):=20add=20verify?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ verify | 1 +
+ 1 file changed, 1 insertion(+)
+ create mode 100644 verify
+
+diff --git a/verify b/verify
+new file mode 100644
+index 00000000..770a8a9d
+--- /dev/null
++++ b/verify
+@@ -0,0 +1 @@
++[commit]: fe3644cd5e587b27c8cabc102a8edd4890e2b99d
+-- 
+2.34.1
+

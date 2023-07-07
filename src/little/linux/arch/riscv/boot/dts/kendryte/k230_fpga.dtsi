@@ -1,0 +1,185 @@
+/* Copyright (c) 2023, Canaan Bright Sight Co., Ltd
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+*/
+/dts-v1/;
+/ {
+	model = "T-HEAD c910 ice";
+	compatible = "thead,c910_ice";
+	#address-cells = <2>;
+	#size-cells = <2>;
+
+	memory@0 {
+		device_type = "memory";
+		reg = <0x0 0x08000000 0x0 0x07FFF000>;  /*linux memory config*/
+	};
+
+	cpus {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		timebase-frequency = <8000000>;
+		cpu@0 {
+			device_type = "cpu";
+			reg = <0>;
+			status = "okay";
+			compatible = "riscv";
+			riscv,isa = "rv64imafdcvxthead";
+			mmu-type = "riscv,sv39";
+			cpu0_intc: interrupt-controller {
+				#interrupt-cells = <1>;
+				compatible = "riscv,cpu-intc";
+				interrupt-controller;
+			};
+		};
+		
+	};
+
+	soc {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		compatible = "simple-bus";
+		ranges;
+
+
+		clint0: clint@f04000000 {
+			compatible = "riscv,clint0";
+			interrupts-extended = <
+				&cpu0_intc  3 &cpu0_intc  7				
+				>;
+			reg = <0xf 0x04000000 0x0 0x04000000>;
+			clint,has-no-64bit-mmio;
+		};
+
+		intc: interrupt-controller@f00000000 {
+			#interrupt-cells = <1>;
+			compatible = "riscv,plic0";
+			interrupt-controller;
+			interrupts-extended = <
+				&cpu0_intc  0xffffffff &cpu0_intc  9				
+				>;
+			reg = <0xf 0x00000000 0x0 0x04000000>;
+			reg-names = "control";
+			riscv,max-priority = <7>;
+			riscv,ndev = <200>;
+		};
+
+		dummy_apb: apb-clock {
+			compatible = "fixed-clock";
+			clock-frequency = <25000000>;
+			clock-output-names = "dummy_apb";
+			#clock-cells = <0>;
+		};
+
+		serial@91404000 {
+			compatible = "snps,dw-apb-uart";
+			reg = <0x0 0x91404000 0x0 0x1000>;
+			interrupt-parent = <&intc>;
+			interrupts = <20>;
+			clock-frequency = <25000000>;
+			clocks = <&dummy_apb>;
+			clock-names = "baudclk";
+			reg-shift = <2>;
+			reg-io-width = <4>;
+			current-speed = <115200>;
+		};
+
+		sdcard: sdhci1@91581000 {
+			compatible = "snps,dwcmshc-sdhci";
+			reg = <0x0 0x91581000 0x0 0x1000>;
+			interrupt-parent = <&intc>;
+			interrupts = <144>;
+			interrupt-names = "sdhci1irq";
+			clocks = <&dummy_apb>,<&dummy_apb>;
+			clock-names = "core", "bus";
+			max-frequency = <6250000>;
+			bus-width = <4>;
+			//cd-gpios = <>;
+			no-1-8-v;
+			//cap-mmc-highspeed;
+			status = "disable";
+		};
+
+		ipcm: ipcm@91104000 {
+			compatible = "canaan,ipcm-interrupt";
+			reg = <0x0 0x91104000 0x0 0x1000>;
+			interrupt-parent = <&intc>;
+			interrupts = <109>,<110>,<111>,<112>;
+			clocks = <&dummy_apb>;
+			status = "okay";
+		};
+
+		pmu: pmu {
+			interrupt-parent = <&cpu0_intc>;
+			interrupts = <17>;
+			compatible = "thead,c900_pmu";
+		};
+
+		gpu: gpu@90800000 {
+			compatible = "verisilicon,gc8000ul";
+			reg = <0x0 0x90800000 0x0 0x4000>;
+			interrupt-parent = <&intc>;
+			interrupts = <135>;
+		};
+
+		i2c0: i2c@91405000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "snps,designware-i2c";
+			reg = <0x0 0x91405000 0x0 0x1000>;
+			interrupt-parent    = <&intc>;
+			interrupts          = <21>;
+			clocks = <&dummy_apb>;
+			clock-frequency = <1000000>;
+
+			status = "okay";
+		};
+
+		sysctl: sysctl {
+			status					= "okay";	
+			#address-cells 			= <2>;
+			#size-cells 			= <2>;
+			compatible 				= "simple-bus";
+			ranges;
+
+			sysctl_clock: sysctl_clock@91100000 {
+				status              = "okay";
+				compatible 			= "simple-bus";
+				reg                 = <0x0 0x91100000 0x0 0x1000>;
+			};
+			sysctl_reset: sysctl_reset@91101000 {
+				status              = "okay";
+				compatible 			= "simple-bus";
+				reg                 = <0x0 0x91101000 0x0 0x1000>;
+			};
+			sysctl_boot: sysctl_boot@91102000 {
+				status              = "okay";
+				compatible 			= "simple-bus";
+				reg                 = <0x0 0x91102000 0x0 0x1000>;
+			};
+			sysctl_power: sysctl_power@91103000 {
+				status              = "okay";
+				compatible 			= "simple-bus";
+				reg                 = <0x0 0x91103000 0x0 0x1000>;
+			};
+		};
+	};
+
+	chosen {
+		bootargs = "console=ttyS0,115200  crashkernel=256M-:128M earlycon=sbi";
+		stdout-path = "/soc/serial@91400000:115200";
+	};
+};
+
+&i2c0 {
+		pca9685: pca9685@40{
+			compatible = "pca9685,pwm";
+			reg = <0x40>;
+		};
+
+		tca9548a: tca9548a@75{
+			compatible = "tca9548a,switch";
+			reg = <0x75>;
+		};
+};

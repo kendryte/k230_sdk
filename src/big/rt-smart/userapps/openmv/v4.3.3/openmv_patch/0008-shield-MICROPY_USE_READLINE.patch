@@ -1,0 +1,34 @@
+From c65262684c0b490b21efc171369d7ddbfa87f4df Mon Sep 17 00:00:00 2001
+From: zhouquan <zhouquan@rt-thread.com>
+Date: Tue, 18 Oct 2022 11:35:32 +0800
+Subject: [PATCH 08/14] shield MICROPY_USE_READLINE
+
+---
+ src/omv/ports/unix/main.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/omv/ports/unix/main.c b/src/omv/ports/unix/main.c
+index 58d841cd..26da3d86 100644
+--- a/src/omv/ports/unix/main.c
++++ b/src/omv/ports/unix/main.c
+@@ -158,7 +158,7 @@ STATIC int execute_from_lexer(int source_kind, const void *source, mp_parse_inpu
+     }
+ }
+ 
+-#if MICROPY_USE_READLINE == 1
++#if MICROPY_USE_READLINE == 0
+ #include "shared/readline/readline.h"
+ #else
+ STATIC char *strjoin(const char *s1, int sep_char, const char *s2) {
+@@ -180,7 +180,7 @@ STATIC int do_repl(void) {
+     mp_hal_stdout_tx_str("MicroPython " MICROPY_GIT_TAG " on " MICROPY_BUILD_DATE "; "
+         MICROPY_PY_SYS_PLATFORM " version\nUse Ctrl-D to exit, Ctrl-E for paste mode\n");
+ 
+-    #if MICROPY_USE_READLINE == 1
++#if MICROPY_USE_READLINE == 0
+ 
+     // use MicroPython supplied readline
+ 
+-- 
+2.33.1.windows.1
+

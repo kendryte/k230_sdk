@@ -1,0 +1,21 @@
+if TARGET_K230_FPGA
+
+config SYS_CPU
+	default "k230"
+    
+config SYS_VENDOR
+    default "canaan"
+
+config SYS_BOARD
+    default "k230_fpga"
+
+config SYS_CONFIG_NAME
+    default "k230_fpga"
+
+
+config BOARD_SPECIFIC_OPTIONS # dummy
+	def_bool y
+	select RISCV_THEAD
+    
+
+endif

@@ -1,0 +1,60 @@
+/* Copyright (c) 2023, Canaan Bright Sight Co., Ltd
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+*/
+#include "k230_evb.dtsi"
+#include "clock_provider.dtsi"          /* k230 soc clock tree */
+#include "clock_consumer.dtsi"          /* k230 soc clock consumer */
+#include "reset_provider.dtsi"          /* k230 soc reset provider */
+#include "reset_consumer.dtsi"          /* k230 soc reset consumer */
+#include "power_provider.dtsi"          /* k230 soc power provider */
+#include "power_consumer.dtsi"          /* k230 soc power consumer */
+#include "gpio_provider.dtsi"           /* k230 soc gpio provider */
+#include "gpio_consumer.dtsi"           /* k230 soc gpio consumer */
+
+
+/ {
+	chosen {
+		bootargs = "console=ttyS0,115200  crashkernel=256M-:128M earlycon=sbi";
+		linux,initrd-start = <0x0 0xa100000>;
+		linux,initrd-end = <0x0 0x0>;
+		stdout-path = "/soc/serial@91400000:115200";
+	};
+};
+
+&i2c4 {
+	gt911: touchscreen@5d {
+		compatible = "goodix,gt911";
+		reg = <0x14>;
+
+		interrupt-parent = <&port29>;
+		interrupts = <0 IRQ_TYPE_EDGE_RISING>; /*IRQ_TYPE_LEVEL_HIGH*/
+		irq-gpios = <&port29 0 GPIO_ACTIVE_HIGH>;
+		reset-gpios = <&port30 0 GPIO_ACTIVE_HIGH>;
+
+		goodix,cfg-group0 = [
+			44 38 04 80 07 05 35 00 01 08
+			28 08 50 32 03 05 00 00 00 00
+			11 11 05 18 1A 1E 14 89 29 0C
+			3D 3F 0C 08 00 00 00 2A 02 2C
+			32 00 00 00 00 03 64 32 00 00
+			00 2D 5A 94 D5 02 00 00 00 04
+			8E 30 00 80 37 00 74 3F 00 69
+			49 00 60 54 00 60 00 00 00 00
+			00 00 00 00 00 00 00 00 00 00
+			00 00 00 00 00 00 00 00 00 00
+			00 00 00 00 00 00 00 00 00 00
+			00 00 18 16 14 12 10 0E 0C 0A
+			08 06 04 02 FF FF 00 00 00 00
+			00 00 00 00 00 00 00 00 00 00
+			00 00 00 02 04 06 08 0A 0F 10
+			12 22 21 20 1F 1E 1D 1C 18 16
+			FF FF FF FF FF FF FF FF 00 00
+			00 00 00 00 00 00 00 00 00 00
+			00 00 00 00 34 01
+		];
+		status = "okay";
+	};
+};

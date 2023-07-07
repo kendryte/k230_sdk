@@ -1,0 +1,25 @@
+/* Copyright (c) 2023, Canaan Bright Sight Co., Ltd
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+*/
+ 
+ /* consumer api guide 
+  1. xxx_probe function call struct reset_control *devm_reset_control_get(struct device *dev, const char *id);
+     Note: If probe error or xxx_detach, devm will auto call reset_control_put
+  2. devm_reset_control_get will call devm_reset_control_get_exclusive. 
+     That is, an assert causes the reset line to be asserted immediately, and a deassert causes the reset line to be deasserted immediately. 
+     
+  for example:
+  sram0_probe:  rst = devm_reset_control_get(dev,"sram0_rst"); or rst = devm_reset_control_get(dev,NULL); only one reset-names
+  isp_probe:    rst = devm_reset_control_get(dev, "vi_rst"); isp has more than one reset-names
+*/
+
+#include <dt-bindings/reset/canaan-k230-reset.h>
+
+/* Please call device_reset(&platform_device->device) api to reset device */
+&gpu {
+   resets = <&sysctl_reset K230_RESET_V2P5D_REG_OFFSET K230_RESET_V2P5D_TYPE K230_RESET_V2P5D_DONE_BIT K230_RESET_V2P5D_ASSERT_BIT>;
+   reset-names = "vglite";
+};

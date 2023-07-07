@@ -1,0 +1,27 @@
+From 3c30107cd461a87d9ff2408d6d1fb4c3b4dbd73e Mon Sep 17 00:00:00 2001
+From: zhouquan <zhouquan@rt-thread.com>
+Date: Tue, 18 Oct 2022 10:10:32 +0800
+Subject: [PATCH 04/14] change board info to MAIX3
+
+---
+ src/omv/boards/MAIX3/omv_boardconfig.h | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/omv/boards/MAIX3/omv_boardconfig.h b/src/omv/boards/MAIX3/omv_boardconfig.h
+index 61e24898..10b97bd4 100644
+--- a/src/omv/boards/MAIX3/omv_boardconfig.h
++++ b/src/omv/boards/MAIX3/omv_boardconfig.h
+@@ -12,8 +12,8 @@
+ #define __OMV_BOARDCONFIG_H__
+ 
+ // Architecture info
+-#define OMV_ARCH_STR            "OMV4 H7 1024" // 33 chars max
+-#define OMV_BOARD_TYPE          "H7"
++#define OMV_ARCH_STR                        "MAIX3"  // 33 chars max
++#define OMV_BOARD_TYPE                      "MAIX3"
+ // #define OMV_UNIQUE_ID_ADDR      0x1FF1E800
+ // #define OMV_UNIQUE_ID_SIZE      3 // 3 words
+ 
+-- 
+2.33.1.windows.1
+

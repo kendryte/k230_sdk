@@ -1,0 +1,7 @@
+config BR2_PACKAGE_TS_TEST
+	bool "ts test"
+	help
+	  k230 ts demo for test
+
+
+

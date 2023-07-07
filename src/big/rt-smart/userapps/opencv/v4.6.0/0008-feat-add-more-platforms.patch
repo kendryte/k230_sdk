@@ -1,0 +1,155 @@
+From 0bcc0e19d06d206518f8997e9d5b624b04845b7e Mon Sep 17 00:00:00 2001
+From: zhouquan <zhouquan@rt-thread.com>
+Date: Mon, 28 Nov 2022 09:56:17 +0800
+Subject: [PATCH 08/14] =?UTF-8?q?=E2=9C=A8=20feat:=20add=20more=20platform?=
+ =?UTF-8?q?s?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ CMakeLists.txt                                |  3 --
+ build.sh                                      |  4 +-
+ .../rt_smart/aarch64-gcc.toolchain.cmake      | 38 +++++++++++++++++++
+ .../rt_smart/riscv64-gcc.toolchain.cmake      |  7 +---
+ .../rt_smart/riscv64-rvv-gcc.toolchain.cmake  | 33 ++++++++++++++++
+ 5 files changed, 75 insertions(+), 10 deletions(-)
+ create mode 100644 platforms/rt_smart/aarch64-gcc.toolchain.cmake
+ create mode 100644 platforms/rt_smart/riscv64-rvv-gcc.toolchain.cmake
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 5e3e837c67..45e0b58fe5 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -14,9 +14,6 @@ FATAL: In-source builds are not allowed.
+ ")
+ endif()
+ 
+-set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-flax-vector-conversions")
+-set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} "-flax-vector-conversions")
+-
+ include(cmake/OpenCVMinDepVersions.cmake)
+ 
+ if(CMAKE_SYSTEM_NAME MATCHES WindowsPhone OR CMAKE_SYSTEM_NAME MATCHES WindowsStore)
+diff --git a/build.sh b/build.sh
+index 1da12c796f..d81ce3bb72 100644
+--- a/build.sh
++++ b/build.sh
+@@ -1,8 +1,8 @@
+-toolchain_path=~/.tools/gnu_gcc/riscv64-unknown-linux-musl-rv64imafdcv-lp64d/bin/
++toolchain_path=~/.tools/gnu_gcc/riscv64-linux-musleabi_for_x86_64-pc-linux-gnu/bin
+ 
+ c_compiler=${toolchain_path}/riscv64-unknown-linux-musl-gcc
+ cxx_compiler=${toolchain_path}/riscv64-unknown-linux-musl-g++
+ 
+-cmake .. -G "Unix Makefiles" -DCMAKE_TOOLCHAIN_FILE="../platforms/rt_smart/riscv64-gcc.toolchain.cmake" \
++cmake .. -G "Unix Makefiles" -DCMAKE_TOOLCHAIN_FILE="../platforms/rt_smart/riscv64-rvv-gcc.toolchain.cmake" \
+     -DCMAKE_C_COMPILER=$c_compiler \
+     -DCMAKE_CXX_COMPILER=$cxx_compiler
+diff --git a/platforms/rt_smart/aarch64-gcc.toolchain.cmake b/platforms/rt_smart/aarch64-gcc.toolchain.cmake
+new file mode 100644
+index 0000000000..51e74cbac7
+--- /dev/null
++++ b/platforms/rt_smart/aarch64-gcc.toolchain.cmake
+@@ -0,0 +1,38 @@
++set(CMAKE_SYSTEM_NAME "Linux")
++set(CMAKE_SYSTEM_PROCESSOR "aarch64")
++set(GCC_COMPILER_VERSION "" CACHE STRING "GCC Compiler version")
++set(GNU_MACHINE "aarch64-linux-musleabi" CACHE STRING "GNU compiler triple")
++
++set(CMAKE_CXX_FLAGS "" CACHE STRING "")
++set(CMAKE_C_FLAGS ""   CACHE STRING "")
++
++set(CMAKE_EXE_LINKER_FLAGS "-static -lpthread -lrt -ldl -latomic")
++
++set(CMAKE_BUILD_TYPE "Release")
++
++set(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT ON)
++set(CMAKE_BUILD_WITH_INSTALL_RPATH ON)
++
++SET(WITH_CAROTENE OFF)
++set(WITH_ITT OFF)
++
++set(BUILD_ZLIB ON)
++set(BUILD_PNG ON)
++set(BUILD_JPEG ON)
++set(BUILD_TIFF ON)
++set(BUILD_WEBP ON)
++set(BUILD_OPENJPEG ON)
++set(BUILD_JASPER ON)
++
++set(BUILD_SHARED_LIBS OFF)
++set(CMAKE_SKIP_INSTALL_RPATH ON)
++set(CMAKE_SKIP_RPATH ON)
++
++set(OPENCV_DISABLE_FILESYSTEM_SUPPORT ON)
++
++set(OPENCL_FOUND OFF)
++set(WITH_OPENCL OFF)
++set(WITH_OPENCLAMDBLAS OFF)
++set(WITH_OPENCLAMDFFT OFF)
++
++include("${CMAKE_CURRENT_LIST_DIR}/../linux/arm.toolchain.cmake")
+diff --git a/platforms/rt_smart/riscv64-gcc.toolchain.cmake b/platforms/rt_smart/riscv64-gcc.toolchain.cmake
+index 3a6bf10aa9..7efc2616fa 100644
+--- a/platforms/rt_smart/riscv64-gcc.toolchain.cmake
++++ b/platforms/rt_smart/riscv64-gcc.toolchain.cmake
+@@ -1,14 +1,11 @@
+ set(CMAKE_SYSTEM_NAME "Linux")
+ set(CMAKE_SYSTEM_PROCESSOR "riscv64")
+ 
+-# set(CMAKE_C_COMPILER  /home/csplink/.tools/gnu_gcc/riscv64-unknown-linux-musl-rv64imafdcv-lp64d/bin/riscv64-unknown-linux-musl-gcc)
+-# set(CMAKE_CXX_COMPILER /home/csplink/.tools/gnu_gcc/riscv64-unknown-linux-musl-rv64imafdcv-lp64d/bin/riscv64-unknown-linux-musl-g++)
+-
+ set(CMAKE_CXX_FLAGS "" CACHE STRING "")
+ set(CMAKE_C_FLAGS ""   CACHE STRING "")
+ 
+-set(CMAKE_CXX_FLAGS "-mcmodel=medany -march=rv64imafdcv -mabi=lp64d -flax-vector-conversions")
+-set(CMAKE_C_FLAGS "-mcmodel=medany -march=rv64imafdcv -mabi=lp64d -flax-vector-conversions")
++set(CMAKE_CXX_FLAGS "-mcmodel=medany -march=rv64imafdc -mabi=lp64")
++set(CMAKE_C_FLAGS "-mcmodel=medany -march=rv64imafdc -mabi=lp64")
+ set(CMAKE_EXE_LINKER_FLAGS "-static -lpthread -lrt -ldl -latomic")
+ 
+ set(CMAKE_BUILD_TYPE "Release")
+diff --git a/platforms/rt_smart/riscv64-rvv-gcc.toolchain.cmake b/platforms/rt_smart/riscv64-rvv-gcc.toolchain.cmake
+new file mode 100644
+index 0000000000..d64301bd39
+--- /dev/null
++++ b/platforms/rt_smart/riscv64-rvv-gcc.toolchain.cmake
+@@ -0,0 +1,33 @@
++set(CMAKE_SYSTEM_NAME "Linux")
++set(CMAKE_SYSTEM_PROCESSOR "riscv64")
++
++set(CMAKE_CXX_FLAGS "" CACHE STRING "")
++set(CMAKE_C_FLAGS ""   CACHE STRING "")
++
++set(CMAKE_CXX_FLAGS "-mcmodel=medany -march=rv64imafdcv -mabi=lp64d -flax-vector-conversions")
++set(CMAKE_C_FLAGS "-mcmodel=medany -march=rv64imafdcv -mabi=lp64d -flax-vector-conversions")
++set(CMAKE_EXE_LINKER_FLAGS "-static -lpthread -lrt -ldl -latomic")
++
++set(CMAKE_BUILD_TYPE "Release")
++
++set(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT ON)
++set(CMAKE_BUILD_WITH_INSTALL_RPATH ON)
++
++set(BUILD_ZLIB ON)
++set(BUILD_PNG ON)
++set(BUILD_JPEG ON)
++set(BUILD_TIFF ON)
++set(BUILD_WEBP ON)
++set(BUILD_OPENJPEG ON)
++set(BUILD_JASPER ON)
++
++set(BUILD_SHARED_LIBS OFF)
++set(CMAKE_SKIP_INSTALL_RPATH ON)
++set(CMAKE_SKIP_RPATH ON)
++
++set(OPENCV_DISABLE_FILESYSTEM_SUPPORT ON)
++
++set(OPENCL_FOUND OFF)
++set(WITH_OPENCL OFF)
++set(WITH_OPENCLAMDBLAS OFF)
++set(WITH_OPENCLAMDFFT OFF)
+-- 
+2.34.1
+

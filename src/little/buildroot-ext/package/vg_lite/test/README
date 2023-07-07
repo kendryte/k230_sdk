@@ -1,0 +1,42 @@
+VeriSilicon VGLite Conformance Test Suite
+
+1. Build CTS test suite
+
+    a) Export VIVANTE_SDK_DIR environment variable to specify VGLite SDK directory that
+       includes VGLite heaader and driver libraries.
+
+    b) Export CROSS_COMPILE environment variable according to your build environment.
+
+    c) Run "build_sample.sh" script to build CTS tests.
+
+        ./build_sample.sh
+
+       All CTS tests and libaries will be installed to $VIVANTE_SDK_DIR/samples/...
+
+2. Run CTS test and check the results
+
+    a) Copy $VIVANTE_SDK_DIR/* to the target system (RT500), such as ~/VGLite/...
+
+    b) Insert VGLite kernel driver on the target system.
+
+        cd ~/VGLite/drivers
+        insmod vg_lite.ko
+
+    c) Set LD_LIBRARY_PATH on the target system.
+
+        export LD_LIBRARY_PATH=~/VGLite/drivers:~/VGLite/samples
+
+    d) Copy the golden image directory "./reference" to ~/VGLite/samples on the target system.
+   
+    e) Edit the "VGLite_CTS.sh" script, set GOLDEN_PATH to the reference image directory.
+
+        GOLDEN_PATH=~/VGLite/samples/reference
+
+    e) Copy the "VGLite_CTS.sh" script to ~/VGLite/samples/ on the target system.
+    
+    f) Run the "VGLite_CTS.sh" script to launch VGLite CTS.
+
+        ./VGLite_CTS.sh
+
+       It will run through all CTS test cases and compare the render result with reference golden
+       image. The CTS test report will be displayed after the CTS run completes.

@@ -1,0 +1,33 @@
+From ab7fe2e0244bfeedb9e193222898089cea97ae08 Mon Sep 17 00:00:00 2001
+From: zhouquan <zhouquan@rt-thread.com>
+Date: Thu, 3 Nov 2022 17:39:44 +0800
+Subject: [PATCH 04/14] and flags -flax-vector-conversions
+
+---
+ CMakeLists.txt | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index fa409f516c..5e3e837c67 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -14,6 +14,8 @@ FATAL: In-source builds are not allowed.
+ ")
+ endif()
+ 
++set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-flax-vector-conversions")
++set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} "-flax-vector-conversions")
+ 
+ include(cmake/OpenCVMinDepVersions.cmake)
+ 
+@@ -1132,6 +1134,7 @@ else()
+ endif()
+ string(STRIP "${OPENCV_COMPILER_STR}" OPENCV_COMPILER_STR)
+ 
++
+ status("")
+ status("  C/C++:")
+ status("    Built as dynamic libs?:" BUILD_SHARED_LIBS THEN YES ELSE NO)
+-- 
+2.34.1
+

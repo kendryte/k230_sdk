@@ -1,0 +1,54 @@
+From e98b04df933db1227fbcc30ce7a70d877b08cccc Mon Sep 17 00:00:00 2001
+From: Guo Ren <ren_guo@c-sky.com>
+Date: Tue, 9 Jul 2019 13:48:55 +0800
+Subject: [PATCH 03/15] version
+
+Signed-off-by: Guo Ren <guoren@linux.alibaba.com>
+---
+ package/binutils/Config.in.host | 2 +-
+ package/gcc/Config.in.host      | 2 +-
+ package/gdb/Config.in.host      | 2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/package/binutils/Config.in.host b/package/binutils/Config.in.host
+index 89c6894..40fd732 100644
+--- a/package/binutils/Config.in.host
++++ b/package/binutils/Config.in.host
+@@ -51,7 +51,7 @@ endchoice
+ config BR2_BINUTILS_VERSION
+ 	string
+ 	default "arc-2020.09-release"	if BR2_BINUTILS_VERSION_ARC
+-	default "c66d8bbcebfddf713b2b436e1b135e6b125a55a5" if BR2_BINUTILS_VERSION_CSKY
++	default "7610729dae52256ec9062854f5e97690efc11674" if BR2_BINUTILS_VERSION_CSKY
+ 	default "2.32"		if BR2_BINUTILS_VERSION_2_32_X
+ 	default "2.33.1"	if BR2_BINUTILS_VERSION_2_33_X
+ 	default "2.34"		if BR2_BINUTILS_VERSION_2_34_X
+diff --git a/package/gcc/Config.in.host b/package/gcc/Config.in.host
+index 2ed1593..2d083e5 100644
+--- a/package/gcc/Config.in.host
++++ b/package/gcc/Config.in.host
+@@ -76,7 +76,7 @@ config BR2_GCC_VERSION
+ 	default "9.3.0"     if BR2_GCC_VERSION_9_X
+ 	default "10.2.0"    if BR2_GCC_VERSION_10_X
+ 	default "arc-2020.09-release" if BR2_GCC_VERSION_ARC
+-	default "48152afb96c59733d5bc79e3399bb7b3d4b44266" if BR2_GCC_VERSION_CSKY
++	default "89d387553cc010f111670ebf75eef82653c49ffa" if BR2_GCC_VERSION_CSKY
+ 
+ config BR2_EXTRA_GCC_CONFIG_OPTIONS
+ 	string "Additional gcc options"
+diff --git a/package/gdb/Config.in.host b/package/gdb/Config.in.host
+index 9ac939e..2e33f6f 100644
+--- a/package/gdb/Config.in.host
++++ b/package/gdb/Config.in.host
+@@ -86,7 +86,7 @@ endif
+ config BR2_GDB_VERSION
+ 	string
+ 	default "arc-2020.09-release-gdb" if BR2_arc
+-	default "4ecb98fbc2f94dbe01b69384afbc515107de73df" if BR2_csky
++	default "84c72e3caad8e93830fe94e67d7e53a0a3112119" if BR2_csky
+ 	default "8.3.1"    if BR2_GDB_VERSION_8_3
+ 	default "9.2"      if BR2_GDB_VERSION_9_2 || !BR2_PACKAGE_HOST_GDB
+ 	default "10.1"	   if BR2_GDB_VERSION_10
+-- 
+2.17.1
+

@@ -1,0 +1,7 @@
+config BR2_PACKAGE_OTP_TEST
+	bool "otp test"
+	help
+	  k230 otp demo for test
+
+
+

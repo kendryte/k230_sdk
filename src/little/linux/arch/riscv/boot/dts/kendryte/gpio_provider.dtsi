@@ -1,0 +1,112 @@
+/* Copyright (c) 2023, Canaan Bright Sight Co., Ltd
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+*/
+#include <dt-bindings/interrupt-controller/irq.h>
+/ {
+		gpio27: gpio27@9140b000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140b000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <59 IRQ_TYPE_EDGE_BOTH>;
+			hardlock = <0>;
+
+			port27: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<27>;
+			};
+		};
+
+		gpio29: gpio29@9140b000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140b000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <61 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+
+			port29: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<29>;
+			};
+		};
+
+		gpio30: gpio30@9140b000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140b000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <62 IRQ_TYPE_NONE>;
+			hardlock = <0>;
+
+			port30: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<30>;
+			};
+		};
+
+		gpio33: gpio33@9140c000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <65 IRQ_TYPE_EDGE_BOTH>;
+			hardlock = <0>;
+
+			port33: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<33>;
+			};
+		};
+
+		gpio34: gpio34@9140c000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+
+			interrupt-parent = <&intc>;
+			interrupts = <66>;
+
+			gpio-controller;
+			#gpio-cells = <2>;
+
+			interrupt-controller;
+			#interrupt-cells = <2>;
+
+			hardlock = <0>;
+
+			port34: gpio-controller@0 {
+				ngpios = <1>;
+				reg-bank = <0>;
+				id = <34>;
+			};
+		};
+};

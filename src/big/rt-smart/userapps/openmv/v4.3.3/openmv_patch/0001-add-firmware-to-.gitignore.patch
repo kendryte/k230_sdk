@@ -1,0 +1,22 @@
+From 400bf3b86f43d5436d8479d387372e100f3b56f6 Mon Sep 17 00:00:00 2001
+From: zhouquan <zhouquan@rt-thread.com>
+Date: Tue, 18 Oct 2022 09:57:32 +0800
+Subject: [PATCH 01/14] add firmware to .gitignore
+
+---
+ .gitignore | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/.gitignore b/.gitignore
+index 815077c7..ec2c0489 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -47,3 +47,5 @@ openmv.creator
+ openmv.creator.user
+ openmv.files
+ openmv.includes
++
++firmware/
+-- 
+2.33.1.windows.1
+

@@ -1,0 +1,550 @@
+From 915b2f35d7181705da5ba81b34ae09e961fa5212 Mon Sep 17 00:00:00 2001
+From: yechang <yechang@rt-thread.com>
+Date: Mon, 20 Mar 2023 23:20:42 -0700
+Subject: [PATCH] =?UTF-8?q?=E2=9C=A8=20feat(tests):=20add=20new=20tests=20?=
+ =?UTF-8?q?for=20opencv=20modules?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ .../33_opencv_getTextSize.cpp                 | 46 +++++++++++++++++
+ tests/33_opencv_getTextSize/SConscript        | 30 +++++++++++
+ tests/33_opencv_getTextSize/SConstruct        |  8 +++
+ .../34_opencv_cvtColor/34_opencv_cvtColor.cpp | 42 ++++++++++++++++
+ tests/34_opencv_cvtColor/SConscript           | 30 +++++++++++
+ tests/34_opencv_cvtColor/SConstruct           |  8 +++
+ .../35_opencv_rowRange/35_opencv_rowRange.cpp | 50 +++++++++++++++++++
+ tests/35_opencv_rowRange/SConscript           | 30 +++++++++++
+ tests/35_opencv_rowRange/SConstruct           |  8 +++
+ tests/36_opencv_total/36_opencv_total.cpp     | 34 +++++++++++++
+ tests/36_opencv_total/SConscript              | 30 +++++++++++
+ tests/36_opencv_total/SConstruct              |  8 +++
+ tests/37_opencv_setTo/37_opencv_setTo.cpp     | 40 +++++++++++++++
+ tests/37_opencv_setTo/SConscript              | 30 +++++++++++
+ tests/37_opencv_setTo/SConstruct              |  8 +++
+ ...5\346\225\260\350\257\264\346\230\216.txt" |  4 ++
+ 16 files changed, 406 insertions(+)
+ create mode 100755 tests/33_opencv_getTextSize/33_opencv_getTextSize.cpp
+ create mode 100755 tests/33_opencv_getTextSize/SConscript
+ create mode 100755 tests/33_opencv_getTextSize/SConstruct
+ create mode 100755 tests/34_opencv_cvtColor/34_opencv_cvtColor.cpp
+ create mode 100755 tests/34_opencv_cvtColor/SConscript
+ create mode 100755 tests/34_opencv_cvtColor/SConstruct
+ create mode 100755 tests/35_opencv_rowRange/35_opencv_rowRange.cpp
+ create mode 100755 tests/35_opencv_rowRange/SConscript
+ create mode 100755 tests/35_opencv_rowRange/SConstruct
+ create mode 100755 tests/36_opencv_total/36_opencv_total.cpp
+ create mode 100755 tests/36_opencv_total/SConscript
+ create mode 100755 tests/36_opencv_total/SConstruct
+ create mode 100755 tests/37_opencv_setTo/37_opencv_setTo.cpp
+ create mode 100755 tests/37_opencv_setTo/SConscript
+ create mode 100755 tests/37_opencv_setTo/SConstruct
+ create mode 100644 "tests/\345\205\266\345\256\203\345\207\275\346\225\260\350\257\264\346\230\216.txt"
+
+diff --git a/tests/33_opencv_getTextSize/33_opencv_getTextSize.cpp b/tests/33_opencv_getTextSize/33_opencv_getTextSize.cpp
+new file mode 100755
+index 0000000000..4d75d79682
+--- /dev/null
++++ b/tests/33_opencv_getTextSize/33_opencv_getTextSize.cpp
+@@ -0,0 +1,46 @@
++/*
++ * Copyright (c) 2006-2021, RT-Thread Development Team
++ *
++ * SPDX-License-Identifier: Apache-2.0
++ *
++ * Change Logs:
++ * Date           Author       Notes
++ * 2023/03/20     YeC          The first version
++ *
++ * @brief  Test for OpenCV/getTextSize .
++ * All the classes tested in this file are summarized as below:
++ * --getTextSize 
++ */
++
++#include <iostream>
++#include <opencv2/opencv.hpp>
++ 
++using namespace std;
++using namespace cv;
++ 
++int main()
++{
++    string text = "Hello K230!";
++ 
++    int fontFace = FONT_HERSHEY_SCRIPT_COMPLEX;
++    double fontScale = 2;       //字体缩放比
++    int thickness = 3;
++    Mat img(600, 800, CV_8UC3, Scalar::all(0));
++    int baseline = 0;
++    
++    Size textSize = getTextSize(text, fontFace, fontScale, thickness, &baseline);
++    baseline += thickness;
++    Point textOrg((img.cols - textSize.width) / 2, (img.rows - textSize.height) / 2);
++    rectangle(img, textOrg + Point(0, baseline), textOrg + Point(textSize.width, -textSize.height), Scalar(0, 0, 255));
++    line(img, textOrg + Point(0, thickness), textOrg + Point(textSize.width, thickness), Scalar(0, 0, 255));
++    putText(img, text, textOrg, fontFace, fontScale, Scalar::all(255), thickness, 8);
++
++    imwrite("./hello_k320.jpg", img);
++
++    cout << "*********************************************************" << endl;	
++    cout << "{Test PASS}."  << endl;
++    cout << "*********************************************************" << endl;
++
++    return 0;
++}
++
+diff --git a/tests/33_opencv_getTextSize/SConscript b/tests/33_opencv_getTextSize/SConscript
+new file mode 100755
+index 0000000000..744cb8de26
+--- /dev/null
++++ b/tests/33_opencv_getTextSize/SConscript
+@@ -0,0 +1,30 @@
++# RT-Thread building script for component
++
++from building import *
++
++cwd = GetCurrentDir()
++src = Glob('*.cpp')
++CPPPATH = [cwd, '../install/include/opencv4']
++
++CPPDEFINES = [
++    'HAVE_CCONFIG_H',
++]
++group = DefineGroup('hello', src, 
++        depend = [''], 
++        CPPPATH = CPPPATH, 
++        CPPDEFINES = CPPDEFINES, 
++        LIBS=['atomic',
++              'opencv_core',
++              'stdc++',
++              'zlib',
++              'cxx',
++              'liblibjpeg-turbo',
++              'liblibopenjp2',
++              'liblibpng',
++              'liblibtiff',
++              'liblibwebp',
++              'opencv_imgproc',
++              'opencv_imgcodecs'],
++        LIBPATH=['../install/lib',
++                 '../install/lib/opencv4/3rdparty'])
++Return('group')
+diff --git a/tests/33_opencv_getTextSize/SConstruct b/tests/33_opencv_getTextSize/SConstruct
+new file mode 100755
+index 0000000000..a65fcd9121
+--- /dev/null
++++ b/tests/33_opencv_getTextSize/SConstruct
+@@ -0,0 +1,8 @@
++import os
++import sys
++
++# add building.py path
++sys.path = sys.path + [os.path.join('..','..','..','..','tools')]
++from building import *
++
++BuildApplication('33_opencv_getTextSize', 'SConscript', usr_root = '../../../')
+diff --git a/tests/34_opencv_cvtColor/34_opencv_cvtColor.cpp b/tests/34_opencv_cvtColor/34_opencv_cvtColor.cpp
+new file mode 100755
+index 0000000000..f4a9bd10c7
+--- /dev/null
++++ b/tests/34_opencv_cvtColor/34_opencv_cvtColor.cpp
+@@ -0,0 +1,42 @@
++/*
++ * Copyright (c) 2006-2021, RT-Thread Development Team
++ *
++ * SPDX-License-Identifier: Apache-2.0
++ *
++ * Change Logs:
++ * Date           Author       Notes
++ * 2023/03/20     YeC          The first version
++ *
++ * @brief  Test for OpenCV/cvtColor.
++ * All the classes tested in this file are summarized as below:
++ * --cvtColor
++ */
++
++#include <opencv2/opencv.hpp>
++#include <iostream>
++ 
++using namespace cv;
++using namespace std;
++ 
++int main(int argc, char** argv) 
++{
++     Mat src, dst, dst1;
++     src = imread("a.jpg");
++ 
++    if (src.empty()) 
++    {
++        printf("图片加载失败\n");
++    }
++ 
++    cvtColor(src, dst, cv::COLOR_BGR2GRAY);
++    cvtColor(src, dst1, COLOR_BGR2Lab);
++ 
++    imwrite("CV_BGR2GRAY转换后.jpg", dst);
++    imwrite("COLOR_BGR2Lab转换后.jpg", dst1);
++
++    cout << "*********************************************************" << endl;	
++    cout << "{Test PASS}."  << endl;
++    cout << "*********************************************************" << endl;
++
++    return 0;
++}
+diff --git a/tests/34_opencv_cvtColor/SConscript b/tests/34_opencv_cvtColor/SConscript
+new file mode 100755
+index 0000000000..744cb8de26
+--- /dev/null
++++ b/tests/34_opencv_cvtColor/SConscript
+@@ -0,0 +1,30 @@
++# RT-Thread building script for component
++
++from building import *
++
++cwd = GetCurrentDir()
++src = Glob('*.cpp')
++CPPPATH = [cwd, '../install/include/opencv4']
++
++CPPDEFINES = [
++    'HAVE_CCONFIG_H',
++]
++group = DefineGroup('hello', src, 
++        depend = [''], 
++        CPPPATH = CPPPATH, 
++        CPPDEFINES = CPPDEFINES, 
++        LIBS=['atomic',
++              'opencv_core',
++              'stdc++',
++              'zlib',
++              'cxx',
++              'liblibjpeg-turbo',
++              'liblibopenjp2',
++              'liblibpng',
++              'liblibtiff',
++              'liblibwebp',
++              'opencv_imgproc',
++              'opencv_imgcodecs'],
++        LIBPATH=['../install/lib',
++                 '../install/lib/opencv4/3rdparty'])
++Return('group')
+diff --git a/tests/34_opencv_cvtColor/SConstruct b/tests/34_opencv_cvtColor/SConstruct
+new file mode 100755
+index 0000000000..c59613d115
+--- /dev/null
++++ b/tests/34_opencv_cvtColor/SConstruct
+@@ -0,0 +1,8 @@
++import os
++import sys
++
++# add building.py path
++sys.path = sys.path + [os.path.join('..','..','..','..','tools')]
++from building import *
++
++BuildApplication('34_opencv_cvtColor', 'SConscript', usr_root = '../../../')
+diff --git a/tests/35_opencv_rowRange/35_opencv_rowRange.cpp b/tests/35_opencv_rowRange/35_opencv_rowRange.cpp
+new file mode 100755
+index 0000000000..1285f885ac
+--- /dev/null
++++ b/tests/35_opencv_rowRange/35_opencv_rowRange.cpp
+@@ -0,0 +1,50 @@
++/*
++ * Copyright (c) 2006-2021, RT-Thread Development Team
++ *
++ * SPDX-License-Identifier: Apache-2.0
++ *
++ * Change Logs:
++ * Date           Author       Notes
++ * 2023/03/20     YeC          The first version
++ *
++ * @brief  Test for OpenCV/rowRange.
++ * All the classes tested in this file are summarized as below:
++ * --rowRange 
++ */
++
++#include <opencv2/opencv.hpp>
++#include <iostream>
++ 
++using namespace cv;
++using namespace std;
++ 
++int main(int argc, char** argv) 
++{
++	Mat Test = (Mat_<double>(3, 3) << 0, 1, 2, 3, 4, 5, 6, 7, 8);
++	cout << "Total matrix:" << endl;
++	cout << Test << endl;
++ 
++	Mat testrow = Test.rowRange(0, 2).clone();
++	cout << "Row range:" << endl;
++	cout << testrow << endl;
++	
++	cout << "*********************************************************" << endl;
++        if(testrow.rows == 2)
++            cout << "{Test PASS}."  << endl;
++        else
++            cout << "{Test FAIL}."  << endl;
++    cout << "*********************************************************" << endl;
++ 
++	Mat testcol = Test.colRange(0, 2).clone();
++	cout << "Col range:" << endl;
++	cout << testcol << endl;
++	
++    cout << "*********************************************************" << endl;	
++	if(testcol.cols == 2)
++        cout << "{Test PASS}."  << endl;
++    else
++        cout << "{Test FAIL}."  << endl;
++    cout << "*********************************************************" << endl;
++	
++    return 0;
++}
+diff --git a/tests/35_opencv_rowRange/SConscript b/tests/35_opencv_rowRange/SConscript
+new file mode 100755
+index 0000000000..744cb8de26
+--- /dev/null
++++ b/tests/35_opencv_rowRange/SConscript
+@@ -0,0 +1,30 @@
++# RT-Thread building script for component
++
++from building import *
++
++cwd = GetCurrentDir()
++src = Glob('*.cpp')
++CPPPATH = [cwd, '../install/include/opencv4']
++
++CPPDEFINES = [
++    'HAVE_CCONFIG_H',
++]
++group = DefineGroup('hello', src, 
++        depend = [''], 
++        CPPPATH = CPPPATH, 
++        CPPDEFINES = CPPDEFINES, 
++        LIBS=['atomic',
++              'opencv_core',
++              'stdc++',
++              'zlib',
++              'cxx',
++              'liblibjpeg-turbo',
++              'liblibopenjp2',
++              'liblibpng',
++              'liblibtiff',
++              'liblibwebp',
++              'opencv_imgproc',
++              'opencv_imgcodecs'],
++        LIBPATH=['../install/lib',
++                 '../install/lib/opencv4/3rdparty'])
++Return('group')
+diff --git a/tests/35_opencv_rowRange/SConstruct b/tests/35_opencv_rowRange/SConstruct
+new file mode 100755
+index 0000000000..6113b1f87b
+--- /dev/null
++++ b/tests/35_opencv_rowRange/SConstruct
+@@ -0,0 +1,8 @@
++import os
++import sys
++
++# add building.py path
++sys.path = sys.path + [os.path.join('..','..','..','..','tools')]
++from building import *
++
++BuildApplication('35_opencv_rowRange', 'SConscript', usr_root = '../../../')
+diff --git a/tests/36_opencv_total/36_opencv_total.cpp b/tests/36_opencv_total/36_opencv_total.cpp
+new file mode 100755
+index 0000000000..fb17bf1954
+--- /dev/null
++++ b/tests/36_opencv_total/36_opencv_total.cpp
+@@ -0,0 +1,34 @@
++/*
++ * Copyright (c) 2006-2021, RT-Thread Development Team
++ *
++ * SPDX-License-Identifier: Apache-2.0
++ *
++ * Change Logs:
++ * Date           Author       Notes
++ * 2023/03/20     YeC          The first version
++ *
++ * @brief  Test for OpenCV/total.
++ * All the classes tested in this file are summarized as below:
++ * --total
++ */
++
++#include <opencv2/opencv.hpp>
++#include <iostream>
++ 
++using namespace cv;
++using namespace std;
++ 
++int main(int argc, char** argv) 
++{
++	Mat Test = (Mat_<double>(3, 3) << 0, 1, 2, 3, 4, 5, 6, 7, 8);
++	cout << "Total matrix is: " << Test.total()  << endl;
++ 
++    cout << "*********************************************************" << endl;	
++	if(Test.total() == 9)
++        cout << "{Test PASS}."  << endl;
++    else
++        cout << "{Test FAIL}."  << endl;
++    cout << "*********************************************************" << endl;
++
++	return 0;
++}
+diff --git a/tests/36_opencv_total/SConscript b/tests/36_opencv_total/SConscript
+new file mode 100755
+index 0000000000..744cb8de26
+--- /dev/null
++++ b/tests/36_opencv_total/SConscript
+@@ -0,0 +1,30 @@
++# RT-Thread building script for component
++
++from building import *
++
++cwd = GetCurrentDir()
++src = Glob('*.cpp')
++CPPPATH = [cwd, '../install/include/opencv4']
++
++CPPDEFINES = [
++    'HAVE_CCONFIG_H',
++]
++group = DefineGroup('hello', src, 
++        depend = [''], 
++        CPPPATH = CPPPATH, 
++        CPPDEFINES = CPPDEFINES, 
++        LIBS=['atomic',
++              'opencv_core',
++              'stdc++',
++              'zlib',
++              'cxx',
++              'liblibjpeg-turbo',
++              'liblibopenjp2',
++              'liblibpng',
++              'liblibtiff',
++              'liblibwebp',
++              'opencv_imgproc',
++              'opencv_imgcodecs'],
++        LIBPATH=['../install/lib',
++                 '../install/lib/opencv4/3rdparty'])
++Return('group')
+diff --git a/tests/36_opencv_total/SConstruct b/tests/36_opencv_total/SConstruct
+new file mode 100755
+index 0000000000..bb3570172a
+--- /dev/null
++++ b/tests/36_opencv_total/SConstruct
+@@ -0,0 +1,8 @@
++import os
++import sys
++
++# add building.py path
++sys.path = sys.path + [os.path.join('..','..','..','..','tools')]
++from building import *
++
++BuildApplication('36_opencv_total', 'SConscript', usr_root = '../../../')
+diff --git a/tests/37_opencv_setTo/37_opencv_setTo.cpp b/tests/37_opencv_setTo/37_opencv_setTo.cpp
+new file mode 100755
+index 0000000000..870b7b8396
+--- /dev/null
++++ b/tests/37_opencv_setTo/37_opencv_setTo.cpp
+@@ -0,0 +1,40 @@
++/*
++ * Copyright (c) 2006-2021, RT-Thread Development Team
++ *
++ * SPDX-License-Identifier: Apache-2.0
++ *
++ * Change Logs:
++ * Date           Author       Notes
++ * 2023/03/20     YeC          The first version
++ *
++ * @brief  Test for OpenCV/setTo.
++ * All the classes tested in this file are summarized as below:
++ * --setTo
++ */
++
++#include <iostream>
++#include <opencv2/opencv.hpp>
++
++using namespace cv;
++using namespace std;
++
++int main() 
++{
++	Mat src = (Mat_<uchar>(3, 3) << 0, 100, 200, 0, 205, 160, 0, 152, 0);
++    cout << "Original matrix is: " << endl;
++    cout << src << endl;
++
++    src.setTo(0);
++    cout << "After setTo matrix is: " << endl;
++	cout << src << endl;
++	
++    cout << "*********************************************************" << endl;	
++	if(sum(src)[0] == 0)
++        cout << "{Test PASS}."  << endl;
++    else
++        cout << "{Test FAIL}."  << endl;
++    cout << "*********************************************************" << endl;
++
++	return 0;
++
++}
+\ No newline at end of file
+diff --git a/tests/37_opencv_setTo/SConscript b/tests/37_opencv_setTo/SConscript
+new file mode 100755
+index 0000000000..744cb8de26
+--- /dev/null
++++ b/tests/37_opencv_setTo/SConscript
+@@ -0,0 +1,30 @@
++# RT-Thread building script for component
++
++from building import *
++
++cwd = GetCurrentDir()
++src = Glob('*.cpp')
++CPPPATH = [cwd, '../install/include/opencv4']
++
++CPPDEFINES = [
++    'HAVE_CCONFIG_H',
++]
++group = DefineGroup('hello', src, 
++        depend = [''], 
++        CPPPATH = CPPPATH, 
++        CPPDEFINES = CPPDEFINES, 
++        LIBS=['atomic',
++              'opencv_core',
++              'stdc++',
++              'zlib',
++              'cxx',
++              'liblibjpeg-turbo',
++              'liblibopenjp2',
++              'liblibpng',
++              'liblibtiff',
++              'liblibwebp',
++              'opencv_imgproc',
++              'opencv_imgcodecs'],
++        LIBPATH=['../install/lib',
++                 '../install/lib/opencv4/3rdparty'])
++Return('group')
+diff --git a/tests/37_opencv_setTo/SConstruct b/tests/37_opencv_setTo/SConstruct
+new file mode 100755
+index 0000000000..08e54c893b
+--- /dev/null
++++ b/tests/37_opencv_setTo/SConstruct
+@@ -0,0 +1,8 @@
++import os
++import sys
++
++# add building.py path
++sys.path = sys.path + [os.path.join('..','..','..','..','tools')]
++from building import *
++
++BuildApplication('37_opencv_setTo', 'SConscript', usr_root = '../../../')
+diff --git "a/tests/\345\205\266\345\256\203\345\207\275\346\225\260\350\257\264\346\230\216.txt" "b/tests/\345\205\266\345\256\203\345\207\275\346\225\260\350\257\264\346\230\216.txt"
+new file mode 100644
+index 0000000000..40bd781918
+--- /dev/null
++++ "b/tests/\345\205\266\345\256\203\345\207\275\346\225\260\350\257\264\346\230\216.txt"
+@@ -0,0 +1,4 @@
++1. 方法Mat::copyTo在tests/1_opencv_core_mat-shape.cpp内最后一个测试demo的copyto and clone 中；
++2. 方法Mat::Mat(int ndims, const int * size, int type)在tests/1_opencv_core_mat-shape.cpp中；
++3. 方法Mat::Mat(int rows,int cols,int type,void * data,size_t step = AUTO_STEP)在tests/1_opencv_core_mat-shape.cpp中；
++4. 方法cv::hconcat在tests/7_opencv_hconcat中，此外cv::vconcat方法类似，不在赘述；
+-- 
+2.34.1
+

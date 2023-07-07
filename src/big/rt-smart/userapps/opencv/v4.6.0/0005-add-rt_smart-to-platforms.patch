@@ -1,0 +1,71 @@
+From 42dc2dfc132ac49b9525689b740faf792ebff13b Mon Sep 17 00:00:00 2001
+From: zhouquan <zhouquan@rt-thread.com>
+Date: Fri, 4 Nov 2022 11:06:00 +0800
+Subject: [PATCH 05/14] add rt_smart to platforms
+
+---
+ build.sh                                      |  8 +++++
+ .../rt_smart/riscv64-gcc.toolchain.cmake      | 36 +++++++++++++++++++
+ 2 files changed, 44 insertions(+)
+ create mode 100644 build.sh
+ create mode 100644 platforms/rt_smart/riscv64-gcc.toolchain.cmake
+
+diff --git a/build.sh b/build.sh
+new file mode 100644
+index 0000000000..1da12c796f
+--- /dev/null
++++ b/build.sh
+@@ -0,0 +1,8 @@
++toolchain_path=~/.tools/gnu_gcc/riscv64-unknown-linux-musl-rv64imafdcv-lp64d/bin/
++
++c_compiler=${toolchain_path}/riscv64-unknown-linux-musl-gcc
++cxx_compiler=${toolchain_path}/riscv64-unknown-linux-musl-g++
++
++cmake .. -G "Unix Makefiles" -DCMAKE_TOOLCHAIN_FILE="../platforms/rt_smart/riscv64-gcc.toolchain.cmake" \
++    -DCMAKE_C_COMPILER=$c_compiler \
++    -DCMAKE_CXX_COMPILER=$cxx_compiler
+diff --git a/platforms/rt_smart/riscv64-gcc.toolchain.cmake b/platforms/rt_smart/riscv64-gcc.toolchain.cmake
+new file mode 100644
+index 0000000000..3a6bf10aa9
+--- /dev/null
++++ b/platforms/rt_smart/riscv64-gcc.toolchain.cmake
+@@ -0,0 +1,36 @@
++set(CMAKE_SYSTEM_NAME "Linux")
++set(CMAKE_SYSTEM_PROCESSOR "riscv64")
++
++# set(CMAKE_C_COMPILER  /home/csplink/.tools/gnu_gcc/riscv64-unknown-linux-musl-rv64imafdcv-lp64d/bin/riscv64-unknown-linux-musl-gcc)
++# set(CMAKE_CXX_COMPILER /home/csplink/.tools/gnu_gcc/riscv64-unknown-linux-musl-rv64imafdcv-lp64d/bin/riscv64-unknown-linux-musl-g++)
++
++set(CMAKE_CXX_FLAGS "" CACHE STRING "")
++set(CMAKE_C_FLAGS ""   CACHE STRING "")
++
++set(CMAKE_CXX_FLAGS "-mcmodel=medany -march=rv64imafdcv -mabi=lp64d -flax-vector-conversions")
++set(CMAKE_C_FLAGS "-mcmodel=medany -march=rv64imafdcv -mabi=lp64d -flax-vector-conversions")
++set(CMAKE_EXE_LINKER_FLAGS "-static -lpthread -lrt -ldl -latomic")
++
++set(CMAKE_BUILD_TYPE "Release")
++
++set(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT ON)
++set(CMAKE_BUILD_WITH_INSTALL_RPATH ON)
++
++set(BUILD_ZLIB ON)
++set(BUILD_PNG ON)
++set(BUILD_JPEG ON)
++set(BUILD_TIFF ON)
++set(BUILD_WEBP ON)
++set(BUILD_OPENJPEG ON)
++set(BUILD_JASPER ON)
++
++set(BUILD_SHARED_LIBS OFF)
++set(CMAKE_SKIP_INSTALL_RPATH ON)
++set(CMAKE_SKIP_RPATH ON)
++
++set(OPENCV_DISABLE_FILESYSTEM_SUPPORT ON)
++
++set(OPENCL_FOUND OFF)
++set(WITH_OPENCL OFF)
++set(WITH_OPENCLAMDBLAS OFF)
++set(WITH_OPENCLAMDFFT OFF)
+-- 
+2.34.1
+

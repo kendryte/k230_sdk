@@ -1,0 +1,514 @@
+From d5c3acf6a504b74c9418daab3be0b95275b01cf6 Mon Sep 17 00:00:00 2001
+From: zhouquan <zhouquan@rt-thread.com>
+Date: Mon, 5 Dec 2022 11:31:54 +0800
+Subject: [PATCH 17/18] =?UTF-8?q?=F0=9F=90=9E=20fix(src/omv):=20revert=20m?=
+ =?UTF-8?q?ore=20img=20api?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+https://support.rt-thread.com/canaan-creative/maix3/-/issues/48
+---
+ src/omv/boards/MAIX3/imlib_config.h    |  76 +++++++-------
+ src/omv/boards/MAIX3/omv_boardconfig.h |   2 +-
+ src/omv/common/ff_wrapper.c            | 133 +++++++++++++++++++++++--
+ src/omv/common/ff_wrapper.h            |   5 +
+ src/omv/modules/py_imageio.c           |   3 +
+ src/omv/ports/unix/omvhal-file.c       |  22 +++-
+ src/omv/ports/unix/omvhaldef.h         |   2 +
+ src/omv/ports/unix/omvhalfile.h        |   7 ++
+ 8 files changed, 196 insertions(+), 54 deletions(-)
+
+diff --git a/src/omv/boards/MAIX3/imlib_config.h b/src/omv/boards/MAIX3/imlib_config.h
+index 65d5a40b..f742e103 100644
+--- a/src/omv/boards/MAIX3/imlib_config.h
++++ b/src/omv/boards/MAIX3/imlib_config.h
+@@ -12,84 +12,84 @@
+ #define __IMLIB_CONFIG_H__
+ 
+ // // Enable Image I/O
+-// #define IMLIB_ENABLE_IMAGE_IO
++#define IMLIB_ENABLE_IMAGE_IO
+ 
+ // Enable Image File I/O
+ #define IMLIB_ENABLE_IMAGE_FILE_IO
+ 
+ // // Enable LAB LUT
+-// #define IMLIB_ENABLE_LAB_LUT
++#define IMLIB_ENABLE_LAB_LUT
+ 
+ // // Enable YUV LUT
+-// //#define IMLIB_ENABLE_YUV_LUT
++#define IMLIB_ENABLE_YUV_LUT
+ 
+ // // Enable mean pooling
+-// #define IMLIB_ENABLE_MEAN_POOLING
++#define IMLIB_ENABLE_MEAN_POOLING
+ 
+ // // Enable midpoint pooling
+-// #define IMLIB_ENABLE_MIDPOINT_POOLING
++#define IMLIB_ENABLE_MIDPOINT_POOLING
+ 
+ // // Enable binary ops
+-// #define IMLIB_ENABLE_BINARY_OPS
++#define IMLIB_ENABLE_BINARY_OPS
+ 
+ // // Enable math ops
+-// #define IMLIB_ENABLE_MATH_OPS
++#define IMLIB_ENABLE_MATH_OPS
+ 
+ // // Enable flood_fill()
+-// #define IMLIB_ENABLE_FLOOD_FILL
++#define IMLIB_ENABLE_FLOOD_FILL
+ 
+ // // Enable mean()
+-// #define IMLIB_ENABLE_MEAN
++#define IMLIB_ENABLE_MEAN
+ 
+ // // Enable median()
+-// #define IMLIB_ENABLE_MEDIAN
++#define IMLIB_ENABLE_MEDIAN
+ 
+ // // Enable mode()
+-// #define IMLIB_ENABLE_MODE
++#define IMLIB_ENABLE_MODE
+ 
+ // // Enable midpoint()
+-// #define IMLIB_ENABLE_MIDPOINT
++#define IMLIB_ENABLE_MIDPOINT
+ 
+ // // Enable morph()
+-// #define IMLIB_ENABLE_MORPH
++#define IMLIB_ENABLE_MORPH
+ 
+ // // Enable Gaussian
+-// #define IMLIB_ENABLE_GAUSSIAN
++#define IMLIB_ENABLE_GAUSSIAN
+ 
+ // // Enable Laplacian
+-// #define IMLIB_ENABLE_LAPLACIAN
++#define IMLIB_ENABLE_LAPLACIAN
+ 
+ // // Enable bilateral()
+-// #define IMLIB_ENABLE_BILATERAL
++#define IMLIB_ENABLE_BILATERAL
+ 
+ // // Enable cartoon()
+-// // #define IMLIB_ENABLE_CARTOON
++#define IMLIB_ENABLE_CARTOON
+ 
+ // // Enable linpolar()
+-// #define IMLIB_ENABLE_LINPOLAR
++#define IMLIB_ENABLE_LINPOLAR
+ 
+ // // Enable logpolar()
+-// #define IMLIB_ENABLE_LOGPOLAR
++#define IMLIB_ENABLE_LOGPOLAR
+ 
+ // // Enable lens_corr()
+-// #define IMLIB_ENABLE_LENS_CORR
++#define IMLIB_ENABLE_LENS_CORR
+ 
+ // // Enable rotation_corr()
+-// #define IMLIB_ENABLE_ROTATION_CORR
++#define IMLIB_ENABLE_ROTATION_CORR
+ 
+ // // Enable phasecorrelate()
+-// #if defined(IMLIB_ENABLE_ROTATION_CORR)
+-// #define IMLIB_ENABLE_FIND_DISPLACEMENT
+-// #endif
++#if defined(IMLIB_ENABLE_ROTATION_CORR)
++#define IMLIB_ENABLE_FIND_DISPLACEMENT
++#endif
+ 
+ // // Enable get_similarity()
+-// #define IMLIB_ENABLE_GET_SIMILARITY
++#define IMLIB_ENABLE_GET_SIMILARITY
+ 
+ // Enable find_lines()
+ #define IMLIB_ENABLE_FIND_LINES
+ 
+ // // Enable find_line_segments()
+-// #define IMLIB_ENABLE_FIND_LINE_SEGMENTS
++#define IMLIB_ENABLE_FIND_LINE_SEGMENTS
+ 
+ // Enable find_circles()
+ #define IMLIB_ENABLE_FIND_CIRCLES
+@@ -107,18 +107,18 @@
+ #define IMLIB_ENABLE_FINE_APRILTAGS
+ 
+ // // Enable high res find_apriltags() - uses more RAM
+-// // #define IMLIB_ENABLE_HIGH_RES_APRILTAGS
++#define IMLIB_ENABLE_HIGH_RES_APRILTAGS
+ 
+ // // Enable find_datamatrices() (26 KB)
+-// #define IMLIB_ENABLE_DATAMATRICES
++#define IMLIB_ENABLE_DATAMATRICES
+ 
+ // // Enable find_barcodes() (42 KB)
+ #define IMLIB_ENABLE_BARCODES
+ 
+ // // Enable CMSIS NN
+-// // #if !defined(CUBEAI)
+-// // #define IMLIB_ENABLE_CNN
+-// // #endif
++// #if !defined(CUBEAI)
++// #define IMLIB_ENABLE_CNN
++// #endif
+ 
+ // // Enable Tensor Flow
+ // #if !defined(CUBEAI)
+@@ -126,25 +126,25 @@
+ // #endif
+ 
+ // // Enable FAST (20+ KBs).
+-// // #define IMLIB_ENABLE_FAST
++#define IMLIB_ENABLE_FAST
+ 
+ // // Enable find_template()
+-// #define IMLIB_FIND_TEMPLATE
++#define IMLIB_FIND_TEMPLATE
+ 
+ // // Enable find_lbp()
+-// #define IMLIB_ENABLE_FIND_LBP
++#define IMLIB_ENABLE_FIND_LBP
+ 
+ // // Enable find_keypoints()
+-// #define IMLIB_ENABLE_FIND_KEYPOINTS
++#define IMLIB_ENABLE_FIND_KEYPOINTS
+ 
+ // // Enable load, save and match descriptor
+-// #define IMLIB_ENABLE_DESCRIPTOR
++#define IMLIB_ENABLE_DESCRIPTOR
+ 
+ // Enable find_hog()
+ #define IMLIB_ENABLE_HOG
+ 
+ // // Enable selective_search()
+-// // #define IMLIB_ENABLE_SELECTIVE_SEARCH
++#define IMLIB_ENABLE_SELECTIVE_SEARCH
+ 
+ // // Enable STM32 DMA2D
+ // #define IMLIB_ENABLE_DMA2D
+@@ -154,6 +154,6 @@
+ #define IMLIB_ENABLE_PNG_DECODER
+ 
+ // // Stereo Imaging
+-// // #define IMLIB_ENABLE_STEREO_DISPARITY
++#define IMLIB_ENABLE_STEREO_DISPARITY
+ 
+ #endif //__IMLIB_CONFIG_H__
+diff --git a/src/omv/boards/MAIX3/omv_boardconfig.h b/src/omv/boards/MAIX3/omv_boardconfig.h
+index d8b03bf1..7aa6977c 100644
+--- a/src/omv/boards/MAIX3/omv_boardconfig.h
++++ b/src/omv/boards/MAIX3/omv_boardconfig.h
+@@ -154,7 +154,7 @@
+ // #define OMV_JPEG_MEMORY         SRAM3       // JPEG buffer memory.
+ // #define OMV_VOSPI_MEMORY        SRAM4       // VoSPI buffer memory.
+ 
+-#define OMV_FB_SIZE                         (400K)  // FB memory: header + VGA/GS image
++#define OMV_FB_SIZE                         (1000K)  // FB memory: header + VGA/GS image
+ #define OMV_FB_ALLOC_SIZE                   (100K)  // minimum fb alloc size
+ // #define OMV_STACK_SIZE          (64K)
+ // #define OMV_HEAP_SIZE           (229K)
+diff --git a/src/omv/common/ff_wrapper.c b/src/omv/common/ff_wrapper.c
+index 8d6af7c3..3327c7c9 100644
+--- a/src/omv/common/ff_wrapper.c
++++ b/src/omv/common/ff_wrapper.c
+@@ -12,15 +12,15 @@
+ #include "imlib_config.h"
+ #if defined(IMLIB_ENABLE_IMAGE_FILE_IO)
+ 
+-#include <string.h>
+-#include "py/runtime.h"
+ #include "extmod/vfs.h"
+ #include "extmod/vfs_fat.h"
++#include "py/runtime.h"
++#include <string.h>
+ 
+ #include "common.h"
+ #include "fb_alloc.h"
+ #include "ff_wrapper.h"
+-#define FF_MIN(x,y) (((x)<(y))?(x):(y))
++#define FF_MIN(x, y) (((x) < (y)) ? (x) : (y))
+ 
+ NORETURN static void ff_fail(FIL *fp, FRESULT res)
+ {
+@@ -494,10 +494,12 @@ void write_data(FIL *fp, const void *data, UINT size)
+         if (bytes != size) ff_write_fail(fp);
+     }
+ }
+-#endif //IMLIB_ENABLE_IMAGE_FILE_IO
++#endif  // IMLIB_ENABLE_IMAGE_FILE_IO
+ 
+ #else
++#include <fcntl.h>
+ #include <stdio.h>
++#include <stdlib.h>
+ #include <string.h>
+ 
+ // #include "systick.h"
+@@ -516,6 +518,8 @@ void write_data(FIL *fp, const void *data, UINT size)
+ #include "py/runtime.h"
+ #include "py/stream.h"
+ 
++#define FF_MIN(x, y) (((x) < (y)) ? (x) : (y))
++
+ const char *ffs_strerror(int res)
+ {
+     return "";
+@@ -634,17 +638,94 @@ void file_buffer_init0()
+     file_buffer_index   = 0;
+ }
+ 
+-static void file_fill(omvhal_fil_t *fp) {}
++static void file_fill(omvhal_fil_t *fp)
++{
++    if (file_buffer_index == file_buffer_size) {
++        file_buffer_pointer -= file_buffer_offset;
++        file_buffer_size += file_buffer_offset;
++        file_buffer_offset      = 0;
++        file_buffer_index       = 0;
++        uint32_t file_remaining = f_size(fp) - f_tell(fp);
++        uint32_t can_do         = FF_MIN(file_buffer_size, file_remaining);
++        UINT     bytes;
++        FRESULT  res = f_read(fp, file_buffer_pointer, can_do, &bytes);
++        if (res != FR_OK)
++            ff_fail(fp, res);
++        if (bytes != can_do)
++            ff_read_fail(fp);
++    }
++}
+ 
+-static void file_flush(omvhal_fil_t *fp) {}
++static void file_flush(omvhal_fil_t *fp)
++{
++    if (file_buffer_index == file_buffer_size) {
++        UINT    bytes;
++        FRESULT res = f_write(fp, file_buffer_pointer, file_buffer_index, &bytes);
++        if (res != FR_OK)
++            ff_fail(fp, res);
++        if (bytes != file_buffer_index)
++            ff_write_fail(fp);
++        file_buffer_pointer -= file_buffer_offset;
++        file_buffer_size += file_buffer_offset;
++        file_buffer_offset = 0;
++        file_buffer_index  = 0;
++    }
++}
+ 
+-uint32_t file_tell_w_buf(omvhal_fil_t *fp) {}
++uint32_t file_tell_w_buf(omvhal_fil_t *fp)
++{
++    if (fp->mode & O_RDWR || fp->mode & O_RDONLY) {
++        return f_tell(fp) - file_buffer_size + file_buffer_index;
++    }
++    else {
++        return f_tell(fp) + file_buffer_index;
++    }
++}
+ 
+-uint32_t file_size_w_buf(omvhal_fil_t *fp) {}
++uint32_t file_size_w_buf(omvhal_fil_t *fp)
++{
++    if (fp->mode & O_RDWR || fp->mode & O_RDONLY) {
++        return f_size(fp);
++    }
++    else {
++        return f_size(fp) + file_buffer_index;
++    }
++}
+ 
+-void file_buffer_on(omvhal_fil_t *fp) {}
++void file_buffer_on(omvhal_fil_t *fp)
++{
++    file_buffer_offset  = f_tell(fp) % 4;
++    file_buffer_pointer = fb_alloc_all(&file_buffer_size, FB_ALLOC_PREFER_SIZE) + file_buffer_offset;
++    if (!file_buffer_size) {
++        mp_raise_msg(&mp_type_MemoryError, MP_ERROR_TEXT("No memory!"));
++    }
++    file_buffer_size -= file_buffer_offset;
++    file_buffer_index = 0;
++    if (fp->mode & O_RDWR || fp->mode & O_RDONLY) {
++        uint32_t file_remaining = f_size(fp) - f_tell(fp);
++        uint32_t can_do         = FF_MIN(file_buffer_size, file_remaining);
++        UINT     bytes;
++        FRESULT  res = f_read(fp, file_buffer_pointer, can_do, &bytes);
++        if (res != FR_OK)
++            ff_fail(fp, res);
++        if (bytes != can_do)
++            ff_read_fail(fp);
++    }
++}
+ 
+-void file_buffer_off(omvhal_fil_t *fp) {}
++void file_buffer_off(omvhal_fil_t *fp)
++{
++    if ((fp->mode & O_RDWR || fp->mode & O_WRONLY) && file_buffer_index) {
++        UINT    bytes;
++        FRESULT res = f_write(fp, file_buffer_pointer, file_buffer_index, &bytes);
++        if (res != FR_OK)
++            ff_fail(fp, res);
++        if (bytes != file_buffer_index)
++            ff_write_fail(fp);
++    }
++    file_buffer_pointer = 0;
++    fb_free();
++}
+ 
+ void read_byte(omvhal_fil_t *fp, uint8_t *value)
+ {
+@@ -768,4 +849,36 @@ void write_data(omvhal_fil_t *fp, const void *data, uint32_t size)
+         ff_write_fail(fp);
+ }
+ 
++void file_sync(FIL *fp)
++{
++    sync();
++}
++
++void file_truncate(omvhal_fil_t *fp)
++{
++    char *path = malloc(strlen(fp->path) + 1);
++    strncpy(path, fp->path, strlen(fp->path) + 1);
++    int   mode = fp->mode;
++    off_t pos  = lseek(fp->fd, 0, SEEK_CUR);
++    omvhal_f_close(fp);
++    truncate(path, pos);
++    omvhal_f_open(fp, path, mode);
++    lseek(fp->fd, pos, SEEK_SET);
++    free(path);
++}
++
++void file_read_write_open_always(FIL *fp, const char *path)
++{
++    FRESULT res = f_open_helper(fp, path, O_RDWR | O_CREAT);
++    if (res != FR_OK)
++        ff_fail(fp, res);
++}
++
++void file_read_write_open_existing(FIL *fp, const char *path)
++{
++    FRESULT res = f_open_helper(fp, path, O_RDWR);
++    if (res != FR_OK)
++        ff_fail(fp, res);
++}
++
+ #endif
+diff --git a/src/omv/common/ff_wrapper.h b/src/omv/common/ff_wrapper.h
+index 6fc46778..34bb9c87 100644
+--- a/src/omv/common/ff_wrapper.h
++++ b/src/omv/common/ff_wrapper.h
+@@ -82,6 +82,11 @@ void write_data(FIL *fp, const void *data, UINT size);
+ 
+ #include "omvhalfile.h"
+ 
++#undef FA_WRITE
++#undef FA_CREATE_ALWAYS
++#undef FA_READ
++#undef FA_OPEN_EXISTING
++
+ #define FA_WRITE         0x01
+ #define FA_CREATE_ALWAYS 0x02
+ #define FA_READ          0x04
+diff --git a/src/omv/modules/py_imageio.c b/src/omv/modules/py_imageio.c
+index d909f363..77e20d19 100644
+--- a/src/omv/modules/py_imageio.c
++++ b/src/omv/modules/py_imageio.c
+@@ -9,6 +9,9 @@
+  * Image I/O Python module.
+  */
+ #include "imlib_config.h"
++
++#define __WFI()  // TODO need to be supplemented
++
+ #if defined(IMLIB_ENABLE_IMAGE_IO)
+ 
+ #include "py/obj.h"
+diff --git a/src/omv/ports/unix/omvhal-file.c b/src/omv/ports/unix/omvhal-file.c
+index 806d0112..e014a623 100644
+--- a/src/omv/ports/unix/omvhal-file.c
++++ b/src/omv/ports/unix/omvhal-file.c
+@@ -1,6 +1,8 @@
+ #include "ff_wrapper.h"
+ 
+ #include <fcntl.h>
++#include <stdlib.h>
++#include <string.h>
+ #include <sys/stat.h>
+ #include <sys/types.h>
+ #include <unistd.h>
+@@ -11,24 +13,34 @@ int omvhal_f_open(omvhal_fil_t *f, const char *path, int mode)
+     int      ret   = 0;
+ 
+     if (mode & FA_WRITE)
+-        oflag |= O_WRONLY;
++        oflag = O_WRONLY;
+     if (mode & FA_READ)
+-        oflag |= O_RDONLY;
++        oflag = O_RDONLY;
++    if (mode & FA_WRITE && mode & FA_READ)
++        oflag = O_RDWR;
++
+     if (mode & FA_CREATE_ALWAYS)
+         oflag |= O_CREAT;
+ 
+     f->fd = open(path, oflag);
+ 
+-    if (f->fd < 0)
++    if (f->fd < 0) {
+         ret = -1;
+-
++    }
++    else {
++        f->path = malloc(strlen(path) + 1);
++        strncpy(f->path, path, strlen(path) + 1);
++        f->mode = oflag;
++    }
+     return ret;
+ }
+ 
+ int omvhal_f_close(omvhal_fil_t *f)
+ {
+     close(f->fd);
+-
++    free(f->path);
++    f->path = NULL;
++    f->mode = -1;
+     return 0;
+ }
+ 
+diff --git a/src/omv/ports/unix/omvhaldef.h b/src/omv/ports/unix/omvhaldef.h
+index 6a3266d0..bf2d470e 100644
+--- a/src/omv/ports/unix/omvhaldef.h
++++ b/src/omv/ports/unix/omvhaldef.h
+@@ -27,6 +27,8 @@ typedef struct
+ typedef struct
+ {
+     int fd;
++    char *path;
++    int   mode;
+ } omvhal_fil_t;
+ 
+ #endif
+diff --git a/src/omv/ports/unix/omvhalfile.h b/src/omv/ports/unix/omvhalfile.h
+index 61c8a674..9aed9fb3 100644
+--- a/src/omv/ports/unix/omvhalfile.h
++++ b/src/omv/ports/unix/omvhalfile.h
+@@ -8,6 +8,13 @@
+ #define UINT    uint32_t
+ #define FR_OK   0
+ 
++#undef f_tell
++#undef f_size
++#undef f_write
++#undef f_read
++#undef f_close
++#undef f_eof
++
+ #define f_tell  omvhal_f_tell
+ #define f_size  omvhal_f_size
+ #define f_write omvhal_f_write
+-- 
+2.38.0.windows.1
+

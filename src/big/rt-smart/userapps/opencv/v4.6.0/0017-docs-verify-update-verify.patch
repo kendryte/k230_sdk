@@ -1,0 +1,23 @@
+From 257d755ecfcd9e951b704394de92859f8d680d87 Mon Sep 17 00:00:00 2001
+From: zhouquan <zhouquan@rt-thread.com>
+Date: Fri, 24 Feb 2023 11:22:43 +0800
+Subject: [PATCH 17/17] =?UTF-8?q?=F0=9F=93=83=20docs(verify):=20update=20v?=
+ =?UTF-8?q?erify?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ verify | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/verify b/verify
+index ca26cc2bd9..8c66359607 100644
+--- a/verify
++++ b/verify
+@@ -1 +1 @@
+-[commit]: 163fdfe56dbd9e0c8f8d19cef741d8f7c3419196
++[commit]: 5041858efcb62a7729fe23ba895dd2eb420988fd
+-- 
+2.34.1
+

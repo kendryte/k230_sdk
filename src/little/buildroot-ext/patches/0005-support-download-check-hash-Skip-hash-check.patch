@@ -1,0 +1,25 @@
+From 6d0883fdd32828729a2bf7d6d6550046ab08e0ef Mon Sep 17 00:00:00 2001
+From: Guo Ren <ren_guo@c-sky.com>
+Date: Thu, 18 Jul 2019 07:41:42 +0800
+Subject: [PATCH 05/15] support/download/check-hash: Skip hash check
+
+Signed-off-by: Guo Ren <ren_guo@c-sky.com>
+Signed-off-by: Guo Ren <guoren@linux.alibaba.com>
+---
+ support/download/check-hash | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/support/download/check-hash b/support/download/check-hash
+index fe9c105..136af60 100755
+--- a/support/download/check-hash
++++ b/support/download/check-hash
+@@ -107,5 +107,5 @@ if [ ${nb_checks} -eq 0 ]; then
+         ;;
+     esac
+     printf "ERROR: No hash found for %s\n" "${base}" >&2
+-    exit 3
++    exit 0
+ fi
+-- 
+2.17.1
+

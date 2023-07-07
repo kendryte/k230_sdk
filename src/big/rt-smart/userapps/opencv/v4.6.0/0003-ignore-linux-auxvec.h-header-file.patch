@@ -1,0 +1,25 @@
+From ab40bdd6b17f6243479a4014f8eb22dda5a3800d Mon Sep 17 00:00:00 2001
+From: zhouquan <zhouquan@rt-thread.com>
+Date: Thu, 3 Nov 2022 14:29:27 +0800
+Subject: [PATCH 03/14] ignore linux/auxvec.h header file
+
+---
+ modules/core/src/system.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/modules/core/src/system.cpp b/modules/core/src/system.cpp
+index d2231fe952..6b6c3eab56 100644
+--- a/modules/core/src/system.cpp
++++ b/modules/core/src/system.cpp
+@@ -140,7 +140,7 @@ void* allocSingletonNewBuffer(size_t size) { return malloc(size); }
+ #  include <elf.h>
+ #endif
+ #if defined __ANDROID__ || defined __linux__
+-#  include <linux/auxvec.h>
++// #  include <linux/auxvec.h>
+ #endif
+ #endif
+ 
+-- 
+2.34.1
+

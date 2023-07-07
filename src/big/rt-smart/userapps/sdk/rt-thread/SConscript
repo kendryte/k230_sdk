@@ -1,0 +1,17 @@
+from building import *
+Import('Env')
+
+cwd        = GetCurrentDir()
+src        = []
+CPPPATH    = [cwd + '/include', 
+    cwd + '/components/dfs', 
+    cwd + '/components/drivers', 
+    cwd + '/components/finsh', 
+    cwd + '/components/net']
+LIBS       = ['rtthread']
+LIBPATH    = [os.path.join(cwd, 'lib', Env['ARCH'], Env['ARCH_CPU'])]
+
+group = DefineGroup('sdk', src, depend = [''], CPPPATH = CPPPATH, 
+        LIBPATH = LIBPATH, LIBS = LIBS)
+
+Return('group')

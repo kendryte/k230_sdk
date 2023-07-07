@@ -1,0 +1,25 @@
+From ae54664a70cca38385e401942d1e2e2450773a4c Mon Sep 17 00:00:00 2001
+From: zhouquan <zhouquan@rt-thread.com>
+Date: Tue, 18 Oct 2022 11:23:54 +0800
+Subject: [PATCH 07/14] increase heap_size
+
+---
+ src/omv/ports/unix/main.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/omv/ports/unix/main.c b/src/omv/ports/unix/main.c
+index b2790791..58d841cd 100644
+--- a/src/omv/ports/unix/main.c
++++ b/src/omv/ports/unix/main.c
+@@ -59,7 +59,7 @@ STATIC uint emit_opt = MP_EMIT_OPT_NONE;
+ #if MICROPY_ENABLE_GC
+ // Heap size of GC heap (if enabled)
+ // Make it larger on a 64 bit machine, because pointers are larger.
+-long heap_size = 1024 * 1024 * (sizeof(mp_uint_t) / 4);
++long heap_size = 4096 * 1024 * (sizeof(mp_uint_t) / 4);
+ #endif
+ 
+ STATIC void stderr_print_strn(void *env, const char *str, size_t len) {
+-- 
+2.33.1.windows.1
+

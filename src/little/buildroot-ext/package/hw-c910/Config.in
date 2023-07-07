@@ -1,0 +1,4 @@
+config BR2_PACKAGE_HW_C910
+	bool
+	depends on BR2_riscv
+	default y if BR2_riscv

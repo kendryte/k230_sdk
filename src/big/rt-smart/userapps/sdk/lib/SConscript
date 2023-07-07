@@ -1,0 +1,13 @@
+from building import *
+Import('Env')
+
+cwd     = GetCurrentDir()
+src     = []
+CPPPATH = []
+LIBS    = []
+LIBPATH = [os.path.join(cwd, Env['ARCH'], Env['ARCH_CPU'])]
+
+group = DefineGroup('sdk', src, depend = [''], CPPPATH = CPPPATH,
+        LIBPATH = LIBPATH, LIBS = LIBS)
+
+Return('group')

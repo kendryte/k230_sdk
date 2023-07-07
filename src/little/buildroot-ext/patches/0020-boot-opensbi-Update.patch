@@ -1,0 +1,28 @@
+From ac1bf95b01badd696e751629b838c3afe7e0d3d0 Mon Sep 17 00:00:00 2001
+From: Guo Ren <guoren@linux.alibaba.com>
+Date: Thu, 11 Mar 2021 10:29:30 +0800
+Subject: [PATCH] boot/opensbi: Update to 0.8
+
+Signed-off-by: Guo Ren <guoren@linux.alibaba.com>
+---
+ boot/opensbi/opensbi.mk | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/boot/opensbi/opensbi.mk b/boot/opensbi/opensbi.mk
+index 6af7ebd..9babd64 100644
+--- a/boot/opensbi/opensbi.mk
++++ b/boot/opensbi/opensbi.mk
+@@ -4,8 +4,8 @@
+ #
+ ################################################################################
+ 
+-OPENSBI_VERSION = 0.8
+-OPENSBI_SITE = $(call github,riscv,opensbi,v$(OPENSBI_VERSION))
++OPENSBI_VERSION = 89182b257c8798e15e4c685c1af0c2862d528d2a
++OPENSBI_SITE = $(call github,c-sky,opensbi,$(OPENSBI_VERSION))
+ OPENSBI_LICENSE = BSD-2-Clause
+ OPENSBI_LICENSE_FILES = COPYING.BSD
+ OPENSBI_INSTALL_TARGET = NO
+-- 
+2.17.1
+

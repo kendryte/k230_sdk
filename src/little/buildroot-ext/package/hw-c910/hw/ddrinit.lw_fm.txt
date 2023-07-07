@@ -1,0 +1,24 @@
+# Set gdb environment
+set height 0
+
+# Don't confirm when quit
+set confirm off
+
+# Reset SoC
+reset
+shell $(sleep 1)
+
+# Set DDR_CFG0 to enable DDR
+set *0xffff005000 = (0x1ff << 4)
+
+# Set GMAC
+set $IOPMP_GMAC0_BASE_ADDR = 0xfffc001000
+set *($IOPMP_GMAC0_BASE_ADDR+0x280) = 0x0 >> 12
+set *($IOPMP_GMAC0_BASE_ADDR+0x284) = 0x200000000 >> 12
+set *($IOPMP_GMAC0_BASE_ADDR+0x80) = 0x3
+
+set $GMAC0_BASE_ADDR = 0xffec003000
+set *($GMAC0_BASE_ADDR + 0x8)=1<<13
+set *($GMAC0_BASE_ADDR + 0x4)=1<<13
+
+shell $(sleep 1)

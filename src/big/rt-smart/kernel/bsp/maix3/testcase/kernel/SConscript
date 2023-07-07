@@ -1,0 +1,77 @@
+Import('rtconfig')
+from building import *
+
+cwd     = GetCurrentDir()
+src     = []
+CPPPATH = [cwd]
+
+if GetDepend(['UTEST_MEMHEAP_TC']):
+    src += ['memheap_tc.c']
+
+if GetDepend(['UTEST_IRQ_TC']):
+    src += ['irq_tc.c']
+
+if GetDepend(['UTEST_SEMAPHORE_TC']):
+    src += ['semaphore_tc.c']
+
+if GetDepend(['UTEST_EVENT_TC']):
+    src += ['event_tc.c']
+
+if GetDepend(['UTEST_TIMER_TC']):
+    src += ['timer_tc.c']
+
+if GetDepend(['UTEST_MESSAGEQUEUE_TC']):
+    src += ['messagequeue_tc.c']
+
+if GetDepend(['UTEST_MUTEX_TC']):
+    src += ['mutex_tc.c']
+
+if GetDepend(['UTEST_MAILBOX_TC']):
+    src += ['mailbox_tc.c']
+
+if GetDepend(['UTEST_THREAD_TC']):
+    src += ['thread_tc.c']
+    src += ['vector_tc.c']
+
+if GetDepend(['UTEST_MMU_TC']):
+    src += ['mmu_tc.c']
+
+if GetDepend(['UTEST_I2C_OV9282']):
+    src += ['i2c_unitest_ov9282.c']
+
+if GetDepend(['UTEST_I2C_TMP103']):
+    src += ['i2c_unitest_tmp103.c']
+
+if GetDepend(['UTEST_ADC']):
+    src += ['adc_tc.c']
+
+if GetDepend(['UTEST_GPIO']):
+    src += ['gpio_unitest_rw.c']
+
+if GetDepend(['UTEST_GPIO']):
+    src += ['gpio_unitest_irq.c']
+
+if GetDepend(['UTEST_SPI_NAND']):
+    src += ['spi_nandflash_w25n01gv.c']
+
+if GetDepend(['UTEST_OTP']):
+    src += ['otp_tc.c']
+
+if GetDepend(['UTEST_WDT']):
+    src += ['wdt_irq_tc.c']
+    
+if GetDepend(['UTEST_TS']):
+    src += ['ts_tc.c']
+
+if GetDepend(['UTEST_PWM']):
+    src += ['pwm_tc.c']
+
+if GetDepend(['UTEST_HWTIMER']):
+    src += ['hwtimer_tc.c']
+
+if GetDepend(['UTEST_RTC']):
+    src += ['rtc_tc.c']
+
+group = DefineGroup('utestcases', src, depend = ['RT_USING_UTEST'], CPPPATH = CPPPATH)
+
+Return('group')

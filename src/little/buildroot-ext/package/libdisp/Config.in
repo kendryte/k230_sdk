@@ -1,0 +1,5 @@
+
+config BR2_PACKAGE_LIBDISP
+	bool "libdisp"
+	help
+	  k230 display lib

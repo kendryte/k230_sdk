@@ -1,0 +1,31 @@
+From d07d44cedf99f1eaf08043e0c7577d5bf9b154f0 Mon Sep 17 00:00:00 2001
+From: Guo Ren <guoren@linux.alibaba.com>
+Date: Tue, 9 Mar 2021 20:49:35 +0800
+Subject: [PATCH] package/linux-headers: Add linux-headers in host
+
+Signed-off-by: Guo Ren <guoren@linux.alibaba.com>
+---
+ package/linux-headers/linux-headers.mk | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/package/linux-headers/linux-headers.mk b/package/linux-headers/linux-headers.mk
+index 69ab16c..87504b6 100644
+--- a/package/linux-headers/linux-headers.mk
++++ b/package/linux-headers/linux-headers.mk
+@@ -133,6 +133,13 @@ endef
+ 
+ define LINUX_HEADERS_INSTALL_STAGING_CMDS
+ 	(cd $(@D); \
++		$(TARGET_MAKE_ENV) $(MAKE) \
++			ARCH=$(KERNEL_ARCH) \
++			HOSTCC="$(HOSTCC)" \
++			HOSTCFLAGS="$(HOSTCFLAGS)" \
++			HOSTCXX="$(HOSTCXX)" \
++			INSTALL_HDR_PATH=$(HOST_DIR)/linux-headers \
++			headers_install; \
+ 		$(TARGET_MAKE_ENV) $(MAKE) \
+ 			ARCH=$(KERNEL_ARCH) \
+ 			HOSTCC="$(HOSTCC)" \
+-- 
+2.17.1
+

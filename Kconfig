@@ -1,0 +1,7 @@
+mainmenu "K230 SDK Configuration"
+
+
+source Kconfig.board
+source Kconfig.toolchain
+source Kconfig.memory
+source Kconfig.storage

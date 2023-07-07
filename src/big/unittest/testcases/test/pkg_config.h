@@ -1,0 +1,17 @@
+#ifndef PKG_CONFIG_H__
+#define PKG_CONFIG_H__
+
+#define RT_USING_TESTCASE
+
+#define TC_USING_FS_DFS_TC
+#define TC_FS_DFS_BLOCK_DEV_NAME "W25Q256"
+#define TC_FS_DFS_NAME "elm"
+#define TC_FS_DFS_MOUNT_PATH_ "/"
+#define TC_USING_UTEST_FAIL_TC
+#define TC_USING_UTEST_PASS_TC
+#define TC_USING_ULOG_TC
+
+#define PKG_USING_TESTCASES_LATEST_VERSION
+#define RT_CONSOLEBUF_SIZE  256
+
+#endif

@@ -1,0 +1,47 @@
+#
+# Copyright (C) 2017-2020 Alibaba Group Holding Limited
+#
+# SPDX-License-Identifier: GPL-2.0+
+#
+
+config RISCV_THEAD
+	bool
+	select ARCH_EARLY_INIT_R
+	select SUPPORT_SPL
+	imply CPU
+	imply CPU_RISCV
+	imply RISCV_TIMER
+	imply RISCV_RDTIME
+	imply CMD_CPU
+	imply SPL_CPU
+	imply SPL_OPENSBI
+	imply SPL_LOAD_FIT
+
+choice
+	prompt "ddr typy freq"
+	depends on TARGET_K230_EVB
+	default LPDDR3_800
+	
+config LPDDR3_800
+	bool "ddr3 800"
+
+config LPDDR3_2133
+	bool  "ddr3 2133"
+	
+
+config LPDDR4_1066
+	bool  "ddr4 1066"
+
+config LPDDR4_2667
+	bool  "ddr4 2667"	
+
+config LPDDR4_3200
+	bool  "ddr4 3200"
+endchoice
+
+config DDR_SIZE
+	hex "DDR  Size"
+	default 0x80000000 if LPDDR4_2667
+	default 0x20000000
+	help
+	  Size of the DDR 

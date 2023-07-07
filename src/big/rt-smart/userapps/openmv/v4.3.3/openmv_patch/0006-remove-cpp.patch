@@ -1,0 +1,25 @@
+From 82f85ca282460781911bcbae536ae0950722305e Mon Sep 17 00:00:00 2001
+From: zhouquan <zhouquan@rt-thread.com>
+Date: Tue, 18 Oct 2022 10:27:12 +0800
+Subject: [PATCH 06/14] remove cpp
+
+---
+ src/Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/Makefile b/src/Makefile
+index 016b8c15..6e9c7e0c 100755
+--- a/src/Makefile
++++ b/src/Makefile
+@@ -22,7 +22,7 @@ AS      = $(Q)arm-none-eabi-as
+ LD      = $(Q)arm-none-eabi-ld
+ AR      = $(Q)arm-none-eabi-ar
+ RM      = $(Q)rm
+-CPP     = $(Q)arm-none-eabi-cpp
++# CPP     = $(Q)arm-none-eabi-cpp
+ SIZE    = $(Q)arm-none-eabi-size
+ STRIP   = $(Q)arm-none-eabi-strip -s
+ OBJCOPY = $(Q)arm-none-eabi-objcopy
+-- 
+2.33.1.windows.1
+

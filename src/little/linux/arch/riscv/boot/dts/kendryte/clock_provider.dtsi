@@ -1,0 +1,3121 @@
+/* Copyright (c) 2023, Canaan Bright Sight Co., Ltd
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+*/
+
+
+/**********************************************************************************************************************
+*
+* K230 sysctl_boot clk tree, include osc24m, pll0-3, pll0-3_div2/div3/div4.
+* 锁相环pllx输出4路信号，分别是pllx、div2、div3、div4。div2~4由CCF框架注册，节点属性为fixed-factor-clock，pllx作为div2~4的父节点，由provider注册.
+*   1. osc24m: 由CCF框架注册，fixed-clock;
+*   2. pll0-3: 由provider注册，定义为“canaan,k230-pll”
+*   3. pll0-3_div2/div3/div4: 由CCF框架注册，fixed-factor-clock
+*
+**********************************************************************************************************************/
+
+&sysctl_boot {
+    /* sysctl_boot clk tree
+        osc24m----------------->|-->pll0----->|--------->pll0      clk output--->to sysctl_clock module
+                                |             |--div2--->pll0_div2 clk output--->to sysctl_clock module
+                                |             |--div3--->pll0_div3 clk output--->to sysctl_clock module
+                                |             |--div4--->pll0_div4 clk output--->to sysctl_clock module
+                                |
+                                |-->pll1----->|--------->pll1      clk output--->to sysctl_clock module
+                                |             |--div2--->pll1_div2 clk output--->to sysctl_clock module
+                                |             |--div3--->pll1_div3 clk output--->to sysctl_clock module
+                                |             |--div4--->pll1_div4 clk output--->to sysctl_clock module
+                                |
+                                |-->pll2----->|--------->pll2      clk output--->to sysctl_clock module
+                                |             |--div2--->pll2_div2 clk output--->to sysctl_clock module
+                                |             |--div3--->pll2_div3 clk output--->to sysctl_clock module
+                                |             |--div4--->pll2_div4 clk output--->to sysctl_clock module
+                                |
+                                |-->pll3----->|--------->pll3      clk output--->to sysctl_clock module
+                                |             |--div2--->pll3_div2 clk output--->to sysctl_clock module
+                                |             |--div3--->pll3_div3 clk output--->to sysctl_clock module
+                                |             |--div4--->pll3_div4 clk output--->to sysctl_clock module
+                                |
+                                |----------------------------------------------->to sysctl_clock module
+
+    */
+    /* osc24m clock */
+    osc24m: osc24m {
+        #clock-cells                            = <0>;                          /* only one clock output */
+        compatible                              = "fixed-clock";                /* It's clock source, no parent */
+        clock-frequency                         = <24000000>;                   /* clock freqence is 24MHz */
+        clock-accuracy                          = <0>;                          /* software assume clock no jitter/wander.*/
+        status                                  = "okay";
+        read-only                               = <0>;                          /* 1 means read-only, 0 means read-write */
+    };
+
+    /* pll clock */ 
+    pll0: pll0 {
+        #clock-cells                            = <0>;                          /* only one output */
+        compatible                              = "canaan,k230-pll";            /* pll0/1/2/3 match same clk driver, comptible is k230-pll(not k230-pll0,1,2,3)*/
+        clocks                                  = <&osc24m>;                    /* clk parent is osc24m */
+        status                                  = "okay";
+        read-only                               = <0>;                          /* 1 means read-only, 0 means read-write */
+
+        /* PLL0_CFG0 */
+        clk-divide-reg-offset                   = <0x0>;                        /* pll divider register offset */
+        clk-divide-out-reg-value-shift          = <24>;                         /* start bit is 24 */
+        clk-divide-out-reg-value-mask           = <0xF>;                        /* bitmask, 0xf means b'1111(4bits), bit24(start bit) to bit27 */        
+        clk-divide-ref-reg-value-shift          = <16>;
+        clk-divide-ref-reg-value-mask           = <0x3F>;       
+        clk-divide-fb-reg-value-shift           = <0>;
+        clk-divide-fb-reg-value-mask            = <0x1FFF>;
+
+        /* PLL0_CFG1: bypass */
+        clk-divide-bypass-reg-offset            = <0x4>;
+        clk-divide-bypass-reg-enable-bit        = <19>;
+
+        /* PLL0_CTL: gate */
+        clk-gate-reg-offset                     = <0x8>;
+        clk-gate-reg-enable-bit                 = <2>;
+        clk-gate-reg-write-enable-bit           = <18>;
+
+        /* PLL0_STAT: pll0 lock status */
+        clk-lock-reg-offset                     = <0xC>;
+        clk-lock-reg-status_bit                 = <0>;
+    };
+
+    pll0_div2: pll0_div2 {
+        #clock-cells                            = <0>;
+        compatible                              = "fixed-factor-clock";
+        clocks                                  = <&pll0>;
+        clock-div                               = <2>;
+        clock-mult                              = <1>;
+        status                                  = "okay";
+        read-only                               = <0>;                          /* 1 means read-only, 0 means read-write */
+    };
+
+    pll0_div3: pll0_div3 {
+        #clock-cells                            = <0>;
+        compatible                              = "fixed-factor-clock";
+        clocks                                  = <&pll0>;
+        clock-div                               = <3>;
+        clock-mult                              = <1>;
+        status                                  = "okay";
+        read-only                               = <0>;                          /* 1 means read-only, 0 means read-write */
+    };
+
+    pll0_div4: pll0_div4 {
+        #clock-cells                            = <0>;
+        compatible                              = "fixed-factor-clock";
+        clocks                                  = <&pll0>;
+        clock-div                               = <4>;
+        clock-mult                              = <1>;
+        status                                  = "okay";
+        read-only                               = <0>;                          /* 1 means read-only, 0 means read-write */
+    };
+
+    pll1: pll1 {
+        #clock-cells                            = <0>;                          /* only one output */
+        compatible                              = "canaan,k230-pll";            /* pll0/1/2/3 match same clk driver, so comptible is k230-pll(not k230-pll0,1,2,3)*/
+        clocks                                  = <&osc24m>;                    /* clk parent is osc24m */
+        status                                  = "okay";
+        read-only                               = <0>;                          /* 1 means read-only, 0 means read-write */
+
+        /* PLL1_CFG0 */
+        clk-divide-reg-offset                  	= <0x10>;
+        clk-divide-out-reg-value-shift          = <24>;
+        clk-divide-out-reg-value-mask           = <0xF>;
+        clk-divide-ref-reg-value-shift          = <16>;
+        clk-divide-ref-reg-value-mask           = <0x3F>;
+        clk-divide-fb-reg-value-shift           = <0>;
+        clk-divide-fb-reg-value-mask            = <0x1FFF>;
+
+        /* PLL1_CFG1: bypass */
+        clk-divide-bypass-reg-offset            = <0x14>;
+        clk-divide-bypass-reg-enable-bit        = <19>;
+
+        /* PLL1_CTL: gate */
+        clk-gate-reg-offset                     = <0x18>;
+        clk-gate-reg-enable-bit                 = <2>;
+        clk-gate-reg-write-enable-bit           = <18>;
+
+        /* PLL1_STAT: pll1 lock status */
+        clk-lock-reg-offset                     = <0x1C>;
+        clk-lock-reg-status_bit                 = <0>;
+    };
+
+    pll1_div2: pll1_div2 {
+        #clock-cells                            = <0>;
+        compatible                              = "fixed-factor-clock";
+        clocks                                  = <&pll1>;
+        clock-div                               = <2>;
+        clock-mult                              = <1>;
+        status                                  = "okay";
+        read-only                               = <0>;                          /* 1 means read-only, 0 means read-write */
+    };
+
+    pll1_div3: pll1_div3 {
+        #clock-cells                            = <0>;
+        compatible                              = "fixed-factor-clock";
+        clocks                                  = <&pll1>;
+        clock-div                               = <3>;
+        clock-mult                              = <1>;
+        status                                  = "okay";
+        read-only                               = <0>;                          /* 1 means read-only, 0 means read-write */
+    };
+
+    pll1_div4: pll1_div4 {
+        #clock-cells                            = <0>;
+        compatible                              = "fixed-factor-clock";
+        clocks                                  = <&pll1>;
+        clock-div                               = <4>;
+        clock-mult                              = <1>;
+        status                                  = "okay";
+        read-only                               = <0>;                          /* 1 means read-only, 0 means read-write */
+    };
+
+    pll2: pll2 {
+        #clock-cells                            = <0>;                          /* only one output */
+        compatible                              = "canaan,k230-pll";            /* pll0/1/2/3 match same clk driver, so comptible is k230-pll(not k230-pll0,1,2,3)*/
+        clocks                                  = <&osc24m>;                    /* clk parent is osc24m */
+        status                                  = "okay";
+        read-only                               = <0>;                          /* 1 means read-only, 0 means read-write */
+
+        /* PLL2_CFG0 */
+        clk-divide-reg-offset                   = <0x20>;
+        clk-divide-out-reg-value-shift          = <24>;
+        clk-divide-out-reg-value-mask           = <0xF>;
+        clk-divide-ref-reg-value-shift          = <16>;
+        clk-divide-ref-reg-value-mask           = <0x3F>;
+        clk-divide-fb-reg-value-shift           = <0>;
+        clk-divide-fb-reg-value-mask            = <0x1FFF>;
+
+        /* PLL2_CFG1: bypass */
+        clk-divide-bypass-reg-offset            = <0x24>;
+        clk-divide-bypass-reg-enable-bit        = <19>;
+
+        /* PLL2_CTL: gate */
+        clk-gate-reg-offset                     = <0x28>;
+        clk-gate-reg-enable-bit                 = <2>;
+        clk-gate-reg-write-enable-bit           = <18>;
+
+        /* PLL_STAT: pll2 lock status */
+        clk-lock-reg-offset                     = <0x2C>;
+        clk-lock-reg-status_bit                 = <0>;
+    };
+
+    pll2_div2: pll2_div2 {
+        #clock-cells                            = <0>;
+        compatible                              = "fixed-factor-clock";
+        clocks                                  = <&pll2>;
+        clock-div                               = <2>;
+        clock-mult                              = <1>;
+        status                                  = "okay";
+        read-only                               = <0>;                          /* 1 means read-only, 0 means read-write */
+    };
+
+    pll2_div3: pll2_div3 {
+        #clock-cells                            = <0>;
+        compatible                              = "fixed-factor-clock";
+        clocks                                  = <&pll2>;
+        clock-div                               = <3>;
+        clock-mult                              = <1>;
+        status                                  = "okay";
+        read-only                               = <0>;                          /* 1 means read-only, 0 means read-write */
+    };
+
+    pll2_div4: pll2_div4 {
+        #clock-cells                            = <0>;
+        compatible                              = "fixed-factor-clock";
+        clocks                                  = <&pll2>;
+        clock-div                               = <4>;
+        clock-mult                              = <1>;
+        status                                  = "okay";
+        read-only                               = <0>;                          /* 1 means read-only, 0 means read-write */
+    };
+
+    pll3: pll3 {
+        #clock-cells                            = <0>;                          /* only one output */
+        compatible                              = "canaan,k230-pll";            /* pll0/1/2/3 match same clk driver, so comptible is k230-pll(not k230-pll0,1,2,3)*/
+        clocks                                  = <&osc24m>;                    /* clk parent is osc24m */
+        status                                  = "okay";
+        read-only                               = <0>;                          /* 1 means read-only, 0 means read-write */
+
+        /* PLL3_CFG0 */
+        clk-divide-reg-offset                   = <0x30>;
+        clk-divide-out-reg-value-shift          = <24>;
+        clk-divide-out-reg-value-mask           = <0xF>;
+        clk-divide-ref-reg-value-shift          = <16>;
+        clk-divide-ref-reg-value-mask           = <0x3F>;
+        clk-divide-fb-reg-value-shift           = <0>;
+        clk-divide-fb-reg-value-mask            = <0x1FFF>;
+
+        /* PLL3_CFG1: bypass */
+        clk-divide-bypass-reg-offset            = <0x34>;
+        clk-divide-bypass-reg-enable-bit        = <19>;
+
+        /* PLL3_CTL: gate */
+        clk-gate-reg-offset                     = <0x38>;
+        clk-gate-reg-enable-bit                 = <2>;
+        clk-gate-reg-write-enable-bit           = <18>;
+
+        /* PLL3_STAT: pll3 lock status */
+        clk-lock-reg-offset                     = <0x3C>;
+        clk-lock-reg-status_bit                 = <0>;
+    };
+
+    pll3_div2: pll3_div2 {
+        #clock-cells                            = <0>;
+        compatible                              = "fixed-factor-clock";
+        clocks                                  = <&pll3>;
+        clock-div                               = <2>;
+        clock-mult                              = <1>;
+        status                                  = "okay";
+        read-only                               = <0>;                          /* 1 means read-only, 0 means read-write */
+    };
+
+    pll3_div3: pll3_div3 {
+        #clock-cells                            = <0>;
+        compatible                              = "fixed-factor-clock";
+        clocks                                  = <&pll3>;
+        clock-div                               = <3>;
+        clock-mult                              = <1>;
+        status                                  = "okay";
+        read-only                               = <0>;                          /* 1 means read-only, 0 means read-write */
+    };
+
+    pll3_div4: pll3_div4 {
+        #clock-cells                            = <0>;
+        compatible                              = "fixed-factor-clock";
+        clocks                                  = <&pll3>;
+        clock-div                               = <4>;
+        clock-mult                              = <1>;
+        status                                  = "okay";
+        read-only                               = <0>;                          /* 1 means read-only, 0 means read-write */
+    };
+};
+
+/**********************************************************************************************************************
+*
+* K230 sysctl_clock clk tree, include cpu0(aclk/pliclk/pclk), pmu(pclk), hs(hs/sdx/ssix/usbx),
+* ls(ls/uartx/i2cx/gpio/pwm/jamlinkx/audio/adc/codec), sysctl(sysctl/wdtx/timer/iomux/mailbox/hdi/stc/ts), timer(timerx), 
+* shrm(shrm/decompress/gsdma/nonai2d/pdma), ddrc(ddrc_core/ddrc_pclk), 
+* display(hclk/aclk//clkext/gpu/refclk), sec(aclk/fixclk/pclk), usb_test_mode(clk480/clk100), dphy_dft_mode(dphy_test_clk), spi2axi(aclk).
+*   
+**********************************************************************************************************************/
+
+&sysctl_clock {
+    /* cpu0 clock tree
+        pll0_div2--->DIV--->GATE--->|--------------------->cpu0 core clk
+                                    |---GATE--->|---DIV--->cpu0 plic clk
+                                    |---------->|---DIV--->cpu0 axi clk
+                                    |---GATE--->|--------->noc & ddrc p4 clk
+
+        pll0_div4--->DIV--->|---GATE--->apb clk
+
+        1. cpu0_src           --> cpu0 core DIV & GATE
+        2. cpu0_plic          -->cpu0 plic clk gate & div
+        3. cpu0_aclk          -->cpu0 axi clk div
+        4. cpu0_noc_ddrcp4    -->ddrc axi4clk & noc AXI clock gate
+
+        1. cpu0_pclk          -->cpu0 apb pclk, DIV & GATE  
+    */
+    cpu0_src: cpu0_src {
+        #clock-cells                            = <0>;                                  /* only one output */
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div2>;                         /* only one parent */
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <16>;
+        clk-rate-conf-div-min                   = <16>;
+        clk-rate-conf-div-max                   = <16>;
+        clk-rate-calc-method                    = <0>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x0>;
+        clk-rate-reg-mul-value-shift            = <0>;
+        clk-rate-reg-mul-value-mask             = <0>;
+        clk-rate-reg-div-value-shift            = <1>;
+        clk-rate-reg-div-value-mask             = <0xF>;
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x0>;
+        clk-gate-reg-bit-enable                 = <0>;
+        clk-gate-reg-bit-reverse                = <0>;                                  /* if set to 0(clk-gate-reg-bit-enable set 1 to enable clcok),  if set to 1(clk-gate-reg-bit-enable set 0 to enable clcok) */
+    };
+
+    cpu0_plic: cpu0_plic {
+        #clock-cells                            = <0>;                                  /* only one output */
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&cpu0_src>;                          /* only one parent */
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <8>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x0>;
+        clk-rate-reg-mul-value-shift            = <0>;
+        clk-rate-reg-mul-value-mask             = <0>;
+        clk-rate-reg-div-value-shift            = <10>;
+        clk-rate-reg-div-value-mask             = <0x7>;
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x0>;
+        clk-gate-reg-bit-enable                 = <9>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    cpu0_aclk: cpu0_aclk {
+        #clock-cells                            = <0>;                                  /* only one output */
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&cpu0_src>;                          /* only one parent */
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <8>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x0>;
+        clk-rate-reg-mul-value-shift            = <0>;
+        clk-rate-reg-mul-value-mask             = <0>;
+        clk-rate-reg-div-value-shift            = <6>;
+        clk-rate-reg-div-value-mask             = <0x7>;
+        clk-rate-reg-write-enable-bit           = <31>;
+    };
+
+    cpu0_noc_ddrcp4: cpu0_noc_ddrcp4 {
+        #clock-cells                            = <0>;                                  /* only one output */
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&cpu0_src>;                          /* only one parent */
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x60>;
+        clk-gate-reg-bit-enable                 = <7>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    cpu0_pclk: cpu0_pclk {
+        #clock-cells                            = <0>;                                  /* only one output */
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div4>;                         /* only one parent */
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <8>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x0>;
+        clk-rate-reg-mul-value-shift            = <0>;
+        clk-rate-reg-mul-value-mask             = <0>;
+        clk-rate-reg-div-value-shift            = <15>;
+        clk-rate-reg-div-value-mask             = <0x7>;
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x0>;
+        clk-gate-reg-bit-enable                 = <13>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+
+    /*  pmu system clock tree
+        osc24m--->GATE--->pmu apb clk
+
+        //root node: osc24m
+        1. pmu_pclk: pmu apb clk gate  
+    */
+    pmu_pclk: pmu_pclk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&osc24m>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x10>;
+        clk-gate-reg-bit-enable                 = <0>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+
+    /*  hs system clock tree
+        pll0_div4--->DIV----------->|--->GATE--->hs hclk high
+                                    |--->DIV--->GATE--->|---hs ahb clk--->|---GATE--->sd0 ahb clk
+                                                                          |---GATE--->sd1 ahb clk
+                                                                          |---GATE--->usb0 ahb clk
+                                                                          |---GATE--->usb1 ahb clk
+                                                                          |---GATE--->ssi1 ahb clk
+                                                                          |---GATE--->ssi2 ahb clk
+        
+        pll0_div4--->|---DIV--->GATE--->ssi0 axi clk
+                     |---DIV--->GATE--->ssi1 clk
+                     |---DIV--->GATE--->ssi2 clk
+                     |---DIV--->GATE--->qspi axi clk--->|---GATE--->ssi1 axi clk
+                                                        |---GATE--->ssi2 axi clk
+        
+                    +-+
+        pll0_div2-->|M \
+                    |U |--->GATE-->ospi core clk
+        pll2_div4-->|X /
+                    +-+
+
+        pll2_div4--->DIV--->GATE--->sd axi clk--->|---GATE--->sd0 axi clk
+                                                  |---GATE--->sd1 axi clk
+                                                  |---GATE--->sd0 base clk
+                                                  |---GATE--->sd1 base clk
+
+        pll0_div4--->DIV---->GATE--->sd card clk--->|---GATE--->sd0 card clk tx 
+                                                    |---GATE--->sd1 card clk tx 
+
+                                            +-+
+        osc24m----------------------------->|M \
+                                            |U |--->|---GATE--->usb0 reference clk 
+        pll0-------->DIV16--->DIV---------->|X /    |---GATE--->usb1 reference clk 
+
+        osc24m--->DIV--->GATE---sd timer clk--->|---GATE--->sd0 timer clk 
+                                                |---GATE--->sd1 timer clk
+    
+        //root node: pll0_div4
+        0. hs_hclk_high_src: hs hclk high DIV
+        1. hs_hclk_high: hs hclk high GATE;
+        2. hs_hclk_src: hs ahb clk DIV & GATE;
+        3. sd0_hclk_gate: sd0 ahb clk gate;
+        4. sd1_hclk_gate: sd1 ahb clk gate;
+        5. usb0_hclk_gate: usb0 ahb clk gate;
+        6. usb1_hclk_gate: usb1 ahb clk gate;
+        7. ssi1_hclk_gate: ssi1 ahb clk gate;
+        8. ssi2_hclk_gate: ssi2 ahb clk gate;
+
+        //root node: pll0_div4
+        1. ssi0_aclk: ssi0 axi clk DIV & GATE;
+        2. ssi1_clk: ssi1 clk DIV & GATE;
+        3. ssi2_clk: ssi2 clk DIV & GATE;
+        4. qspi_aclk_src: qspi sxi clk DIV & GATE;
+        5. ssi1_aclk_gate: ssi1 axi clk gate;
+        6. ssi2_aclk_gate: ssi2 axi clk gate;
+
+        //root node: pll0_div2 & pll2_div4
+        1. ssi0_clk: ospi core clk MUX & GATE;
+
+        //root node: pll2_div4
+        1. sd_aclk_src: sd axi clk DIV & GATE;
+        2. sd0_aclk_gate: sd0 axi clk gate;
+        3. sd1_aclk_gate: sd1 axi clk gate;
+        4. sd0_bclk_gate: sd0 base clk gate;
+        5. sd1_bclk_gate: sd1 base clk gate;
+
+        //root node: pll0_div4
+        1. sd_cclk_src: sd card clk gate & div;
+        2. sd0_cclk_gate: sd0 card clk gate;
+        3. sd1_cclk_gate: sd1 card clk gate;
+
+        //root node: pll0
+        1. pll0_div16
+        //root node: pll0_div16
+        1. usb_ref_50m: usbx reference clk DIV;
+        //root node: osc24m & usb_ref_50m
+        2. usb0_ref_clk: usb0 reference clk gate & MUX;
+        3. usb1_ref_clk: usb1 reference clk gate & MUX;
+
+        //root node: osc24m
+        1. sd_tmclk_src: sdx timer clk DIV & GATE;
+        2. sd0_tmclk_gate: sd0 timer clk gate;
+        3. sd1_tmclk_gate: sd1 timer clk gate;
+    */
+    hs_hclk_high_src: hs_hclk_high_src {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div4>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <8>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x1C>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <0>;                                  /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x7>;                                /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+    };
+    hs_hclk_high: hs_hclk_high {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&hs_hclk_high_src>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x18>;
+        clk-gate-reg-bit-enable                 = <1>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    hs_hclk_src: hs_hclk_src {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&hs_hclk_high_src>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <8>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x1C>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <3>;                                  /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x7>;                                /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x18>;
+        clk-gate-reg-bit-enable                 = <0>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    sd0_hclk_gate: sd0_hclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&hs_hclk_src>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x18>;
+        clk-gate-reg-bit-enable                 = <2>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    sd1_hclk_gate: sd1_hclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&hs_hclk_src>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x18>;
+        clk-gate-reg-bit-enable                 = <3>;
+        clk-gate-reg-bit-reverse                = <0>;    
+    };
+    usb0_hclk_gate: usb0_hclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&hs_hclk_src>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x18>;
+        clk-gate-reg-bit-enable                 = <4>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    usb1_hclk_gate: usb1_hclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&hs_hclk_src>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x18>;
+        clk-gate-reg-bit-enable                 = <5>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    ssi1_hclk_gate: ssi1_hclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&hs_hclk_src>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x18>;
+        clk-gate-reg-bit-enable                 = <7>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    ssi2_hclk_gate: ssi2_hclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&hs_hclk_src>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x18>;
+        clk-gate-reg-bit-enable                 = <8>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    ssi0_aclk: ssi0_aclk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div4>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <8>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x20>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <9>;                                  /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x7>;                                /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x18>;
+        clk-gate-reg-bit-enable                 = <27>;
+        clk-gate-reg-bit-reverse                = <0>;   
+    };
+    
+    ssi1_clk: ssi1_clk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div4>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <8>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x20>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <3>;                                  /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x7>;                                /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x18>;
+        clk-gate-reg-bit-enable                 = <25>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    ssi2_clk: ssi2_clk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div4>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <8>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x20>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <6>;                                  /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x7>;                                /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x18>;
+        clk-gate-reg-bit-enable                 = <26>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    qspi_aclk_src: qspi_aclk_src {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div4>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <8>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x20>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <12>;                                 /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x7>;                                /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x18>;
+        clk-gate-reg-bit-enable                 = <28>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    ssi1_aclk_gate: ssi1_aclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&qspi_aclk_src>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x18>;
+        clk-gate-reg-bit-enable                 = <29>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    ssi2_aclk_gate: ssi2_aclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&qspi_aclk_src>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x18>;
+        clk-gate-reg-bit-enable                 = <30>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    ssi0_clk: ssi0_clk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+        
+        /* parent */
+        clocks                                  = <&pll0_div2>, <&pll2_div4>;           /* mux parent */
+        clk-parent-reg-offset                   = <0x20>;                               /* mux register offset */
+        clk-parent-reg-value-shift              = <18>;                                 /* mux field shift */
+        clk-parent-reg-value-mask               = <0x1>;                                /* mux field mask */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x18>;
+        clk-gate-reg-bit-enable                 = <24>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    sd_aclk: sd_aclk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll2_div4>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <8>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x1C>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <6>;                                  /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x7>;                                /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x18>;
+        clk-gate-reg-bit-enable                 = <9>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    sd0_aclk_gate: sd0_aclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&sd_aclk>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x18>;
+        clk-gate-reg-bit-enable                 = <13>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    sd1_aclk_gate: sd1_aclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&sd_aclk>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x18>;
+        clk-gate-reg-bit-enable                 = <17>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    sd0_bclk_gate: sd0_bclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&sd_aclk>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x18>;
+        clk-gate-reg-bit-enable                 = <14>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    sd1_bclk_gate: sd1_bclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&sd_aclk>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x18>;
+        clk-gate-reg-bit-enable                 = <18>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    sd_cclk_src: sd_cclk_src {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div4>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <2>;                                  /* maxinum = 1/2, 1/2, 1/3 --- 1/8 */
+        clk-rate-conf-div-max                   = <8>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x1C>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <12>;                                  /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x7>;                                /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x18>;
+        clk-gate-reg-bit-enable                 = <11>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    sd0_cclk_gate: sd0_cclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&sd_cclk_src>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x18>;
+        clk-gate-reg-bit-enable                 = <15>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    sd1_cclk_gate: sd1_cclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&sd_cclk_src>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x18>;
+        clk-gate-reg-bit-enable                 = <19>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    pll0_div16: pll0_div16 {
+        #clock-cells                            = <0>;
+        compatible                              = "fixed-factor-clock";
+        clocks                                  = <&pll0>;
+        clock-div                               = <16>;
+        clock-mult                              = <1>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+    };
+    usb_ref_50m: usb_ref_50m {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div16>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <8>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x20>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <15>;                                 /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x7>;                                /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;     
+    };
+    usb0_ref_clk: usb0_ref_clk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* parent */
+        clocks                                  = <&osc24m>, <&usb_ref_50m>;             /* mux parent */
+        clk-parent-reg-offset                   = <0x18>;                               /* mux register offset */
+        clk-parent-reg-value-shift              = <23>;                                 /* mux field shift */
+        clk-parent-reg-value-mask               = <0x1>;                                /* mux field mask */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x18>;
+        clk-gate-reg-bit-enable                 = <21>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    usb1_ref_clk: usb1_ref_clk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* parent */
+        clocks                                  = <&osc24m>, <&usb_ref_50m>;             /* mux parent */
+        clk-parent-reg-offset                   = <0x18>;                               /* mux register offset */
+        clk-parent-reg-value-shift              = <23>;                                 /* mux field shift */
+        clk-parent-reg-value-mask               = <0x1>;                                /* mux field mask */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x18>;
+        clk-gate-reg-bit-enable                 = <22>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    sd_tmclk_src: sd_tmclk_src {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&osc24m>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <24>;                                  /* maxinum = 1/24, 1/24 --- 1/32 */
+        clk-rate-conf-div-max                   = <32>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x1C>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <15>;                                 /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x1F>;                               /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x18>;
+        clk-gate-reg-bit-enable                 = <12>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    sd0_tmclk_gate: sd0_tmclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&sd_tmclk_src>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x18>;
+        clk-gate-reg-bit-enable                 = <16>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    sd1_tmclk_gate: sd1_tmclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&sd_tmclk_src>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x18>;
+        clk-gate-reg-bit-enable                 = <20>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+
+    /*  ls system clock tree
+        pll0_div4--->DIV------------------GATE--->ls apb clk--->|---GATE--->uart0 apb clk
+                                                                |---GATE--->uart1 apb clk
+                                                                |---GATE--->uart2 apb clk
+                                                                |---GATE--->uart3 apb clk
+                                                                |---GATE--->uart4 apb clk
+                                                                |---GATE--->i2c0 apb clk
+                                                                |---GATE--->i2c1 apb clk
+                                                                |---GATE--->i2c2 apb clk
+                                                                |---GATE--->i2c3 apb clk
+                                                                |---GATE--->i2c4 apb clk
+                                                                |---GATE--->gpio apb clk
+                                                                |---GATE--->pwm apb clk
+                                                                |---GATE--->jamlink0 apb clk
+                                                                |---GATE--->jamlink1 apb clk
+                                                                |---GATE--->jamlink2 apb clk
+                                                                |---GATE--->jamlink3 apb clk
+                                                                |---GATE--->audio apb clk
+                                                                |---GATE--->adc apb clk
+                                                                |---GATE--->codec apb clk
+
+        pll0_div16----->|---DIV--->GATE--->uart0 core clk 
+                        |---DIV--->GATE--->uart1 core clk
+                        |---DIV--->GATE--->uart2 core clk
+                        |---DIV--->GATE--->uart3 core clk
+                        |---DIV--->GATE--->uart4 core clk
+
+        pll0_div16----->DIV--->|---GATE--->jamlink0 CO clk
+                               |---GATE--->jamlink1 CO clk
+                               |---GATE--->jamlink2 CO clk
+                               |---GATE--->jamlink3 CO clk
+
+        pll0_div4------>|---DIV--->GATE--->i2c0 core clk 
+                        |---DIV--->GATE--->i2c1 core clk
+                        |---DIV--->GATE--->i2c2 core clk
+                        |---DIV--->GATE--->i2c3 core clk
+                        |---DIV--->GATE--->i2c4 core clk
+        
+        pll0_div4------>|---fraDIV--->GATE--->codec adc mclk 
+                        |---fraDIV--->GATE--->codec dac mclk
+                        |---fraDIV--->GATE--->audio dev clk
+                        |---fraDIV--->GATE--->pdm clk
+                        |---DIV--->GATE--->adc clk
+
+        osc24m----->DIV--->GATE--->gpio debounce clk
+
+        //root node: pll0_div4
+        1. ls_pclk_src: low system apb clk div & gate;
+        2. uart0_pclk_gate: uart0 apb clk gate;
+        3. uart1_pclk_gate: uart1 apb clk gate;
+        4. uart2_pclk_gate: uart2 apb clk gate;
+        5. uart3_pclk_gate: uart3 apb clk gate;
+        6. uart4_pclk_gate: uart4 apb clk gate;
+        7. i2c0_pclk_gate: i2c0 apb clk gate;
+        8. i2c1_pclk_gate: i2c1 apb clk gate;
+        9. i2c2_pclk_gate: i2c2 apb clk gate;
+        10. i2c3_pclk_gate: i2c3 apb clk gate;
+        11. i2c4_pclk_gate: i2c4 apb clk gate;
+        12. gpio_pclk_gate: gpio apb clk gate;
+        13. pwm_pclk_gate: pwm apb clk gate;
+        14. jamlink0_pclk_gate: jamlink0 apb clk gate;
+        15. jamlink1_pclk_gate: jamlink1 apb clk gate;
+        16. jamlink2_pclk_gate: jamlink2 apb clk gate;
+        17. jamlink3_pclk_gate: jamlink3 apb clk gate;
+        18. audio_pclk_gate: audio apb clk gate;
+        19. adc_pclk_gate: adc apb clk gate;
+        20. codec_pclk_gate: codec apb clk gate;
+
+        //root node: pll0_div16
+        1. uart0_clk: uart0 core clk div & gate;
+        2. uart1_clk: uart1 core clk div & gate;
+        3. uart2_clk: uart2 core clk div & gate;
+        4. uart3_clk: uart3 core clk div & gate;
+        5. uart4_clk: uart4 core clk div & gate;
+
+        //root node: pll0_div16
+        1. jamlinkCO_div: jamlinkx CO div;
+        2. jamlink0CO_gate: jamlink0 CO clk gate;
+        3. jamlink1CO_gate: jamlink1 CO clk gate;
+        4. jamlink2CO_gate: jamlink2 CO clk gate;
+        5. jamlink3CO_gate: jamlink3 CO clk gate;
+
+        //root node: pll0_div4
+        1. i2c0_clk: i2c0 core clk div & gate;
+        2. i2c1_clk: i2c1 core clk div & gate;
+        3. i2c2_clk: i2c2 core clk div & gate;
+        4. i2c3_clk: i2c3 core clk div & gate;
+        5. i2c4_clk: i2c4 core clk div & gate;
+
+        //root node: pll0_div4
+        1. codec_adc_mclk: codec adc mclk fradiv & gate;
+        2. codec_dac_mclk: codec dac mclk fradiv & gate;
+        3. audio_dev_clk: audio dev clk fradiv & gate;
+        4. pdm_clk: pdm clk fradiv & gate;
+        5. adc_clk: adc clk div & gate;
+
+        //root node: osc24m
+        1. gpio_dbclk: gpio debounce clk div & gate;
+    */
+    ls_pclk_src: ls_pclk_src {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div4>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <8>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x30>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <0>;                                 /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x7>;                               /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x24>;
+        clk-gate-reg-bit-enable                 = <0>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    uart0_pclk_gate: uart0_pclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&ls_pclk_src>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x24>;
+        clk-gate-reg-bit-enable                 = <1>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    uart1_pclk_gate: uart1_pclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&ls_pclk_src>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x24>;
+        clk-gate-reg-bit-enable                 = <2>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    uart2_pclk_gate: uart2_pclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&ls_pclk_src>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x24>;
+        clk-gate-reg-bit-enable                 = <3>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    uart3_pclk_gate: uart3_pclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&ls_pclk_src>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x24>;
+        clk-gate-reg-bit-enable                 = <4>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    uart4_pclk_gate: uart4_pclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&ls_pclk_src>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x24>;
+        clk-gate-reg-bit-enable                 = <5>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    i2c0_pclk_gate: i2c0_pclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&ls_pclk_src>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x24>;
+        clk-gate-reg-bit-enable                 = <6>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    i2c1_pclk_gate: i2c1_pclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&ls_pclk_src>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x24>;
+        clk-gate-reg-bit-enable                 = <7>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    i2c2_pclk_gate: i2c2_pclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&ls_pclk_src>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x24>;
+        clk-gate-reg-bit-enable                 = <8>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    i2c3_pclk_gate: i2c3_pclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&ls_pclk_src>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x24>;
+        clk-gate-reg-bit-enable                 = <9>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    i2c4_pclk_gate: i2c4_pclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&ls_pclk_src>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x24>;
+        clk-gate-reg-bit-enable                 = <10>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    gpio_pclk_gate: gpio_pclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&ls_pclk_src>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x24>;
+        clk-gate-reg-bit-enable                 = <11>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    pwm_pclk_gate: pwm_pclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&ls_pclk_src>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x24>;
+        clk-gate-reg-bit-enable                 = <12>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    jamlink0_pclk_gate: jamlink0_pclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&ls_pclk_src>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x28>;
+        clk-gate-reg-bit-enable                 = <4>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    jamlink1_pclk_gate: jamlink1_pclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&ls_pclk_src>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x28>;
+        clk-gate-reg-bit-enable                 = <5>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    jamlink2_pclk_gate: jamlink2_pclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&ls_pclk_src>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x28>;
+        clk-gate-reg-bit-enable                 = <6>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    jamlink3_pclk_gate: jamlink3_pclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&ls_pclk_src>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x28>;
+        clk-gate-reg-bit-enable                 = <7>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    audio_pclk_gate: audio_pclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&ls_pclk_src>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x24>;
+        clk-gate-reg-bit-enable                 = <13>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    adc_pclk_gate: adc_pclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&ls_pclk_src>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x24>;
+        clk-gate-reg-bit-enable                 = <15>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    codec_pclk_gate: codec_pclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&ls_pclk_src>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x24>;
+        clk-gate-reg-bit-enable                 = <14>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    uart0_clk: uart0_clk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div16>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <8>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x2C>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <0>;                                  /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x7>;                                /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x24>;
+        clk-gate-reg-bit-enable                 = <16>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    uart1_clk: uart1_clk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div16>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <8>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x2C>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <3>;                                  /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x7>;                                /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x24>;
+        clk-gate-reg-bit-enable                 = <17>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    uart2_clk: uart2_clk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div16>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <8>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x2C>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <6>;                                  /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x7>;                                /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x24>;
+        clk-gate-reg-bit-enable                 = <18>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    uart3_clk: uart3_clk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div16>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <8>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x2C>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <9>;                                  /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x7>;                                /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x24>;
+        clk-gate-reg-bit-enable                 = <19>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    uart4_clk: uart4_clk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div16>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <8>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x2C>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <12>;                                 /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x7>;                                /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x24>;
+        clk-gate-reg-bit-enable                 = <20>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    jamlinkCO_div: jamlinkCO_div {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div16>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <2>;
+        clk-rate-conf-div-max                   = <512>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x30>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <23>;                                 /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0xFF>;                               /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+    };
+    jamlink0CO_gate: jamlink0CO_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&jamlinkCO_div>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x28>;
+        clk-gate-reg-bit-enable                 = <0>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    jamlink1CO_gate: jamlink1CO_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&jamlinkCO_div>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x28>;
+        clk-gate-reg-bit-enable                 = <1>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    jamlink2CO_gate: jamlink2CO_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&jamlinkCO_div>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x28>;
+        clk-gate-reg-bit-enable                 = <2>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    jamlink3CO_gate: jamlink3CO_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&jamlinkCO_div>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x28>;
+        clk-gate-reg-bit-enable                 = <3>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    i2c0_clk: i2c0_clk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div4>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <8>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x2C>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <15>;                                 /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x7>;                                /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x24>;
+        clk-gate-reg-bit-enable                 = <21>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    i2c1_clk: i2c1_clk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div4>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <8>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x2C>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <18>;                                 /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x7>;                                /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x24>;
+        clk-gate-reg-bit-enable                 = <22>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    i2c2_clk: i2c2_clk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div4>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <8>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x2C>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <21>;                                 /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x7>;                                /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x24>;
+        clk-gate-reg-bit-enable                 = <23>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    i2c3_clk: i2c3_clk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div4>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <8>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x2C>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <24>;                                 /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x7>;                                /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x24>;
+        clk-gate-reg-bit-enable                 = <24>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    i2c4_clk: i2c4_clk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div4>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <8>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x2C>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <27>;                                 /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x7>;                                /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x24>;
+        clk-gate-reg-bit-enable                 = <25>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    codec_adc_mclk: codec_adc_mclk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div4>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <0x10>;
+        clk-rate-conf-mul-max                   = <0x1B9>;
+        clk-rate-conf-div-min                   = <0xC35>;
+        clk-rate-conf-div-max                   = <0x3D09>;
+        clk-rate-calc-method                    = <2>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x38>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <14>;                                 /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0x1FFF>;                             /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <0>;                                  /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x3FFF>;                             /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x24>;
+        clk-gate-reg-bit-enable                 = <29>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    codec_dac_mclk: codec_dac_mclk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div4>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <0x10>;
+        clk-rate-conf-mul-max                   = <0x1B9>;
+        clk-rate-conf-div-min                   = <0xC35>;
+        clk-rate-conf-div-max                   = <0x3D09>;
+        clk-rate-calc-method                    = <2>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x3C>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <14>;                                 /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0x1FFF>;                             /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <0>;                                  /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x3FFF>;                             /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x24>;
+        clk-gate-reg-bit-enable                 = <30>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    audio_dev_clk: audio_dev_clk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div4>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <0x4>;
+        clk-rate-conf-mul-max                   = <0x1B9>;
+        clk-rate-conf-div-min                   = <0xC35>;
+        clk-rate-conf-div-max                   = <0xF424>;
+        clk-rate-calc-method                    = <2>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x34>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <16>;                                 /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0x7FFF>;                             /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <0>;                                  /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0xFFFF>;                             /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x24>;
+        clk-gate-reg-bit-enable                 = <28>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    
+    pdm_clk: pdm_clk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div4>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-div-min                   = <0xC35>;
+        clk-rate-conf-div-max                   = <0x1E848>;
+
+        clk-rate-reg-offset                     = <0x40>;                               /* divider register offset */
+        clk-rate-reg-div-value-shift            = <0>;                                  /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x1FFFF>;                            /* divider field mask.  */
+        clk-rate-calc-method                    = <2>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        /* rate1 */
+        clk-rate-conf-mul-min_1                   = <0x2>;
+        clk-rate-conf-mul-max_1                   = <0x1B9>;
+        
+        clk-rate-reg-offset_1                     = <0x44>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift_1            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask_1             = <0xFFFF>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-write-enable-bit_1           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x24>;
+        clk-gate-reg-bit-enable                 = <31>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+
+    adc_clk: adc_clk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div4>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <1024>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x30>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <3>;                                  /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x3FF>;                              /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x24>;
+        clk-gate-reg-bit-enable                 = <26>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    gpio_dbclk: gpio_dbclk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&osc24m>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <1024>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x30>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <13>;                                 /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x3FF>;                              /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x24>;
+        clk-gate-reg-bit-enable                 = <27>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+
+    /*  sysctl clock tree
+        pll0_div16------------------>sysctl apb clk---->|---GATE--->wdt0 apb clk
+                                                        |---GATE--->wdt1 apb clk
+                                                        |---GATE--->timer apb clk
+                                                        |---GATE--->iomux apb clk
+                                                        |---GATE--->mailbox apb clk 
+
+        pll0_div4--->DIV---GATE--->hdi core clk
+        pll1_div4--->DIV--->GATE--->time stamp clk
+        osc24m------>DIV----------->temp sensor clk
+
+        //root node: pll0_div16
+        1. sysctl_pclk: sysctl apb clk;     // sysctl_pclk have no gate & div
+        2. wdt0_pclk_gate: wdt0 apb clk gate;
+        3. wdt1_pclk_gate: wdt1 apb clk gate;
+        4. timer_pclk_gate: timer apb clk gate;
+        5. iomux_pclk_gate: iomux apb clk gate;
+        6. mailbox_pclk_gate: mailbox apb clk gate;
+
+        //root node: pll0_div4
+        1. hdi_clk: hdi core clk div & gate;
+
+        //root node: pll1_div4
+        1. stc_clk: time stamp clk div & gate;
+
+        //root node: osc24m
+        1. ts_clk: temp sensor clk div;
+    */
+    sysctl_pclk: sysctl_pclk {
+        #clock-cells                            = <0>;
+        compatible                              = "fixed-clock";
+        clock-frequency                         = <100000000>;
+        clock-accuracy                          = <0>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */        
+    };
+    wdt0_pclk_gate: wdt0_pclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&sysctl_pclk>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x50>;
+        clk-gate-reg-bit-enable                 = <1>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    wdt1_pclk_gate: wdt1_pclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&sysctl_pclk>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x50>;
+        clk-gate-reg-bit-enable                 = <2>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    timer_pclk_gate: timer_pclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&sysctl_pclk>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x50>;
+        clk-gate-reg-bit-enable                 = <3>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    iomux_pclk_gate: iomux_pclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&sysctl_pclk>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x50>;
+        clk-gate-reg-bit-enable                 = <20>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    mailbox_pclk_gate: mailbox_pclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&sysctl_pclk>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x50>;
+        clk-gate-reg-bit-enable                 = <4>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    hdi_clk: hdi_clk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div4>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <8>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x58>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <28>;                                 /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x7>;                                /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x50>;
+        clk-gate-reg-bit-enable                 = <21>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    stc_clk: stc_clk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll1_div4>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <32>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x58>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <15>;                                 /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x1F>;                               /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x50>;
+        clk-gate-reg-bit-enable                 = <19>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    ts_clk: ts_clk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&osc24m>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <256>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x58>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <20>;                                 /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0xFF>;                               /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+    };
+
+    wdt0: wdt0 {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&osc24m>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <64>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x58>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <3>;                                 /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x3F>;                               /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x50>;
+        clk-gate-reg-bit-enable                 = <5>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    wdt1: wdt1 {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&osc24m>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <64>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x58>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <9>;                                 /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x3F>;                               /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x50>;
+        clk-gate-reg-bit-enable                 = <6>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+
+    /*  timer clock tree
+                                +-+
+        pll0_div16----->DIV---->|M \
+                                |U |---GATE--->timer0 core clk
+        timerx_pulse_in-------->|X /
+                                +-+
+        
+                                +-+
+        pll0_div16----->DIV---->|M \
+                                |U |---GATE--->timer1 core clk
+        timerx_pulse_in-------->|X /
+                                +-+
+
+                                +-+
+        pll0_div16----->DIV---->|M \
+                                |U |---GATE--->timer2 core clk
+        timerx_pulse_in-------->|X /
+                                +-+
+        
+                                +-+
+        pll0_div16----->DIV---->|M \
+                                |U |---GATE--->timer3 core clk
+        timerx_pulse_in-------->|X /
+                                +-+
+
+                                +-+
+        pll0_div16----->DIV---->|M \
+                                |U |---GATE--->timer4 core clk
+        timerx_pulse_in-------->|X /
+                                +-+
+
+                                +-+
+        pll0_div16----->DIV---->|M \
+                                |U |---GATE--->timer5 core clk
+        timerx_pulse_in-------->|X /
+                                +-+
+
+        //root node: pll0_div16 & timerx_pulse_in
+        1. timerx_pulse_in: external input, maxsize is 50MHz;
+
+        2. timer0_clk_src: timer0 core clk DIV;
+        3. timer0_clk: timer0 core clk GATE & MUX;
+
+        4. timer1_clk_src: timer1 core clk DIV;
+        5. timer1_clk: timer1 core clk GATE & MUX;
+
+        6. timer2_clk_src: timer2 core clk DIV;
+        7. timer2_clk: timer2 core clk GATE & MUX;
+
+        8. timer3_clk_src: timer3 core clk DIV;
+        9. timer3_clk: timer3 core clk GATE & MUX;
+
+        10. timer4_clk_src: timer4 core clk DIV;
+        11. timer4_clk: timer4 core clk GATE & MUX
+
+        12. timer5_clk_src: timer5 core clk DIV;
+        13. timer5_clk: timer5 core clk GATE & MUX
+    */
+    timerx_pulse_in: timerx_pulse_in {
+        #clock-cells                            = <0>;
+        compatible                              = "fixed-clock";
+        clock-frequency                         = <50000000>;
+        clock-accuracy                          = <0>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+    };
+    timer0_clk_src: timer0_clk_src {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div16>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <8>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x54>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <0>;                                  /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x7>;                                /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+    };
+    timer0_clk: timer0_clk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* parents */
+        clocks                                  = <&timer0_clk_src>, <&timerx_pulse_in>;
+        clk-parent-reg-offset                   = <0x50>;
+        clk-parent-reg-value-shift              = <7>;
+        clk-parent-reg-value-mask               = <0x1>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x50>;
+        clk-gate-reg-bit-enable                 = <13>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    timer1_clk_src: timer1_clk_src {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div16>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <8>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x54>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <3>;                                  /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x7>;                                /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+    };
+    timer1_clk: timer1_clk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* parents */
+        clocks                                  = <&timer1_clk_src>, <&timerx_pulse_in>;
+        clk-parent-reg-offset                   = <0x50>;
+        clk-parent-reg-value-shift              = <8>;
+        clk-parent-reg-value-mask               = <0x1>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x50>;
+        clk-gate-reg-bit-enable                 = <14>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    timer2_clk_src: timer2_clk_src {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div16>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <8>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x54>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <6>;                                  /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x7>;                                /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+    };
+    timer2_clk: timer2_clk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* parents */
+        clocks                                  = <&timer2_clk_src>, <&timerx_pulse_in>;
+        clk-parent-reg-offset                   = <0x50>;
+        clk-parent-reg-value-shift              = <9>;
+        clk-parent-reg-value-mask               = <0x1>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x50>;
+        clk-gate-reg-bit-enable                 = <15>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    timer3_clk_src: timer3_clk_src {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div16>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <8>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x54>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <9>;                                  /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x7>;                                /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+    };
+    timer3_clk: timer3_clk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* parents */
+        clocks                                  = <&timer3_clk_src>, <&timerx_pulse_in>;
+        clk-parent-reg-offset                   = <0x50>;
+        clk-parent-reg-value-shift              = <10>;
+        clk-parent-reg-value-mask               = <0x1>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x50>;
+        clk-gate-reg-bit-enable                 = <16>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    timer4_clk_src: timer4_clk_src {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div16>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <8>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x54>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <12>;                                 /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x7>;                                /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+    };
+    timer4_clk: timer4_clk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* parents */
+        clocks                                  = <&timer4_clk_src>, <&timerx_pulse_in>;
+        clk-parent-reg-offset                   = <0x50>;
+        clk-parent-reg-value-shift              = <11>;
+        clk-parent-reg-value-mask               = <0x1>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x50>;
+        clk-gate-reg-bit-enable                 = <17>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    timer5_clk_src: timer5_clk_src {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div16>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <8>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x54>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <15>;                                 /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x7>;                                /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+    };
+    timer5_clk: timer5_clk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* parents */
+        clocks                                  = <&timer5_clk_src>, <&timerx_pulse_in>;
+        clk-parent-reg-offset                   = <0x50>;
+        clk-parent-reg-value-shift              = <12>;
+        clk-parent-reg-value-mask               = <0x1>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x50>;
+        clk-gate-reg-bit-enable                 = <18>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+
+    /*  shrm system clock tree
+                  +-+
+        pll0_div2-->|M \
+                    |U |---GATE--->shrm sram clk--->|---DIV2--->GATE--->shrm axi slave clk
+        pll3_div2-->|X /                            |---------->GATE--->decompress axi clk
+                    +-+
+
+        pll0_div4--->DIV--->GATE---shrm apb clk
+
+        pll0_div4--->GATE--->shrm axi master clk--->|---GATE--->gsdma axi clk
+                                                    |---GATE--->nonai2d axi clk
+                                                    |---GATE--->peri dma axi clk
+        
+        //root node: pll0_div2 & pll3_div2
+        1. shrm_src: MUX & GATE;
+        2. shrm_div2: div2;
+        3. shrm_axis_clk_gate: shrm axi slave clk gate;
+        4. decompress_aclk_gate: decompress axi clk gate;
+
+        //root node: pll0_div4
+        1. shrm_pclk: shrm apb clk div & gate;
+
+        //root node: pll0_div4
+        1. shrm_axim_clk_gate: shrm axi master clk gate;
+        2. gsdma_aclk_gate: gsdma axi clk gate;
+        3. nonai2d_aclk_gate: nonai2d axi clk gate;
+        4. pdma_aclk_gate: peri dma axi clk gate;
+    */
+    shrm_src: shrm_src {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* parents */
+        clocks                                  = <&pll0_div2>, <&pll3_div2>;
+        clk-parent-reg-offset                   = <0x5C>;
+        clk-parent-reg-value-shift              = <14>;
+        clk-parent-reg-value-mask               = <0x1>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x5C>;
+        clk-gate-reg-bit-enable                 = <10>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    shrm_div2: shrm_div2 {
+        #clock-cells                            = <0>;
+        compatible                              = "fixed-factor-clock";
+        clocks                                  = <&shrm_src>;
+        clock-div                               = <2>;
+        clock-mult                              = <1>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+    };
+    shrm_axis_clk_gate: shrm_axis_clk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&shrm_div2>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x5C>;
+        clk-gate-reg-bit-enable                 = <11>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    decompress_aclk_gate: decompress_aclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&shrm_src>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x5C>;
+        clk-gate-reg-bit-enable                 = <7>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    shrm_pclk: shrm_pclk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div4>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <8>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x5C>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <18>;                                 /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x7>;                                /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x5C>;
+        clk-gate-reg-bit-enable                 = <0>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    shrm_axim_clk_gate: shrm_axim_clk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div4>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x5C>;
+        clk-gate-reg-bit-enable                 = <12>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    gsdma_aclk_gate: gsdma_aclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&shrm_axim_clk_gate>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x5C>;
+        clk-gate-reg-bit-enable                 = <5>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    nonai2d_aclk_gate: nonai2d_aclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&shrm_axim_clk_gate>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x5C>;
+        clk-gate-reg-bit-enable                 = <9>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    pdma_aclk_gate: pdma_aclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&shrm_axim_clk_gate>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x5C>;
+        clk-gate-reg-bit-enable                 = <3>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+
+    /*  ddr system clock tree
+                                +-+
+        pll0_div2-------------->|M \
+        pll0_div3-------------->|U |--->DIV--->GATE--->ddrc core clk
+        pll2_div4-------------->|X /
+                                +-+
+                
+        pll2_div4---------->GATE--->ddrc bypass gate
+
+        pll0_div4--->DIV--->GATE--->ddrc apb clk
+
+        // root node: pll0_div2 & pll0_div3 & pll2_div4
+        1. ddrc_core_clk: ddrc core clk MUX & DIV & GATE;
+
+        // root node: pll2_div4
+        1. ddrc_bypass_gate: ddrc bypass gate;
+
+        // root node: pll0_div4
+        1. ddrc_pclk: ddrc apb clk DIV & GATE;
+    */
+    ddrc_core_clk: ddrc_core_clk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* parents */
+        clocks                                  = <&pll0_div2>, <&pll0_div3>, <&pll2_div4>;
+        clk-parent-reg-offset                   = <0x60>;
+        clk-parent-reg-value-shift              = <0>;
+        clk-parent-reg-value-mask               = <0x3>;
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <16>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x60>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <10>;                                 /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0xF>;                                /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x60>;
+        clk-gate-reg-bit-enable                 = <2>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    ddrc_bypass_gate: ddrc_bypass_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll2_div4>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x60>;
+        clk-gate-reg-bit-enable                 = <8>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    ddrc_pclk: ddrc_pclk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div4>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <16>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x60>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <14>;                                 /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0xF>;                                /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x60>;
+        clk-gate-reg-bit-enable                 = <9>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+
+    /*  display system clock tree 
+        pll0_div4-->|---DIV--->GATE--->display ahb clk
+                    |---GATE--->display axi clk
+        pll0_div3-->|---DIV--->GATE--->display clkext clk
+                    |---DIV--->GATE--->display gpu clk
+        pll1_div4-->|---DIV--->GATE--->display dpipclk clk 
+                    |---DIV--->GATE--->display cfgclk clk
+        osc24m------------->GATE--->display refclk clk 
+
+        //root node: pll0_div4
+        1. disp_hclk: display ahb clk DIV & GATE;
+        2. disp_aclk_gate: display axi clk gate;
+
+        //root node: pll0_div3
+        1. disp_clkext: display clkext DIV & GATE;
+        2. disp_gpu: display gpu clk DIV & GATE;
+
+        //root node: pll1_div4
+        1. dpipclk: dpipclk clk DIV & GATE;
+        2. disp_cfgclk: display cfgclk DIV & GATE;
+
+        //root node: osc24m
+        1. disp_refclk_gate: display refclk gate;
+    */
+    disp_hclk: disp_hclk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div4>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <8>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x78>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <0>;                                  /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x7>;                                /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x74>;
+        clk-gate-reg-bit-enable                 = <0>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    disp_aclk_gate: disp_aclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div4>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x74>;
+        clk-gate-reg-bit-enable                 = <1>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    disp_clkext: disp_clkext {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div3>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <16>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x78>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <16>;                                 /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0xF>;                                /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x74>;
+        clk-gate-reg-bit-enable                 = <5>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    disp_gpu: disp_gpu {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div3>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <16>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x78>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <20>;                                 /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0xF>;                                /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x74>;
+        clk-gate-reg-bit-enable                 = <6>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    dpipclk: dpipclk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll1_div4>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <256>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x78>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <3>;                                  /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0xFF>;                               /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x74>;
+        clk-gate-reg-bit-enable                 = <2>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    disp_cfgclk: disp_cfgclk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll1_div4>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <32>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x78>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <11>;                                 /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x1F>;                               /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x74>;
+        clk-gate-reg-bit-enable                 = <4>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    disp_refclk_gate: disp_refclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&osc24m>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x74>;
+        clk-gate-reg-bit-enable                 = <3>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+
+
+    /*  sec system clock tree
+        pll0_div4--->|---DIV--->GATE--->sec apb clk 
+        pll1_div4--->|---DIV--->GATE--->sec fix clk 
+        pll1_div4--->DIV--->GATE--->sec axi clk 
+
+        //root node: pll0_div4
+        1. sec_pclk: sec apb clk DIV & GATE;
+        2. sec_fixclk: sec fix clk DIV & GATE;
+
+        //root node: pll1_div4
+        1. sec_aclk: sec axi clk DIV & GATE;
+    */
+    sec_pclk: sec_pclk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div4>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <8>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x80>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <1>;                                  /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x7>;                                /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x80>;
+        clk-gate-reg-bit-enable                 = <0>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+    sec_fixclk: sec_fixclk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll1_div4>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <32>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x80>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <6>;                                  /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x1F>;                               /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x80>;
+        clk-gate-reg-bit-enable                 = <5>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    sec_aclk_gate: sec_aclk_gate {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll1_div4>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <8>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x80>;                               /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <11>;                                 /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x3>;                                /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x80>;
+        clk-gate-reg-bit-enable                 = <4>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+
+    /*  usb test mode clock tree
+        pll1--->DIV--->GATE--->usb 480m clk
+        pll0_div4--->DIV--->GATE--->usb 100m clk
+
+        //root node: pll1
+        1. usb_clk480: usb 480m clk DIV & GATE;
+
+        //root node: pll0_div4
+        1. usb_clk100: usb 100m clk DIV & GATE;
+    */
+    usb_clk480: usb_clk480 {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll1>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <8>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x100>;                              /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <1>;                                  /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x7>;                                /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x100>;
+        clk-gate-reg-bit-enable                 = <0>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+    usb_clk100: usb_clk100 {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div4>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <8>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x100>;                              /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <4>;                                  /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x7>;                                /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x100>;
+        clk-gate-reg-bit-enable                 = <0>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+
+    /*  dphy dft mode clock tree
+        pll0--->DIV--->GATE--->dphy dft mode clk 
+
+        //root node: pll0  
+        1. dphy_test_clk: dphy dft mode clk DIV & GATE;
+    */
+    dphy_test_clk: dphy_test_clk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <16>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x104>;                              /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <1>;                                  /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0xF>;                                /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x104>;
+        clk-gate-reg-bit-enable                 = <0>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+
+
+    /*  spi2axi clock tree
+        pll0_div4--->DIV--->GATE--->spi2axi axi clk 
+
+        //root node: pll0_div4  
+        1. spi2axi_aclk: spi2axi clk DIV & GATE;
+    */
+    spi2axi_aclk: spi2axi_aclk {
+        #clock-cells                            = <0>;
+        compatible                              = "canaan,k230-clk-composite";
+        clocks                                  = <&pll0_div4>;
+        status                                  = "okay";
+        read-only                               = <0>;                                  /* 1 means read-only, 0 means read-write */
+
+        /* rate */
+        clk-rate-conf-mul-min                   = <1>;
+        clk-rate-conf-mul-max                   = <1>;
+        clk-rate-conf-div-min                   = <1>;
+        clk-rate-conf-div-max                   = <8>;
+        clk-rate-calc-method                    = <1>;                                  /* 0 for mul changeabled, 1 for div changeabled, 2 for div&mul changeable */
+
+        clk-rate-reg-offset                     = <0x108>;                              /* divider register offset */
+        clk-rate-reg-mul-value-shift            = <0>;                                  /* multiple field shift. It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-mul-value-mask             = <0>;                                  /* multiple field mask.  It's valid when clk-rate-calc-method = 2 */
+        clk-rate-reg-div-value-shift            = <1>;                                  /* divider field shift. */
+        clk-rate-reg-div-value-mask             = <0x7>;                                /* divider field mask.  */
+        clk-rate-reg-write-enable-bit           = <31>;
+
+        /* gate */
+        clk-gate-reg-offset                     = <0x108>;
+        clk-gate-reg-bit-enable                 = <0>;
+        clk-gate-reg-bit-reverse                = <0>;
+    };
+};

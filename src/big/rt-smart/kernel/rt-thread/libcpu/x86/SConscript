@@ -1,0 +1,20 @@
+# RT-Thread building script for bridge
+import os
+from building import *
+
+Import('rtconfig')
+
+cwd   = GetCurrentDir()
+group = []
+list  = os.listdir(cwd)
+
+# add common code files
+if rtconfig.CPU == "i386" :
+    group = group
+else :
+    group = group + SConscript(os.path.join(cwd, 'common', 'SConscript'))
+
+# cpu porting code files
+group = group + SConscript(os.path.join(cwd, rtconfig.CPU, 'SConscript'))
+
+Return('group')

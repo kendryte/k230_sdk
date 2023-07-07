@@ -1,0 +1,18 @@
+from building import *
+
+cwd     = GetCurrentDir()
+src     = Split('''
+shell.c
+cmd.c
+msh.c
+''')
+
+
+if GetDepend('RT_USING_DFS'):
+    src += ['msh_file.c']
+
+CPPPATH = [cwd]
+
+group = DefineGroup('msh', src, depend = ['RT_USING_FINSH'], CPPPATH = CPPPATH)
+
+Return('group')

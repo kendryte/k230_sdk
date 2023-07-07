@@ -1,0 +1,18 @@
+#
+# Automatically generated file; DO NOT EDIT.
+# Configuration
+#
+# CONFIG_CORTEX_A is not set
+# CONFIG_CORTEX_M is not set
+# CONFIG_AARCH64 is not set
+CONFIG_RISCV64=y
+# CONFIG_I386 is not set
+CONFIG_ARCH="RISCV64"
+# CONFIG_GNU_GCC is not set
+CONFIG_GNU_GCC_MUSL=y
+# CONFIG_GNU_GCC_NEWLIB is not set
+CONFIG_Toolchain="gcc_musl"
+CONFIG_EXEC_PATH="/opt/rtt/riscv64-linux-musleabi_for_x86_64-pc-linux-gnu/bin"
+CONFIG_CUSTOM_PREFIX=y
+CONFIG_PREFIX="riscv64-unknown-linux-musl-"
+CONFIG_TARGET_FILE=""

@@ -1,0 +1,4 @@
+config BR2_PACKAGE_DOOR_LOCK
+	bool "door lock"
+	help
+	  door lock ui app
