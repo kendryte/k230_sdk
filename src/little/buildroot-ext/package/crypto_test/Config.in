@@ -1,0 +1,7 @@
+config BR2_PACKAGE_CRYPTO_TEST
+	bool "crypto test"
+	help
+	  k230 crypto demo for test
+
+
+

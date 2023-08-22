@@ -96,7 +96,7 @@ void video_proc(char *argv[])
 
         {
             ScopedTiming st("isp copy", atoi(argv[6]));
-            auto vbvaddr = kd_mpi_sys_mmap(dump_info.v_frame.phys_addr[0], size);
+            auto vbvaddr = kd_mpi_sys_mmap_cached(dump_info.v_frame.phys_addr[0], size);
             memcpy(vaddr, (void *)vbvaddr, SENSOR_HEIGHT * SENSOR_WIDTH * 3);  // 这里以后可以去掉，不用copy
             kd_mpi_sys_munmap(vbvaddr, size);
         }

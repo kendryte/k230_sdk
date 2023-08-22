@@ -1,0 +1,5 @@
+config BR2_PACKAGE_TOUCH_EMU
+	bool "touchscreen emulator"
+	help
+	  k230 touchscreen emulator
+

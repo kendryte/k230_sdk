@@ -29,7 +29,7 @@
     clock-names = "vglite";
 };
 
-&emmc {
+&mmc_sd0 {
     clocks = <&sd0_cclk_gate>,<&sd0_cclk_gate>;
     clock-names = "core", "bus";
 };
@@ -52,4 +52,12 @@
 
 &watchdog0 {
     clocks = <&wdt0>;
+};
+
+&adc {
+    clocks = <&adc_clk>;
+};
+
+&pwm {
+    clocks = <&pwm_pclk_gate>;
 };

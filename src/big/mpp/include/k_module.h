@@ -68,6 +68,7 @@ typedef enum
     K_ID_DMA,                   /**< dma device                                 */
     K_ID_VICAP,                 /**< vicap device                               */
     K_ID_DW200,
+    K_ID_PM,
     K_ID_BUTT,                  /**< Invalid                                    */
 } k_mod_id;
 

@@ -5,3 +5,29 @@ source Kconfig.board
 source Kconfig.toolchain
 source Kconfig.memory
 source Kconfig.storage
+
+####################debug /realse version begain {
+choice 
+	prompt "build debug/release version"
+    default BUILD_RELEASE_VER
+    help
+        build debug/release version.
+
+config BUILD_DEBUG_VER
+	bool "debug"
+
+config BUILD_RELEASE_VER
+	bool "release"
+
+endchoice
+
+
+config DBGLV
+        int  "config debug level"
+        depends on BUILD_DEBUG_VER
+        help  
+              debug level: 0...8 ;
+              0----release
+        default 0 if BUILD_RELEASE_VER
+        default 8 if BUILD_DEBUG_VER
+####################debug /realse version end }

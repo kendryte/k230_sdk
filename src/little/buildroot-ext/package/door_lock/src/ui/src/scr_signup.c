@@ -62,7 +62,7 @@ static void setup_scr_scr_signup(void)
 
     lv_obj_t *kb = lv_keyboard_create(lv_ui.scr_signup);
     lv_obj_set_style_text_font(kb, &lv_font_montserrat_40, LV_PART_MAIN);
-    lv_obj_set_size(kb, lv_pct(100), lv_pct(30));
+    lv_obj_set_size(kb, lv_pct(100), 580);
     lv_keyboard_set_mode(kb, LV_KEYBOARD_MODE_TEXT_LOWER);
     lv_keyboard_set_textarea(kb, ta);
     lv_obj_add_event_cb(kb, scr_signup_continue, LV_EVENT_READY, ta);

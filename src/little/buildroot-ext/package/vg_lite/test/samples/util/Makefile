@@ -24,5 +24,5 @@ $(OUT) :
 	@mkdir $(OUT)
 
 $(OUT)/$(NAME) : $(OUT) $(SOURCES)
-	@echo $(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(SOURCES)
-	@$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(SOURCES)
+	@echo $(CC) $(CFLAGS) -o $@ $(SOURCES) $(LDFLAGS)
+	@$(CC) $(CFLAGS) -o $@ $(SOURCES) $(LDFLAGS)

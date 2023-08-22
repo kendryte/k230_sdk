@@ -70,12 +70,12 @@ static int obj_property_init(void)
     lv_ui.scr_main_btn_signup.img_path = "signup.png";
 
     lv_ui.scr_main_btn_import.pos.x = lv_pct(-30);
-    lv_ui.scr_main_btn_import.pos.y = lv_pct(-5);
+    lv_ui.scr_main_btn_import.pos.y = -96;
     lv_ui.scr_main_btn_import.align = LV_ALIGN_BOTTOM_MID;
     lv_ui.scr_main_btn_import.img_path = "import.png";
 
     lv_ui.scr_main_btn_delete.pos.x = lv_pct(30);
-    lv_ui.scr_main_btn_delete.pos.y = lv_pct(-5);
+    lv_ui.scr_main_btn_delete.pos.y = -96;
     lv_ui.scr_main_btn_delete.align = LV_ALIGN_BOTTOM_MID;
     lv_ui.scr_main_btn_delete.img_path = "delete.png";
 

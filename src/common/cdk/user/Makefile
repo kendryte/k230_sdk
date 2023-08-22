@@ -5,6 +5,7 @@ all:
 	@cd component/datafifo; make
 	@cd mapi; make
 	@cd thirdparty; make
+	@cd middleware; make
 	@cd samples; make
 
 clean:
@@ -12,4 +13,5 @@ clean:
 	@cd component/ipcmsg; make clean
 	@cd component/datafifo; make clean
 	@cd thirdparty; make clean
+	@cd middleware; make clean
 	@cd samples; make clean

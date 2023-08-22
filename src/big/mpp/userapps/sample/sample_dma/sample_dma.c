@@ -699,7 +699,7 @@ static k_s32 check_result(k_s32 chn_num, k_dma_chn_attr_u *attr, k_video_frame_i
         {
             src_16 = (k_u16 *)df_info_src->v_frame.virt_addr[0];
             dst_16 = (k_u16 *)kd_mpi_sys_mmap(df_info_dst->v_frame.phys_addr[0], gdma_size[2] / 3 * 2);
-            
+
             width = attr->gdma_attr.width;
             height = attr->gdma_attr.height;
             src_stride = attr->gdma_attr.src_stride[0] / 2;
@@ -814,7 +814,7 @@ int main(void)
     k_u32 loop = 0;
     k_s32 check_ret = K_SUCCESS;
 
-    printf("dma sample case, press e to end the operation.\n");
+    printf("dma sample case, press q to end the operation.\n");
 
     ret = pthread_create(&tid1, NULL, getchar_entry, NULL);
     if (ret)

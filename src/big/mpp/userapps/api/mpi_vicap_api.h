@@ -226,6 +226,21 @@ k_s32 kd_mpi_vicap_dump_release(k_vicap_dev dev_num, k_vicap_chn chn_num, const 
  */
 k_s32 kd_mpi_vicap_set_mclk(k_vicap_mclk_id id, k_vicap_mclk_sel sel, k_u8 mclk_div, k_u8 mclk_en);
 
+
+/**
+ * @brief vicap set vi drop frame
+ *
+ * @param [in] csi csi num
+ * @param [in] k_vicap_drop_frame Description of lost frame information
+ * @param [in] enable enable drop frame
+ * @return k_s32
+ * @retval 0 success
+ * @retval "not 0" see err code
+ * @see K_ERR_CODE_E
+ * @note
+ */
+k_s32 kd_mpi_vicap_set_vi_drop_frame(k_vicap_csi_num csi, k_vicap_drop_frame *frame, k_bool enable);
+
 /** @} */ /** <!-- ==== VICAP End ==== */
 
 /**

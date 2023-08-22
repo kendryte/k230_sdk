@@ -55,6 +55,31 @@
 static int k230_check_and_get_plain_data(firmware_head_s *pfh, ulong *pplain_addr);
 static int k230_boot_rtt_uimage(image_header_t *pUh);
 
+#define LINUX_KERNEL_IMG_MAX_SIZE  (25*1024*1024)
+
+unsigned long get_CONFIG_CIPHER_ADDR(void)
+{
+    unsigned long ret=0;
+    
+    if(CONFIG_MEM_LINUX_SYS_SIZE >= 0x8000000){
+        ret = round_down( (((CONFIG_MEM_LINUX_SYS_SIZE - 0x1000000)/3) + CONFIG_MEM_LINUX_SYS_BASE ), 0x100000);//25MB
+    }else{
+        ret = round_down ((LINUX_KERNEL_IMG_MAX_SIZE + CONFIG_MEM_LINUX_SYS_BASE ), 0x100000);//25MB;
+    }
+
+    
+    return ret;
+}
+unsigned long get_CONFIG_PLAIN_ADDR(void)
+{
+    unsigned long ret=0;
+    if(CONFIG_MEM_LINUX_SYS_SIZE >= 0x8000000){
+        ret = round_down( ((CONFIG_MEM_LINUX_SYS_SIZE - 0x1000000)/3*2) + CONFIG_MEM_LINUX_SYS_BASE , 0x100000);
+    }else {
+        ret = round_down ((CONFIG_MEM_LINUX_SYS_SIZE- 0x1000000 - LINUX_KERNEL_IMG_MAX_SIZE)/2 + CONFIG_CIPHER_ADDR, 0x100000);//25MB;
+    }
+    return ret;    
+}
 
 #define USE_UBOOT_BOOTARGS 
 #define OPENSBI_DTB_ADDR ( CONFIG_MEM_LINUX_SYS_BASE +0x2000000)
@@ -73,8 +98,8 @@ char *board_fdt_chosen_bootargs(void){
         else if(g_bootmod == SYSCTL_BOOT_SDIO1)
             bootargs = "root=/dev/mmcblk1p3 loglevel=8 rw rootdelay=4 rootfstype=ext4 console=ttyS0,115200 crashkernel=256M-:128M earlycon=sbi";
         else  if(g_bootmod == SYSCTL_BOOT_NORFLASH)
-            //bootargs = "root=/dev/mtdblock8 rw rootwait rootfstype=jffs2 console=ttyS0,115200 earlycon=sbi";
-            bootargs = "ubi.mtd=8 rootfstype=ubifs rw root=ubi0_0 console=ttyS0,115200 earlycon=sbi";
+            //bootargs = "root=/dev/mtdblock9 rw rootwait rootfstype=jffs2 console=ttyS0,115200 earlycon=sbi";
+            bootargs = "ubi.mtd=9 rootfstype=ubifs rw root=ubi0_0 console=ttyS0,115200 earlycon=sbi";
     }
     //printf("%s\n",bootargs);
     return bootargs;
@@ -95,7 +120,7 @@ static int k230_boot_rtt_uimage(image_header_t *pUh)
     ulong data;
 
     image_multi_getimg(pUh, 0, &data, &len);
-    
+    K230_dbg("rtt load %x  compress =%x  src %lx len=%lx \n", image_get_load(pUh), image_get_comp(pUh), data, len);    
 
     //设计要求必须gzip压缩，调试可以不压缩；
     if (image_get_comp(pUh) == IH_COMP_GZIP) {        
@@ -143,14 +168,25 @@ static int k230_boot_linux_uimage(image_header_t *pUh)
     ulong data;
     ulong dtb;
     ulong img_load_addr = 0;
+
+
+     //dtb
+    image_multi_getimg(pUh, 2, &dtb, &len);
+    #ifdef USE_UBOOT_BOOTARGS
+    len = fdt_shrink_to_minimum((void*)dtb,0x100);
+    ret = fdt_chosen((void*)dtb);
+    #endif 
+    memmove((void*)OPENSBI_DTB_ADDR, (void *)dtb, len);
+
+
     //record_boot_time_info("gd");
     image_multi_getimg(pUh, 0, &data, &len);
     img_load_addr = (ulong)image_get_load(pUh);
-    
 
+    K230_dbg("linux load %lx  compress =%x  src %lx len=%lx dtb %lx \n", img_load_addr, image_get_comp(pUh), data, len, dtb);
     //设计要求必须gzip压缩，调试可以不压缩；
     if (image_get_comp(pUh) == IH_COMP_GZIP) {        
-        ret = gunzip((void *)img_load_addr, 0x6000000, (void *)data, &len); //
+        ret = gunzip((void *)img_load_addr, (ulong)pUh-img_load_addr, (void *)data, &len); //
         if(ret){
             printf("unzip fialed ret =%x\n", ret);
             return -1;
@@ -159,13 +195,7 @@ static int k230_boot_linux_uimage(image_header_t *pUh)
         memmove((void *)img_load_addr, (void *)data, len);
     }
     
-    //dtb
-    image_multi_getimg(pUh, 2, &dtb, &len);
-    #ifdef USE_UBOOT_BOOTARGS
-    len = fdt_shrink_to_minimum((void*)dtb,0x100);
-    ret = fdt_chosen((void*)dtb);
-    #endif 
-    memmove((void*)OPENSBI_DTB_ADDR, (void *)dtb, len);
+   
     cleanup_before_linux();//flush cache，
 
     kernel = (void (*)(ulong, void *))img_load_addr;
@@ -185,8 +215,7 @@ static int k230_boot_paramter_uimage(image_header_t *pUh)
     ulong len = image_get_data_size(pUh);
     ulong data = image_get_data(pUh);
 
-    //printf("image name  %s  load =%x  comp=%x\n", image_get_name(pUh),image_get_load(pUh), image_get_comp(pUh));
-    //；
+    K230_dbg("image name  %s  load =%x  comp=%x src %lx len=%lx \n", image_get_name(pUh),image_get_load(pUh), image_get_comp(pUh), data, len);
     if (image_get_comp(pUh) == IH_COMP_GZIP) {        
         ret = gunzip((void *)(ulong)image_get_load(pUh), 0x6000000, (void *)data, &len);
         if(ret){
@@ -197,6 +226,7 @@ static int k230_boot_paramter_uimage(image_header_t *pUh)
         memmove((void *)(ulong)image_get_load(pUh), (void *)data, len);
     }
     //printf("unzip end \n");
+    flush_cache((ulong)image_get_load(pUh), len);
     return 0;
 }
 int k230_img_boot_sys_bin(firmware_head_s * fhBUff)
@@ -245,7 +275,7 @@ static int k230_check_and_get_plain_data_securiy(firmware_head_s *pfh, ulong *pp
 
 
     if(pfh->crypto_type == INTERNATIONAL_SECURITY) {
-        printf(" INTERNATIONAL_SECURITY aes \n");
+        K230_dbg(" INTERNATIONAL_SECURITY aes \n");
         // 检验头携带的RSA2048/SM2的 public key是否正确，与烧录到OTP里面的PUK HASH值做比对。
         // 直接把public key烧录到OTP也可以，但是需要消耗2Kbit的OTP空间，这里主要是节约otp空间考虑。
         // 把PUK HASH烧录到OTP，可以保证只有经过PRK签名的固件才可以正常启动。
@@ -293,7 +323,7 @@ static int k230_check_and_get_plain_data_securiy(firmware_head_s *pfh, ulong *pp
             *pplain_addr = (ulong)pplaint;
         
     }else if (pfh->crypto_type == CHINESE_SECURITY){
-        printf("CHINESE_SECURITY sm\n");
+        K230_dbg("CHINESE_SECURITY sm\n");
         if(SUCCESS != cb_pufs_read_otp(puk_hash_otp, 32, OTP_BLOCK_SM2_PUK_HASH_ADDR)){
             printf("otp read puk hash error \n");
             return -6;
@@ -439,8 +469,10 @@ static int k230_load_sys_from_mmc_or_sd(en_boot_sys_t sys, ulong buff)//(ulong o
     if(ret != HD_BLK_NUM)
         return 4;
 
-    if(pfh->magic != MAGIC_NUM)
+    if(pfh->magic != MAGIC_NUM){
+        K230_dbg("pfh->magic 0x%x != 0x%x blk=0x%lx buff=0x%lx  ", pfh->magic, MAGIC_NUM, blk_s, buff);
         return 5;
+    }
 
     data_sect = DIV_ROUND_UP(pfh->length + sizeof(*pfh), BLKSZ) - HD_BLK_NUM;
 	
@@ -507,9 +539,10 @@ static int k230_load_sys_from_spi_nor( en_boot_sys_t sys, ulong buff)
 
     ret = spi_flash_read(boot_flash, off, sizeof(*pfh), (void *)pfh);
 
-    if(ret || (pfh->magic != MAGIC_NUM) )
+    if(ret || (pfh->magic != MAGIC_NUM) )   {
+        K230_dbg("pfh->magic 0x%x != 0x%x off=0x%lx buff=0x%lx  ", pfh->magic, MAGIC_NUM, off, buff);
         return 5;
-    
+    }
     ret = spi_flash_read(boot_flash, off+sizeof(*pfh), round_up(pfh->length,2), (void*)(buff+sizeof(*pfh)));
 
     if(sys== BOOT_SYS_LINUX){
@@ -561,8 +594,10 @@ static int k230_load_sys_from_spi_nand( en_boot_sys_t sys, ulong buff)
 
     ret = nand_read(boot_flash, off, &len, (void *)pfh);
 
-    if(ret || (pfh->magic != MAGIC_NUM) )
+    if(ret || (pfh->magic != MAGIC_NUM) ){
+        K230_dbg("pfh->magic 0x%x != 0x%x off=0x%lx buff=0x%lx ", pfh->magic, MAGIC_NUM, off, buff);
         return 5;
+    }
 
     lenth = round_up(pfh->length,2);
     ret = nand_read(boot_flash, off+sizeof(*pfh), &lenth, (void*)(buff+sizeof(*pfh)));
@@ -620,7 +655,7 @@ int k230_img_load_boot_sys(en_boot_sys_t sys)
         ret = k230_img_load_sys_from_dev(sys, CONFIG_CIPHER_ADDR);
         if(ret){
             if(ret != IMG_PART_NOT_EXIT)
-                printf("img load error ret=%x\n", ret);
+                printf("sys %x  load error ret=%x\n", sys, ret);
             return ret;
         }
         ret = k230_img_boot_sys_bin((firmware_head_s * )CONFIG_CIPHER_ADDR);

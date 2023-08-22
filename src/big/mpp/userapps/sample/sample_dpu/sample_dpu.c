@@ -226,7 +226,7 @@ static k_s32 dpu_vb_exit()
 {
     k_s32 ret;
     ret = kd_mpi_vb_exit();
-    if (ret) 
+    if (ret)
         printf("vb_exit failed ret:%d\n", ret);
     return ret;
 }
@@ -313,13 +313,13 @@ static k_s32 dpu_userspace_mmz(k_dpu_user_space_t *data, const char *name, const
     }
     size = file_stat.st_size;
     printf("%-46s size:0x%x\n", path, size);
-    ret = kd_mpi_sys_mmz_alloc_cached(&data->phys_addr, &data->virt_addr, 
+    ret = kd_mpi_sys_mmz_alloc_cached(&data->phys_addr, &data->virt_addr,
         name, "anonymous", size);
     if (ret != K_ERR_OK) {
         printf("[ERROR]: kd_mpi_sys_mmz_alloc return 0x%08x\n",ret);
         return K_FAILED;
     } else {
-        // printf("data alloc result phyaddr:0x%lx virtaddr:%p\n", 
+        // printf("data alloc result phyaddr:0x%lx virtaddr:%p\n",
         //     data->phys_addr, data->virt_addr);
     }
     data->size = size;
@@ -356,11 +356,11 @@ static k_s32 dpu_golden_data_prepare()
     ret = dpu_userspace_mmz(&g_depth_out_space, "depth", g_depth_out);
     if (ret)
         return K_ERR_DPU_NOMEM;
-    
+
     ret = dpu_userspace_mmz(&g_ir_out_space, "ir", g_ir_out);
     if (ret)
         return K_ERR_DPU_NOMEM;
-    
+
     ret = dpu_userspace_mmz(&g_disp_out_x_space, "disp_x", g_disp_out_x);
     if (ret)
         return K_ERR_DPU_NOMEM;
@@ -399,7 +399,7 @@ static k_s32 dpu_input_data_prepare_bind(k_video_frame_info *vf_info, k_u8 *src_
 
     if (vf_info == NULL)
         return K_FALSE;
-    
+
     size = vf_info->v_frame.height * vf_info->v_frame.width * 4;
     printf("%s,%d, size:%x\n", __func__, __LINE__, size);
     handle = kd_mpi_vb_get_block(VB_INVALID_POOLID, size, NULL);
@@ -428,7 +428,7 @@ static k_s32 dpu_input_data_prepare_bind(k_video_frame_info *vf_info, k_u8 *src_
     vf_info->v_frame.pixel_format = PIXEL_FORMAT_ARGB_8888;
     vf_info->v_frame.virt_addr[0] = 0;
     *dst_vaddr = virt_addr;
-    // printf("%s,%d, pool_id:%d, phys_addr:%lx\n", 
+    // printf("%s,%d, pool_id:%d, phys_addr:%lx\n",
     //     __func__, __LINE__, vf_info->pool_id, vf_info->v_frame.phys_addr[0]);
 
     return K_SUCCESS;
@@ -453,7 +453,7 @@ static k_s32 dpu_input_data_release_bind(k_video_frame_info *vf_info, const void
         kd_mpi_sys_munmap((void *)virt_addr, size);
         printf("%s,%d\n", __func__, __LINE__);
     }
-        
+
     return ret;
 }
 
@@ -522,7 +522,7 @@ static k_s32 dpu_result_check(k_dpu_chn_result_u *result, k_u32 chn_num)
     if (chn_num == 0) {
         lcn = &result->lcn_result;
         if (lcn->depth_out.valid) {
-            // printf("%s,%d, depth_phys_addr:%lx, vb.length:%d, array.length:%d\n", 
+            // printf("%s,%d, depth_phys_addr:%lx, vb.length:%d, array.length:%d\n",
             //     __func__, __LINE__, lcn->depth_out.depth_phys_addr, lcn->depth_out.length, g_depth_out_space.size);
             virt_result = (k_u8 *)kd_mpi_sys_mmap(lcn->depth_out.depth_phys_addr, lcn->depth_out.length);
             ret = result_check(virt_result, g_depth_out_space.virt_addr, lcn->depth_out.length);
@@ -532,7 +532,7 @@ static k_s32 dpu_result_check(k_dpu_chn_result_u *result, k_u32 chn_num)
             kd_mpi_sys_munmap(virt_result, lcn->depth_out.length);
         }
         if (lcn->disp_out.valid) {
-            // printf("%s,%d, disp_phys_addr:%lx, vb.length:%d, array.length:%d\n", 
+            // printf("%s,%d, disp_phys_addr:%lx, vb.length:%d, array.length:%d\n",
             //     __func__, __LINE__, lcn->disp_out.disp_phys_addr, lcn->disp_out.length, g_disp_out_space.size);
             virt_result = (k_u8 *)kd_mpi_sys_mmap(lcn->disp_out.disp_phys_addr, lcn->disp_out.length);
             ret = result_check(virt_result, g_disp_out_space.virt_addr, lcn->disp_out.length);
@@ -541,7 +541,7 @@ static k_s32 dpu_result_check(k_dpu_chn_result_u *result, k_u32 chn_num)
             printf("%-15s check pass\n", "disp_out");
         }
         if (lcn->qlt_out.valid) {
-            // printf("%s,%d, qlt_phys_addr:%lx, vb.length:%d, array.length:%d\n", 
+            // printf("%s,%d, qlt_phys_addr:%lx, vb.length:%d, array.length:%d\n",
             //     __func__, __LINE__, lcn->qlt_out.qlt_phys_addr, lcn->qlt_out.qlt_length, g_qlt_out_space.size);
             virt_result = (k_u8 *)kd_mpi_sys_mmap(lcn->qlt_out.qlt_phys_addr, lcn->qlt_out.qlt_length);
             ret = result_check(virt_result, g_qlt_out_space.virt_addr, lcn->qlt_out.qlt_length);
@@ -549,7 +549,7 @@ static k_s32 dpu_result_check(k_dpu_chn_result_u *result, k_u32 chn_num)
                 return ret;
             printf("%-15s check pass\n", "qlt_out");
 
-            // printf("%s,%d, sad_disp_phys_addr:%lx, vb.length:%d, array.length:%d\n", 
+            // printf("%s,%d, sad_disp_phys_addr:%lx, vb.length:%d, array.length:%d\n",
             //     __func__, __LINE__, lcn->qlt_out.sad_disp_phys_addr, lcn->qlt_out.sad_disp_length, g_disp_out_x_space.size);
             virt_result = (k_u8 *)kd_mpi_sys_mmap(lcn->qlt_out.sad_disp_phys_addr, lcn->qlt_out.sad_disp_length);
             ret = result_check(virt_result, g_disp_out_x_space.virt_addr, lcn->qlt_out.sad_disp_length);
@@ -557,7 +557,7 @@ static k_s32 dpu_result_check(k_dpu_chn_result_u *result, k_u32 chn_num)
                 return ret;
             printf("%-15s check pass\n", "sad_disp");
 
-            // printf("%s,%d, init_sad_disp_phys_addr:%lx, vb.length:%d, array.length:%d\n", 
+            // printf("%s,%d, init_sad_disp_phys_addr:%lx, vb.length:%d, array.length:%d\n",
             //     __func__, __LINE__, lcn->qlt_out.init_sad_disp_phys_addr, lcn->qlt_out.init_sad_disp_length, g_disp_out_xy_space.size);
             virt_result = (k_u8 *)kd_mpi_sys_mmap(lcn->qlt_out.init_sad_disp_phys_addr, lcn->qlt_out.init_sad_disp_length);
             ret = result_check(virt_result, g_disp_out_xy_space.virt_addr, lcn->qlt_out.init_sad_disp_length);
@@ -590,8 +590,8 @@ k_s32 sample_dpu_unbound_mode(k_dpu_dev_attr_t *dev_attr, k_dpu_chn_lcn_attr_t *
     k_s32 ret;
     k_s32 test_nums = 10;
     k_s32 err_times = 0;
-    k_dpu_chn_result_u lcn_result;
-    k_dpu_chn_result_u ir_result;
+    k_dpu_chn_result_u lcn_result = {0};
+    k_dpu_chn_result_u ir_result = {0};
 
     for (int tmp = 0; tmp < test_nums; tmp++) {
         if (tmp == 5) {
@@ -599,7 +599,7 @@ k_s32 sample_dpu_unbound_mode(k_dpu_dev_attr_t *dev_attr, k_dpu_chn_lcn_attr_t *
             dev_attr->tytz_temp_recfg = K_TRUE;
             dev_attr->align_depth_recfg = K_TRUE;
             dev_attr->param_valid = 144;
-            
+
             /* set device attribute */
             ret = kd_mpi_dpu_set_dev_attr(dev_attr);
             if (ret) {
@@ -662,9 +662,9 @@ k_s32 sample_dpu_unbound_mode(k_dpu_dev_attr_t *dev_attr, k_dpu_chn_lcn_attr_t *
 static void *bind_mode_get_frame(void *parameter)
 {
     k_s32 ret;
-    k_dpu_chn_result_u lcn_result;
-    k_dpu_chn_result_u ir_result;
-    k_dpu_chn_result_u lcn_result_save;
+    k_dpu_chn_result_u lcn_result = {0};
+    k_dpu_chn_result_u ir_result = {0};
+    k_dpu_chn_result_u lcn_result_save = {0};
 
     printf("%s,%d\n", __func__, __LINE__);
 
@@ -803,7 +803,7 @@ int main(int argc, char *argv[])
     }
 
     /************************************************************
-     * This part is the demo that actually starts to use DPU 
+     * This part is the demo that actually starts to use DPU
      ***********************************************************/
     /* dpu init */
     dpu_init.start_num = 0;
@@ -815,12 +815,12 @@ int main(int argc, char *argv[])
     }
 
     /* parse file */
-    ret = kd_mpi_dpu_parse_file(g_param_path, 
-                                &dev_attr.dev_param, 
+    ret = kd_mpi_dpu_parse_file(g_param_path,
+                                &dev_attr.dev_param,
                                 &lcn_attr.lcn_param,
                                 &ir_attr.ir_param,
                                 &g_temp_space);
-    // printf("g_temp_space.virt_addr:%p, g_temp_space.phys_addr:%lx\n", 
+    // printf("g_temp_space.virt_addr:%p, g_temp_space.phys_addr:%lx\n",
     //     g_temp_space.virt_addr, g_temp_space.phys_addr);
     if (g_temp_space.virt_addr == NULL) {
         printf("g_temp_space.virt_addr is NULL\n");

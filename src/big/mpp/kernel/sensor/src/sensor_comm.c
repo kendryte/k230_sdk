@@ -194,11 +194,13 @@ k_s32 sensor_priv_ioctl(struct sensor_driver_dev *dev, k_u32 cmd, void *args)
                 return -1;
             }
 
-            ret = sensor_reg_read(&dev->i2c_info, reg.addr, &reg.val);
+            k_u16 reg_val;
+            ret = sensor_reg_read(&dev->i2c_info, reg.addr, &reg_val);
             if (ret) {
                 rt_kprintf("%s:%d sensor_reg_read err\n", __func__, __LINE__);
                 return -1;
             }
+            reg.val = reg_val;
 
             if (sizeof(k_sensor_reg) != lwp_put_to_user(args, &reg, sizeof(k_sensor_reg))){
                 rt_kprintf("%s:%d lwp_put_to_user err\n", __func__, __LINE__);

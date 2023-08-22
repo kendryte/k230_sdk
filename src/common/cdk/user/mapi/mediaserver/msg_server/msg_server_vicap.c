@@ -235,6 +235,31 @@ k_s32 msg_vicap_stop(k_s32 id, k_ipcmsg_message_t *msg)
     return K_SUCCESS;
 }
 
+k_s32 msg_vicap_set_vi_drop_frame(k_s32 id, k_ipcmsg_message_t *msg)
+{
+    k_s32 ret;
+    k_ipcmsg_message_t *resp_msg;
+    msg_vicap_drop_frame_info_t *drop_frame = msg->pBody;
+
+    ret = kd_mapi_vicap_set_vi_drop_frame(drop_frame->csi, &drop_frame->frame, drop_frame->enable);
+    if(ret != K_SUCCESS) {
+        mapi_vicap_error_trace("kd_mpi_vicap_set_vi_drop_frame failed:0x%x\n", ret);
+    }
+
+    resp_msg = kd_ipcmsg_create_resp_message(msg, ret, NULL, 0);
+    if(resp_msg == NULL) {
+        mapi_vicap_error_trace("kd_ipcmsg_create_resp_message failed\n");
+        return K_FAILED;
+    }
+
+    ret = kd_ipcmsg_send_async(id, resp_msg, NULL);
+    if(ret != K_SUCCESS) {
+        mapi_vicap_error_trace(" kd_ipcmsg_send_async failed:%x\n", ret);
+    }
+    kd_ipcmsg_destroy_message(resp_msg);
+    return K_SUCCESS;
+}
+
 static msg_module_cmd_t g_module_cmd_table[] = {
     {MSG_CMD_MEDIA_VICAP_GET_SENSOR_FD,   msg_vicap_get_sensor_fd},
     {MSG_CMD_MEDIA_VICAP_DUMP_FRAME,      msg_vicap_dump_frame},
@@ -244,6 +269,7 @@ static msg_module_cmd_t g_module_cmd_table[] = {
     {MSG_CMD_MEDIA_VICAP_SET_CHN_ATTR,    msg_vicap_set_chn_attr},
     {MSG_CMD_MEDIA_VICAP_START,           msg_vicap_start},
     {MSG_CMD_MEDIA_VICAP_STOP,            msg_vicap_stop},
+    {MSG_CMD_MEDIA_VICAP_DROP_FRAME,      msg_vicap_set_vi_drop_frame},
 };
 
 msg_server_module_t g_module_vicap = {

@@ -3,6 +3,7 @@ DATAFIFO_ROOT=$(CDK_SRC_DIR)/user/component/datafifo
 MAPI_ROOT=$(CDK_SRC_DIR)/user/mapi
 MPI_ROOT=$(RTSMART_SRC_DIR)/userapps/mpp
 LIVE_ROOT=$(CDK_SRC_DIR)/user/thirdparty/live
+MW_ROOT=$(CDK_SRC_DIR)/user/middleware
 
 BIN=$(CDK_SRC_DIR)/user/out/little/rtsp_server
 CC=riscv64-unknown-linux-gnu-g++
@@ -10,6 +11,7 @@ LIBS=-lipcmsg
 LIBS+=-lpthread
 LIBS+=-lmapi
 LIBS+=-ldatafifo
+LIBS+=-lrtsp_server
 LIBS+=-lliveMedia
 LIBS+=-lUsageEnvironment
 LIBS+=-lBasicUsageEnvironment
@@ -17,12 +19,13 @@ LIBS+=-lgroupsock
 LIBPATH=-L$(IPCMSG_ROOT)/host/lib
 LIBPATH+=-L$(MAPI_ROOT)/mediaclient/lib
 LIBPATH+=-L$(DATAFIFO_ROOT)/slave/lib
+LIBPATH+=-L$(MW_ROOT)/rtsp_server/lib
 LIBPATH+=-L$(LIVE_ROOT)/BasicUsageEnvironment
 LIBPATH+=-L$(LIVE_ROOT)/groupsock
 LIBPATH+=-L$(LIVE_ROOT)/liveMedia
 LIBPATH+=-L$(LIVE_ROOT)/UsageEnvironment
 LIBPATH+=-L/usr/local/lib
-CFLAGS=-DNO_OPENSSL=1
+CFLAGS=
 
 #add common include
 INCS=-I$(IPCMSG_ROOT)/include
@@ -35,11 +38,7 @@ INCS+=-I$(MPP_SRC_DIR)/include/comm
 INCS+=-I$(MPP_SRC_DIR)/userapps/api
 INCS+=-I./include
 INCS+=-I/usr/local/include
-INCS+=-I$(LIVE_ROOT)/BasicUsageEnvironment/include
-INCS+=-I$(LIVE_ROOT)/groupsock/include
-INCS+=-I$(LIVE_ROOT)/liveMedia/include
-INCS+=-I$(LIVE_ROOT)/UsageEnvironment/include
-
+INCS+=-I$(MW_ROOT)/rtsp_server/include
 RTSP_DEMO_SRC=./src ./
 
 SRCS:=$(foreach dir, $(RTSP_DEMO_SRC), $(wildcard $(dir)/*.cpp $()))
@@ -49,7 +48,7 @@ all:$(BIN)
 
 $(COBJS) : %.o: %.cpp
 
-	$(CC) -c $(CFLAGS) $< -o $@ $(INCS) -DNO_OPENSSL=1
+	$(CC) -c $(CFLAGS) $< -o $@ $(INCS)
 
 
 $(BIN):$(COBJS)

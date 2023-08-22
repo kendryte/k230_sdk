@@ -20,3 +20,7 @@
 &gpu {
    power-domains = <&sysctl_power K230_PM_DOMAIN_DISP>;
 };
+
+&display {
+   power-domains = <&sysctl_power K230_PM_DOMAIN_DISP>;
+};

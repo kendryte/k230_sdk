@@ -51,7 +51,7 @@ extern "C" {
  *      DEFINES
  *********************/
 #define DISP_HOR_RES 1080
-#define DISP_VER_RES 1920
+#define DISP_VER_RES (1920 / 2)
 #define display_width DISP_HOR_RES
 #define display_height DISP_VER_RES
 
@@ -108,11 +108,10 @@ void lv_port_disp_init(void)
      * Create a buffer for drawing
      *----------------------------*/
     static lv_disp_draw_buf_t draw_buf_dsc;
-    lv_color_t *draw_buf = (lv_color_t *)malloc(display_width * display_height /
-                                                2 * sizeof(lv_color_t));
-    lv_disp_draw_buf_init(&draw_buf_dsc, draw_buf, NULL,
-                          display_width * display_height /
-                              2); /*Initialize the display buffer*/
+    lv_color_t *draw_buf = (lv_color_t *)malloc(display_width * 100 *
+                            sizeof(lv_color_t));
+    /*Initialize the display buffer*/
+    lv_disp_draw_buf_init(&draw_buf_dsc, draw_buf, NULL, display_width * 100);
     /*-----------------------------------
      * Register the display in LVGL
      *----------------------------------*/
@@ -301,12 +300,13 @@ static int disp_init(void)
         return -1;
 
     drm_get_resolution(&drm_dev, &screen_width, &screen_height);
+    input_map_set(0);
 
     for (int i = DRM_UI_BUF_SRART_IDX; i < DRM_UI_BUF_END_IDX; i++) {
         drm_bufs[i].width = ALIGNED_UP_POWER_OF_TWO(display_width, 3);
         drm_bufs[i].height = ALIGNED_DOWN_POWER_OF_TWO(display_height, 0);
         drm_bufs[i].offset_x = (screen_width - display_width) / 2;
-        drm_bufs[i].offset_y = (screen_height - display_height) / 2;
+        drm_bufs[i].offset_y = (screen_height - display_height);
         drm_bufs[i].fourcc = DRM_FORMAT_ARGB8888;
         drm_bufs[i].bpp = 32;
         buf_mgt_reader_put(&ui_buf_mgt, (void *)i);

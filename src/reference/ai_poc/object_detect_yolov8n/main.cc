@@ -188,7 +188,7 @@ int main(int argc, char *argv[])
         obDet.post_process({ori_w, ori_h}, results);
 
         Utils::draw_detections(ori_img, results);
-        cv::imwrite("box_result.jpg", ori_img);
+        cv::imwrite("object_det.jpg", ori_img);
     }
     return 0;
 }

@@ -1,4 +1,5 @@
 import os
+import re
 
 # toolchains options
 ARCH        ='risc-v'
@@ -21,7 +22,10 @@ else:
 if os.getenv('RTT_EXEC_PATH'):
     EXEC_PATH = os.getenv('RTT_EXEC_PATH')
 
-BUILD = 'release'
+if re.match("-DDBGLV=0", os.getenv('KCFLAGS', '-DDBGLV=0')):
+    BUILD = 'release'
+else:
+    BUILD = 'debug'
 
 if PLATFORM == 'gcc':
     # toolchains
@@ -49,6 +53,8 @@ if PLATFORM == 'gcc':
         AFLAGS += ' -gdwarf-2'
     else:
         CFLAGS += ' -O1 -g'
+        
+    CFLAGS += ' ' +  os.getenv('KCFLAGS', '-DDBGLV=0')
 
     CXXFLAGS = CFLAGS
 

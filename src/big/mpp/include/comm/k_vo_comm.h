@@ -165,7 +165,8 @@ typedef enum
 typedef enum
 {
     K_BURST_MODE = 0,
-    K_NO_BURST_MODE = 1,
+    K_NON_BURST_MODE_WITH_SYNC_EVENT = 1,
+    K_NON_BURST_MODE_WITH_PULSES = 2,
 } k_dsi_work_mode;
 
 

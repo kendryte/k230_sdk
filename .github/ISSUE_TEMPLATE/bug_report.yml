@@ -1,0 +1,61 @@
+name: Bug report
+description: 向我们反馈您发现的Bug
+title: "[Bug]: "
+labels: ["bug"]
+assignees:
+  - wuwentao
+  - zhangxiaojingCAN
+  - kexinliang666
+  - chenhb3 
+body:
+  - type: textarea
+    id: what_happened
+    attributes:
+      label: What happened
+      description: Bug现象
+      placeholder: A clear and concise description of what you see, example LCD not display. (请简洁清晰的描述一下您看到的现象,比如屏幕不显示)
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction_steps
+    attributes:
+      label: Reproduction steps
+      description: 复现步骤
+      placeholder: How do you trigger this bug? Please walk us through it step by step. (您是如何触发这个bug的,请描述一下步骤)
+    validations:
+      required: true
+  - type: input
+    id: hw_version
+    attributes:
+      label: Hardware board
+      description: 硬件板卡
+      placeholder: k230 evb board
+      value: k230 evb board
+    validations:
+      required: false
+  - type: input
+    id: sw_version
+    attributes:
+      label: Software version
+      description: 软件版本
+      placeholder: v1.0 or git id
+    validations:
+      required: false
+  - type: input
+    id: bug_frequency
+    attributes:
+      label: Bug frequency
+      description: Bug复现频率
+      placeholder: occur 1-2 times per 10 times. (每10次出现1-2次)
+    validations:
+      required: false
+  - type: textarea
+    id: other
+    attributes:
+      label: Anything else
+      description: 其它信息
+      placeholder: |
+        log or image? Anything that will give us more context about the bug. (向我们提供关于bug的任何其它信息,图片或log)
+        Tip: You can attach images or log files by clicking this area to highlight it and then dragging files in. (您能点击这个区域然后拖动文件来添加图片或log)
+    validations:
+      required: false

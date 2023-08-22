@@ -192,6 +192,7 @@ static rt_err_t kd_wdt_control(rt_watchdog_t *wdt, int cmd, void *args)
         case KD_DEVICE_CTRL_WDT_START:
             kd_wdt_enable(wdt);
         break;
+        case RT_DEVICE_CTRL_WDT_STOP:
         case KD_DEVICE_CTRL_WDT_STOP:
             kd_wdt_disable(wdt);
         break;

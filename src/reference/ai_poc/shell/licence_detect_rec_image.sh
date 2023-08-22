@@ -1,0 +1,1 @@
+./licence_det_rec.elf LPD_640.kmodel 0.1 0.2 licence.jpg licence_reco.kmodel 0

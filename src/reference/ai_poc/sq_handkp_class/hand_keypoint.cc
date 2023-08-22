@@ -216,7 +216,7 @@ std::vector<double> HandKeypoint::hand_angle()
     angle_list.push_back(angle_);
     //---------------------------- ring 无名指角度
     angle_ = vector_2d_angle(
-        {(results[1] - results[28]), (results[1] - results[29])},
+        {(results[0] - results[28]), (results[1] - results[29])},
         {(results[30] - results[32]), (results[31] - results[33])}
     );
     angle_list.push_back(angle_);

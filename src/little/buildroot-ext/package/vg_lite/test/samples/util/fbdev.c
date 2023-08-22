@@ -61,7 +61,9 @@ vg_lite_buffer_t * vg_lite_fb_open(void)
     s_framebuffer.stride = fix_info.line_length;
     s_framebuffer.address = fix_info.smem_start;
 
-    if (vg_lite_map(&s_framebuffer) != VG_LITE_SUCCESS) {
+    vg_lite_map_flag_t flag = VG_LITE_MAP_USER_MEMORY;
+    int32_t fd = -1;
+    if (vg_lite_map(&s_framebuffer, flag, fd) != VG_LITE_SUCCESS) {
         close(s_file);
         return NULL;
     }

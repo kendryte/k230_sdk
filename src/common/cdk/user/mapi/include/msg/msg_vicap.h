@@ -54,6 +54,7 @@ typedef enum {
     MSG_CMD_MEDIA_VICAP_GET_SENSOR_INFO,
     MSG_CMD_MEDIA_VICAP_START,
     MSG_CMD_MEDIA_VICAP_STOP,
+    MSG_CMD_MEDIA_VICAP_DROP_FRAME,
 } msg_media_vicap_cmd_t;
 
 typedef struct
@@ -103,6 +104,7 @@ typedef struct {
     k_u32 crop_v_start;
     k_pixel_format pixel_format;
     k_u32 buf_size;
+    k_u8 alignment;
 } msg_vicap_chn_set_info_t;
 
 typedef struct {
@@ -123,6 +125,13 @@ typedef struct {
     k_u16 glitch_filter;
     k_vicap_sensor_type sensor_type;
 } msg_vicap_sensor_info_t;
+
+typedef struct
+{
+    k_vicap_csi_num csi;
+    k_bool enable;
+    k_vicap_drop_frame frame;
+} msg_vicap_drop_frame_info_t;
 
 /** @}*/  /** <!-- ==== COMM End ====*/
 #ifdef __cplusplus

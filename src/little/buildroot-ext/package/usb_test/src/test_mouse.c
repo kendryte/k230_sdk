@@ -27,11 +27,17 @@
 #include <fcntl.h>
 #include <linux/input.h>
 
-int main(void)
+int main(int argc, const char *argv[])
 {
     struct input_event event_mouse ;
     int fd    = -1 ;
-    fd = open("/dev/input/event1", O_RDONLY);
+	char *filename = "/dev/input/event1";
+
+	if (argc > 1) {
+        filename = argv[1];
+    }
+
+    fd = open(filename, O_RDONLY);
     if(-1 == fd)
     {
         printf("open mouse event fair!\n");

@@ -154,19 +154,18 @@ static void touchpad_read(lv_indev_drv_t *indev_drv, lv_indev_data_t *data)
 
 static void map0(int *evdev_root_x, int *evdev_root_y)
 {
-    int x, y;
-    // x,y mirror
+    int x,y;
     x = 1080 - *evdev_root_x;
     y = 1920 - *evdev_root_y;
-    // x,y offset
-    x -= (1080 - 800) / 2;
-    y -= (1920 - 1280) / 2;
-    // x,y limit
-    x = x < 0 ? 0 : x >= 800 ? 799 : x;
-    y = y < 0 ? 0 : y >= 1280 ? 1279 : y;
+    // y offset
+    y = y - 1920 / 2;
+    
+    // y limit
+    y = y < 0 ? 0 : y;
+    x = x < 0 ? 0 : x;
 
-    *evdev_root_x = x;
     *evdev_root_y = y;
+    *evdev_root_x = x;
 }
 
 static void map1(int *evdev_root_x, int *evdev_root_y)

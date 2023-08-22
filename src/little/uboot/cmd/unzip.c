@@ -18,8 +18,10 @@ static int do_unzip(struct cmd_tbl *cmdtp, int flag, int argc,
 	unsigned long src_len = ~0UL, dst_len = ~0UL;
 
 	switch (argc) {
+		case 5:
+			dst_len = hextoul(argv[4], NULL);
 		case 4:
-			dst_len = hextoul(argv[3], NULL);
+			src_len = hextoul(argv[3], NULL);
 			/* fall through */
 		case 3:
 			src = hextoul(argv[1], NULL);
@@ -40,9 +42,9 @@ static int do_unzip(struct cmd_tbl *cmdtp, int flag, int argc,
 }
 
 U_BOOT_CMD(
-	unzip,	4,	1,	do_unzip,
+	unzip,	5,	1,	do_unzip,
 	"unzip a memory region",
-	"srcaddr dstaddr [dstsize]"
+	"srcaddr  dstaddr [srcsize  dstsize]"
 );
 
 static int do_gzwrite(struct cmd_tbl *cmdtp, int flag,

@@ -40,8 +40,8 @@ void print_usage(const char *name)
 {
     cout << "Usage: " << name << "<kmodel> <pd_thresh> <nms_thresh> <input_mode> <debug_mode>" << endl
          << "For example: " << endl
-         << " [for img] ./person_detect.elf yolov5n.kmodel 0.5 0.45 bus.jpg 0" << endl
-         << " [for isp] ./person_detect.elf yolov5n.kmodel 0.5 0.45 None 0" << endl
+         << " [for img] ./person_detect.elf person_detect_yolov5n.kmodel 0.5 0.45 bus.jpg 0" << endl
+         << " [for isp] ./person_detect.elf person_detect_yolov5n.kmodel 0.5 0.45 None 0" << endl
          << "Options:" << endl
          << " 1> kmodel    行人检测kmodel文件路径 \n"
          << " 2> pd_thresh  行人检测阈值\n"

@@ -795,7 +795,7 @@ void ls(const char *pathname)
 
                 if (dfs_file_stat(fullpath, &stat) == 0)
                 {
-                    rt_kprintf("%-20s", dirent.d_name);
+                    rt_kprintf("%-40s", dirent.d_name);
                     if (S_ISDIR(stat.st_mode))
                     {
                         rt_kprintf("%-25s\n", "<DIR>");

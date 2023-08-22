@@ -32,6 +32,7 @@
 #include <semaphore.h>
 #include "mapi_sys_api.h"
 #include "mapi_vdec_api.h"
+#include "vo_cfg.h"
 #include <stdlib.h>
 #include <errno.h>
 
@@ -226,6 +227,32 @@ static k_s32 _sys_munmap(k_u64 phy_addr, void *virt_addr, k_u32 size)
     }
 
     return 0;
+}
+
+static void *vo_cfg_thread(void *arg)
+{
+    k_s32 ret;
+    sample_vdec_conf_t *vdec_conf;
+    vdec_conf = (sample_vdec_conf_t *)arg;
+
+    k_vdec_chn_status status;
+    while (1)
+    {
+        ret = kd_mapi_vdec_query_status(vdec_conf->ch_id, &status);
+        CHECK_RET(ret, __func__, __LINE__);
+
+        if (status.width != 0 && status.height != 0)
+        {
+            break;
+        }
+        usleep(1000*100);
+    }
+
+    printf("vo cfg width:%d,height:%d\n",status.width,status.height);
+    vo_layer_init(status.width,status.height);
+    //kd_mapi_vdec_bind_vo(vdec_conf->ch_id, 0, BIND_VO_LAYER);
+
+    return NULL;
 }
 
 static void *input_thread(void *arg)
@@ -423,6 +450,7 @@ int main(int argc, char *argv[])
 
     sem_init(&g_vdec_conf[ch].sem_vdec_done, 0, 0);
     pthread_create(&g_vdec_conf[ch].input_tid, NULL, input_thread, &g_vdec_conf[ch]);
+    pthread_create(&g_vdec_conf[ch].config_vo_tid, NULL, vo_cfg_thread, &g_vdec_conf[ch]);
 
     sem_wait(&g_vdec_conf[ch].sem_vdec_done);
     if (g_vdec_conf[ch].done == K_TRUE)
@@ -434,7 +462,10 @@ int main(int argc, char *argv[])
         ret = kd_mapi_vdec_deinit(ch);
         CHECK_RET(ret, __func__, __LINE__);
 
+        vo_layer_deinit();
+
         pthread_join(g_vdec_conf[ch].input_tid, NULL);
+        pthread_join(g_vdec_conf[ch].config_vo_tid, NULL);
 
         fclose(g_vdec_conf[ch].input_file);
         vb_destory_pool(ch);

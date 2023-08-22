@@ -135,3 +135,40 @@ k_s32 kd_mapi_ai_release_frame(k_handle ai_hdl, k_audio_frame *frame)
     }
     return ret;
 }
+
+k_s32 kd_mapi_ai_set_pitch_shift_attr(k_handle ai_hdl, const k_ai_chn_pitch_shift_param *param)
+{
+    CHECK_MAPI_AI_NULL_PTR("param", param);
+
+    k_s32 ret;
+    k_msg_ai_pitch_shift_attr_t ai_ps_attr;
+    ai_ps_attr.ai_hdl = ai_hdl;
+    ai_ps_attr.param = *param;
+
+    ret = mapi_send_sync(MODFD(K_MAPI_MOD_AI, 0, 0), MSG_CMD_MEDIA_AI_SET_PITCH_SHIFT_ATTR,
+        &ai_ps_attr, sizeof(ai_ps_attr), NULL);
+
+    if(ret != K_SUCCESS) {
+        mapi_ai_error_trace("mapi_send_sync failed\n");
+    }
+    return ret;
+}
+
+k_s32 kd_mapi_ai_get_ptich_shift_attr(k_handle ai_hdl, k_ai_chn_pitch_shift_param *param)
+{
+    CHECK_MAPI_AI_NULL_PTR("param", param);
+
+    k_s32 ret;
+    k_msg_ai_pitch_shift_attr_t ai_ps_attr;
+    ai_ps_attr.ai_hdl = ai_hdl;
+    ai_ps_attr.param = *param;
+
+    ret = mapi_send_sync(MODFD(K_MAPI_MOD_AI, 0, 0), MSG_CMD_MEDIA_AI_GET_PITCH_SHIFT_ATTR,
+        &ai_ps_attr, sizeof(ai_ps_attr), NULL);
+
+    if(ret != K_SUCCESS) {
+        mapi_ai_error_trace("mapi_send_sync failed\n");
+    }
+    return ret;
+}
+

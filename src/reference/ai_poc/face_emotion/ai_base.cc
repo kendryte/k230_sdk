@@ -40,8 +40,10 @@ AIBase::AIBase(const char *kmodel_file,const string model_name, const int debug_
 {
     if (debug_mode > 1)
         cout << "kmodel_file:" << kmodel_file << endl;
-    kmodel_vec_ = Utils::read_binary_file<unsigned char>(kmodel_file);
-    kmodel_interp_.load_model({(const gsl::byte *)kmodel_vec_.data(), kmodel_vec_.size()}).expect("cannot load kmodel.");
+    // kmodel_vec_ = Utils::read_binary_file<unsigned char>(kmodel_file);
+    // kmodel_interp_.load_model({(const gsl::byte *)kmodel_vec_.data(), kmodel_vec_.size()}).expect("cannot load kmodel.");
+    std::ifstream ifs(kmodel_file, std::ios::binary);
+    kmodel_interp_.load_model(ifs).expect("Invalid kmodel");
     set_input_init();
     set_output_init();
 }
@@ -93,18 +95,12 @@ void AIBase::set_input(const unsigned char *buf, size_t size)
     ScopedTiming st(model_name_ + " set_input", debug_mode_);
     for (size_t i = 0; i < kmodel_interp_.inputs_size(); ++i)
     {
-        cout<<"desc"<<endl;
         auto desc = kmodel_interp_.input_desc(i);
         auto shape = kmodel_interp_.input_shape(i);
-        cout<<"shape"<<endl;
         auto tensor = host_runtime_tensor::create(desc.datatype, shape, hrt::pool_shared).expect("cannot create input tensor");
-        cout<<"tensor"<<endl;
         auto mapped_buf = std::move(hrt::map(tensor, map_access_::map_write).unwrap()); // mapped_buf实际是有缓存数据的
-        cout<<"memcpy:"<<each_input_size_by_byte_[i + 1] - each_input_size_by_byte_[i]<<endl;
         memcpy(reinterpret_cast<void *>(mapped_buf.buffer().data()), buf, each_input_size_by_byte_[i + 1] - each_input_size_by_byte_[i]);
-        cout<<"unmap"<<endl;
         auto ret = mapped_buf.unmap();
-        cout<<"sync"<<endl;
         ret = hrt::sync(tensor, sync_op_t::sync_write_back, true);
         if (!ret.is_ok())
         {
@@ -118,12 +114,6 @@ void AIBase::set_input(const unsigned char *buf, size_t size)
 runtime_tensor AIBase::get_input_tensor(size_t idx)
 {
     return kmodel_interp_.input_tensor(idx).expect("cannot get input tensor");
-}
-
-void AIBase::set_input_tensor(size_t idx, runtime_tensor &tensor)
-{
-    ScopedTiming st(model_name_ + " set_input_tensor", debug_mode_);
-    kmodel_interp_.input_tensor(idx, tensor).expect("cannot set input tensor");
 }
 
 void AIBase::set_output_init()

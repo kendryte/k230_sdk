@@ -1,9 +1,9 @@
 CC = riscv64-unknown-linux-musl-gcc
 CC_CFLAGS += -mcmodel=medany -march=rv64imafdcv -mabi=lp64d \
-		-fvar-tracking -ffreestanding -fno-common -ffunction-sections \
+		-ffreestanding -fno-common -ffunction-sections \
 		-fdata-sections -fstrict-volatile-bitfields \
-		-O0 -g \
-		-DHAVE_CCONFIG_H -D__STDC_ISO_10646__=201206L -D_STDC_PREDEF_H -D__KERNEL__
+		-O0 \
+		-DHAVE_CCONFIG_H -D__STDC_ISO_10646__=201206L -D_STDC_PREDEF_H -D__KERNEL__   $(KCFLAGS)
 
 AR = riscv64-unknown-linux-musl-ar
 ARFLAGS = -rc
@@ -27,4 +27,6 @@ BSP_CFLGAS = -I$(RTSMART_SRC_DIR)/kernel/bsp/maix3/c908 \
 		-I$(RTSMART_SRC_DIR)/kernel/bsp/maix3/board \
 		-I$(RTSMART_SRC_DIR)/kernel/bsp/maix3/board/interdrv/sysctl/sysctl_boot \
 		-I$(RTSMART_SRC_DIR)/kernel/bsp/maix3/board/interdrv/sysctl/sysctl_power \
-		-I$(RTSMART_SRC_DIR)/kernel/bsp/maix3/board/interdrv/sysctl/sysctl_reset
+		-I$(RTSMART_SRC_DIR)/kernel/bsp/maix3/board/interdrv/sysctl/sysctl_reset \
+		-I$(RTSMART_SRC_DIR)/kernel/bsp/maix3/board/extdrv/regulator \
+		-I$(RTSMART_SRC_DIR)/kernel/bsp/maix3/board/extcomponents/usage

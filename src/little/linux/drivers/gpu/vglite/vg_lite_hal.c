@@ -53,15 +53,21 @@
  *****************************************************************************/
 
 #include "linux/device/bus.h"
+#include "linux/dma-direction.h"
+#include "linux/err.h"
 #include "linux/kern_levels.h"
 #include "linux/power_supply.h"
 #include "linux/printk.h"
+#include "linux/scatterlist.h"
+#include "linux/slab.h"
 #include "linux/types.h"
 #include "vg_lite_platform.h"
 #include "vg_lite_kernel.h"
 #include "vg_lite_hal.h"
 #include "vg_lite_ioctl.h"
 #include "vg_lite_hw.h"
+#include "vg_lite_type.h"
+#include "vg_lite_debug.h"
 #include <linux/mm.h>
 #include <linux/interrupt.h>
 #include <linux/list.h>
@@ -116,11 +122,62 @@ struct dma_node {
     vg_lite_kernel_map_memory_t map;
 };
 
+enum um_desc_type {
+    UM_PAGE_MAP,
+    UM_PFN_MAP,
+};
+
 struct mapped_memory {
-    void *logical;
-    u32 physical;
-    int page_count;
-    struct page **pages;
+    struct list_head list;
+    vg_lite_uint32_t  flags; 
+    
+    union {
+        struct {
+            /* parse user dma_buf fd */
+            vg_lite_pointer usr_dmabuf;
+    
+            /* Descriptor of a dma_buf imported. */
+            struct dma_buf *dmabuf;
+            struct sg_table *sgt;
+            struct dma_buf_attachment *attachment;
+            vg_lite_uintptr_t *dma_address_array;
+    
+            vg_lite_int32_t npages;
+            vg_lite_int32_t pid;
+            struct list_head list;
+        } dmabuf_desc;
+    
+        struct {
+            enum um_desc_type type;
+
+            vg_lite_pointer   logical;
+            vg_lite_uintptr_t physical;
+            vg_lite_int32_t   page_count;
+
+            union {
+                /* UM_PAGE_MAP. */
+                struct {
+                    struct page  **pages;
+                };
+    
+                /* UM_PFN_MAP. */
+                struct {
+                    vg_lite_long_t  *pfns;
+                    vg_lite_int32_t *refs;
+                    vg_lite_int32_t  pfns_valid;
+               };
+            };
+    
+            /* TODO: Map pages to sg table. */
+            struct sg_table   sgt;
+            vg_lite_uint32_t  alloc_from_res;
+    
+            /* record user data */
+            vg_lite_uintptr_t user_vaddr;
+            vg_lite_uint32_t  size;
+            vg_lite_flag_t    vm_flags;
+        } um_desc;
+    };
 };
 
 struct vg_lite_device {
@@ -143,6 +200,7 @@ struct vg_lite_device {
     struct clk* clk;
     struct reset_control *reset;
     struct list_head dma_list_head;
+    struct list_head mapped_list_head;
     int created;
 };
 
@@ -171,24 +229,25 @@ void vg_lite_hal_barrier(void) {
     }
 }
 
-void vg_lite_hal_initialize(void) {
+void vg_lite_hal_initialize(void) {};
+void vg_lite_hal_deinitialize(void) {};
+
+void vg_lite_hal_open(void) {
     // Power-on
-    pm_runtime_get(device->dev);
+    pm_runtime_get_sync(device->dev);
     // Reset
     reset_control_reset(device->reset);
-    // Enable clock
-    clk_prepare_enable(device->clk);
 }
 
-void vg_lite_hal_deinitialize(void) {
-    // Disable clock
-    clk_disable(device->clk);
-    clk_unprepare(device->clk);
+void vg_lite_hal_close(void) {
     // Power-off
-    pm_runtime_put(device->dev);
+    pm_runtime_put_sync(device->dev);
 }
 
-vg_lite_error_t vg_lite_hal_allocate_contiguous(unsigned long size, void **logical, u32 *physical, void **node) {
+#define VG_LITE_PAD(number, align_bytes) \
+        ((number) + (((align_bytes) - (number) % (align_bytes)) % (align_bytes)))
+
+vg_lite_error_t vg_lite_hal_allocate_contiguous(unsigned long size, void **logical, void ** klogical, u32 *physical, void **node) {
     struct dma_node* n = kmalloc(sizeof(struct dma_node), GFP_KERNEL);
     if (!n) {
         return VG_LITE_OUT_OF_MEMORY;
@@ -214,6 +273,7 @@ vg_lite_error_t vg_lite_hal_allocate_contiguous(unsigned long size, void **logic
     }
     list_add(&n->list, &device->dma_list_head);
 #if MANUAL_ALIGN
+    *klogical = (u8*)VG_LITE_PAD((size_t)n->virt_addr, 64);
     *logical = (u8*)VG_LITE_PAD((size_t)n->map.logical, 64);
     *physical = VG_LITE_PAD(n->map.physical, 64);
 #else
@@ -240,8 +300,12 @@ void vg_lite_hal_free_os_heap(void)
 {
     struct dma_node* dn;
     struct dma_node* dn2;
+    struct mapped_memory* mapped, *_mapped;
     list_for_each_entry_safe(dn, dn2, &device->dma_list_head, list) {
         vg_lite_hal_free_contiguous(dn);
+    }
+    list_for_each_entry_safe(mapped, _mapped, &device->mapped_list_head, list) {
+        vg_lite_hal_unmap(mapped);
     }
 }
 
@@ -366,7 +430,7 @@ vg_lite_error_t vg_lite_hal_unmap_memory(vg_lite_kernel_unmap_memory_t *node)
     return error;
 }
 
-s32 vg_lite_hal_wait_interrupt(u32 timeout, u32 mask, u32 *value)
+int vg_lite_hal_wait_interrupt(u32 timeout, u32 mask, u32 *value)
 {
     // FIXME: struct timeval tv;
     unsigned long jiffies;
@@ -415,74 +479,77 @@ s32 vg_lite_hal_wait_interrupt(u32 timeout, u32 mask, u32 *value)
     return (result != 0);
 }
 
-// XXX: problem
-void *vg_lite_hal_map(unsigned long bytes, void *logical, u32 physical, u32 *gpu)
-{
-    struct mapped_memory *mapped;
-    int page_count;
-    unsigned long start, end;
-    return NULL;
-    printk(KERN_INFO "vg_lite: map size: %lu, log: %llX, phy: %X\n", bytes, (u64)logical, physical);
-
-    if (logical) {
-        start = (unsigned long)logical >> PAGE_SHIFT;
-        end = ((unsigned long)logical + bytes + PAGE_SIZE - 1) >> PAGE_SHIFT;
-        page_count = end - start;
-    } else {
-        page_count = 0;
-    }
-
-    mapped = kmalloc(sizeof(*mapped) + page_count * sizeof(struct page *), GFP_KERNEL);
-    if (!mapped)
-        return NULL;
-
-    mapped->logical = logical;
-    mapped->physical = physical;
-    mapped->page_count = page_count;
-    mapped->pages = page_count ? (struct page **)(mapped + 1) : NULL;
-
-    if (!logical) {
-        *gpu = physical;
-    } else {
-        // FIXME: down_read(&current->mm->mmap_sem);
-        down_read(&current_mm_mmap_sem);
-#if KERNEL_VERSION(4, 6, 0) > LINUX_VERSION_CODE
-        get_user_pages(current,
-                       current->mm,
-                       (unsigned long)logical & PAGE_MASK,
-#else
-        get_user_pages((unsigned long)logical & PAGE_MASK,
-#endif
-                       page_count,
-#if KERNEL_VERSION(4, 9, 0) <= LINUX_VERSION_CODE
-                       FOLL_WRITE,
-#else
-                       1,
-                       0,
-#endif
-                       mapped->pages,
-                       NULL);
-
-        // FIXME: up_read(&current->mm->mmap_sem);
-        up_read(&current_mm_mmap_sem);
-    }
-
-    return mapped;
+vg_lite_error_t vg_lite_hal_operation_cache(void *handle, vg_lite_cache_op_t cache_op) {
+    return VG_LITE_SUCCESS;
 }
 
-void vg_lite_hal_unmap(void *handle)
+vg_lite_error_t vg_lite_hal_memory_export(int32_t *fd)
 {
-    int i;
-    struct mapped_memory *mapped = handle;
+    // TODO
+    return VG_LITE_NOT_SUPPORT;
+}
 
-    return;
-    if (mapped->page_count) {
-        for (i = 0; i < mapped->page_count; i++) {
-            if (mapped->pages[i])
-                put_page(mapped->pages[i]);
+void * vg_lite_hal_map(uint32_t flags, uint32_t bytes, void *logical, uint32_t physical, int32_t dma_buf_fd, uint32_t *gpu)
+{
+    struct mapped_memory * mapped;
+   
+    mapped = kmalloc(sizeof(struct mapped_memory), GFP_KERNEL);
+    if (mapped == NULL) {
+        return NULL;
+    }
+    memset(mapped, 0, sizeof(struct mapped_memory));
+    mapped->flags = flags;
+
+    if (flags == VG_LITE_HAL_MAP_DMABUF) {
+        struct scatterlist *sg;
+        unsigned i;
+
+        mapped->dmabuf_desc.dmabuf = dma_buf_get(dma_buf_fd);
+        if (IS_ERR(mapped->dmabuf_desc.dmabuf)) {
+            goto error;
         }
+        mapped->dmabuf_desc.attachment = dma_buf_attach(mapped->dmabuf_desc.dmabuf, device->dev);
+        if (IS_ERR(mapped->dmabuf_desc.attachment)) {
+            dma_buf_put(mapped->dmabuf_desc.dmabuf);
+            goto error;
+        }
+        mapped->dmabuf_desc.sgt = dma_buf_map_attachment(mapped->dmabuf_desc.attachment, DMA_BIDIRECTIONAL);
+        if (IS_ERR(mapped->dmabuf_desc.sgt)) {
+            dma_buf_detach(mapped->dmabuf_desc.dmabuf, mapped->dmabuf_desc.attachment);
+            dma_buf_put(mapped->dmabuf_desc.dmabuf);
+            goto error;
+        }
+        for_each_sg(mapped->dmabuf_desc.sgt->sgl, sg, mapped->dmabuf_desc.sgt->orig_nents, i) {
+            *gpu = sg_dma_address(sg);
+        }
+    } else {
+        vg_lite_kernel_hintmsg("vg_lite_hal_map: this map type not support!\n");
+        return NULL;
     }
 
+    list_add(&mapped->list, &device->mapped_list_head);
+    return mapped;
+
+error:
+    kfree(mapped);
+    return NULL;
+}
+
+void vg_lite_hal_unmap(void * handle)
+{
+    struct mapped_memory * mapped = handle;
+
+    if (mapped->flags == VG_LITE_HAL_MAP_DMABUF) {
+        dma_buf_unmap_attachment(mapped->dmabuf_desc.attachment, mapped->dmabuf_desc.sgt, DMA_BIDIRECTIONAL);
+
+        dma_buf_detach(mapped->dmabuf_desc.dmabuf, mapped->dmabuf_desc.attachment);
+
+        dma_buf_put(mapped->dmabuf_desc.dmabuf);
+    } else {
+        vg_lite_kernel_hintmsg("vg_lite_hal_map: this map type not support!\n");
+    }
+
+    list_del(&mapped->list);
     kfree(mapped);
 }
 
@@ -490,6 +557,7 @@ int drv_open(struct inode *inode, struct file *file)
 {
     struct client_data *data;
     printk(KERN_INFO "vg_lite: open device\n");
+    vg_lite_hal_open();
     data = kmalloc(sizeof(*data), GFP_KERNEL);
     if (!data) {
         printk(KERN_ERR "vg_lite: kmalloc() return -1\n");
@@ -510,6 +578,7 @@ int drv_release(struct inode *inode, struct file *file)
 
     kfree(data);
     file->private_data = NULL;
+    vg_lite_hal_close();
 
     return 0;
 }
@@ -577,52 +646,8 @@ long drv_ioctl(/*struct inode *inode, */struct file *file, unsigned int ioctl_co
     } else {
         printk(KERN_ERR "vg_lite: ioctl unknown command\n");
     }
-    if (arguments.command == VG_LITE_BUFFER_FROM_DMA_BUF) {
-        // import buffer from dma-buf fd
-        struct dma_buf_attachment *attach;
-        struct sg_table *sgt;
-        // FIXME: struct will come up error! don't know why!!!
-        uint64_t raw = *(uint64_t*)data;
-        int fd = raw & 0xffffffff;
-        uint32_t memory_gpu = raw >> 32;
-        struct scatterlist *sg;
-        unsigned i;
-        struct dma_buf* dmabuf;
-        printk(KERN_DEBUG "vg_lite: import from dma-buf, fd(%d) memory_gpu(%u)\n", fd, memory_gpu);
-        dmabuf = dma_buf_get(fd);
-        if (IS_ERR(dmabuf)) {
-            arguments.error = VG_LITE_INVALID_ARGUMENT;
-            goto error2;
-        }
-        attach = dma_buf_attach(dmabuf, device->dev);
-        if (IS_ERR(attach)) {
-            dma_buf_put(dmabuf);
-            arguments.error = VG_LITE_NOT_SUPPORT;
-            printk(KERN_ERR "dma_buf_attach error: %ld\n", PTR_ERR(attach));
-            goto error2;
-        }
-        sgt = dma_buf_map_attachment(attach, DMA_BIDIRECTIONAL);
-        if (IS_ERR(sgt)) {
-            dma_buf_detach(dmabuf, attach);
-            dma_buf_put(dmabuf);
-            arguments.error = VG_LITE_OUT_OF_RESOURCES;
-            printk(KERN_ERR "dma_buf_map_attachment error: %ld\n", PTR_ERR(sgt));
-            goto error2;
-        }
-        printk(KERN_DEBUG "vg_lite: dma_buf_map_attachment done, sgt(%p)\n", sgt);
-        for_each_sg(sgt->sgl, sg, sgt->orig_nents, i) {
-            memory_gpu = sg_dma_address(sg);
-        }
-        dma_buf_unmap_attachment(attach, sgt, DMA_BIDIRECTIONAL);
-        dma_buf_detach(dmabuf, attach);
-        dma_buf_put(dmabuf);
-        printk(KERN_DEBUG "vg_lite: import fd(%d) to buffer(%08x)\n", fd, memory_gpu);
-        *(uint64_t*)data = fd | ((uint64_t)memory_gpu << 32ULL);
-        arguments.error = VG_LITE_SUCCESS;
-    } else
-        arguments.error = vg_lite_kernel(arguments.command, data);
+    arguments.error = vg_lite_kernel(arguments.command, data);
 
-error2:
     if (copy_to_user(arguments.buffer, data, arguments.bytes) != 0)
         goto error;
 
@@ -706,8 +731,6 @@ static const struct file_operations file_operations = {
 
 static int vg_lite_exit(struct platform_device *pdev)
 {
-    struct dma_node* dn;
-    struct dma_node* _dn;
     /* Check for valid device. */
     if (device) {
         if (device->gpu) {
@@ -724,13 +747,7 @@ static int vg_lite_exit(struct platform_device *pdev)
             /* Free the IRQ. */
             free_irq(platform_get_irq(pdev, 0)/*GPU_IRQ*/, device);
 
-        list_for_each_entry_safe(dn, _dn, &device->dma_list_head, list) {
-            vg_lite_kernel_unmap_memory_t unmap = {.bytes = dn->map.bytes, .logical = dn->map.logical};
-            list_del(&dn->list);
-            vg_lite_hal_unmap_memory(&unmap);
-            dma_free_coherent(device->dev, dn->size, dn->virt_addr, dn->dma_addr);
-            kfree(dn);
-        }
+        vg_lite_hal_free_os_heap();
 
         if (device->created)
             /* Destroy the device. */
@@ -791,6 +808,7 @@ static int vg_lite_init(struct platform_device *pdev)
     device->dev = &pdev->dev;
     device->clk = devm_clk_get(&pdev->dev, "vglite");
     device->reset = devm_reset_control_get(&pdev->dev, NULL);
+    pm_runtime_enable(device->dev);
 
     /* Map the GPU registers. */
     device->gpu = ioremap(mem->start, resource_size(mem));
@@ -848,6 +866,7 @@ static int vg_lite_init(struct platform_device *pdev)
     printk(KERN_DEBUG "vg_lite: created /dev/vg_lite device\n");
 
     INIT_LIST_HEAD(&device->dma_list_head);
+    INIT_LIST_HEAD(&device->mapped_list_head);
     if (dma_set_mask_and_coherent(device->dev, DMA_BIT_MASK(32))) {
         printk(KERN_ERR "vg_lite: dma_set_coherent_mask failed\n");
         vg_lite_exit(pdev);

@@ -35,6 +35,9 @@ int main(void)
     printf("Enter any character to exit the program!\n");
 
     getchar();
+    ret = kd_mapi_sys_deinit();
+    if(ret != K_SUCCESS)
+        printf("kd_mapi_sys_deinit error:%d\n", ret);
     printf("exit\n");
     return 0;
 }

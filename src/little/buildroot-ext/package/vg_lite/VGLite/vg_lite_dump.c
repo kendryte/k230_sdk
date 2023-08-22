@@ -1,6 +1,6 @@
 /****************************************************************************
 *
-*    Copyright 2012 - 2020 Vivante Corporation, Santa Clara, California.
+*    Copyright 2012 - 2022 Vivante Corporation, Santa Clara, California.
 *    All Rights Reserved.
 *
 *    Permission is hereby granted, free of charge, to any person obtaining
@@ -32,7 +32,7 @@
 #include <vg_lite.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include "vg_lite_context.h"
 #ifdef _WIN32
     #include <windows.h>
     #define bool int 
@@ -90,7 +90,7 @@ vg_lite_CreateMutex(void **Mutex)
     assert(Mutex!=NULL);
     handle = CreateMutex(NULL, 0, NULL);
     
-    if(handle == NULL)
+    if (handle == NULL)
     {
         return VG_LITE_OUT_OF_RESOURCES;
     }

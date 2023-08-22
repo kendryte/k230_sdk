@@ -51,6 +51,7 @@ extern "C" {
 #define K_IOC_TYPE_DEWARP   'W'
 
 #define K_IOC_TYPE_USER_MMZ 'M'
+#define K_IOC_TYPE_PM       'p'
 
 #define K_IOC_OUT         0x40000000UL    /* copy out parameters */
 #define K_IOC_IN          0x80000000UL    /* copy in parameters */

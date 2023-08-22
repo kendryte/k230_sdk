@@ -404,11 +404,13 @@ static void sample_vo_fn(void *arg)
     dwc_dsi_init();
     vo_layer_vdss_bind_vo_config();
     sample_sys_bind_init();
+    return;
 }
 
 static void *sample_vo_thread(void *arg)
 {
     TEST_TIME(sample_vo_fn(arg), "sample_vo_fn");
+    return NULL;
 }
 
 k_vicap_dev vicap_dev;
@@ -609,6 +611,7 @@ static void *exit_app(void *arg)
         usleep(10000);
     }
     app_run = false;
+    return NULL;
 }
 
 int main(int argc, char *argv[])

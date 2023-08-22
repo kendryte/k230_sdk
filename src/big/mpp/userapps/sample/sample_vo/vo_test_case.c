@@ -44,18 +44,19 @@
 
 #if 0
 k_vo_display_resolution hx8399[20] = {
-	{49500, 297000, 1200, 1080, 20, 20, 80, 2000, 1920, 5, 8, 67},				// layer0 、layer1 需要提前30 行预取	
+	{49500, 297000, 1200, 1080, 20, 20, 80, 2000, 1920, 5, 8, 67},				// layer0 、layer1 需要提前30 行预取
 };
 #else
 k_vo_display_resolution hx8399[20] =
 {
     // {74250, 445500, 1340, 1080, 20, 20, 220, 1938, 1920, 5, 8, 10},           // display  evblp3
     {74250, 445500, 1240, 1080, 20, 20, 120, 1988, 1920, 5, 8, 55},
+    {49500, 297000, 1200, 1080, 20, 20, 80, 2000, 1920, 5, 8, 67},				// layer0 、layer1 需要提前30 行预取
 };
 
 k_vo_display_resolution cma0400[20] = {
-    {9000, 216000, 500, 454, 5, 10, 31, 600, 454, 5, 10, 131},	 // ok 
-	
+    {9000, 216000, 500, 454, 5, 10, 31, 600, 454, 5, 10, 131},	 // ok
+
 };
 
 #endif
@@ -121,7 +122,7 @@ void cma0400_495x495_config(void)
 {
     k_u8 param1[] = {0x11};
     k_u8 param2[] = {0x29};
-	
+
 	kd_mpi_dsi_send_cmd(param1, sizeof(param1));
 	usleep(170000);
 	kd_mpi_dsi_send_cmd(param2, sizeof(param2));
@@ -162,6 +163,9 @@ void dwc_dsi_lpmode_test(void)
 
     // enable dsi
     kd_mpi_dsi_enable(enable);
+
+    printf("Press Enter to exit \n");
+    getchar();
 }
 
 void dwc_dsi_read_hx8399_id(void)
@@ -175,7 +179,7 @@ void dwc_dsi_read_hx8399_id(void)
     int enable = 1;
     int screen_test_mode = 1;
 
-    k_u32 rv_data = 0; 
+    k_u32 rv_data = 0;
     k_u8 addr = 0x4;
     k_u16 cmd_len = 0x3;
 
@@ -246,6 +250,9 @@ void dwc_dsi_hsmode_test(void)
 
     // enable dsi
     kd_mpi_dsi_enable(enable);
+
+    printf("Press Enter to exit \n");
+    getchar();
 }
 
 
@@ -287,6 +294,9 @@ void dwc_dsi_init_with_test_pattern(void)
 
     // enable test pattern
     kd_mpi_dsi_set_test_pattern();
+
+    printf("Press Enter to exit \n");
+    getchar();
 }
 
 void dwc_dsi_init(void)
@@ -326,6 +336,42 @@ void dwc_dsi_init(void)
     // enable dsi
     kd_mpi_dsi_enable(enable);
 
+}
+
+
+void dwc_dsi_layer0_init(void)
+{
+
+    k_vo_display_resolution *resolution = NULL;
+    int resolution_index = 1;
+    resolution = &hx8399[resolution_index];
+    k_vo_dsi_attr attr;
+
+    k_vo_mipi_phy_attr phy_attr;
+    int enable = 1;
+    int screen_test_mode = 0;
+
+    memset(&attr, 0, sizeof(k_vo_dsi_attr));
+
+    // config phy
+    phy_attr.phy_lan_num = K_DSI_4LAN;
+    phy_attr.m = TXPHY_297_M;
+    phy_attr.n = TXPHY_297_N;
+    phy_attr.voc = TXPHY_297_VOC;
+    phy_attr.hs_freq = TXPHY_297_HS_FREQ;
+    kd_mpi_set_mipi_phy_attr(&phy_attr);
+
+
+    attr.lan_num = K_DSI_4LAN;
+    attr.cmd_mode = K_VO_LP_MODE;
+    attr.lp_div = 8;
+    memcpy(&attr.resolution, resolution, sizeof(k_vo_display_resolution));
+    // set dsi timing
+    kd_mpi_dsi_set_attr(&attr);
+    // config scann
+    hx8399_v2_init(screen_test_mode);
+    // enable dsi
+    kd_mpi_dsi_enable(enable);
 }
 
 
@@ -381,6 +427,9 @@ void vo_background_init(void)
     kd_mpi_vo_set_dev_param(&attr);
     // enable vo
     kd_mpi_vo_enable();
+
+    printf("Press Enter to exit \n");
+    getchar();
 }
 
 
@@ -492,7 +541,7 @@ k_vb_blk_handle vo_insert_frame(k_video_frame_info *vf_info, void **pic_vaddr)
     k_u64 phys_addr = 0;
     k_u32 *virt_addr;
     k_vb_blk_handle handle;
-    k_s32 size;
+    k_s32 size = 0;
 
     if (vf_info == NULL)
         return K_FALSE;
@@ -770,6 +819,12 @@ k_s32 vo_osd_insert_multi_frame_test(void)
     vf_info.v_frame.pixel_format = osd.format;
     vf_info.v_frame.priv_data = K_VO_ONLY_CHANGE_PHYADDR;
 
+    vf_info3.v_frame.width = osd.act_size.width;
+    vf_info3.v_frame.height = osd.act_size.height;
+    vf_info3.v_frame.stride[0] = osd.act_size.width;
+    vf_info3.v_frame.pixel_format = osd.format;
+    vf_info3.v_frame.priv_data = K_VO_ONLY_CHANGE_PHYADDR;
+
     block = vo_insert_frame(&vf_info, &pic_vaddr);
     block2 = vo_insert_frame(&vf_info2, &pic_vaddr2);
     block3 = vo_insert_frame(&vf_info3, &pic_vaddr3);
@@ -1017,7 +1072,7 @@ k_vb_blk_handle vo_set_writeback_attr(k_vo_wbc_attr *attr, void **pic_vaddr)
     k_u64 phys_addr = 0;
     k_u32 *virt_addr;
     k_vb_blk_handle handle;
-    k_s32 size;
+    k_s32 size = 0;
 
     if (attr == NULL)
         return K_FALSE;
@@ -1169,3 +1224,127 @@ k_s32 vo_writeback_test(void)
 
 }
 
+
+
+k_s32 vo_layer0_scaler_test(void)
+{
+    k_vo_display_resolution *resolution = NULL;
+    int resolution_index = 1;
+    resolution = &hx8399[resolution_index];
+
+    k_vo_pub_attr attr;
+    k_vb_blk_handle block;
+    k_video_frame_info vf_info;
+    layer_info info;
+
+    void *pic_vaddr = NULL;
+    k_vo_layer chn_id = K_VO_LAYER0;//K_VO_LAYER1;//K_VO_LAYER2;
+
+    memset(&vf_info, 0, sizeof(vf_info));
+    memset(&attr, 0, sizeof(attr));
+    memset(&info, 0, sizeof(info));
+
+    attr.bg_color = 0xffffff;
+    attr.intf_sync = K_VO_OUT_1080P30;
+    attr.intf_type = K_VO_INTF_MIPI;
+    attr.sync_info = resolution;
+
+    // vo init
+    kd_mpi_vo_init();
+
+    // set vo timing
+    kd_mpi_vo_set_dev_param(&attr);
+
+    vo_creat_private_poll();
+
+    // config lyaer
+    info.act_size.width = 800;
+    info.act_size.height = 640;
+    info.format = PIXEL_FORMAT_YVU_PLANAR_420;
+    info.func = K_VO_SCALER_ENABLE ;
+    info.global_alptha = 0xff;
+    info.offset.x = 0;
+    info.offset.y = 0;
+    info.attr.out_size.width = 400;//640;
+    info.attr.out_size.height = 320;//480;
+    vo_creat_layer_test(chn_id, &info);
+
+    // enable vo
+    kd_mpi_vo_enable();
+
+    printf("Press Enter to start install frame\n");
+    getchar();
+
+    if((info.func & K_VO_SCALER_ENABLE) == K_VO_SCALER_ENABLE)
+    {
+        vf_info.v_frame.width = info.attr.out_size.width;
+        vf_info.v_frame.height = info.attr.out_size.height;
+    }
+    else
+    {
+        vf_info.v_frame.width = info.act_size.width;
+        vf_info.v_frame.height = info.act_size.height;
+    }
+
+    vf_info.v_frame.stride[0] = info.act_size.width;
+    vf_info.v_frame.pixel_format = info.format;
+    vf_info.v_frame.priv_data = K_VO_ONLY_CHANGE_PHYADDR;
+
+    block = vo_insert_frame(&vf_info, &pic_vaddr);
+
+#if USE_PICTURE_TEST
+    void *read_addr = NULL;
+    FILE *fd;
+    int ret = 0;
+    k_u32 read_size = info.size;
+
+    read_addr = malloc(read_size);
+    if (!read_addr)
+    {
+        printf("alloc read addr failed\n");
+    }
+    // add picture
+    fd = fopen(YUV_TEST_PICTURE, "rb");
+    // get output image
+    ret = fread(read_addr, read_size, 1, fd);
+    if (ret <= 0)
+    {
+        printf("fread  picture_addr is failed ret is %d \n", ret);
+    }
+    memcpy(pic_vaddr, read_addr, read_size);
+
+#else
+    k_u8 *yuv;
+    k_u8 color = 0x10;
+    k_u32 step = 1;
+
+    yuv = malloc(info.size);
+
+    for (int i = 0; i < info.act_size.width; i++)
+    {
+        memset(yuv + info.act_size.height * i, color, info.act_size.height);
+        if (color == 0x10)
+            step = 1;
+        else if (color == 0xeb)
+            step = -1;
+        color += step;
+    }
+    memset(yuv + info.act_size.height * info.act_size.width, 0x80, info.act_size.height * info.act_size.width / 2);
+
+    memcpy(pic_vaddr, yuv, info.size);
+
+#endif
+
+    kd_mpi_vo_chn_insert_frame(chn_id, &vf_info);  //K_VO_OSD0
+
+    printf("Press Enter to exit\n");
+    getchar();
+
+    // close plane
+    kd_mpi_vo_disable_video_layer(chn_id);
+    vo_release_frame(block);
+    vo_release_private_poll();
+    // fclose(fd);
+    //exit ;
+    return 0;
+}

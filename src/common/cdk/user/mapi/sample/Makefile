@@ -9,6 +9,7 @@ all:
 	@cd sample_vicap_dump_lite; make
 	@cd sample_vicap; make
 	@cd sample_audio; make
+	@cd sample_vo; make
 clean:
 	@cd rt-smart; make clean
 	@cd sample_venc; make clean
@@ -20,3 +21,4 @@ clean:
 	@cd sample_vicap_dump_lite; make clean
 	@cd sample_vicap; make clean
 	@cd sample_audio; make clean
+	@cd sample_vo; make clean

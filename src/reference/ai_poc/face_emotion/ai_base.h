@@ -73,8 +73,6 @@ public:
      */
     runtime_tensor get_input_tensor(size_t idx);
 
-    void set_input_tensor(size_t idx, runtime_tensor &tensor);
-
     /**
      * @brief 初始化kmodel输出
      * @return None

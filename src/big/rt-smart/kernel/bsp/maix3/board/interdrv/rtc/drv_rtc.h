@@ -30,6 +30,8 @@
 #define IRQN_PMU_INTERRUPT   175
 #define RT_DEVICE_CTRL_RTC_SET_CALLBACK     0x44
 #define RT_DEVICE_CTRL_RTC_STOP_ALARM       0x45
+#define RT_DEVICE_CTRL_RTC_STOP_TICK        0x46
+#define BIT(n)  (1 << n)
 
 typedef struct _rtc_interrupt_ctrl
 {
@@ -126,14 +128,14 @@ typedef struct _rtc
 
 typedef enum _rtc_tick_interrupt_mode_e
 {
-    RTC_INT_ALARM_YEAR, //单次中断
-    RTC_INT_ALARM_MONTH,
-    RTC_INT_ALARM_DAY,
-    RTC_INT_ALARM_WEEK,
-    RTC_INT_ALARM_HOUR,
-    RTC_INT_ALARM_MINUTE,
-    RTC_INT_ALARM_SECOND,
-    RTC_INT_TICK_YEAR,  //周期中断
+    RTC_INT_ALARM_YEAR = BIT(0), //单次中断
+    RTC_INT_ALARM_MONTH = BIT(1),
+    RTC_INT_ALARM_DAY = BIT(2),
+    RTC_INT_ALARM_WEEK = BIT(3),
+    RTC_INT_ALARM_HOUR = BIT(4),
+    RTC_INT_ALARM_MINUTE = BIT(5),
+    RTC_INT_ALARM_SECOND = BIT(6),
+    RTC_INT_TICK_YEAR = BIT(7),  //周期中断
     RTC_INT_TICK_MONTH,
     RTC_INT_TICK_DAY,
     RTC_INT_TICK_WEEK,

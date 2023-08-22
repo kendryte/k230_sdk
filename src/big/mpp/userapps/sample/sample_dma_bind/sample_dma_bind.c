@@ -518,7 +518,7 @@ int main(void)
 {
     k_s32 ret;
 
-    printf("dma sample case, press e to end the operation.\n");
+    printf("dma sample case, press q to end the operation.\n");
 
     memset(chn_attr, 0, sizeof(k_dma_chn_attr_u)*DMA_MAX_CHN_NUMS);
 

@@ -25,8 +25,9 @@
 
 #include <rtthread.h>
 #include <stdbool.h>
-// #include "platform.h"
 #include "sysctl_rst.h"
+#include "ioremap.h"
+#include "board.h"
 
 /* created by yangfan */
 
@@ -913,4 +914,14 @@ bool sysctl_set_reset_time(sysctl_reset_time_e reset, uint32_t tim0, uint32_t ti
     }
 }
 
+int rt_hw_sysctl_rst_init(void)
+{
+    sysctl_rst = rt_ioremap((void*)RMU_BASE_ADDR, RMU_IO_SIZE);
+    if(!sysctl_rst) {
+        rt_kprintf("sysctl_rst ioremap error\n");
+        return -1;
+    }
 
+    return 0;
+}
+INIT_BOARD_EXPORT(rt_hw_sysctl_rst_init);

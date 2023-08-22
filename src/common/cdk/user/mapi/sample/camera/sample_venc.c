@@ -139,11 +139,11 @@ k_s32 get_venc_stream(k_u32 chn_num, kd_venc_data_s* p_vstream_data, k_u8 *p_pri
     }
 
     if(sample_context.type == K_PT_JPEG)
-        count += 10;
+        count += 5;
     else
         count ++;
 
-    if(count % 10 == 0)
+    if(count % 5 == 0)
     {
         put_node_to_queue(uvc_cache->ok_queue, fnode);
         fnode = NULL;
@@ -295,10 +295,9 @@ static k_s32 venc_normalp_classic(void)
     // vicap init
     k_vicap_dev_set_info dev_attr_info;
     memset(&dev_attr_info, 0, sizeof(dev_attr_info));
-    if (sample_context.sensor_type == OV_OV9732_MIPI_1280X720_30FPS_10BIT_LINEAR)
-        dev_attr_info.dw_en = K_FALSE;
-    else
-        dev_attr_info.dw_en = K_TRUE;
+
+    dev_attr_info.dw_en = K_FALSE;
+
     dev_attr_info.pipe_ctrl.data = 0xFFFFFFFF;
     dev_attr_info.sensor_type = sample_context.sensor_type;
     dev_attr_info.vicap_dev = VICAP_DEV_ID_0;

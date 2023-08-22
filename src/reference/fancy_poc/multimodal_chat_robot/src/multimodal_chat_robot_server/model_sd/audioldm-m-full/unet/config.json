@@ -1,0 +1,56 @@
+{
+  "_class_name": "UNet2DConditionModel",
+  "_diffusers_version": "0.15.0.dev0",
+  "act_fn": "silu",
+  "attention_head_dim": 8,
+  "block_out_channels": [
+    192,
+    384,
+    576,
+    960
+  ],
+  "center_input_sample": false,
+  "class_embed_type": "simple_projection",
+  "class_embeddings_concat": true,
+  "conv_in_kernel": 3,
+  "conv_out_kernel": 3,
+  "cross_attention_dim": [
+    192,
+    384,
+    576,
+    960
+  ],
+  "down_block_types": [
+    "DownBlock2D",
+    "CrossAttnDownBlock2D",
+    "CrossAttnDownBlock2D",
+    "CrossAttnDownBlock2D"
+  ],
+  "downsample_padding": 1,
+  "dual_cross_attention": false,
+  "flip_sin_to_cos": true,
+  "freq_shift": 0,
+  "in_channels": 8,
+  "layers_per_block": 2,
+  "mid_block_scale_factor": 1,
+  "mid_block_type": "UNetMidBlock2DCrossAttn",
+  "norm_eps": 1e-05,
+  "norm_num_groups": 32,
+  "num_class_embeds": null,
+  "only_cross_attention": false,
+  "out_channels": 8,
+  "projection_class_embeddings_input_dim": 512,
+  "resnet_time_scale_shift": "default",
+  "sample_size": 128,
+  "time_cond_proj_dim": null,
+  "time_embedding_type": "positional",
+  "timestep_post_act": null,
+  "up_block_types": [
+    "CrossAttnUpBlock2D",
+    "CrossAttnUpBlock2D",
+    "CrossAttnUpBlock2D",
+    "UpBlock2D"
+  ],
+  "upcast_attention": false,
+  "use_linear_projection": false
+}

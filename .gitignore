@@ -1,0 +1,16 @@
+release_sdk/
+output/
+.config
+toolchain
+tools/kconfig/conf
+tools/kconfig/mconf
+tools/kconfig/zconf.hash.c
+tools/kconfig/zconf.lex.c
+tools/kconfig/zconf.tab.c
+.config.old
+defconfig
+prepare_memory
+.last_conf
+tools/post_copy_rootfs/etc/version/
+**/__pycache__
+**/.sconsign.dblite

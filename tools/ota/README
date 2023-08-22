@@ -1,0 +1,22 @@
+1. 密钥生成
+生成RSA私钥
+openssl genrsa -out ota_private.pem 2048
+基于私钥生成公钥
+openssl rsa -in ota_private.pem -pubout -out ota_public.pem
+sdk编译会把公钥ota_public.pem拷贝到/etc目录下
+
+2. 打包升级文件
+参考ota_package目录，
+升级脚本会拷贝rootfs的文件覆盖当前文件系统文件。
+除了文件系统外，都是以分区的方式进行升级，把分区的二进制文件(linux_system.bin/rtt_system.bin等等)直接拷贝到ota_package目录下。
+./package_kpk.sh ota_package
+产生 ota_package.kpk 即为ota升级包。
+升级包放在服务器上，修改buildroot-ext/package/ota/src/ota.conf的server_url，K230设备会通过wget从服务器下载升级包。
+
+3. 编译升级程序
+升级程序源码位于buildroot-ext/package/ota，编译buildroot会产生ota，拷贝到文件系统/usr/bin目录下。
+
+4. ota升级
+执行ota，会从远端服务器下载升级包进行升级。服务器链接可以修改/etc/目录下的ota.conf配置文件。
+如果固件的分区有改动，可以修改ota_upgrade.sh文件同步分区的改动。dd命令可以对整个磁盘空间做读写操作。
+由于norflash磁盘空间太小限制，该方案未实现灾难恢复功能，需保证升级过程中不受其他因素影响。

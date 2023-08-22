@@ -31,7 +31,7 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <arpa/inet.h>
-#include "sdk_autoconf.h"
+#include "k_autoconf_comm.h"
 
 #define uint32_t uint
 #define uint8_t unsigned char
@@ -220,8 +220,8 @@ static int write_file_2_mtd(char *file)
    int ret = 0;
    char cmd[256];
    sprintf(cmd, "mtd=$(cat /proc/mtd  | grep face | cut -d ':' -f1);"
-               "flashcp -v %s /dev/${mtd}",file );
-   //printf("cmd=%s\n", cmd);
+               "flashcp -v %s /dev/${mtd}; sync;",file );
+   // printf("cmd=%s\n", cmd);
    ret = system(cmd);
    sprintf(cmd, "cd /tmp; rm -rf face_db_*");
    //system(cmd);
@@ -253,6 +253,7 @@ int feature_db_save(uint32_t phyaddr, uint32_t length)
     vaddr = mmap(NULL, length, PROT_READ, MAP_SHARED, fd, phyaddr);
     ret = save_face_db(vaddr, length);
     munmap(vaddr, length);
+    fsync(fd);
     close(fd);
 
     return ret;

@@ -8,5 +8,6 @@
 &sysctl_power {
     status              = "okay";
     compatible          = "canaan, k230-sysctl-power";
+    hardlock            = <3>, <4>, <5>;
     #power-domain-cells = <1>;                          /* more than 1 power provider */
 };

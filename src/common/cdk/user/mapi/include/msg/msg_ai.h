@@ -55,6 +55,8 @@ typedef enum {
     MSG_CMD_MEDIA_AI_UNMUTE,
     MSG_CMD_MEDIA_AI_GETFRAME,
     MSG_CMD_MEDIA_AI_RELEASEFRAME,
+    MSG_CMD_MEDIA_AI_SET_PITCH_SHIFT_ATTR,
+    MSG_CMD_MEDIA_AI_GET_PITCH_SHIFT_ATTR,
 } k_msg_media_ai_cmd_t;
 
 typedef struct
@@ -72,6 +74,13 @@ typedef struct
     k_s32 milli_sec;
     k_audio_frame audio_frame;
 } k_msg_ai_frame_t;
+
+typedef struct
+{
+    k_handle ai_hdl;
+    k_s32 milli_sec;
+    k_ai_chn_pitch_shift_param  param;
+} k_msg_ai_pitch_shift_attr_t;
 
 /** @}*/  /** <!-- ==== COMM End ====*/
 #ifdef __cplusplus

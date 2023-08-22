@@ -2,9 +2,6 @@
 #include "sensor_dev.h"
 #include "io.h"
 #include <ioremap.h>
-
-//#include "gpio.h"
-
 #include "drv_gpio.h"
 
 #define pr_info(...) /*rt_kprintf(__VA_ARGS__)*/
@@ -538,7 +535,7 @@ static k_s32 sc035hgs_sensor_init(void* ctx, k_sensor_mode mode)
         ret = sensor_reg_read(&dev->i2c_info, SC035HGS_REG_HTS, &reg_lsb);
         current_mode->ae_info.one_line_exp_time = (reg_msb << 8 | reg_lsb) * 1000.0f / current_mode->clk_info->pclk  ; // ms
         current_mode->ae_info.integration_time_increment = current_mode->ae_info.one_line_exp_time;
-        
+
         current_mode->ae_info.max_long_integraion_line = current_mode->ae_info.frame_length - 6;
         current_mode->ae_info.min_long_integraion_line = 2;
         current_mode->ae_info.max_integraion_line = current_mode->ae_info.frame_length - 6;
@@ -562,6 +559,11 @@ static k_s32 sc035hgs_sensor_init(void* ctx, k_sensor_mode mode)
         current_mode->ae_info.gain_increment = (1.0f / 16.0f);
         current_mode->ae_info.min_gain = 1.0;
         current_mode->ae_info.max_gain = 120.125;
+
+        current_mode->ae_info.int_time_delay_frame = 0;
+        current_mode->ae_info.gain_delay_frame = 0;
+        current_mode->ae_info.ae_min_interval_frame = 0.8;
+        current_mode->ae_info.color_type = 1;	//mono sensor
 
         current_mode->ae_info.cur_long_again = 0.0;
         current_mode->ae_info.cur_long_dgain = 0.0;
@@ -591,6 +593,8 @@ static k_s32 sc035hgs_sensor_init(void* ctx, k_sensor_mode mode)
         current_mode->ae_info.d_vs_gain.step = (1.0f / 1024.0f);
 
         current_mode->ae_info.cur_fps = current_mode->max_fps;
+        current_mode->sensor_again = 0;
+        current_mode->et_line = 0;
 
         break;
 
@@ -754,16 +758,16 @@ static k_s32 sc035hgs_sensor_set_again(void* ctx, k_sensor_gain gain)
     //     }
     //     ret = sensor_reg_write(&dev->i2c_info, SC035HGS_REG_COARSE_AGAIN, coarse);
     //     ret |= sensor_reg_write(&dev->i2c_info, SC035HGS_REG_FINE_AGAIN, fine);
-    //     current_mode->ae_info.cur_again = again / 16.0f;
+    //     current_mode->ae_info.cur_again = (float)again / 16.0f;
     // } else if (gain.exp_frame_type == SENSOR_EXPO_FRAME_TYPE_2FRAMES) {
     //     again = (k_u32)(gain.gain[SENSOR_DUAL_EXP_L_PARAS] * 16);
     //     // ret = sensor_reg_write(&dev->i2c_info, OV9732_REG_LONG_AGAIN_H, (again & 0x0300) >> 8);
     //     // ret |= sensor_reg_write(&dev->i2c_info, OV9732_REG_LONG_AGAIN_L, (again & 0xff));
-    //     current_mode->ae_info.cur_again = again / 16.0f;
+    //     current_mode->ae_info.cur_again = (float)again / 16.0f;
 
     //     again = (k_u32)(gain.gain[SENSOR_DUAL_EXP_S_PARAS] * 16);
     //     // TODO
-    //     current_mode->ae_info.cur_vs_again = again / 16.0f;
+    //     current_mode->ae_info.cur_vs_again = (float)again / 16.0f;
     // } else {
     //     pr_err("%s, unsupport exposure frame.\n", __func__);
     //     return -1;
@@ -825,17 +829,17 @@ static k_s32 sc035hgs_sensor_set_dgain(void* ctx, k_sensor_gain gain)
     //     }
     //     ret = sensor_reg_write(&dev->i2c_info, SC035HGS_REG_COARSE_DGAIN, coarse);
     //     ret |= sensor_reg_write(&dev->i2c_info, SC035HGS_REG_FINE_DGAIN, fine);
-    //     current_mode->ae_info.cur_dgain = dgain / 128.0f;
+    //     current_mode->ae_info.cur_dgain = (float)dgain / 128.0f;
 
     // } else if (gain.exp_frame_type == SENSOR_EXPO_FRAME_TYPE_2FRAMES) {
     //     dgain = (k_u32)(gain.gain[SENSOR_DUAL_EXP_L_PARAS] * 1024);
     //     // ret = sensor_reg_write(&dev->i2c_info, OV9732_REG_LONG_AGAIN_H,(again & 0x0300)>>8);
     //     // ret |= sensor_reg_write(&dev->i2c_info, OV9732_REG_LONG_AGAIN_L,(again & 0xff));
-    //     current_mode->ae_info.cur_dgain = dgain / 1024.0f;
+    //     current_mode->ae_info.cur_dgain = (float)dgain / 1024.0f;
 
     //     dgain = (k_u32)(gain.gain[SENSOR_DUAL_EXP_S_PARAS] * 1024);
     //     // TODO wirte vs gain register
-    //     current_mode->ae_info.cur_vs_dgain = dgain / 1024.0f;
+    //     current_mode->ae_info.cur_vs_dgain = (float)dgain / 1024.0f;
     // } else {
     //     pr_err("%s, unsupport exposure frame.\n", __func__);
     //     return -1;
@@ -881,19 +885,19 @@ static k_s32 sc035hgs_sensor_set_intg_time(void* ctx, k_sensor_intg_time time)
         // ret |= sensor_reg_write(&dev->i2c_info, 0x3501, (exp_line >> 4) & 0xff);
         // ret |= sensor_reg_write(&dev->i2c_info, 0x3502, (exp_line << 4) & 0xff);
 
-        current_mode->ae_info.cur_integration_time = exp_line * current_mode->ae_info.one_line_exp_time;
+        current_mode->ae_info.cur_integration_time = (float)exp_line * current_mode->ae_info.one_line_exp_time;
     } else if (time.exp_frame_type == SENSOR_EXPO_FRAME_TYPE_2FRAMES) {
         integraion_time = time.intg_time[SENSOR_DUAL_EXP_L_PARAS];
         exp_line = integraion_time / current_mode->ae_info.one_line_exp_time;
         exp_line = MIN(current_mode->ae_info.max_integraion_line, MAX(1, exp_line));
 
-        current_mode->ae_info.cur_integration_time = exp_line * current_mode->ae_info.one_line_exp_time;
+        current_mode->ae_info.cur_integration_time = (float)exp_line * current_mode->ae_info.one_line_exp_time;
 
         integraion_time = time.intg_time[SENSOR_DUAL_EXP_S_PARAS];
         exp_line = integraion_time / current_mode->ae_info.one_line_exp_time;
         exp_line = MIN(current_mode->ae_info.max_integraion_line, MAX(1, exp_line));
 
-        current_mode->ae_info.cur_vs_integration_time = exp_line * current_mode->ae_info.one_line_exp_time;
+        current_mode->ae_info.cur_vs_integration_time = (float)exp_line * current_mode->ae_info.one_line_exp_time;
     } else {
         pr_err("%s, unsupport exposure frame.\n", __func__);
         return -1;

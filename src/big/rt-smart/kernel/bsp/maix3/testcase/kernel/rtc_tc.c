@@ -96,18 +96,19 @@ static int alarm_sample(void)
     dev = rt_device_find(RTC_NAME);
     rt_device_open(dev, 0);
     set_date(2024, 1, 1);
-    set_time(1, 1, 0);
+    set_time(0, 0, 50);
 
     now = time(RT_NULL);
     gmtime_r(&now,&p_tm);
     setup.flag = RTC_INT_TICK_SECOND;
+    // setup.flag = RTC_INT_ALARM_MINUTE | RTC_INT_ALARM_SECOND;
     setup.tm.tm_year = p_tm.tm_year;
     setup.tm.tm_mon = p_tm.tm_mon;
     setup.tm.tm_mday = p_tm.tm_mday;
     setup.tm.tm_wday = p_tm.tm_wday;
     setup.tm.tm_hour = p_tm.tm_hour;
-    setup.tm.tm_min = p_tm.tm_min;
-    setup.tm.tm_sec = p_tm.tm_sec;
+    setup.tm.tm_min = p_tm.tm_min + 1;
+    setup.tm.tm_sec = 0;
     rt_kprintf("get now time:  %d-%d-%d  %d:%d:%d\n", p_tm.tm_year+1900, p_tm.tm_mon+1, p_tm.tm_mday, p_tm.tm_hour, p_tm.tm_min, p_tm.tm_sec);
 
     rt_device_control(dev, RT_DEVICE_CTRL_RTC_SET_CALLBACK, &user_alarm_callback); //set rtc intr callback
@@ -117,15 +118,23 @@ static int alarm_sample(void)
     rt_device_control(dev, RT_DEVICE_CTRL_RTC_GET_ALARM, &p_tm);   //get alarm time
     rt_kprintf("get alarm time:  %d-%d-%d  %d:%d:%d\n", p_tm.tm_year, p_tm.tm_mon+1, p_tm.tm_mday, p_tm.tm_hour, p_tm.tm_min, p_tm.tm_sec);
 
-    for (i=0; i<5; i++)
+    for (i=0; i<10; i++)
     {
         now = time(RT_NULL);
         rt_kprintf("%s\n", ctime(&now));
         rt_thread_mdelay(1000);
     }
-    rt_device_control(dev, RT_DEVICE_CTRL_RTC_STOP_ALARM, RT_NULL);
-    rt_device_close(dev);
-    return ret;
+
+    rt_device_control(dev, RT_DEVICE_CTRL_RTC_STOP_TICK, RT_NULL);
+    // rt_device_control(dev, RT_DEVICE_CTRL_RTC_STOP_ALARM, RT_NULL);
+
+    while(1){
+        now = time(RT_NULL);
+        rt_kprintf("%s\n", ctime(&now));
+        rt_thread_mdelay(1000);
+    }
+    // rt_device_close(dev);
+    // return ret;
 }
 MSH_CMD_EXPORT(alarm_sample,alarm sample);
 

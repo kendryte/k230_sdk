@@ -32,6 +32,9 @@ typedef enum k230_hardlock_type
     HARDLOCK_GPIO = 0,
     HARDLOCK_KPU = 1,
     HARDLOCK_TS = 2,
+    HARDLOCK_DISP = 3,
+    HARDLOCK_DISP_CPU0 = 4,
+    HARDLOCK_DISP_CPU1 = 5,
     HARDLOCK_MAX = 128
 } hardlock_type;
 

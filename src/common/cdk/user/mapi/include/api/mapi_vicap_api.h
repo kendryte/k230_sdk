@@ -168,6 +168,21 @@ k_s32 kd_mapi_vicap_start(k_vicap_dev vicap_dev);
  * - If the channel id or device id does not belong to a started pipe, the mpi returns failure
  */
 k_s32 kd_mapi_vicap_stop(k_vicap_dev vicap_dev);
+
+/**
+ * @brief vicap set vi drop frame
+ *
+ * @param [in] csi csi num
+ * @param [in] k_vicap_drop_frame Description of lost frame information
+ * @param [in] enable enable drop frame
+ * @return k_s32
+ * @retval 0 success
+ * @retval "not 0" see err code
+ * @see K_ERR_CODE_E
+ * @note
+ */
+k_s32 kd_mapi_vicap_set_vi_drop_frame(k_vicap_csi_num csi, k_vicap_drop_frame *frame, k_bool enable);
+
 /** @} */ /** <!-- ==== MAPI_VICAP End ==== */
 
 #ifdef __cplusplus

@@ -1,0 +1,55 @@
+# https://docs.github.com/en/packages/managing-github-packages-using-github-actions-workflows/publishing-and-installing-a-package-with-github-actions
+# https://github.com/marketplace/actions/build-and-push-docker-images
+
+
+on:
+  push:
+    branches: ['main']
+    paths: ['tools/docker/**']
+  pull_request:
+    branches: ['main']
+    paths: ['tools/docker/**']
+
+env:
+  REGISTRY: ghcr.io
+  NAMESPACE: kendryte
+  IMAGE_NAME: k230_sdk
+
+jobs:
+  docker_build:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v3
+      -
+        name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.CR_USER }}
+          password: ${{ secrets.CR_PAT }}
+      -
+        name: Build docker and test
+        run: |
+          docker build -f tools/docker/Dockerfile -t ${{ env.IMAGE_NAME }} tools/docker --label "runnumber=${GITHUB_RUN_ID}"
+          docker run --rm ${{ env.IMAGE_NAME }}
+      -
+        name: Push image
+        run: |
+          IMAGE_ID=${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ env.IMAGE_NAME }}
+          # Change all uppercase to lowercase
+          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+          # Strip git ref prefix from version
+          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+          # Strip "v" prefix from tag name
+          [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
+          # Use Docker `latest` tag convention
+          [ "$VERSION" == "main" ] && VERSION=latest
+          echo IMAGE_ID=$IMAGE_ID
+          echo VERSION=$VERSION
+          echo "start to tag docker image"
+          docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
+          echo "start to push docker image"
+          docker push $IMAGE_ID:$VERSION
+          echo "finished to push docker image"

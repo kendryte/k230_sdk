@@ -17,6 +17,8 @@ void ddr_init_2133(void);
 void ddr_init_1066(void);
 void ddr4_init_3200(void);
 void ddr_init_2667(void);
+void sip_ddr_init_3200_have_wodt(void);
+void sip_ddr_init_3200_have_all_odt(void);
 
 int ddr_init_training(void)
 {
@@ -46,6 +48,11 @@ int ddr_init_training(void)
 	#elif  defined(CONFIG_LPDDR4_3200) 
 		printf("CONFIG_LPDDR4_3200 \n");
 		ddr4_init_3200();	
+	#elif  defined(CONFIG_SIPLP4_3200_WODT) 
+		//printf("CONFIG_SIPLP4_3200_WODT \n");
+		sip_ddr_init_3200_have_wodt();	
+	#elif  defined(CONFIG_SIPLP4_3200_WALLODT) 
+		sip_ddr_init_3200_have_all_odt();	
 	#endif 	
 
 	return 0;

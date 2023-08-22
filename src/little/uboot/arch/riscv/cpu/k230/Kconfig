@@ -35,13 +35,18 @@ config LPDDR4_1066
 config LPDDR4_2667
 	bool  "ddr4 2667"	
 
-config LPDDR4_3200
-	bool  "ddr4 3200"
+config SIPLP4_3200_WODT
+	bool  "sip ddr4 3200 with write odt"
+	
+config SIPLP4_3200_WALLODT
+	bool  "sip ddr4 3200 with all odt"
+
 endchoice
 
 config DDR_SIZE
 	hex "DDR  Size"
 	default 0x80000000 if LPDDR4_2667
-	default 0x20000000
+	default 0x20000000 
+	default 0x08000000 if SIPLP4_3200_WODT
 	help
 	  Size of the DDR 

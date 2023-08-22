@@ -87,7 +87,7 @@ clean:
 
 dl:
 	rm -rf dl.tar.gz;
-	wget https://ai.b-bug.org/~wangjianxin/k230/dl.tar.gz;
+	wget https://ai.b-bug.org/k230/downloads/dl/dl.tar.gz;
 	tar -zxf dl.tar.gz;
 	
 help:

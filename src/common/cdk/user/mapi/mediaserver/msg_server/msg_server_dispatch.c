@@ -170,6 +170,9 @@ k_s32 media_msg_server_init(void)
     g_server_context.server_modules[K_MAPI_MOD_AREC] = mapi_msg_get_arec_mod();
     g_server_context.server_modules[K_MAPI_MOD_AO] = mapi_msg_get_ao_mod();
 #endif
+
+    g_server_context.server_modules[K_MAPI_MOD_VO] = mapi_msg_get_vo_mod();
+
     g_server_context.server_modules[K_MAPI_MOD_VI] = mapi_msg_get_vi_mod();
     g_server_context.server_modules[K_MAPI_MOD_VVI] = mapi_msg_get_vvi_mod();
     g_server_context.server_modules[K_MAPI_MOD_VICAP] = mapi_msg_get_vicap_mod();
@@ -193,10 +196,18 @@ k_s32 media_msg_server_deinit(void)
     ret = kd_ipcmsg_disconnect(g_media_msg_id);
     if(ret != K_SUCCESS) {
         mapi_sys_error_trace("kd_ipcmsg_disconnect fail:0x%x\n", ret);
-        return K_FAILED;
+//        return K_FAILED;
     }
+    /*
+     The detachstate attribute controls whether the thread is created in a detached state.
+     If the thread is created detached, then use of the ID of the newly created thread by the
+     pthread_detach() or pthread_join() function is an error.
+     https://pubs.opengroup.org/onlinepubs/007908799/xsh/pthread_attr_getdetachstate.html
+    */
+#if 0
     pthread_join(g_server_receive_thread, NULL);
-
+#endif
+    g_msg_start_flag = K_FALSE;
     kd_ipcmsg_del_service(IPCMSG_MEDIA_SERVER_NAME);
     return ret;
 }

@@ -7,9 +7,12 @@ BIN = $(MPP_SRC_DIR)/userapps/sample/elf/$(CURRECT_DIR_NAME).elf
 LIBPATH = $(MPP_LIB_PATH)
 LIBS = $(MPP_LIBS)
 
-LOCAL_CFLAGS = -I$(LOCAL_SRC_DIR)
+LOCAL_CFLAGS = -I$(LOCAL_SRC_DIR)   \
+			   -I$(LOCAL_SRC_DIR)/../sample_vo
 
-SRCS = $(wildcard $(LOCAL_SRC_DIR)/*.c)
+SRCS = $(wildcard $(LOCAL_SRC_DIR)/*.c)			\
+		$(LOCAL_SRC_DIR)/../sample_vo/vo_test_case.c \
+		$(LOCAL_SRC_DIR)/../sample_vo/vo_bind_test.c
 
 OBJS = $(patsubst %.c,%.o,$(SRCS))
 

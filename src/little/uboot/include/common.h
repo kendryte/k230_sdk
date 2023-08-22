@@ -31,4 +31,16 @@
 # include <env_internal.h>
 #endif
 
+
+#ifndef DBGLV
+    #define DBGLV 7
+#endif 
+
+#define k230_log(out_loglevel, fmt, ...) \
+    if ( DBGLV >= out_loglevel) \
+        printf(fmt, ##__VA_ARGS__);  
+
+#define K230_dbg(fmt, ...) \
+     k230_log(7, fmt, ##__VA_ARGS__)
+
 #endif	/* __COMMON_H_ */

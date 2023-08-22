@@ -125,6 +125,7 @@ k_s32 kd_mapi_vicap_set_dev_attr(k_vicap_dev_set_info dev_info)
         return K_FAILED;
     }
     dev_attr.dw_enable = dev_info.dw_en;
+
     dev_attr.acq_win.h_start = 0;
     dev_attr.acq_win.v_start = 0;
     dev_attr.acq_win.width = sensor_info[dev_info.vicap_dev].width;
@@ -214,6 +215,7 @@ k_s32 kd_mapi_vicap_set_chn_attr(k_vicap_chn_set_info chn_info)
     chn_attr.pix_format = chn_info.pixel_format;
     chn_attr.buffer_num = 6;
     chn_attr.buffer_size = chn_info.buf_size;
+    chn_attr.alignment = chn_info.alignment;
     ret = kd_mpi_vicap_set_chn_attr(chn_info.vicap_dev, chn_info.vicap_chn, chn_attr);
     if(ret)
     {
@@ -269,6 +271,22 @@ k_s32 kd_mapi_vicap_stop(k_vicap_dev vicap_dev)
         mapi_vicap_error_trace("kd_mpi_vicap_deinit failed\n");
         return K_FAILED;
     }
+    return K_SUCCESS;
+}
+
+
+k_s32 kd_mapi_vicap_set_vi_drop_frame(k_vicap_csi_num csi, k_vicap_drop_frame *frame, k_bool enable)
+{
+    k_s32 ret = 0;
+
+    CHECK_MAPI_VICAP_NULL_PTR("drop_frame", frame);
+
+    ret = kd_mpi_vicap_set_vi_drop_frame(csi, frame, enable);
+    if(ret)
+    {
+        mapi_vicap_error_trace("kd_mapi_vicap_set_vi_drop_frame failed\n");
+    }
+
     return K_SUCCESS;
 }
 

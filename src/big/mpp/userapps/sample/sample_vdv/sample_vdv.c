@@ -112,10 +112,11 @@ int main(int argc, char *argv[])
     vicap_dev = VICAP_DEV_ID_0;
 
     //vo init
+    // rst display subsystem
+    kd_display_reset();
     // set hardware reset;
     kd_display_set_backlight();
-	// rst display subsystem
-    kd_display_reset();
+	
 
     memset(&config, 0, sizeof(config));
     config.max_pool_cnt = 64;
@@ -252,7 +253,7 @@ int main(int argc, char *argv[])
     k_isp_ae_roi ae_roi;
     memset(&ae_roi, 0, sizeof(k_isp_ae_roi));
 
-    k_char select;
+    k_char select = 0;
     while(K_TRUE)
     {
         if(select != '\n')

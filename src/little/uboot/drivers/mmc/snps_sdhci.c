@@ -117,23 +117,12 @@ static void dwcmshc_phy_delay_config(struct sdhci_host *host)
 
 	return;
 }
+
 static int dwcmshc_phy_init(struct sdhci_host *host)
 {
-	#define REG_SDC_RST_CTL         0x91101034U
 	u32 reg;
 	
 	unsigned int timeout = 15000;
-    int index = 0;
-	
-	if(readl((void*)REG_SDC_RST_CTL) & (1<<index) ) { //need reset 
-		writel(1<<index, (void*)REG_SDC_RST_CTL);
-		udelay(2);
-		while(!(readl((void*)REG_SDC_RST_CTL) & (1<<(index+28))));
-		writel(1<<(index+28), (void*)REG_SDC_RST_CTL);
-		udelay(5);
-		if(readl((void*)REG_SDC_RST_CTL) & (1<<index) )
-			printf("dwcmshc_phy_init error %x \n", readl((void*)REG_SDC_RST_CTL));
-	}
 
 	/* reset phy */
 	sdhci_writew(host, 0, DWC_MSHC_PHY_CNFG);
@@ -166,6 +155,7 @@ static int dwcmshc_phy_init(struct sdhci_host *host)
 
 	return 0;
 }
+
 struct sdhci_ops k230_host_opt={
 	.deferred_probe = dwcmshc_phy_init,
 };

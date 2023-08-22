@@ -1,1 +1,1 @@
-./ob_det.elf yolov8n_640.kmodel 0.25 0.6 bus.jpg 0
+./ob_det.elf yolov8n_640.kmodel 0.5 0.6 bus.jpg 0

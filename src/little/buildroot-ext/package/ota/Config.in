@@ -1,0 +1,5 @@
+config BR2_PACKAGE_OTA
+	bool "ota"
+	default y
+	help
+		for Over The Air upgrade.

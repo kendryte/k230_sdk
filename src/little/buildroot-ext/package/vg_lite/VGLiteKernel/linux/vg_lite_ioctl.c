@@ -2,7 +2,7 @@
 *
 *    The MIT License (MIT)
 *
-*    Copyright (c) 2014 - 2020 Vivante Corporation
+*    Copyright (c) 2014 - 2022 Vivante Corporation
 *
 *    Permission is hereby granted, free of charge, to any person obtaining a
 *    copy of this software and associated documentation files (the "Software"),
@@ -26,7 +26,7 @@
 *
 *    The GPL License (GPL)
 *
-*    Copyright (C) 2014 - 2020 Vivante Corporation
+*    Copyright (C) 2014 - 2022 Vivante Corporation
 *
 *    This program is free software; you can redistribute it and/or
 *    modify it under the terms of the GNU General Public License
@@ -51,7 +51,7 @@
 *    version of this file.
 *
 *****************************************************************************/
-#include <stdio.h>
+
 #include <stdint.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -60,14 +60,14 @@
 #include "vg_lite_kernel.h"
 #include "vg_lite_ioctl.h"
 
-static int device;
-static unsigned int length;
-static void *mapped;
+static int device = 0;
+static uint32_t length = 0;
+static void * mapped = NULL;
 
-vg_lite_error_t vg_lite_kernel(vg_lite_kernel_command_t command, void *data)
+vg_lite_error_t vg_lite_kernel(vg_lite_kernel_command_t command, void * data)
 {
     struct ioctl_data to_kernel;
-    static const unsigned int bytes[] = {
+    static const uint32_t bytes[] = {
         sizeof(vg_lite_kernel_initialize_t),
         sizeof(vg_lite_kernel_terminate_t),
         sizeof(vg_lite_kernel_allocate_t),
@@ -86,29 +86,22 @@ vg_lite_error_t vg_lite_kernel(vg_lite_kernel_command_t command, void *data)
         sizeof(vg_lite_kernel_flexa_info_t),
         sizeof(vg_lite_kernel_map_memory_t),
         sizeof(vg_lite_kernel_unmap_memory_t),
-        sizeof(uint64_t)
+        sizeof(vg_lite_kernel_close_t),
+        sizeof(vg_lite_kernel_cache_t),
+        sizeof(vg_lite_kernel_export_memory_t),
     };
 
     if (device == 0) {
         device = open("/dev/vg_lite", O_RDWR);
-        if (device == -1) {
-            printf("vg_lite open() error\n");
+        if (device == -1)
             return VG_LITE_GENERIC_IO;
-        }
-        #if 0
-        // FIXME driver error
-        if (read(device, &length, 4) != 4) {
-            close(device);
-            device = 0;
-            return VG_LITE_GENERIC_IO;
-        }
-        #endif
+
         /* Default contiguous mapping size. */
         length = MAX_CONTIGUOUS_SIZE;
 
         mapped = mmap(NULL, length, PROT_READ | PROT_WRITE, MAP_SHARED, device, 0);
-        if (!mapped ||
-            mapped == (char *)-1) {
+        if ((mapped == NULL) ||
+            (mapped == (char *)-1)) {
             close(device);
             device = 0;
             return VG_LITE_GENERIC_IO;
@@ -118,9 +111,9 @@ vg_lite_error_t vg_lite_kernel(vg_lite_kernel_command_t command, void *data)
     to_kernel.command = command;
     to_kernel.buffer = data;
     to_kernel.bytes = bytes[command];
-    if (ioctl(device, VG_LITE_IOCTL, &to_kernel) < 0) {
-        printf("vg_lite ioctl() error\n");
+
+    if (ioctl(device, VG_LITE_IOCTL, &to_kernel) < 0)
         return VG_LITE_GENERIC_IO;
-    }
+
     return to_kernel.error;
 }

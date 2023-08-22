@@ -76,21 +76,62 @@ void spl_board_prepare_for_boot(void){
     asm volatile(".long 0x0170000b\n":::"memory");
 }
 
+static void device_disable(void)
+{
+    uint32_t value;
+
+    // disable ai power
+    if (readl(0x9110302c) & 0x2)
+        writel(0x30001, 0x91103028);
+    // disable vpu power
+    if (readl(0x91103080) & 0x2)
+        writel(0x30001, 0x9110307c);
+    // disable dpu power
+    if (readl(0x9110310c) & 0x2)
+        writel(0x30001, 0x91103108);
+    // disable disp power
+    if (readl(0x91103040) & 0x2)
+        writel(0x30001, 0x9110303c);
+    // check disable status
+    value = 1000000;
+    while (!(readl(0x9110302c) & 0x1) || !(readl(0x91103080) & 0x1) ||
+        !(readl(0x9110310c) & 0x1) || !(readl(0x91103040) & 0x1) && value)
+        value--;
+    // disable ai clk
+    value = readl(0x91100008);
+    value &= ~((1 << 0));
+    writel(value, 0x91100008);
+    // disable vpu clk
+    value = readl(0x9110000c);
+    value &= ~((1 << 0));
+    writel(value, 0x9110000c);
+    // disable dpu clk
+    value = readl(0x91100070);
+    value &= ~((1 << 0));
+    writel(value, 0x91100070);
+    // disable mclk
+    value = readl(0x9110006c);
+    value &= ~((1 << 0) | (1 << 1) | (1 << 2));
+    writel(value, 0x9110006c);
+}
+
 //weak;
 int spl_board_init_f(void)
 {
     int ret = 0;
-    g_bootmod = sysctl_boot_get_boot_mode(); 
-    
+
+    device_disable();
+    g_bootmod = sysctl_boot_get_boot_mode();
+
     record_boot_time_info_to_sram("ds");
     ddr_init_training();
     record_boot_time_info_to_sram("dd");
     /* Clear the BSS. */
     //record_boot_time_info_to_sram("bs");
-	memset(__bss_start, 0, (ulong)&__bss_end - (ulong)__bss_start);
+    memset(__bss_start, 0, (ulong)&__bss_end - (ulong)__bss_start);
     //record_boot_time_info_to_sram("be");
 
-	// /* load/boot image from boot device */
+    // /* load/boot image from boot device */
     //if(quick_boot() == 1){//默认非快起；
     if(quick_boot()){//默认快起
         u32 usb0_otg_en_gpio52_dir = readl((void*)(GPIO_BASE_ADDR1 + 0x4));
@@ -101,13 +142,12 @@ int spl_board_init_f(void)
         usb0_otg_en_gpio52_data |= 1 << (52 - 32);
         writel(usb0_otg_en_gpio52_data, (void*)(GPIO_BASE_ADDR1 + 0x0));
 
-    
         //record_boot_time_info("ls");
         ret += k230_img_load_boot_sys(BOOT_SYS_AUTO);
     }
     //printf("normal boot\n");
     board_init_r(NULL, 0);
-	return ret;
+    return ret;
 }
 
 //1 快起 other：非快起

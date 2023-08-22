@@ -51,10 +51,11 @@ int StreamingPlayer::StreamingPlayerInit() {
     }
 
     memset(&dev_attr_info_, 0, sizeof(dev_attr_info_));
-    if (sensor_type_ <= OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_SPECKLE)
-        dev_attr_info_.dw_en = K_FALSE;
-    else
-        dev_attr_info_.dw_en = K_TRUE;
+    // if (sensor_type_ <= OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_SPECKLE)
+    //     dev_attr_info_.dw_en = K_FALSE;
+    // else
+    //     dev_attr_info_.dw_en = K_TRUE;
+    dev_attr_info_.dw_en = K_FALSE;
 
     memset(&media_attr_, 0, sizeof(media_attr_));
     k_u64 pic_size = video_width_ * video_height_ * 2;
@@ -63,7 +64,7 @@ int StreamingPlayer::StreamingPlayerInit() {
     for (int i = 0; i < session_num_ * 2; i++) {
         if (i % 2 == 0) {
             media_attr_.media_config.vb_config.comm_pool[i].blk_cnt = 6;
-            media_attr_.media_config.vb_config.comm_pool[i].blk_size = ((pic_size + 0xfff) & ~0xfff);    
+            media_attr_.media_config.vb_config.comm_pool[i].blk_size = ((pic_size + 0xfff) & ~0xfff);
             media_attr_.media_config.vb_config.comm_pool[i].mode = VB_REMAP_MODE_NOCACHE;
         } else {
             media_attr_.media_config.vb_config.comm_pool[i].blk_cnt = 30;
@@ -90,7 +91,7 @@ int StreamingPlayer::StreamingPlayerInit() {
             return -1;
         }
         media_attr_.media_config.vb_config.comm_pool[session_num_ * 2 + 2].blk_cnt = 6;
-        media_attr_.media_config.vb_config.comm_pool[session_num_ * 2 + 2].blk_size = VI_ALIGN_UP(sensor_info.width * sensor_info.height * 3 / 2, 0x400);
+        media_attr_.media_config.vb_config.comm_pool[session_num_ * 2 + 2].blk_size = VI_ALIGN_UP(sensor_info.width * sensor_info.height * 3 / 2, 0x1000);
         media_attr_.media_config.vb_config.comm_pool[session_num_ * 2 + 2].mode = VB_REMAP_MODE_NOCACHE;
     }
 
@@ -153,7 +154,7 @@ void StreamingPlayer::Start() {
     });
 }
 
-void StreamingPlayer::Stop() {    
+void StreamingPlayer::Stop() {
     for (int i = 0; i < session_num_; i++)
         kd_mapi_venc_unbind_vi(0, i, i);
 
@@ -280,6 +281,7 @@ int StreamingPlayer::CreateVideoEncode(const SessionAttr &session_attr) {
     vi_chn_attr_info.pixel_format = PIXEL_FORMAT_YUV_SEMIPLANAR_420;
     vi_chn_attr_info.vicap_dev = VICAP_DEV_ID_0;
     vi_chn_attr_info.vicap_chn = (k_vicap_chn)session_attr.session_idx;
+    vi_chn_attr_info.alignment = 12;
     if (!dev_attr_info_.dw_en)
         vi_chn_attr_info.buf_size = VI_ALIGN_UP(session_attr.video_width * session_attr.video_height * 3 / 2, 0x400);
     else
@@ -320,7 +322,7 @@ int StreamingPlayer::CreateAudioEncode() {
     aenc_chn_attr.buf_size = AUDIO_PERSEC_DIV_NUM;
     aenc_chn_attr.point_num_per_frame = audio_sample_rate_ / aenc_chn_attr.buf_size;
     aenc_chn_attr.type = K_PT_G711A;
-     
+
     if (K_SUCCESS != kd_mapi_aenc_init(0, &aenc_chn_attr)) {
         std::cout << "kd_mapi_aenc_init failed." << std::endl;
         kd_mapi_ai_stop(ai_handle);
@@ -354,7 +356,7 @@ int StreamingPlayer::DestroySession(int session_idx) {
     if (session_info[session_idx].sessionVideoReplicator) {
         if (session_info[session_idx].sessionVideoType ==  kVideoTypeMjpeg)
             Medium::close((JpegStreamReplicator*)session_info[session_idx].sessionVideoReplicator);
-        else 
+        else
             Medium::close((StreamReplicator*)session_info[session_idx].sessionVideoReplicator);
     }
 

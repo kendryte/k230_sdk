@@ -24,8 +24,12 @@
  */
 
 #include <rtthread.h>
+#include <rthw.h>
 #include <stdio.h>
 #include "sysctl_pwr.h"
+#include "drv_hardlock.h"
+#include "ioremap.h"
+#include "board.h"
 
 /* created by yangfan */
 
@@ -573,16 +577,21 @@ bool sysctl_pwr_set_lpi(sysctl_pwr_domain_e powerdomain, bool enable)
 bool sysctl_pwr_set_pwr_reg(volatile uint32_t *regctl, volatile uint32_t *regsta, bool enable)
 {
     /* enable==true, power on; enable==false, power off */
-    *regctl |= (true == enable) ? ((1 << 1) | (1 << 17)) : ((1 << 0) | (1 << 16));
+    uint32_t mask;
 
-    // usleep(500);
-    rt_thread_delay(1);
+    mask = enable ? 0x2 : 0x1;
+    if (*regsta & mask)
+        return true;
 
-    /* power enable state */
-    if(true == enable)
-        return (*regsta & (1 << 1)) ? true:false;
-    else
-        return (*regsta & (1 << 0)) ? true:false;
+    *regctl = (0x30000 | mask);
+
+    for (int i = 0; i < 100; i++) {
+        if (*regsta & mask)
+            return true;
+        for (int j = 0; j < 5000; j++);
+    }
+
+    return false;
 }
 
 bool sysctl_pwr_set_power(sysctl_pwr_domain_e powerdomain, bool enable)
@@ -634,6 +643,78 @@ bool sysctl_pwr_set_power(sysctl_pwr_domain_e powerdomain, bool enable)
     }
 
     return sysctl_pwr_set_pwr_reg(pwr_ctl_reg, pwr_sta_reg, enable);
+}
+
+bool sysctl_pwr_set_power_multi(sysctl_pwr_domain_e powerdomain, bool enable)
+{
+    bool ret = true;
+    rt_base_t level;
+    static uint32_t ref_count[SYSCTL_PD_MAX];
+    /*
+    1. enable step for non-DISP power domains:
+        a. disable interrupt
+        b. judge ref_count, if == 0, execute sysctl_pwr_set_pwr_reg
+        c. ref_count++, limit UINT32_MAX
+        d. enable interrupt
+    2. disable step for non-DISP power domains:
+        a. disable interrupt
+        b. judge ref_count, if == 0, go step d
+        c. ref_count--, judge ref_count, if == 0, execute sysctl_pwr_set_pwr_reg
+        d. enable interrupt
+    3. enable step for DISP power domains:
+        a. disable interrupt
+        b. judge ref_count, if == 0, execute
+            b.1 get HARDLOCK_DISP
+            b.2 get HARDLOCK_DISP_CPU1
+            b.3 execute sysctl_pwr_set_pwr_reg
+            b.4 put HARDLOCK_DISP
+        c. ref_count++, limit UINT32_MAX
+        d. enable interrupt
+    4. disable step for DISP power domains:
+        a. disable interrupt
+        b. judge ref_count, if == 0, go step e
+        c. ref_count--, judge ref_count, if == 0, execute
+            c.1 get HARDLOCK_DISP
+            c.2 qeury HARDLOCK_DISP_CPU0, if no get, go step c.4
+            c.3 put HARDLOCK_DISP_CPU0, execute sysctl_pwr_set_pwr_reg
+            c.4 put HARDLOCK_DISP_CPU1
+            c.5 put HARDLOCK_DISP
+        d. enable interrupt
+    */
+    level = rt_hw_interrupt_disable();
+    if (enable == true) {
+        if (ref_count[powerdomain] == 0) {
+            if (powerdomain == SYSCTL_PD_DISP) {
+                while (kd_hardlock_lock(HARDLOCK_DISP));
+                kd_hardlock_lock(HARDLOCK_DISP_CPU1);
+                ret = sysctl_pwr_set_power(powerdomain, enable);
+                kd_hardlock_unlock(HARDLOCK_DISP);
+            } else {
+                ret = sysctl_pwr_set_power(powerdomain, enable);
+            }
+        }
+        ref_count[powerdomain]++;
+        if (ref_count[powerdomain] == UINT32_MAX)
+            rt_kprintf("error: enable too many times\n");
+    } else if (ref_count[powerdomain]) {
+        ref_count[powerdomain]--;
+        if (ref_count[powerdomain] == 0) {
+            if (powerdomain == SYSCTL_PD_DISP) {
+                while (kd_hardlock_lock(HARDLOCK_DISP));
+                if (kd_hardlock_lock(HARDLOCK_DISP_CPU0) == 0) {
+                    kd_hardlock_unlock(HARDLOCK_DISP_CPU0);
+                    ret = sysctl_pwr_set_power(powerdomain, enable);
+                }
+                kd_hardlock_unlock(HARDLOCK_DISP_CPU1);
+                kd_hardlock_unlock(HARDLOCK_DISP);
+            } else {
+                ret = sysctl_pwr_set_power(powerdomain, enable);
+            }
+        }
+    }
+    rt_hw_interrupt_enable(level);
+
+    return ret;
 }
 #if 0
 bool sysctl_pwr_set_power(sysctl_pwr_domain_e powerdomain, bool enable)
@@ -711,12 +792,23 @@ bool sysctl_pwr_set_power(sysctl_pwr_domain_e powerdomain, bool enable)
 /* 电源域上电 */
 bool sysctl_pwr_up(sysctl_pwr_domain_e powerdomain)
 {
-    return sysctl_pwr_set_power(powerdomain, true);
+    return sysctl_pwr_set_power_multi(powerdomain, true);
 }
 
 /* 电源域下电 */
 bool sysctl_pwr_off(sysctl_pwr_domain_e powerdomain)
 {
-    return sysctl_pwr_set_power(powerdomain, false);
+    return sysctl_pwr_set_power_multi(powerdomain, false);
 }
 
+int rt_hw_sysctl_pwr_init(void)
+{
+    sysctl_pwr = rt_ioremap((void*)PWR_BASE_ADDR, PWR_IO_SIZE);
+    if(!sysctl_pwr) {
+        rt_kprintf("sysctl_pwr ioremap error\n");
+        return -1;
+    }
+
+    return 0;
+}
+INIT_BOARD_EXPORT(rt_hw_sysctl_pwr_init);

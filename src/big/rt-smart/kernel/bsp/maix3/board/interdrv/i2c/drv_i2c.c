@@ -545,7 +545,7 @@ int rt_hw_i2c_init(void)
 
     return 0;
 }
-INIT_DEVICE_EXPORT(rt_hw_i2c_init);
+INIT_BOARD_EXPORT(rt_hw_i2c_init);
 
 #ifdef RT_USING_I2C_DUMP
 void i2c_reg_show(int argc, char *argv[])

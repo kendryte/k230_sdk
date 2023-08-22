@@ -23,8 +23,10 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-// #include "platform.h"
+#include <rtthread.h>
 #include "sysctl_boot.h"
+#include "ioremap.h"
+#include "board.h"
 
 volatile sysctl_boot_t* sysctl_boot = (volatile sysctl_boot_t*)SYSCTL_BOOT_BASE_ADDR;
 
@@ -81,4 +83,14 @@ int sysctl_boot_read_is_boot_wakeup(void)
 	return sysctl_boot->soc_wakeup_src;
 }
 
+int rt_hw_sysctl_boot_init(void)
+{
+    sysctl_boot = rt_ioremap((void*)BOOT_BASE_ADDR, BOOT_IO_SIZE);
+    if(!sysctl_boot) {
+        rt_kprintf("sysctl_boot ioremap error\n");
+        return -1;
+    }
 
+    return 0;
+}
+INIT_BOARD_EXPORT(rt_hw_sysctl_boot_init);

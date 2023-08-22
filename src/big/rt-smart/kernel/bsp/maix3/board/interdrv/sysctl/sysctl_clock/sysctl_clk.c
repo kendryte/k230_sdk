@@ -23,11 +23,13 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <rtthread.h>
 #include <stdlib.h>
 #include <math.h>
-// #include "platform.h"
 #include "sysctl_boot.h"
 #include "sysctl_clk.h"
+#include "ioremap.h"
+#include "board.h"
 
 /* created by yangfan */
 /* please refer to the sysctl_clk.h file for API description */
@@ -3435,3 +3437,15 @@ uint32_t sysctl_clk_get_leaf_freq(sysctl_clk_node_e leaf)
     /* get root freq and calc leaf freq */
     return (uint32_t)(sysctl_boot_get_root_clk_freq(node) * div);
 }
+
+int rt_hw_sysctl_clk_init(void)
+{
+    sysctl_clk = rt_ioremap((void*)CMU_BASE_ADDR, CMU_IO_SIZE);
+    if(!sysctl_clk) {
+        rt_kprintf("sysctl_clk ioremap error\n");
+        return -1;
+    }
+
+    return 0;
+}
+INIT_BOARD_EXPORT(rt_hw_sysctl_clk_init);

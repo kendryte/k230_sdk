@@ -130,7 +130,8 @@ public:
 
      /**
      * @brief 将检测结果画到原图
-     * @param src_img 原图
+     * @param src_img     原图
+     * @param results     人脸检测结果
      * @param pic_mode    ture(原图片)，false(osd)
      * @return None
      */

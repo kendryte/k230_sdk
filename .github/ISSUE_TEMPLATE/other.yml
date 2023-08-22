@@ -1,0 +1,20 @@
+name: Other
+description: 其它问题
+title: "[other]: "
+labels: []
+assignees:
+  - wuwentao
+  - zhangxiaojingCAN
+  - kexinliang666
+  - chenhb3 
+body:
+  - type: textarea
+    id: other
+    attributes:
+      label: Other
+      description: 其它问题
+      placeholder: |
+        If you have any other questions you can describe them here. (如果您有任何其它问题可以在这里描述)
+        Tip: You can attach images or files by clicking this area to highlight it and then dragging files in. (您能点击这个区域然后拖动文件来添加图片或文件)
+    validations:
+      required: true

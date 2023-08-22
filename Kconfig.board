@@ -14,11 +14,16 @@ config BOARD_K230_EVB
 config BOARD_K230_FPGA
 	bool "K230 fpga"
 
+config BOARD_K230D
+	bool "K230 sip"
+        help 
+           "siplp4 128MB ddr";
+
 endchoice
 
 config BOARD_NAME
        string "define K230 reference board name"
-       depends on BOARD_K230_EVB=y || BOARD_K230_FPGA=y
+       #depends on BOARD_K230_EVB=y || BOARD_K230_FPGA=y
        default "k230_evb"
 
 config QUICK_BOOT
@@ -39,6 +44,17 @@ config UBOOT_DEFCONFIG
               uboot defconfig ;
        default "k230_evb"
 
+config LINUX_DTB
+        string "linux dtb name"
+        help  
+              linux  dtb name ;
+       default "k230_evb"
+
+config REMOTE_TEST_PLATFORM
+        bool "config REMOTE_TEST_PLATFORM"
+        help  
+              xxxe ;
+        default n
 endmenu
 
 

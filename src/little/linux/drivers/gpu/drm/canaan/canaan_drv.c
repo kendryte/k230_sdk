@@ -33,7 +33,21 @@
 #include "canaan_drv.h"
 #include "canaan_vo.h"
 
-DEFINE_DRM_GEM_CMA_FOPS(canaan_drm_fops);
+static int canaan_drm_open(struct inode *inode, struct file *filp);
+static int canaan_drm_release(struct inode *inode, struct file *filp);
+
+static const struct file_operations canaan_drm_fops = {
+    .owner		= THIS_MODULE,
+    .open		= canaan_drm_open,
+    .release	= canaan_drm_release,
+    .unlocked_ioctl	= drm_ioctl,
+    .compat_ioctl	= drm_compat_ioctl,
+    .poll		= drm_poll,
+    .read		= drm_read,
+    .llseek		= noop_llseek,
+    .mmap		= drm_gem_cma_mmap,
+    DRM_GEM_CMA_UNMAPPED_AREA_FOPS
+};
 
 static struct drm_driver canaan_drm_driver = {
     .driver_features    = DRIVER_GEM | DRIVER_MODESET | DRIVER_ATOMIC,
@@ -55,6 +69,28 @@ static const struct drm_mode_config_funcs canaan_drm_mode_config_funcs = {
 static const struct drm_mode_config_helper_funcs canaan_drm_mode_config_helpers = {
     .atomic_commit_tail = drm_atomic_helper_commit_tail_rpm,
 };
+
+static struct device *disp_dev;
+
+static int canaan_drm_open(struct inode *inode, struct file *filp)
+{
+    int ret;
+
+    pm_runtime_get_sync(disp_dev);
+    ret = drm_open(inode, filp);
+
+    return ret;
+}
+
+static int canaan_drm_release(struct inode *inode, struct file *filp)
+{
+    int ret;
+
+    ret = drm_release(inode, filp);
+    pm_runtime_put_sync(disp_dev);
+
+    return ret;
+}
 
 static int canaan_drm_bind(struct device *dev)
 {
@@ -167,6 +203,8 @@ static int canaan_drm_platform_probe(struct platform_device *pdev)
     struct device *dev = &pdev->dev;
     struct component_match *match = NULL;
 
+    disp_dev = dev;
+    pm_runtime_enable(disp_dev);
     match = canaan_drm_match_add(dev);
     if (IS_ERR(match))
         return PTR_ERR(match);

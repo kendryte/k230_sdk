@@ -31,7 +31,7 @@ obj-$(CONFIG_LPDDR3_2133) += lpddr3_2133.o   #ddr_init_2133.c
 
 
 $(obj)/lpddr3_2133.c: $(src)/ddr_init_2133.c   $(src)/../ddr.sh
-	($(srctree)/arch/riscv/cpu/k230/ddr.sh $< $@ || exit 1)
+	($(srctree)/arch/riscv/cpu/k230/ddr.sh $< $@ 0x50000 0x53fff 0x54000 0x54359  || exit 1)
 	
 
 

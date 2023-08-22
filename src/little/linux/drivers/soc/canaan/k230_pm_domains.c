@@ -27,6 +27,7 @@
 #include <linux/of.h>
 #include <linux/pm_domain.h>
 #include <linux/platform_device.h>
+#include <linux/canaan-hardlock.h>
 
 #include <dt-bindings/soc/canaan,k230_pm_domains.h>
 
@@ -52,6 +53,7 @@ struct k230_pm_domain {
     u16 repair_bit;
     u16 repair_wen_bit;
     bool soft_control_enable;
+    bool hardlock;
 };
 
 #define PM_PWR_EN(pd) ((pd)->reg_offset[REG_PM_PWR_EN])
@@ -60,27 +62,37 @@ struct k230_pm_domain {
 #define PM_PWR_REPAIR_STAT(pd) ((pd)->reg_offset[REG_PM_REPAIR_STAT])
 
 static void __iomem *sysctl_power_base;
+static u32 hardlock_disp;
+static u32 hardlock_disp_cpu0;
+static u32 hardlock_disp_cpu1;
 
 static int k230_power_on(struct generic_pm_domain *domain)
 {
     struct k230_pm_domain *pd = (struct k230_pm_domain *)domain;
     unsigned long loop = 1000;  //需要review
     u32 val;
+    unsigned long flags;
 
 #ifndef K230_PM_DEBUG
     if(false == pd->soft_control_enable) {
         pr_info("[K230_POWER]:skip power on %s\n", domain->name);
         return 0;
     }
-    val = readl(sysctl_power_base + PM_PWR_EN(pd));
-    val |= BIT(pd->pwr_on_bit);
-    val |= BIT(pd->pwr_on_wen_bit);
+
+    if (pd->hardlock) {
+        local_irq_save(flags);
+        while (hardlock_lock(hardlock_disp));
+        hardlock_lock(hardlock_disp_cpu0);
+    }
+
+    if (readl(sysctl_power_base + PM_PWR_STAT(pd)) & BIT(pd->pwr_on_bit))
+        goto out;
+
+    val = BIT(pd->pwr_on_bit) | BIT(pd->pwr_on_wen_bit) | BIT(pd->pwr_off_wen_bit);
     writel(val, sysctl_power_base + PM_PWR_EN(pd));
 
     if(true == pd->repair_enable) {
-        val = readl(sysctl_power_base + PM_PWR_REPAIR_EN(pd));
-        val |= BIT(pd->repair_bit);
-        val |= BIT(pd->repair_wen_bit);
+        val = BIT(pd->repair_bit) | BIT(pd->repair_wen_bit);
         writel(val, sysctl_power_base + PM_PWR_REPAIR_EN(pd));
 
         do {
@@ -102,13 +114,17 @@ static int k230_power_on(struct generic_pm_domain *domain)
         udelay(1);
         val = readl(sysctl_power_base + PM_PWR_STAT(pd)) & BIT(pd->pwr_on_bit);
     } while (--loop && !val);
+out:
+    if (pd->hardlock) {
+        hardlock_unlock(hardlock_disp);
+        local_irq_restore(flags);
+    }
 
     if (!loop) {
         pr_err("[K230_POWER]:Error: %s %s power on fail\n", __func__, domain->name);
         return -EIO;
     }
 #endif
-    pr_info("[K230_POWER]:power on %s\n", domain->name);
 
     return 0;
 }
@@ -118,6 +134,7 @@ static int k230_power_off(struct generic_pm_domain *domain)
     struct k230_pm_domain *pd = (struct k230_pm_domain *)domain;
     unsigned long loop = 1000;
     u32 val;
+    unsigned long flags;
 
 #ifndef K230_PM_DEBUG
     if(false == pd->soft_control_enable) {
@@ -125,22 +142,36 @@ static int k230_power_off(struct generic_pm_domain *domain)
         return 0;
     }
 
-    val = readl(sysctl_power_base + PM_PWR_EN(pd));
-    val |= BIT (pd->pwr_off_bit);
-    val |= BIT (pd->pwr_off_wen_bit);
+    if (pd->hardlock) {
+        local_irq_save(flags);
+        while (hardlock_lock(hardlock_disp));
+        if (hardlock_lock(hardlock_disp_cpu1))
+            goto out;
+        hardlock_unlock(hardlock_disp_cpu1);
+    }
+
+    if (readl(sysctl_power_base + PM_PWR_STAT(pd)) & BIT(pd->pwr_off_bit))
+        goto out;
+
+    val = BIT(pd->pwr_off_bit) | BIT(pd->pwr_on_wen_bit) | BIT(pd->pwr_off_wen_bit);
     writel(val, sysctl_power_base + PM_PWR_EN(pd));
 
     do {
         udelay(1);
         val = readl(sysctl_power_base + PM_PWR_STAT(pd)) & BIT(pd->pwr_off_bit);
     } while (--loop && !val);
+out:
+    if (pd->hardlock) {
+        hardlock_unlock(hardlock_disp_cpu0);
+        hardlock_unlock(hardlock_disp);
+        local_irq_restore(flags);
+    }
 
     if (!loop) {
         pr_err("[K230_POWER]:Error: %s %s power off fail\n", __func__, domain->name);
         return -EIO;
     }
 #endif
-    pr_info("[K230_POWER]:power off %s\n", domain->name);
 
     return 0;
 }
@@ -166,17 +197,25 @@ int k230_pd_probe(struct platform_device *pdev,
     if (IS_ERR(sysctl_power_base))
         return PTR_ERR(sysctl_power_base);
 
+    k230_pm_domains[K230_PM_DOMAIN_CPU1]->flags |= GENPD_FLAG_ALWAYS_ON;
+    k230_pm_domains[K230_PM_DOMAIN_AI]->flags |= GENPD_FLAG_ALWAYS_ON;
+    k230_pm_domains[K230_PM_DOMAIN_VPU]->flags |= GENPD_FLAG_ALWAYS_ON;
+    k230_pm_domains[K230_PM_DOMAIN_DPU]->flags |= GENPD_FLAG_ALWAYS_ON;
+
     for (i = 0; i < domain_num; ++i) {
         k230_pm_domains[i]->power_on = k230_power_on;
         k230_pm_domains[i]->power_off = k230_power_off;
 
-        pm_genpd_init(k230_pm_domains[i], NULL, false);
+        pm_genpd_init(k230_pm_domains[i], NULL, i != K230_PM_DOMAIN_DISP ? false : true);
     }
 
     of_genpd_add_provider_onecell(pdev->dev.of_node, genpd_data);
 
+    of_property_read_u32_index(pdev->dev.of_node, "hardlock", 0, &hardlock_disp);
+    of_property_read_u32_index(pdev->dev.of_node, "hardlock", 1, &hardlock_disp_cpu0);
+    of_property_read_u32_index(pdev->dev.of_node, "hardlock", 2, &hardlock_disp_cpu1);
+
     dev_info(&pdev->dev, "powerdomain init ok\n");
-    pr_info("[K230_PD]:k230_pd_probe ok!");
 
     return 0;
 }
@@ -200,6 +239,7 @@ static struct k230_pm_domain cpu1_domain = {
     .repair_enable  = false,
     .reg_offset     = k230_offsets[K230_PM_DOMAIN_CPU1],
     .soft_control_enable = true,    //该字段需要need review
+    .hardlock       = false,
 };
 
 static struct k230_pm_domain ai_domain = {
@@ -215,6 +255,7 @@ static struct k230_pm_domain ai_domain = {
     .repair_wen_bit = 20,
     .reg_offset     = k230_offsets[K230_PM_DOMAIN_AI],
     .soft_control_enable = true,
+    .hardlock       = false,
 };
 
 static struct k230_pm_domain disp_domain = {
@@ -228,6 +269,7 @@ static struct k230_pm_domain disp_domain = {
     .repair_enable  = false,
     .reg_offset     = k230_offsets[K230_PM_DOMAIN_DISP],
     .soft_control_enable = true,
+    .hardlock       = true,
 };
 
 static struct k230_pm_domain vpu_domain = {
@@ -241,6 +283,7 @@ static struct k230_pm_domain vpu_domain = {
     .repair_enable  = false,
     .reg_offset     = k230_offsets[K230_PM_DOMAIN_VPU],
     .soft_control_enable = true,
+    .hardlock       = false,
 };
 
 static struct k230_pm_domain dpu_domain = {
@@ -254,6 +297,7 @@ static struct k230_pm_domain dpu_domain = {
     .repair_enable  = false,
     .reg_offset     = k230_offsets[K230_PM_DOMAIN_DPU],
     .soft_control_enable = true,
+    .hardlock       = false,
 };
 
 static struct generic_pm_domain *k230_pm_domains[] = {

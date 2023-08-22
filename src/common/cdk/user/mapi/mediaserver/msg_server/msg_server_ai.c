@@ -170,6 +170,63 @@ k_s32 msg_ai_release_frame(k_s32 id, k_ipcmsg_message_t *msg)
     return K_SUCCESS;
 }
 
+k_s32 msg_ai_set_pitch_shift_attr(k_s32 id, k_ipcmsg_message_t *msg)
+{
+    k_s32 ret;
+    k_ipcmsg_message_t *resp_msg;
+    k_msg_ai_pitch_shift_attr_t* attr = msg->pBody;
+
+    ret =  kd_mapi_ai_set_pitch_shift_attr(attr->ai_hdl, &attr->param);
+    if(ret != K_SUCCESS) {
+        mapi_ai_error_trace("%s failed:0x%x\n",__FUNCTION__ ,ret);
+        return ret;
+    }
+
+    resp_msg = kd_ipcmsg_create_resp_message(msg, ret, NULL,0);
+    if(resp_msg == NULL) {
+        mapi_ai_error_trace("kd_ipcmsg_create_resp_message failed\n");
+        return K_FAILED;
+    }
+    ret = kd_ipcmsg_send_async(id, resp_msg, NULL);
+    if(ret != K_SUCCESS) {
+        mapi_ai_error_trace(" kd_ipcmsg_send_async failed:%x\n", ret);
+        kd_ipcmsg_destroy_message(resp_msg);
+        return ret;
+    }
+    kd_ipcmsg_destroy_message(resp_msg);
+
+    return K_SUCCESS;
+}
+
+k_s32 msg_ai_get_pitch_shift_attr(k_s32 id, k_ipcmsg_message_t *msg)
+{
+    k_s32 ret;
+    k_ipcmsg_message_t *resp_msg;
+    k_msg_ai_pitch_shift_attr_t* attr = msg->pBody;
+
+    ret =  kd_mapi_ai_get_pitch_shift_attr(attr->ai_hdl, &attr->param);
+    if(ret != K_SUCCESS) {
+        mapi_ai_error_trace("%s failed:0x%x\n",__FUNCTION__ ,ret);
+        return ret;
+    }
+
+    resp_msg = kd_ipcmsg_create_resp_message(msg, ret, NULL,0);
+    if(resp_msg == NULL) {
+        mapi_ai_error_trace("kd_ipcmsg_create_resp_message failed\n");
+        return K_FAILED;
+    }
+    ret = kd_ipcmsg_send_async(id, resp_msg, NULL);
+    if(ret != K_SUCCESS) {
+        mapi_ai_error_trace(" kd_ipcmsg_send_async failed:%x\n", ret);
+        kd_ipcmsg_destroy_message(resp_msg);
+        return ret;
+    }
+    kd_ipcmsg_destroy_message(resp_msg);
+
+    return K_SUCCESS;
+}
+
+
 static msg_module_cmd_t g_module_cmd_table[] = {
     {MSG_CMD_MEDIA_AI_INIT,      msg_ai_init},
     {MSG_CMD_MEDIA_AI_DEINIT,       msg_ai_deinit},
@@ -181,7 +238,8 @@ static msg_module_cmd_t g_module_cmd_table[] = {
    // {MSG_CMD_MEDIA_AI_UNMUTE,      msg_ai_unmute},
     {MSG_CMD_MEDIA_AI_GETFRAME,      msg_ai_get_frame},
     {MSG_CMD_MEDIA_AI_RELEASEFRAME,      msg_ai_release_frame},
-
+    {MSG_CMD_MEDIA_AI_SET_PITCH_SHIFT_ATTR, msg_ai_set_pitch_shift_attr},
+    {MSG_CMD_MEDIA_AI_GET_PITCH_SHIFT_ATTR, msg_ai_get_pitch_shift_attr},
 };
 
 msg_server_module_t g_module_ai = {

@@ -901,4 +901,12 @@ config CRYPTO_DEV_SA2UL
 	  used for crypto offload.  Select this if you want to use hardware
 	  acceleration for cryptographic algorithms on these devices.
 
+config CRYPTO_DEV_CANAAN
+	bool "Support for k230 cryptographic accelerator"
+	help
+		Support for k230 cryptographic accelerator.
+if CRYPTO_DEV_CANAAN
+	source "drivers/crypto/canaan/Kconfig"
+endif
+
 endif # CRYPTO_HW

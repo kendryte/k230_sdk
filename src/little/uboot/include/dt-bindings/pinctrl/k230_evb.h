@@ -29,13 +29,13 @@
 #define K230_MSC_3V3 0
 #define K230_MSC_1V8 1
 
-#define BANK_VOLTAGE_IO0_IO1       K230_MSC_1V8  // FIXED
-#define BANK_VOLTAGE_IO2_IO13      K230_MSC_1V8
-#define BANK_VOLTAGE_IO14_IO25     K230_MSC_1V8
-#define BANK_VOLTAGE_IO26_IO37     K230_MSC_1V8
-#define BANK_VOLTAGE_IO38_IO49     K230_MSC_1V8
-#define BANK_VOLTAGE_IO50_IO61     K230_MSC_3V3
-#define BANK_VOLTAGE_IO62_IO63     K230_MSC_1V8
+// #define BANK_VOLTAGE_IO0_IO1       K230_MSC_1V8  // FIXED
+// #define BANK_VOLTAGE_IO2_IO13      K230_MSC_1V8
+// #define BANK_VOLTAGE_IO14_IO25     K230_MSC_1V8
+// #define BANK_VOLTAGE_IO26_IO37     K230_MSC_1V8
+// #define BANK_VOLTAGE_IO38_IO49     K230_MSC_1V8
+// #define BANK_VOLTAGE_IO50_IO61     K230_MSC_3V3
+// #define BANK_VOLTAGE_IO62_IO63     K230_MSC_1V8
 
 #define ST   (0)
 #define DS   (1)
@@ -45,7 +45,7 @@
 #define IE   (8)
 #define MSC  (9)
 #define SL   (10)
-#define SEL  (11)
+#define SEL  (11)  //function select
 
 #define IO0  (0*4)
 #define IO1  (1*4)

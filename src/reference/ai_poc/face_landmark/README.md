@@ -17,7 +17,7 @@ Options:
   debug_mode      是否需要调试，0、1、2分别表示不调试、简单调试、详细调试
  
  #单图推理示例：（face_landmark_image.sh）
-./face_landmark.elf face_detection_320.kmodel 0.6 0.2 face_landmark.kmodel 1024x1331.jpg 2
+./face_landmark.elf face_detection.kmodel 0.6 0.2 face_landmark.kmodel 1024x1331.jpg 2
 
  #视频流推理：（face_landmark_isp.sh）
 ./face_landmark.elf face_detection_320.kmodel 0.6 0.2 face_landmark.kmodel None 0

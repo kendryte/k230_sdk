@@ -60,7 +60,7 @@ int kd_hardlock_lock(hardlock_type num)
         return 0;
     }
 
-    LOG_E("hardlock-%d is busy\n", num);
+    LOG_D("hardlock-%d is busy\n", num);
     return -1;
 }
 RTM_EXPORT(kd_hardlock_lock);

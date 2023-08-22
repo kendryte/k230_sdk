@@ -25,7 +25,44 @@
 				id =<27>;
 			};
 		};
+		gpio22: gpio22@9140b000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140b000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <54 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
 
+			port22: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<22>;
+			};
+		};
+		gpio23: gpio23@9140b000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140b000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <55 IRQ_TYPE_NONE>;
+			hardlock = <0>;
+
+			port23: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<23>;
+			};
+		};
 		gpio29: gpio29@9140b000 {
 			#address-cells = <1>;
 			#size-cells = <0>;

@@ -27,6 +27,8 @@ obj-$(CONFIG_LPDDR4_1066) += lpddr4_init_32_swap_1066.o
 obj-$(CONFIG_LPDDR4_3200) += lpddr4_init_32_swap_3200.o
 obj-$(CONFIG_LPDDR4_2667) += lpddr4_2667.o
 
+
+
 ##ddr size
 $(obj)/lpddr4_2667.c: $(src)/lpddr4_init_32_swap_2667.c   
 	(cp $(srctree)/arch/riscv/cpu/k230/ddr4/lpddr4_init_32_swap_2667.c  $@)
@@ -35,10 +37,23 @@ ifeq ($(CONFIG_DDR_SIZE),0x80000000)
 else ifeq ($(CONFIG_DDR_SIZE),0x20000000)  
 	sed -i  -E -e 's/(^[^/]*0x00000218[ ]*,)([^)]*)(.*)/\1 0x0f0f0707 \3/ \/\/have modify'  $@ ; 
 endif 
-
-
 #sed -n -E -e 's/(^[^/]*0x00000218[ ]*,)([^)]*)(.*)/\1 0x07070707 \3/p'  $@ 
 #sed -n -E -e 's/(^[^/]*0x00000218[ ]*,)([^)]*)(.*)/\1 0x0f0f0707 \3/p'  $@ 
 #0x0f0f0f07  256MB;
 #0x0f0f0707 512MB
 #0x07070707 2GB
+
+
+
+obj-$(CONFIG_SIPLP4_3200_WODT) += siplp4_3200_hwodt.o
+obj-$(CONFIG_SIPLP4_3200_WALLODT) += siplp4_3200_allodt.o
+
+#arch/riscv/cpu/k230/ddr4/sip_lpddr4_init_32_swap_3200_with_wodt.c
+$(obj)/siplp4_3200_hwodt.c: $(src)/sip_lpddr4_init_32_swap_3200_with_wodt.c   
+	($(srctree)/arch/riscv/cpu/k230/ddr_2d.sh $< $@ 0x50000 0x53fff 0x54000 0x5433d  0x542bd || exit 1)
+
+$(obj)/siplp4_3200_allodt.c: $(src)/sip_lpddr4_init_32_swap_3200_with_allodt.c
+	($(srctree)/arch/riscv/cpu/k230/ddr_2d.sh $< $@ 0x50000 0x53fff 0x54000 0x5433d  0x542bd || exit 1)
+
+
+

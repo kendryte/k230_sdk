@@ -134,6 +134,9 @@ int vg_lite_save_raw(const char *name, vg_lite_buffer_t *buffer);
 int vg_lite_save_raw_byline(const char *name, vg_lite_buffer_t *buffer);
 int vg_lite_load_pkm(vg_lite_buffer_t * buffer, const char * name);
 int vg_lite_load_pkm_info_to_buffer(vg_lite_buffer_t * buffer, const char * name);
+int vg_lite_load_dev_info_to_buffer(vg_lite_buffer_t * buffer, const char * name);
+int vg_lite_load_decnano_compressd_data(vg_lite_buffer_t * buffer, const char * name);
+int vg_lite_save_decnano_compressd_data(const char *name, vg_lite_buffer_t *buffer);
 
 #ifdef __cplusplus
 }

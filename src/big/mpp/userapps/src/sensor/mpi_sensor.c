@@ -341,6 +341,41 @@ const k_vicap_sensor_info sensor_info_list[] = {
         0,
         SC_SC035HGS_MIPI_1LANE_RAW10_640X480_30FPS_LINEAR
     },
+    {
+        "ov9286",
+        "ov9286",
+        1280,
+        720,
+        VICAP_CSI1,
+        VICAP_MIPI_2LANE,
+        VICAP_SOURCE_CSI1_FS_TR0,
+        K_TRUE,
+        VICAP_MIPI_PHY_800M,
+        VICAP_CSI_DATA_TYPE_RAW10,
+        VICAP_LINERA_MODE,
+        VICAP_FLASH_FOLLOW_STROBE,
+        VICAP_VI_FIRST_FRAME_FS_TR0,
+        0,
+        OV_OV9286_MIPI_1280X720_60FPS_10BIT_LINEAR_IR
+    },
+    {
+        "ov9286",
+        "ov9286",
+        1280,
+        720,
+        VICAP_CSI1,
+        VICAP_MIPI_2LANE,
+        VICAP_SOURCE_CSI1_FS_TR1,
+        K_TRUE,
+        VICAP_MIPI_PHY_800M,
+        VICAP_CSI_DATA_TYPE_RAW10,
+        VICAP_LINERA_MODE,
+        VICAP_FLASH_FOLLOW_STROBE,
+        VICAP_VI_FIRST_FRAME_FS_TR0,
+        0,
+        OV_OV9286_MIPI_1280X720_60FPS_10BIT_LINEAR_SPECKLE
+    },
+
 };
 
 

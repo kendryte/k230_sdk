@@ -14,9 +14,8 @@
 	#address-cells = <2>;
 	#size-cells = <2>;
 
-	memory@0 {
+	ddr: memory@0 {
 		device_type = "memory";
-		reg = <0x0 0x8200000 0x0 0x7dff000>;  /*linux memory config*/
     };
 
 	cpus {
@@ -95,7 +94,7 @@
 			current-speed = <115200>;
 		};
 
-		emmc: sdhci0@91580000 {
+		mmc_sd0: sdhci0@91580000 {
 			compatible = "snps,dwcmshc-sdhci";
 			reg = <0x0 0x91580000 0x0 0x1000>;
 			interrupt-parent = <&intc>;
@@ -110,7 +109,7 @@
 			status = "okay";
 		};
 
-		sdcard: sdhci1@91581000 {
+		mmc_sd1: sdhci1@91581000 {
 			compatible = "snps,dwcmshc-sdhci";
 			reg = <0x0 0x91581000 0x0 0x1000>;
 			interrupt-parent = <&intc>;
@@ -138,71 +137,6 @@
 			rx-sample-delay-ns = <5>;
 			num-cs = <1>;
 			reg-io-width = <4>;
-			spi-flash@0 {
-				compatible = "jedec,spi-nor";
-				//compatible = "spi-nand";
-				//compatible = "rohm,dh2228fv";
-				#address-cells = <1>;
-            	#size-cells = <1>;
-				reg = <0>;
-				spi-max-frequency = <100000000>;
-				spi-tx-bus-width = <8>;
-				spi-rx-bus-width = <8>;
-				status = "okay";
-				partitions {
-					compatible = "fixed-partitions";
-					#address-cells = <1>;
-					#size-cells = <1>;
-
-					partition@0 {
-						/* spl boot */
-						reg = <0x0 0x00080000>;
-						label = "spl_boot";
-					};
-
-					partition@80000 {
-						/* normal boot */
-						reg = <0x00080000 0x00180000>;
-						label = "uboot";
-					};
-
-					partition@200000 {
-						reg = <0x200000 0x80000>;
-						label = "quick_boot_cfg ";
-					};
-					partition@280000 {
-						reg = <0x280000 0x80000>;
-						label = "face_db";
-					};
-					partition@300000 {
-						reg = <0x300000 0x40000>;
-						label = "sensor_cfg";
-					};
-					partition@640000 {
-						reg = <0x640000 0x200000>;
-						label = "speckle";
-					};
-
-					partition@a00000 {
-						reg = <0xa00000 0x5c0000>;
-						label = "rtt";
-					};
-					partition@fc0000 {
-						reg = <0xfc0000 0x700000>;
-						label = "linux";
-					};
-					partition@16c0000 {
-						reg = <0x16c0000 0x900000>;
-						label = "rootfs";
-					};
-
-					partition@2000000 {
-						/* 32MB for  update image*/
-						reg = <0 0x2000000>;
-						label = "all_flash";
-					};
-				};
-			};
 		};
 
 		spi1: spi@91582000 {
@@ -387,6 +321,12 @@
 			#size-cells         	= <2>;
 			ranges;
 
+			aes: aes@91210000 {
+				status				= "okay";
+				compatible			= "canaan,k230-crypto";
+				reg					= <0x0 0x91210000 0x0 0x1000>;
+			};
+
 			trng: trng@91213000 {
 				status              = "okay";
 				compatible          = "canaan,k230-rng";
@@ -412,6 +352,15 @@
 			reg = <0x0 0x91104000 0x0 0x01000>;
 		};
 
+		adc: adc@9140d000 {
+			compatible = "canaan,k230-adc";
+			reg = <0x0 0x9140d000 0x0 0x1000>;
+		};
+
+		pwm: pwm@9140a000 {
+			compatible = "canaan,k230-pwm";
+			reg = <0x0 0x9140a000 0x0 0x1000>;
+		};
 		watchdog0: wdt0@91106000 {
 			compatible = "snps,dw-wdt";
 			reg = <0x0 0x91106000 0x0 0x800>;

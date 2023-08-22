@@ -21,9 +21,9 @@ endif
 
 export K230_SDK_ROOT := $(shell pwd)
 ifeq ("$(origin CONF)", "command line")
-$(shell echo CONF=$(CONF)>.last_conf;)
+$(shell echo CONF=$(CONF)>.last_conf;rm -rf .config)
 else
-$(shell [ -f .last_conf ] || echo CONF=k230_evb_defconfig>.last_conf )
+$(shell [ -f .last_conf ] || ( echo CONF=k230_evb_defconfig>.last_conf; rm -rf .config ) )
 endif
 
 ifneq ($(wildcard .last_conf),)
@@ -51,7 +51,18 @@ KCONFIG_PATH= tools/kconfig/
 KCONFIG_MCONF_EXE = tools/kconfig/mconf
 KCONFIG_CFG = Kconfig
 
+GEN_IMAGE_SCRIPT ?= gen_image.sh
+ifeq ($(CONF), k230_evb_doorlock_defconfig)
+GEN_IMAGE_SCRIPT = gen_doorlock_image.sh
+endif
 
+ifeq ($(CONF), k230d_doorlock_defconfig)
+GEN_IMAGE_SCRIPT = gen_doorlock_image.sh
+endif
+
+ifeq ($(CONF), k230_evb_doorlock_ov9286_defconfig)
+GEN_IMAGE_SCRIPT = gen_doorlock_ov9286_image.sh
+endif
 
 define CLEAN
 	set -e; \
@@ -68,7 +79,7 @@ endef
 #include .config
 
 .PHONY: all
-all .DEFAULT: prepare_memory linux mpp cdk-kernel cdk-kernel-install cdk-user cdk-user-install rt-smart-apps rt-smart-kernel big-core-opensbi little-core-opensbi buildroot uboot build-image
+all .DEFAULT: check_src prepare_memory linux mpp cdk-kernel cdk-kernel-install cdk-user cdk-user-install rt-smart-apps rt-smart-kernel big-core-opensbi little-core-opensbi buildroot uboot build-image
 
 .PHONY: test_url
 test_url:
@@ -108,8 +119,8 @@ prepare_sourcecode:prepare_toolchain
 #ai
 	@echo "download nncase sdk"
 	@rm -rf src/big/utils/; rm -rf src/big/ai;
-	@wget -qc $(DOWNLOAD_URL)/downloads/kmodel/kmodel_v2.1.0.tgz -O - | tar -xzC src/big/
-	@wget -qc $(DOWNLOAD_URL)/downloads/nncase/nncase_k230_v2.1.0.tgz -O - | tar -xzC src/big/
+	@wget -qc $(DOWNLOAD_URL)/downloads/kmodel/kmodel_v2.2.0.tgz -O - | tar -xzC src/big/
+	@wget -qc $(DOWNLOAD_URL)/downloads/nncase/nncase_k230_v2.2.0.tgz -O - | tar -xzC src/big/
 
 #big utils
 	@echo "download big utils"
@@ -123,6 +134,9 @@ prepare_sourcecode:prepare_toolchain
 
 #tuning-server
 	@echo "download tuninig-server"
+	@mkdir -p ${BUILDROOT_EXT_SRC_PATH}/package/tuning-server
+	@wget -qc $(DOWNLOAD_URL)/downloads/tunning_server/tuning-server-package_v0.1.1.tar.bz2 -O ${BUILDROOT_EXT_SRC_PATH}/package/tuning-server/tuning-server-package_v0.1.1.tar.bz2
+	@tar -jxf ${BUILDROOT_EXT_SRC_PATH}/package/tuning-server/tuning-server-package_v0.1.1.tar.bz2 -C ${POST_COPY_ROOTFS_PATH}/
 	@mkdir -p tools/tuning-tool-client/
 	@wget -qc $(DOWNLOAD_URL)/downloads/tunning_tools/tunning_client/Kendyte_ISP_Tool_TuningClient_RC22.5_Pre_596062-20221116.7z -P tools/tuning-tool-client/
 
@@ -171,9 +185,11 @@ prepare_memory: defconfig  .config  tools/menuconfig_to_code.sh  parse.mak
 	@mkdir -p  include/generated/  include/config/;
 	@./tools/kconfig/conf --silentoldconfig  --olddefconfig $(KCONFIG_CFG)
 	@cp include/generated/autoconf.h src/little/uboot/board/canaan/k230_evb/sdk_autoconf.h
+	@cp include/generated/autoconf.h src/big/mpp/include/comm/k_autoconf_comm.h
+
 #	#@cp include/generated/autoconf.h src/little/buildroot-ext/package/feature_opreation/src/sdk_autoconf.h
 	@rm -rf include;
-	@$(call CONFIG_MEM_RTT)
+	@./tools/menuconfig_to_code.sh
 	@touch $@
 
 .PHONY: mpp-kernel
@@ -204,8 +220,8 @@ mpp-apps:check_src
 	mkdir -p userapps/sample/fastboot_elf; \
 	make -C userapps/sample || exit $?; \
 	mkdir -p $(RTSMART_SRC_DIR)/userapps/root/bin/; \
-	cp userapps/sample/fastboot_elf/* $(RTSMART_SRC_DIR)/userapps/root/bin/; \
-	cp $(RTSMART_SRC_DIR)/init.sh $(RTSMART_SRC_DIR)/userapps/root/bin/;\
+	source $(K230_SDK_ROOT)/.config; [ "$${CONFIG_BOARD_K230D}" != "y" ] && cp userapps/sample/fastboot_elf/* $(RTSMART_SRC_DIR)/userapps/root/bin/; \
+	cp $(RTSMART_SRC_DIR)/init.sh $(RTSMART_SRC_DIR)/userapps/root/bin/; \
 	cd -;
 
 .PHONY: mpp-apps-clean
@@ -227,7 +243,21 @@ mpp-clean: mpp-kernel-clean mpp-apps-clean
 poc:check_src
 	@export PATH=$(RTT_EXEC_PATH):$(PATH); \
 	export RTSMART_SRC_DIR=$(K230_SDK_ROOT)/$(RT-SMART_SRC_PATH); \
-	cd $(K230_SDK_ROOT)/src/reference/business_poc/door_lock; \
+	cd $(K230_SDK_ROOT)/src/reference/business_poc/doorlock/big; \
+	mkdir -p build; cd build; cmake ../; \
+	make && make install; rm ./* -rf; \
+	cd -;
+
+	@export PATH=$(RTT_EXEC_PATH):$(PATH); \
+	export RTSMART_SRC_DIR=$(K230_SDK_ROOT)/$(RT-SMART_SRC_PATH); \
+	cd $(K230_SDK_ROOT)/src/reference/business_poc/peephole/big; \
+	mkdir -p build; cd build; cmake ../; \
+	make && make install; rm ./* -rf; \
+	cd -;
+
+	@export PATH=$(RTT_EXEC_PATH):$(PATH); \
+	export RTSMART_SRC_DIR=$(K230_SDK_ROOT)/$(RT-SMART_SRC_PATH); \
+	cd $(K230_SDK_ROOT)/src/reference/business_poc/doorlock_ov9286/big; \
 	mkdir -p build; cd build; cmake ../; \
 	make && make install; rm ./* -rf; \
 	cd -;
@@ -238,7 +268,7 @@ cdk-kernel: linux
 
 
 .PHONY: cdk-kernel-install
-cdk-kernel-install:
+cdk-kernel-install: check_src
 	@mkdir -p $(LINUX_BUILD_DIR)/rootfs/mnt; \
 	cd $(CDK_SRC_PATH)/kernel/ipcm; \
 	cp out/node_0/* $(LINUX_BUILD_DIR)/rootfs/mnt/; \
@@ -485,8 +515,6 @@ build-image: defconfig  prepare_memory  check_src
 	mkdir -p $(BUILD_DIR)/images/little-core
 	cp -rf $(BUILDROOT_BUILD_DIR)/images/* $(BUILD_DIR)/images/little-core/
 	cp -rf $(LINUX_BUILD_DIR)/arch/riscv/boot/Image $(BUILD_DIR)/images/little-core/
-	cpp -nostdinc -I $(K230_SDK_ROOT)/$(LINUX_SRC_PATH)/include -I $(K230_SDK_ROOT)/$(LINUX_SRC_PATH)/arch  -undef -x assembler-with-cpp $(K230_SDK_ROOT)/$(LINUX_DTS_PATH)  $(K230_SDK_ROOT)/$(LINUX_DTS_PATH).tmp
-	mv -f $(K230_SDK_ROOT)/$(LINUX_DTS_PATH).tmp $(BUILD_DIR)/images/little-core/hw/k230.dts.txt
 	cp -rf $(LITTLE_OPENSBI_BUILD_DIR)/ $(BUILD_DIR)/images/little-core/
 	cp -f $(LITTLE_OPENSBI_BUILD_DIR)/platform/generic/firmware/fw_*.bin $(BUILD_DIR)/images/little-core/
 	cp -f $(LITTLE_OPENSBI_BUILD_DIR)/platform/generic/firmware/fw_*.elf $(BUILD_DIR)/images/little-core/
@@ -497,13 +525,14 @@ build-image: defconfig  prepare_memory  check_src
 	cd $(BUILD_DIR)/images/little-core/rootfs; \
 	fakeroot -- cpio -idm < ../rootfs.cpio ; \
 	cd $(K230_SDK_ROOT)
+	cp -rf $(K230_SDK_ROOT)/tools/ota/ota_public.pem  	$(BUILD_DIR)/images/little-core/rootfs/etc/
 	cp -rf $(K230_SDK_ROOT)/tools/post_copy_rootfs/*  	$(BUILD_DIR)/images/little-core/rootfs/
 	fakeroot -- cp -rf $(BUILD_DIR)/images/little-core/ko-apps/* $(BUILD_DIR)/images/little-core/rootfs/
 	set -e ;cd $(BUILD_DIR)/images/little-core/rootfs/; \
 	fakeroot -- $(K230_SDK_ROOT)/tools/mkcpio-rootfs.sh; \
 	cd ../; \
 	tar -zcf rootfs-final.tar.gz rootfs; \
-	$(K230_SDK_ROOT)/tools/gen_image.sh; \
+	$(K230_SDK_ROOT)/tools/$(GEN_IMAGE_SCRIPT); \
 	cd $(K230_SDK_ROOT)
 
 

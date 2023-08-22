@@ -103,6 +103,12 @@ int board_init(void)
 
 	writel(usb0_test_ctl3, (void*)USB0_TEST_CTL3);
 	writel(usb1_test_ctl3, (void*)USB1_TEST_CTL3);
+
+    #define SD_HOST_REG_VOL_STABLE      (1<<4)
+    #define SD_CARD_WRITE_PROT          (1<<6)
+    u32 sd0_ctrl = readl((void*)SD0_CTRL);
+    sd0_ctrl |= SD_HOST_REG_VOL_STABLE | SD_CARD_WRITE_PROT;
+    writel(sd0_ctrl, (void*)SD0_CTRL);
 	return 0;
 }
 

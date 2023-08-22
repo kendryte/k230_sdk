@@ -16,7 +16,8 @@ set(MPP_PATH $ENV{MPP_SRC_DIR})
 
 target_include_directories(${EXE_TARGET}
     PRIVATE ${IPCMSG_PATH}/include
-    PRIVATE ${MPP_PATH}/include)
+    PRIVATE ${MPP_PATH}/include
+    PRIVATE ${MPP_PATH}/include/comm)
 
 target_link_directories(${EXE_TARGET}
     PRIVATE ${IPCMSG_PATH}/host/lib)

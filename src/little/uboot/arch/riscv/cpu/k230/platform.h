@@ -169,6 +169,7 @@ extern "C" {
 #define DEBUG_UART_RXD  (39)
 
 #define HS_REG_BASE (0x91585000UL)
+#define SD0_CTRL       (HS_REG_BASE + 0x00)
 #define USB0_TEST_CTL0 (HS_REG_BASE + 0x70)
 #define USB0_TEST_CTL1 (HS_REG_BASE + 0x74)
 #define USB0_TEST_CTL2 (HS_REG_BASE + 0x78)

@@ -731,6 +731,13 @@ static int sdhci_init(struct mmc *mmc)
 
 	sdhci_writeb(host, 0x0, 0x508);
 
+	if(dev_read_bool(mmc->dev, "1-8-v"))
+	{
+		u32 ctrl = sdhci_readw(host, SDHCI_HOST_CONTROL2);
+		ctrl |= SDHCI_CTRL_VDD_180;
+		sdhci_writew(host, ctrl, SDHCI_HOST_CONTROL2);
+	}
+
 	return 0;
 }
 

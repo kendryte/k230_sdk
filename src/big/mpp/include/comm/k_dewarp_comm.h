@@ -124,6 +124,7 @@ struct k_dw_frame_info {
     u32 height;
     enum k_dw_pix_format format;
     k_bool bit10;
+    u8 alignment;
 };
 
 struct k_dw_settings {
@@ -138,6 +139,10 @@ struct k_dw_settings {
     u32 lut_phy_addr;
     void* lut_user_virt_addr;
     u32 lut_size;
+    u32 lut_width;
+    u32 lut_height;
+    // for statistics purpose
+    u8 vdev_id;
 };
 
 struct k_dw_load_request {

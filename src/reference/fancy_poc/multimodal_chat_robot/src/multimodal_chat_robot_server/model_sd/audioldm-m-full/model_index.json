@@ -1,0 +1,28 @@
+{
+  "_class_name": "AudioLDMPipeline",
+  "_diffusers_version": "0.15.0.dev0",
+  "scheduler": [
+    "diffusers",
+    "DDIMScheduler"
+  ],
+  "text_encoder": [
+    "transformers",
+    "ClapTextModelWithProjection"
+  ],
+  "tokenizer": [
+    "transformers",
+    "RobertaTokenizerFast"
+  ],
+  "unet": [
+    "diffusers",
+    "UNet2DConditionModel"
+  ],
+  "vae": [
+    "diffusers",
+    "AutoencoderKL"
+  ],
+  "vocoder": [
+    "transformers",
+    "SpeechT5HifiGan"
+  ]
+}

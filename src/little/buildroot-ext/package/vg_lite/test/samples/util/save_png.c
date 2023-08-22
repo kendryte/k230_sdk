@@ -39,6 +39,10 @@ int vg_lite_save_png(const char *name, vg_lite_buffer_t *buffer)
         q = memory + y * buffer->width * 3;
         for (x = 0; x < buffer->width; x++, q += 3) {
             switch (buffer->format) {
+#if defined(GPU_CHIP_ID_GCNanoUltraV)
+                case VG_LITE_RGBA5658_PLANAR:
+                case VG_LITE_ARGB8565_PLANAR:
+#endif
                 case VG_LITE_RGB565:
                     color = *(uint16_t *)p;
                     p += 2;
@@ -47,6 +51,10 @@ int vg_lite_save_png(const char *name, vg_lite_buffer_t *buffer)
                     q[2] = ((color & 0xF800) >> 8) | ((color & 0xE000) >> 13);
                     break;
 
+#if defined(GPU_CHIP_ID_GCNanoUltraV)
+                case VG_LITE_ABGR8565_PLANAR:
+                case VG_LITE_BGRA5658_PLANAR:
+#endif
                 case VG_LITE_BGR565:
                     color = *(uint16_t *)p;
                     p += 2;
@@ -55,6 +63,7 @@ int vg_lite_save_png(const char *name, vg_lite_buffer_t *buffer)
                     q[2] = ((color & 0x001F) << 3) | ((color & 0x001C) >> 2);
                     break;
 
+#if defined(GPU_CHIP_ID_GCNanoUltraV)
                 case VG_LITE_ABGR8565:
                     p += 1;
                     color = *(uint8_t *)p | *(uint8_t *)(p + 1) << 8;
@@ -102,12 +111,21 @@ int vg_lite_save_png(const char *name, vg_lite_buffer_t *buffer)
                     q[2] = p[0];
                     p += 3;
                     break;
+#endif
 
                 case VG_LITE_RGBA8888:
                 case VG_LITE_RGBX8888:
                     q[0] = p[0];
                     q[1] = p[1];
                     q[2] = p[2];
+                    p += 4;
+                    break;
+
+                case VG_LITE_ARGB8888:
+                case VG_LITE_XRGB8888:
+                    q[0] = p[1];
+                    q[1] = p[2];
+                    q[2] = p[3];
                     p += 4;
                     break;
 

@@ -191,3 +191,23 @@ k_s32 kd_mapi_ai_release_frame(k_handle ai_hdl, k_audio_frame *frame)
 
     return kd_mpi_ai_release_frame(dev,chn,frame);
 }
+
+k_s32 kd_mapi_ai_set_pitch_shift_attr(k_handle ai_hdl, const k_ai_chn_pitch_shift_param *param)
+{
+    CHECK_MAPI_AI_NULL_PTR("param", param);
+    k_u32 dev;
+    k_u32 chn;
+    AI_GET_DEVICE_AND_CHANNEL(ai_hdl,dev,chn);
+
+    return kd_mpi_ai_set_pitch_shift_attr(dev,chn, param);
+}
+
+k_s32 kd_mapi_ai_get_pitch_shift_attr(k_handle ai_hdl, k_ai_chn_pitch_shift_param *param)
+{
+    CHECK_MAPI_AI_NULL_PTR("param", param);
+    k_u32 dev;
+    k_u32 chn;
+    AI_GET_DEVICE_AND_CHANNEL(ai_hdl,dev,chn);
+
+    return kd_mpi_ai_get_pitch_shift_attr(dev,chn, param);
+}

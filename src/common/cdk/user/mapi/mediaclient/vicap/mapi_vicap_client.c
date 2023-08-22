@@ -191,3 +191,22 @@ k_s32 kd_mapi_vicap_stop(k_vicap_dev vicap_dev)
     }
     return ret;
 }
+
+
+k_s32 kd_mapi_vicap_set_vi_drop_frame(k_vicap_csi_num csi, k_vicap_drop_frame *frame, k_bool enable)
+{
+    k_s32 ret = 0;
+    msg_vicap_drop_frame_info_t drop_frame;
+
+    drop_frame.csi = csi;
+    drop_frame.enable = enable;
+    memcpy(&drop_frame.frame, frame, sizeof(k_vicap_drop_frame));
+
+    ret = mapi_send_sync(MODFD(K_MAPI_MOD_VICAP, 0, 0), MSG_CMD_MEDIA_VICAP_DROP_FRAME,
+            &drop_frame, sizeof(drop_frame), NULL);
+
+    if(ret != K_SUCCESS) {
+        mapi_vicap_error_trace("mapi_send_sync failed\n");
+    }
+    return ret;
+}

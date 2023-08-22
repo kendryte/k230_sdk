@@ -184,13 +184,13 @@ int main(int argc, char* argv[]) {
     buffers[0].format = VG_LITE_BGRA8888;
     buffers[0].stride = buffers[0].width * 4;
     buffers[0].memory = drm_get_map(0);
-    CHECK_ERROR(vg_lite_from_dma_buf(buf_fd[0], &buffers[0].address));
+    CHECK_ERROR(vg_lite_map(&buffers[0], VG_LITE_MAP_DMABUF, buf_fd[0]));
     buffers[1].width = width;
     buffers[1].height = height;
     buffers[1].format = VG_LITE_BGRA8888;
-    buffers[1].stride = buffers[0].width * 4;
-    buffers[1].memory = drm_get_map(0);
-    CHECK_ERROR(vg_lite_from_dma_buf(buf_fd[1], &buffers[1].address));
+    buffers[1].stride = buffers[1].width * 4;
+    buffers[1].memory = drm_get_map(1);
+    CHECK_ERROR(vg_lite_map(&buffers[1], VG_LITE_MAP_DMABUF, buf_fd[1]));
 
     unsigned buffer_ptr = 0;
     vg_lite_buffer_t* fb = &buffers[buffer_ptr];

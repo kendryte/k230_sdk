@@ -77,6 +77,12 @@ extern "C" {
 #define TXPHY_216_VOC                            (0x27)                      // 100111 = 0x27
 #define TXPHY_216_HS_FREQ                        (0x93)                      //1001 0011 = 0x93
 
+
+#define TXPHY_297_M                              (196)                       //148.5 M phy clk  ok
+#define TXPHY_297_N                              (7)
+#define TXPHY_297_VOC                            (0x27)                      // 100111 = 0x27
+#define TXPHY_297_HS_FREQ                        (0xa5)                      //10100101 = 0x82
+
 typedef enum
 {
     DISPLAY_DSI_LP_MODE_TEST,
@@ -92,6 +98,7 @@ typedef enum
     DISPALY_VVI_BING_VO_OSD_DUMP_FRAME_TEST,
     DISPALY_VO_1LAN_CASE_TEST,
     DISPALY_VO_DSI_READ_ID,
+    DISPALY_VO_LAYER0_ROTATION,
     // DISPALY_VO_LAYER_FUNCTION_TEST,
 } display_test_case;
 
@@ -170,6 +177,9 @@ void dwc_dsi_1lan_init(void);
 void vo_1lan_background_init(void);
 
 void dwc_dsi_read_hx8399_id(void);
+
+void dwc_dsi_layer0_init(void);
+k_s32 vo_layer0_scaler_test(void);
 
 /** @} */ /** <!-- ==== VVO End ==== */
 #ifdef __cplusplus

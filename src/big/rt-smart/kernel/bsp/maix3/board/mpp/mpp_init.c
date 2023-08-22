@@ -250,6 +250,24 @@ int __attribute__((weak)) dewarp_init(void)
 extern int dewarp_init(void);
 /****************************************************/
 
+/*************pm device*************/
+int __attribute__((weak)) pm_core_init(void)
+{
+    rt_kprintf("no pm_core_init library!\n");
+    return -1;
+}
+extern int pm_core_init(void);
+/****************************************************/
+
+/*************fft device*************/
+int __attribute__((weak)) fft_device_init(void)
+{
+    rt_kprintf("no fft_device_init library!\n");
+    return -1;
+}
+extern int fft_device_init(void);
+/****************************************************/
+
 static int mpp_device_init(void)
 {
     media_freq_init();
@@ -268,6 +286,8 @@ static int mpp_device_init(void)
     vdss_init();
     dpu_init();
     dewarp_init();
+    pm_core_init();
+    fft_device_init();
     return 0;
 }
 

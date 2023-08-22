@@ -26,10 +26,9 @@
 #include "sensor_dev.h"
 #include "io.h"
 #include <math.h>
-
-// #include "gpio.h"
-
 #include "drv_gpio.h"
+
+#include "k_board_config_comm.h"
 
 #define pr_info(...) /* rt_kprintf(__VA_ARGS__) */
 #define pr_debug(...) /*rt_kprintf(__VA_ARGS__)*/
@@ -678,17 +677,22 @@ static k_sensor_mode* current_mode = NULL;
 
 static int imx335_power_reset(k_s32 on)
 {
-    #define IMX335_RST_PIN                  46  
-    #define IMX335_MASTER_PIN               28
+    // #define IMX335_RST_PIN                  46
+    // #define IMX335_MASTER_PIN               28
 
-    kd_pin_mode(IMX335_RST_PIN, GPIO_DM_OUTPUT);
-    kd_pin_mode(IMX335_MASTER_PIN, GPIO_DM_OUTPUT);
+    k_u8 rst_gpio, master_gpio;
 
-    kd_pin_write(IMX335_MASTER_PIN, GPIO_PV_LOW);
+    rst_gpio = VICAP_IMX335_RST_GPIO;
+    master_gpio = VICAP_IMX335_MASTER_GPIO;
+
+    kd_pin_mode(rst_gpio, GPIO_DM_OUTPUT);
+    kd_pin_mode(master_gpio, GPIO_DM_OUTPUT);
+
+    kd_pin_write(master_gpio, GPIO_PV_LOW);
     if (on)
-        kd_pin_write(IMX335_RST_PIN, GPIO_PV_HIGH); // GPIO_PV_LOW  GPIO_PV_HIGH
+        kd_pin_write(rst_gpio, GPIO_PV_HIGH); // GPIO_PV_LOW  GPIO_PV_HIGH
     else
-        kd_pin_write(IMX335_RST_PIN, GPIO_PV_LOW); // GPIO_PV_LOW  GPIO_PV_HIGH
+        kd_pin_write(rst_gpio, GPIO_PV_LOW); // GPIO_PV_LOW  GPIO_PV_HIGH
 
     rt_thread_mdelay(1);
 
@@ -777,6 +781,11 @@ static k_s32 imx335_sensor_init(void* ctx, k_sensor_mode mode)
         current_mode->ae_info.min_gain = 1.0;
         current_mode->ae_info.max_gain = 50.0;
 
+        current_mode->ae_info.int_time_delay_frame = 0;
+        current_mode->ae_info.gain_delay_frame = 0;
+        current_mode->ae_info.ae_min_interval_frame = 2.5;
+        current_mode->ae_info.color_type = 0;	//color sensor
+
         current_mode->ae_info.integration_time_increment = current_mode->ae_info.one_line_exp_time;
         current_mode->ae_info.gain_increment = IMX335_AGAIN_STEP;
 
@@ -839,6 +848,9 @@ static k_s32 imx335_sensor_init(void* ctx, k_sensor_mode mode)
         current_mode->ae_info.d_vs_gain.step = (1.0f / 1024.0f);
 
         current_mode->ae_info.cur_fps = current_mode->fps;
+        current_mode->sensor_again = 0;
+        current_mode->et_line = 0;
+
         break;
     }
 
@@ -978,13 +990,14 @@ static k_s32 imx335_sensor_set_again(void* ctx, k_sensor_gain gain)
 
     if (gain.exp_frame_type == SENSOR_EXPO_FRAME_TYPE_1FRAME) {
     	again = (k_u32)(log10f(gain.gain[SENSOR_LINEAR_PARAS])*200.0f/3.0f + 0.5f); 	//20*log(gain)*10/3
-    	ret = sensor_reg_write(&dev->i2c_info, IMX335_REG_AGAIN_L,(again & 0xff));
-    	ret |= sensor_reg_write(&dev->i2c_info, IMX335_REG_AGAIN_H,(again & 0x0700)>>8);
-
-
-    	SensorGain = (float)(again) * 0.015f;	//db value/20,(RegVal * 3/10)/20
+    	if(current_mode->sensor_again !=again)
+    	{
+	    	ret = sensor_reg_write(&dev->i2c_info, IMX335_REG_AGAIN_L,(again & 0xff));
+	    	ret |= sensor_reg_write(&dev->i2c_info, IMX335_REG_AGAIN_H,(again & 0x0700)>>8);
+	    	current_mode->sensor_again = again;
+    	}
+    	SensorGain = (float)(current_mode->sensor_again) * 0.015f;	//db value/20,(RegVal * 3/10)/20
     	current_mode->ae_info.cur_again = powf(10, SensorGain);
-
     } else if (gain.exp_frame_type == SENSOR_EXPO_FRAME_TYPE_2FRAMES) {
        again = (k_u32)(log10f(gain.gain[SENSOR_DUAL_EXP_L_PARAS])*200.0f/3.0f + 0.5f); 	//20*log(gain)*10/3
        ret = sensor_reg_write(&dev->i2c_info, IMX335_REG_AGAIN_L,(again & 0xff));
@@ -1080,30 +1093,31 @@ static k_s32 imx335_sensor_set_intg_time(void* ctx, k_sensor_intg_time time)
     float integraion_time = 0;
     struct sensor_driver_dev* dev = ctx;
 
-    if (time.exp_frame_type == SENSOR_EXPO_FRAME_TYPE_1FRAME) {
+    if (time.exp_frame_type == SENSOR_EXPO_FRAME_TYPE_1FRAME)
+    {
         integraion_time = time.intg_time[SENSOR_LINEAR_PARAS];
-
         exp_line = integraion_time / current_mode->ae_info.one_line_exp_time;
         exp_line = MIN(current_mode->ae_info.max_integraion_line, MAX(current_mode->ae_info.min_integraion_line, exp_line));
-
-        k_u32 SHR0 = IMX335_VMAX - exp_line;
-        ret = sensor_reg_write(&dev->i2c_info, IMX335_REG_SHR0_L, SHR0 & 0xff);
-        ret |= sensor_reg_write(&dev->i2c_info, IMX335_REG_SHR0_M, (SHR0 >> 8) & 0xff);
-
-
-        current_mode->ae_info.cur_integration_time = exp_line * current_mode->ae_info.one_line_exp_time;
+        if (current_mode->et_line != exp_line)
+        {
+	        k_u32 SHR0 = IMX335_VMAX - exp_line;
+	        ret = sensor_reg_write(&dev->i2c_info, IMX335_REG_SHR0_L, SHR0 & 0xff);
+	        ret |= sensor_reg_write(&dev->i2c_info, IMX335_REG_SHR0_M, (SHR0 >> 8) & 0xff);
+	        current_mode->et_line = exp_line;
+        }
+        current_mode->ae_info.cur_integration_time = (float)current_mode->et_line * current_mode->ae_info.one_line_exp_time;
     } else if (time.exp_frame_type == SENSOR_EXPO_FRAME_TYPE_2FRAMES) {
         integraion_time = time.intg_time[SENSOR_DUAL_EXP_L_PARAS];
         exp_line = integraion_time / current_mode->ae_info.one_line_exp_time;
         exp_line = MIN(current_mode->ae_info.max_integraion_line, MAX(current_mode->ae_info.min_integraion_line, exp_line));
 
-        current_mode->ae_info.cur_integration_time = exp_line * current_mode->ae_info.one_line_exp_time;
+        current_mode->ae_info.cur_integration_time = (float)exp_line * current_mode->ae_info.one_line_exp_time;
 
         integraion_time = time.intg_time[SENSOR_DUAL_EXP_S_PARAS];
         exp_line = integraion_time / current_mode->ae_info.one_line_exp_time;
         exp_line = MIN(current_mode->ae_info.max_integraion_line, MAX(current_mode->ae_info.min_integraion_line, exp_line));
 
-        current_mode->ae_info.cur_vs_integration_time = exp_line * current_mode->ae_info.one_line_exp_time;
+        current_mode->ae_info.cur_vs_integration_time = (float)exp_line * current_mode->ae_info.one_line_exp_time;
     } else {
         pr_err("%s, unsupport exposure frame.\n", __func__);
         return -1;

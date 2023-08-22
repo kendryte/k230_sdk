@@ -413,6 +413,7 @@ static void sample_vo_fn(void *arg)
 static void *sample_vo_thread(void *arg)
 {
     TEST_TIME(sample_vo_fn(arg), "sample_vo_fn");
+    return NULL;
 }
 
 k_vicap_dev vicap_dev;
@@ -613,6 +614,7 @@ static void *exit_app(void *arg)
         usleep(10000);
     }
     app_run = false;
+    return NULL;
 }
 
 void face_location_convert_roi(std::vector<int> boxes, k_isp_ae_roi *ae_roi, k_u32 h_offset, k_u32 v_offset, k_u32 scale_h, k_u32 scale_v, k_u32 width, k_u32 height)
@@ -644,13 +646,15 @@ void face_location_convert_roi(std::vector<int> boxes, k_isp_ae_roi *ae_roi, k_u
     for(auto i = 0; i < box_size; i += 4)
     {
         k_u32 index = i / 4;
+        boxes[i + 0] = boxes[i + 0] < 0 ? 0: boxes[i + 0];
+        boxes[i + 1] = boxes[i + 1] < 0 ? 0: boxes[i + 1];
 
         ae_roi->roiWindow[index].weight = 100.0;
-        ae_roi->roiWindow[index].window.hOffset = (k_u32)boxes[i + 0] * 1088 / scale_h + h_offset;
-        ae_roi->roiWindow[index].window.vOffset = (k_u32)boxes[i + 1] * 1920 / scale_v + v_offset;
+        ae_roi->roiWindow[index].window.hOffset = (k_u32)(boxes[i + 0] * 1088 / scale_h + h_offset);
+        ae_roi->roiWindow[index].window.vOffset = (k_u32)(boxes[i + 1] * 1920 / scale_v + v_offset);
 
-        ae_roi->roiWindow[index].window.width = ((k_u32)boxes[i + 2] - (k_u32)boxes[i + 0]) * width / scale_h;
-        ae_roi->roiWindow[index].window.height = ((k_u32)boxes[i + 3] - (k_u32)boxes[i + 1]) * height / scale_v;
+        ae_roi->roiWindow[index].window.width = ((k_u32)(boxes[i + 2] - (k_u32)boxes[i + 0]) * width / scale_h);
+        ae_roi->roiWindow[index].window.height = ((k_u32)(boxes[i + 3] - (k_u32)boxes[i + 1]) * height / scale_v);
 
     }
 }
@@ -768,7 +772,7 @@ int main(int argc, char *argv[])
 
         k_isp_ae_roi user_roi;
         face_location_convert_roi(boxes, &user_roi, 768, 16, ISP_CHN1_WIDTH, ISP_CHN1_HEIGHT, 1088, 1920);
-
+        kd_mpi_isp_ae_set_roi((k_isp_dev)vicap_dev, user_roi);
         ret = kd_mpi_vicap_dump_release(vicap_dev, VICAP_CHN_ID_1, &dump_info);
         if (ret) {
             printf("sample_vicap...kd_mpi_vicap_dump_release failed.\n");

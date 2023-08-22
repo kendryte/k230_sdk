@@ -17,10 +17,10 @@ Options:
   debug_mode      是否需要调试，0、1、2分别表示不调试、简单调试、详细调试
  
  #单图推理示例：（face_glasses_image.sh）
-./face_glasses.elf face_detection_320.kmodel 0.4 0.2 face_glasses.kmodel 1024x768.jpg 2
+./face_glasses.elf face_detection_320.kmodel 0.6 0.2 face_glasses.kmodel 1024x768.jpg 2
 
  #视频流推理：（face_glasses_isp.sh）
-./face_glasses.elf face_detection_320.kmodel 0.4 0.2 face_glasses.kmodel None 0
+./face_glasses.elf face_detection_320.kmodel 0.6 0.2 face_glasses.kmodel None 0
 ```
 
 

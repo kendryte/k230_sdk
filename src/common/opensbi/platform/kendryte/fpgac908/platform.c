@@ -18,7 +18,7 @@
 
 #define UART_DEFAULT_BAUDRATE       115200
 #define UART_CLK                    50000000
-#define UART_ADDR                   0x91403000
+#define UART_ADDR 0x91403000UL
 
 static size_t plic_base_addr;
 static size_t clint_base_addr;

@@ -142,10 +142,12 @@ void video_proc(char *argv[])
             cv::rectangle(osd_frame, cv::Rect( x1,y1,w,h ), scalars[r.label], 6, 2, 0); // ARGB
             cv::putText(osd_frame, text, origin, cv::FONT_HERSHEY_COMPLEX, 2, scalars[r.label+2], 1, 8, 0);
             
-            cv::flip(osd_frame, osd_frame_vertical, 0);
-            cv::flip(osd_frame_vertical, osd_frame_horizontal, 1);
-            osd_frame = osd_frame_horizontal;
+            
         }
+
+        cv::flip(osd_frame, osd_frame_vertical, 0);
+        cv::flip(osd_frame_vertical, osd_frame_horizontal, 1);
+        osd_frame = osd_frame_horizontal;
 
         {
             ScopedTiming st("osd copy", atoi(argv[5]));

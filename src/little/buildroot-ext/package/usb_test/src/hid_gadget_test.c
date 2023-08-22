@@ -173,7 +173,7 @@ int mouse_fill_report(char report[8], char buf[BUF_LEN], int *hold)
 
         fprintf(stderr, "unknown option: %s\n", tok);
     }
-    return 3;
+    return 4;
 }
 
 static struct options jmod[] = {

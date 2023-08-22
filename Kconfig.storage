@@ -5,17 +5,17 @@ config SPI_NOR
         bool "enable spi nor flash"
         default y
 
-config SPI_NOR_CFG
-	string "chose spi nor genimage configuration"
-	depends on SPI_NOR=y
+#config SPI_NOR_CFG
+#	string "chose spi nor genimage configuration"
+#	depends on SPI_NOR=y
 
 config SPI_NAND
         bool "enable spi nand flash"
-        default y
+        default n
 
-config SPI_NAND_CFG
-	string "chose spi nand genimage configuration"
-	depends on SPI_NAND=y
+#config SPI_NAND_CFG
+#	string "chose spi nand genimage configuration"
+#	depends on SPI_NAND=y
 
 config SDCAED
         bool "enable sd card"
@@ -29,9 +29,9 @@ config EMMC
         bool "enable EMMC"
         default y
 
-config SPI_EMMC_CFG
-	string "chose EMMC genimage configuration"
-	depends on EMMC=y
+#config SPI_EMMC_CFG
+#	string "chose EMMC genimage configuration"
+#	depends on EMMC=y
 
 
 

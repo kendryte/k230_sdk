@@ -27,8 +27,6 @@
 
 //#include <riscv_io.h>
 #include "io.h"
-// #include "gpio.h"
-
 #include "drv_gpio.h"
 
 #define pr_info(...) //rt_kprintf(__VA_ARGS__)
@@ -49,16 +47,16 @@
 
 #define DELAY_MS_SENSOR_DEFAULT     1
 
-static k_sensor_reg_list ov9732_mipi2lane_1080p_30fps_linear[] = {
+static const k_sensor_reg ov9732_mipi2lane_1080p_30fps_linear[] = {
     {REG_NULL, 0x00},
 };
 
-static k_sensor_reg_list ov9732_mipi2lane_1080p_30fps_hdr[] = {
+static const k_sensor_reg ov9732_mipi2lane_1080p_30fps_hdr[] = {
     {REG_NULL, 0x00},
 };
 
 
-static k_sensor_reg ov9732_mipi2lane_720p_30fps_linear[] = {
+static const k_sensor_reg ov9732_mipi2lane_720p_30fps_linear[] = {
     {0x0103, 0x01},
     {0x0100, 0x00},
     {0x3001, 0x00},
@@ -224,7 +222,7 @@ static k_sensor_reg ov9732_mipi2lane_720p_30fps_linear[] = {
 };
 
 
-static k_sensor_reg ov9732_mipi2lane_720p_30fps_mclk_16m_linear[] = {  
+static const k_sensor_reg ov9732_mipi2lane_720p_30fps_mclk_16m_linear[] = {
     {0x0103, 0x01},
     {0x0100, 0x00},
     {0x3001, 0x00},
@@ -597,6 +595,11 @@ static k_s32 ov9732_sensor_init(void *ctx, k_sensor_mode mode)
         current_mode->ae_info.min_gain = 1.0;
         current_mode->ae_info.max_gain = 63.9375;
 
+        current_mode->ae_info.int_time_delay_frame = 0;
+        current_mode->ae_info.gain_delay_frame = 0;
+        current_mode->ae_info.ae_min_interval_frame = 2.5;
+        current_mode->ae_info.color_type = 0;	//color sensor
+
         current_mode->ae_info.integration_time_increment = current_mode->ae_info.one_line_exp_time;
         current_mode->ae_info.gain_increment = OV9732_MIN_GAIN_STEP;
 
@@ -697,6 +700,8 @@ static k_s32 ov9732_sensor_init(void *ctx, k_sensor_mode mode)
         //current_mode->ae_info.d_vvs_gain.step = (1.0f/1024.0f);//
 
         current_mode->ae_info.cur_fps = current_mode->fps;
+        current_mode->sensor_again = 0;
+        current_mode->et_line = 0;
 
         break;
 
@@ -837,17 +842,21 @@ k_s32 ov9732_sensor_set_again(void *ctx, k_sensor_gain gain)
     struct sensor_driver_dev *dev = ctx;
 
     if (gain.exp_frame_type == SENSOR_EXPO_FRAME_TYPE_1FRAME) {
-        again = (k_u32)(gain.gain[SENSOR_LINEAR_PARAS] * 16);
-        ret = sensor_reg_write(&dev->i2c_info, OV9732_REG_LONG_AGAIN_H,(again & 0x0300)>>8);
-        ret |= sensor_reg_write(&dev->i2c_info, OV9732_REG_LONG_AGAIN_L,(again & 0xff));
-        current_mode->ae_info.cur_again = (float)again/16.0f;
+        again = (k_u32)(gain.gain[SENSOR_LINEAR_PARAS] * 16 + 0.5);
+        if(current_mode->sensor_again !=again)
+        {
+	        ret = sensor_reg_write(&dev->i2c_info, OV9732_REG_LONG_AGAIN_H,(again & 0x0300)>>8);
+	        ret |= sensor_reg_write(&dev->i2c_info, OV9732_REG_LONG_AGAIN_L,(again & 0xff));
+	        current_mode->sensor_again = again;
+        }
+        current_mode->ae_info.cur_again = (float)current_mode->sensor_again/16.0f;
     } else if (gain.exp_frame_type == SENSOR_EXPO_FRAME_TYPE_2FRAMES) {
-        again = (k_u32)(gain.gain[SENSOR_DUAL_EXP_L_PARAS]  * 16);
+        again = (k_u32)(gain.gain[SENSOR_DUAL_EXP_L_PARAS]  * 16 + 0.5);
         ret = sensor_reg_write(&dev->i2c_info, OV9732_REG_LONG_AGAIN_H,(again & 0x0300)>>8);
         ret |= sensor_reg_write(&dev->i2c_info, OV9732_REG_LONG_AGAIN_L,(again & 0xff));
         current_mode->ae_info.cur_again = (float)again/16.0f;
 
-        again = (k_u32)(gain.gain[SENSOR_DUAL_EXP_S_PARAS] * 16);
+        again = (k_u32)(gain.gain[SENSOR_DUAL_EXP_S_PARAS] * 16 + 0.5);
         //TODO
         current_mode->ae_info.cur_vs_again = (float)again/16.0f;
     } else {
@@ -942,23 +951,25 @@ k_s32 ov9732_sensor_set_intg_time(void *ctx, k_sensor_intg_time time)
 
         exp_line = integraion_time / current_mode->ae_info.one_line_exp_time;
         exp_line = MIN(current_mode->ae_info.max_integraion_line, MAX(1, exp_line));
-
-        ret |= sensor_reg_write(&dev->i2c_info, 0x3501, ( exp_line >> 4) & 0xff);
-        ret |= sensor_reg_write(&dev->i2c_info, 0x3502, ( exp_line << 4) & 0xff);
-
-        current_mode->ae_info.cur_integration_time = exp_line * current_mode->ae_info.one_line_exp_time;
+        if (current_mode->et_line != exp_line)
+        {
+	        ret |= sensor_reg_write(&dev->i2c_info, 0x3501, ( exp_line >> 4) & 0xff);
+	        ret |= sensor_reg_write(&dev->i2c_info, 0x3502, ( exp_line << 4) & 0xff);
+	        current_mode->et_line = exp_line;
+        }
+        current_mode->ae_info.cur_integration_time = (float)current_mode->et_line * current_mode->ae_info.one_line_exp_time;
     } else if (time.exp_frame_type == SENSOR_EXPO_FRAME_TYPE_2FRAMES) {
         integraion_time = time.intg_time[SENSOR_DUAL_EXP_L_PARAS];
         exp_line = integraion_time / current_mode->ae_info.one_line_exp_time;
         exp_line = MIN(current_mode->ae_info.max_integraion_line, MAX(1, exp_line));
 
-        current_mode->ae_info.cur_integration_time = exp_line * current_mode->ae_info.one_line_exp_time;
+        current_mode->ae_info.cur_integration_time = (float)exp_line * current_mode->ae_info.one_line_exp_time;
 
         integraion_time = time.intg_time[SENSOR_DUAL_EXP_S_PARAS];
         exp_line = integraion_time / current_mode->ae_info.one_line_exp_time;
         exp_line = MIN(current_mode->ae_info.max_integraion_line, MAX(1, exp_line));
 
-        current_mode->ae_info.cur_vs_integration_time = exp_line * current_mode->ae_info.one_line_exp_time;
+        current_mode->ae_info.cur_vs_integration_time = (float)exp_line * current_mode->ae_info.one_line_exp_time;
     } else {
         pr_err("%s, unsupport exposure frame.\n", __func__);
         return -1;

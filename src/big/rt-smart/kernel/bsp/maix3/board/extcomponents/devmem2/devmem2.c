@@ -25,7 +25,7 @@ int devmem2(int argc, char **argv) {
         return -1;
     }
     target = strtoul(argv[1], 0, 0);
-    if(target & 0x7) {
+    if(target & 0x3) {
         rt_kprintf("The address must be 8-byte aligned!\n");
         return -1;
     }

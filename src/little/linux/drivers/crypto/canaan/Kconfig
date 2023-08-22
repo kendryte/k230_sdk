@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: GPL-2.0
+#
+# k230 AES-GCM configuration
+#
+config CRYPTO_DEV_KENDRYTE_CRYP
+    tristate "Support for K230 crypto accelerators"
+    select CRYPTO_AES
+    select CRYPTO_BLKCIPHER
+    help
+        This driver interfaces with the hardware crypto accelerator.
+        Supporting gcm mode.

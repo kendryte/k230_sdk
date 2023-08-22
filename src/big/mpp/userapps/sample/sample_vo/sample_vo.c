@@ -28,6 +28,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/mman.h>
+#include <stdbool.h>
 
 #include "k_module.h"
 #include "k_type.h"
@@ -42,18 +43,17 @@
 
 #include "vo_test_case.h"
 
-
 void display_hardware_init()
 {
-    // set hardware reset;
-    kd_display_set_backlight();
     // rst display subsystem
     kd_display_reset();
+    // set hardware reset;
+    kd_display_set_backlight();
+    
 }
 
 int main(int argc, char *argv[])
 {
-
     int test_case;
 
     test_case = atoi(argv[1]);
@@ -132,14 +132,20 @@ int main(int argc, char *argv[])
         dwc_dsi_1lan_init();
         vo_1lan_background_init();
         break;
-    
+
     case DISPALY_VO_DSI_READ_ID :
         dwc_dsi_read_hx8399_id();
         break;
+
+    case DISPALY_VO_LAYER0_ROTATION :
+        kd_mpi_vo_set_user_sync_info(11, 1);
+        dwc_dsi_layer0_init();
+        vo_layer0_scaler_test();
+        break;
         
     default :
-
         break;
     }
-}
 
+    return 0;
+}

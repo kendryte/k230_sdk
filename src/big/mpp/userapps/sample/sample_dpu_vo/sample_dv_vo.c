@@ -1,4 +1,5 @@
 #include "sample_dpu_vo.h"
+#include "vo_test_case.h"
 
 extern k_video_frame_info g_vf_info;
 
@@ -61,6 +62,7 @@ static k_u32 dv_vo_creat_osd_test(k_vo_osd osd, dv_osd_info *info)
     return 0;
 }
 
+
 k_s32 sample_dv_vo_init()
 {
     k_vo_display_resolution *resolution = NULL;
@@ -87,6 +89,14 @@ k_s32 sample_dv_vo_init()
     osd.offset.y = 0;
     osd.global_alptha = 0xff;
     osd.format = PIXEL_FORMAT_RGB_MONOCHROME_8BPP;//PIXEL_FORMAT_RGB_888;//PIXEL_FORMAT_ARGB_4444; //PIXEL_FORMAT_ARGB_1555;//PIXEL_FORMAT_ARGB_8888;
+
+    kd_display_reset();
+    // set hardware reset;
+    kd_display_set_backlight();
+
+    usleep(200000);
+    
+    dwc_dsi_init();
 
     /* vo init */
     kd_mpi_vo_init();

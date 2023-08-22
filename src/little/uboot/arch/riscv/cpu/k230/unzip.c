@@ -321,9 +321,10 @@ int gunzip(void *dst, int dstlen, unsigned char *src, unsigned long *lenp) //gun
             printf("dest len error %x %x \n",temp, dstlen);
             return  -4;
         }
-        ret = k230_priv_unzip(dst,temp, src,lenp);           
+        ret = k230_priv_unzip(dst,temp, src,lenp);  
+        *lenp = temp;         
     }else{
-        printf("general gunzip \n"); 
+        K230_dbg("general gunzip "); 
         ret = stand_gunzip(dst,dstlen, src,lenp);           
     }
     return ret;

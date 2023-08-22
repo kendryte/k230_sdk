@@ -115,7 +115,7 @@ int main(int argc, const char * argv[]) {
     buffer.format = VG_LITE_BGRA8888;
     buffer.stride = buffer.width * 4;
     buffer.memory = drm_get_map(0);
-    CHECK_ERROR(vg_lite_from_dma_buf(buf_fd, &buffer.address));
+    CHECK_ERROR(vg_lite_map(&buffer, VG_LITE_MAP_DMABUF, buf_fd));
     printf("buffer phys: %08x\n", buffer.address);
 
     CHECK_ERROR(vg_lite_clear(&buffer, NULL, 0xffffffffU));

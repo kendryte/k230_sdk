@@ -170,14 +170,14 @@ static void *input_thread(void *arg)
 
     file_size = 0;
     blk_size = STREAM_BUF_SIZE;
-    
+
     int poolid = vdec_conf->input_pool_id;
     vdec_debug("%s>poolid:%d \n", __func__, poolid);
     while (file_size < vdec_conf->file_size)
     {
         memset(&stream, 0, sizeof(k_vdec_stream));
         handle = kd_mpi_vb_get_block(poolid, blk_size, NULL);
-        
+
         if (handle == VB_INVALID_HANDLE)
         {
             //vdec_debug("%s>no vb\n", __func__);
@@ -299,9 +299,6 @@ static void *output_thread(void *arg)
             vo_layer_bind_config(&config);
 
             first = 1;
-
-
-
         }
         else
             usleep(10000);
@@ -358,7 +355,6 @@ int main(int argc, char *argv[])
     int j;
     int i;
     FILE *input_file = NULL;
-    k_u32 hold_sec;
     k_s32 ret;
 
     memset(g_vdec_conf, 0, sizeof(sample_vdec_conf_t)*VDEC_MAX_CHN_NUMS);
@@ -404,10 +400,6 @@ int main(int argc, char *argv[])
                 return -1;
             }
         }
-        else if (strcmp(argv[i], "-t") == 0)
-        {
-            hold_sec = atoi(argv[i+1]);
-        }
         else
         {
             vdec_debug("Error :Invalid arguments %s\n", argv[i]);
@@ -440,7 +432,7 @@ int main(int argc, char *argv[])
         g_vdec_conf[ch].file_size = 0;
 
     vdec_debug("input file size %d\n", g_vdec_conf[ch].file_size);
-    
+
     attr.pic_width = MAX_WIDTH;
     attr.pic_height = MAX_HEIGHT;
     attr.frame_buf_cnt = OUTPUT_BUF_CNT;
@@ -453,7 +445,6 @@ int main(int argc, char *argv[])
     ret = kd_mpi_vdec_create_chn(ch, &attr);
     CHECK_RET(ret, __func__, __LINE__);
 
-    
     ret = kd_mpi_vdec_start_chn(ch);
     CHECK_RET(ret, __func__, __LINE__);
 
@@ -462,8 +453,6 @@ int main(int argc, char *argv[])
     pthread_create(&g_vdec_conf[ch].input_tid, NULL, input_thread, &g_vdec_conf[ch]);
     pthread_create(&g_vdec_conf[ch].output_tid, NULL, output_thread, &g_vdec_conf[ch]);
 
-    usleep(hold_sec*1000*1000);
-    
     while (1)
     {
         if (g_vdec_conf[ch].done == K_TRUE)

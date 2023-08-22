@@ -1,0 +1,36 @@
+name: Feature request
+description: 向我们建议您想要的Feature
+title: "[Feature]: "
+labels: ["feature"]
+assignees:
+  - wuwentao
+  - zhangxiaojingCAN
+  - kexinliang666
+  - chenhb3 
+body:
+  - type: textarea
+    id: what_feature
+    attributes:
+      label: Feature description
+      description: Feature说明
+      placeholder: A clear and concise description of feature. (请简洁清晰的描述一下您想要的feature)
+    validations:
+      required: true
+  - type: textarea
+    id: why_want
+    attributes:
+      label: Want resolve what problem
+      description: 想要解决什么问题
+      placeholder: I need this feature to solve the xx problem or my xx application needs to be based on this feature. (我需要这个feature解决xx问题或者我xx的应用需要基于这个feature)
+    validations:
+      required: false
+  - type: textarea
+    id: other
+    attributes:
+      label: Anything else
+      description: 其它信息
+      placeholder: |
+        Add any other infomation about the feature request here. (关于feature的任何其它信息)
+        Tip: You can attach images or files by clicking this area to highlight it and then dragging files in. (您能点击这个区域然后拖动文件来添加图片或文件)
+    validations:
+      required: false

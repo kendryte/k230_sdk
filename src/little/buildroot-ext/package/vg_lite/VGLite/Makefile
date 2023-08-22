@@ -1,6 +1,12 @@
 OUT = ../drivers
 NAME = libvg_lite.so
-SOURCES = vg_lite_dump.c vg_lite.c vg_lite_path.c vg_lite_matrix.c vg_lite_image.c vg_lite_dmabuf.c ../VGLiteKernel/linux/vg_lite_ioctl.c
+SOURCES = vg_lite_dump.c \
+          vg_lite.c vg_lite_path.c \
+		  vg_lite_stroke.c \
+		  vg_lite_matrix.c \
+		  vg_lite_image.c \
+		  ../VGLiteKernel/linux/vg_lite_ioctl.c \
+		  ../VGLiteKernel/linux/vg_lite_os.c
 
 CFLAGS += -I../inc -I../VGLiteKernel -I.
 CFLAGS += -Wno-missing-braces -D_GNU_SOURCE -lpthread -lrt -g

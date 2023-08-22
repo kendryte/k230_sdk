@@ -18,7 +18,6 @@ LABEL version=0.1
 LABEL date='2023-01-10'
 LABEL auther='wuwentao@canaan-creative.com'
 
-# set default username and uid/gid
 ENV USER=gitlab
 ARG UID=6000
 # local build flag
@@ -43,7 +42,7 @@ dosfstools mtools bison flex autoconf automake \
 libc6-dev-i386 libncurses5:i386 libssl-dev \
 python3 python3-pip python-is-python3 \
 lib32z1 scons libncurses5-dev \
-kmod fakeroot pigz doxygen gawk pkg-config libyaml-dev
+kmod fakeroot pigz tree doxygen gawk pkg-config libyaml-dev
 
 # config pip source
 RUN python3 -m pip config set global.index-url "https://pypi.tuna.tsinghua.edu.cn/simple" \
@@ -93,7 +92,7 @@ USER ${USER}
 RUN mkdir -p /home/${USER}/.ssh/ \
     && FLAG=$(cat /tmp/.flag) && if [ "$FLAG" = "False" ]; then ssh-keyscan g.a-bug.org >> /home/${USER}/.ssh/known_hosts; else echo "Skip install"; fi \
     && ssh-keyscan github.com >> /home/${USER}/.ssh/known_hosts \
-    && chmod 644 ~/.ssh/known_hosts
+    && chmod 644 /home/${USER}/.ssh/known_hosts
 
 # switch work dir
 WORKDIR /home/${USER}/

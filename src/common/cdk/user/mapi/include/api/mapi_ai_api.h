@@ -118,6 +118,28 @@ k_s32 kd_mapi_ai_get_frame(k_handle ai_hdl, k_audio_frame *frame);
  */
 k_s32 kd_mapi_ai_release_frame(k_handle ai_hdl, k_audio_frame *frame);
 
+/**
+ * @brief Set pitch shift attributes
+ *
+ * @param [in] ai_hdl AI handle
+ * @param [in] param  pitch shift param
+ * @return k_s32
+ * @retval 0 success
+ * @retval "not 0" see error code
+ */
+k_s32 kd_mapi_ai_set_pitch_shift_attr(k_handle ai_hdl, const k_ai_chn_pitch_shift_param *param);
+
+/**
+ * @brief Get pitch shift attributes
+ *
+ * @param [in] ai_hdl AI handle
+ * @param [out] param  pitch shift param
+ * @return k_s32
+ * @retval 0 success
+ * @retval "not 0" see error code
+ */
+k_s32 kd_mapi_ai_get_pitch_shift_attr(k_handle ai_hdl, k_ai_chn_pitch_shift_param *param);
+
 
 /** @} */ /** <!-- ==== MAPI_AI End ==== */
 

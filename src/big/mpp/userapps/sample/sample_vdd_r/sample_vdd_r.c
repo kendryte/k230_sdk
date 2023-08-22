@@ -73,7 +73,7 @@ static k_s32 sample_vdd_vb_exit()
 {
     k_s32 ret;
     ret = kd_mpi_vb_exit();
-    if (ret) 
+    if (ret)
         printf("vb_exit failed ret:%d\n", ret);
     return ret;
 }
@@ -134,8 +134,8 @@ static k_s32 sample_vdd_unbind()
 static void *bind_mode_get_frame(void *parameter)
 {
     k_s32 ret;
-    k_dpu_chn_result_u lcn_result;
-    k_dpu_chn_result_u lcn_result_save;
+    k_dpu_chn_result_u lcn_result = {0};
+    k_dpu_chn_result_u lcn_result_save = {0};
 
     printf("%s,%d\n", __func__, __LINE__);
 

@@ -1,0 +1,20 @@
+name: Help
+description: 向我们寻求帮助
+title: "[help]: "
+labels: ["help"]
+assignees:
+  - wuwentao
+  - zhangxiaojingCAN
+  - kexinliang666
+  - chenhb3 
+body:
+  - type: textarea
+    id: help
+    attributes:
+      label: Help
+      description: 帮助
+      placeholder: |
+        A clear and concise description of your problem. (请简洁清晰的描述一下您遇到的问题)
+        Tip: You can attach images or files by clicking this area to highlight it and then dragging files in. (您能点击这个区域然后拖动文件来添加图片或文件)
+    validations:
+      required: true

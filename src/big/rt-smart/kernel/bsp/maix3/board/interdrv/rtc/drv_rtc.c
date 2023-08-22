@@ -94,75 +94,104 @@ static int rtc_timer_set_clock_count_value(unsigned int count)
 static void rtc_interrupt_ctrl_set(rtc_interrupt_mode_t mode)
 {
     rtc_interrupt_ctrl_t *interrupt_ctrl = (rtc_interrupt_ctrl_t*)((void*)addr_base + 0x14);
-    switch(mode) 
+
+    if (mode < RTC_INT_TICK_YEAR)
     {
-        case RTC_INT_ALARM_YEAR:
+        interrupt_ctrl->year_cmp = 0;
+        interrupt_ctrl->month_cmp = 0;
+        interrupt_ctrl->day_cmp = 0;
+        interrupt_ctrl->week_cmp = 0;
+        interrupt_ctrl->hour_cmp = 0;
+        interrupt_ctrl->minute_cmp = 0;
+        interrupt_ctrl->second_cmp = 0;
+
+        if (mode & RTC_INT_ALARM_YEAR)
+        {
             interrupt_ctrl->year_cmp = 1;
-            interrupt_ctrl->alarm_en = 1;
-            break;
-        case RTC_INT_ALARM_MONTH:
+        }
+        if (mode & RTC_INT_ALARM_MONTH)
+        {
             interrupt_ctrl->month_cmp = 1;
-            interrupt_ctrl->alarm_en = 1;
-            break;
-        case RTC_INT_ALARM_DAY:
+        }
+        if (mode & RTC_INT_ALARM_DAY)
+        {
             interrupt_ctrl->day_cmp = 1;
-            interrupt_ctrl->alarm_en = 1;
-            break;
-        case RTC_INT_ALARM_WEEK:
+        }
+        if (mode & RTC_INT_ALARM_WEEK)
+        {
             interrupt_ctrl->week_cmp = 1;
-            interrupt_ctrl->alarm_en = 1;
-            break;
-        case RTC_INT_ALARM_HOUR:
+        }
+        if (mode & RTC_INT_ALARM_HOUR)
+        {
             interrupt_ctrl->hour_cmp = 1;
-            interrupt_ctrl->alarm_en = 1;
-            break;
-        case RTC_INT_ALARM_MINUTE:
+        }
+        if (mode & RTC_INT_ALARM_MINUTE)
+        {
             interrupt_ctrl->minute_cmp = 1;
-            interrupt_ctrl->alarm_en = 1;
-            break;
-        case RTC_INT_ALARM_SECOND:
+        }
+        if (mode & RTC_INT_ALARM_SECOND)
+        {
             interrupt_ctrl->second_cmp = 1;
-            interrupt_ctrl->alarm_en = 1;
-            break;
-        case RTC_INT_TICK_YEAR:
-            interrupt_ctrl->tick_sel = 0x8;
-            interrupt_ctrl->tick_en = 1;
-            break;
-        case RTC_INT_TICK_MONTH:
-            interrupt_ctrl->tick_sel = 0x7;
-            interrupt_ctrl->tick_en = 1;
-            break;
-        case RTC_INT_TICK_DAY:
-            interrupt_ctrl->tick_sel = 0x6;
-            interrupt_ctrl->tick_en = 1;
-            break;
-        case RTC_INT_TICK_WEEK:
-            interrupt_ctrl->tick_sel = 0x5;
-            interrupt_ctrl->tick_en = 1;
-            break;
-        case RTC_INT_TICK_HOUR:
-            interrupt_ctrl->tick_sel = 0x4;
-            interrupt_ctrl->tick_en = 1;
-            break;
-        case RTC_INT_TICK_MINUTE:
-            interrupt_ctrl->tick_sel = 0x3;
-            interrupt_ctrl->tick_en = 1;
-            break;
-        case RTC_INT_TICK_SECOND:
-            interrupt_ctrl->tick_sel = 0x2;
-            interrupt_ctrl->tick_en = 1;
-            break;
-        case RTC_INT_TICK_S8:
-            interrupt_ctrl->tick_sel = 0x1;
-            interrupt_ctrl->tick_en = 1;
-            break;
-        case RTC_INT_TICK_S64:
-            interrupt_ctrl->tick_sel = 0x0;
-            interrupt_ctrl->tick_en = 1;
-            break;
-        default :
-            break;
+        }
+
+        interrupt_ctrl->alarm_en = 1;
+        return;
+    } else {
+        switch(mode)
+        {
+            case RTC_INT_TICK_YEAR:
+                interrupt_ctrl->tick_sel = 0x8;
+                interrupt_ctrl->tick_en = 1;
+                break;
+            case RTC_INT_TICK_MONTH:
+                interrupt_ctrl->tick_sel = 0x7;
+                interrupt_ctrl->tick_en = 1;
+                break;
+            case RTC_INT_TICK_DAY:
+                interrupt_ctrl->tick_sel = 0x6;
+                interrupt_ctrl->tick_en = 1;
+                break;
+            case RTC_INT_TICK_WEEK:
+                interrupt_ctrl->tick_sel = 0x5;
+                interrupt_ctrl->tick_en = 1;
+                break;
+            case RTC_INT_TICK_HOUR:
+                interrupt_ctrl->tick_sel = 0x4;
+                interrupt_ctrl->tick_en = 1;
+                break;
+            case RTC_INT_TICK_MINUTE:
+                interrupt_ctrl->tick_sel = 0x3;
+                interrupt_ctrl->tick_en = 1;
+                break;
+            case RTC_INT_TICK_SECOND:
+                interrupt_ctrl->tick_sel = 0x2;
+                interrupt_ctrl->tick_en = 1;
+                break;
+            case RTC_INT_TICK_S8:
+                interrupt_ctrl->tick_sel = 0x1;
+                interrupt_ctrl->tick_en = 1;
+                break;
+            case RTC_INT_TICK_S64:
+                interrupt_ctrl->tick_sel = 0x0;
+                interrupt_ctrl->tick_en = 1;
+                break;
+            default :
+                break;
+        }
+        return;
     }
+}
+
+static void alarm_stop(void)
+{
+    rtc_interrupt_ctrl_t *interrupt_ctrl = (rtc_interrupt_ctrl_t*)((void*)addr_base + 0x14);
+    interrupt_ctrl->alarm_en = 0;
+}
+
+static void tick_stop(void)
+{
+    rtc_interrupt_ctrl_t *interrupt_ctrl = (rtc_interrupt_ctrl_t*)((void*)addr_base + 0x14);
+    interrupt_ctrl->tick_en = 0;
 }
 
 static int rtc_set_interrupt(int enable, rtc_interrupt_mode_t mode)
@@ -370,10 +399,14 @@ static rt_err_t kd_rtc_control(rt_device_t dev, int cmd, void *args)
         rtc_alarm_set(args);
         break;
     case RT_DEVICE_CTRL_RTC_STOP_ALARM:
-        rtc_stop_interrupt();
+        alarm_stop();
+        break;
+    case RT_DEVICE_CTRL_RTC_STOP_TICK:
+        tick_stop();
         break;
     case RT_DEVICE_CTRL_RTC_SET_CALLBACK:
         callback = args;
+        break;
     default:
         return RT_EINVAL;
     }

@@ -1,133 +1,138 @@
 {
-  "ARCH": "VSI_SIMULATOR_8200L_V6.0.8",
+  "ARCH": "ISP8000_V2201.Manual_ext",
   "root": [
     {
       "driver": [
         {
+          "base_frame": 0,
           "bls": [64, 64, 64, 64],
           "bls_out": [0, 0, 0, 0],
-          "bypass": 0,
+          "bypass": false,
           "bypass_select": 0,
-          "class": "CHdrv3",
-          "color_weight": [254, 1, 0],
-          "enable": true,
-          "ratio": [4.0599999999999996, 29.550000000000001, 1],
+          "class": "CHdrv2",
+          "color_weight": [255, 0, 1],
+          "driver_load": false,
+          "enable": false,
+          "extend_bit": [1,3],
+          "ratio": [4, 16],
           "sensor_type": 7,
+          "stitching_mode": 0,
           "trans_range": [
-            [0.84999999999999998, 0.94999999999999996],
-            [0.84999999999999998, 0.94999999999999996],
-            [0.0, 0.10000000000000001],
-            [0.0, 0.01],
-            [0.84999999999999998, 0.94999999999999996],
-            [0, 0.10000000000000001]
+            [0.2, 0.9],
+            [0, 0.9],
+            [0.95, 1],
+            [0, 0.1]
           ]
         },
         {
           "class": "CGreenEqu",
-          "enable": 1,
+          "driver_load": true,
           "threshold": 2.5
         },
         {
-          "rccc_enable": 0,
           "bls": [0, 0, 0, 0],
-          "ccmatrix": [
-            1, 0, 0, -0.90000000000000002, 0, 1, 0, -0.90000000000000002, 0, 0,
-            1, -0.90000000000000002
-          ],
+          "ccmatrix": [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0],
           "class": "CRgbIR",
           "dpcc_mid_th": [4095, 4095, 4095, 4095],
           "dpcc_th": [400, 100, 100, 100],
-          "enable": 0,
+          "enable": false,
           "gain": [1, 1, 1],
           "ir_threshold": 512,
           "irbayer_pattern": 0,
           "l_threshold": 1024,
-          "out_rgb_pattern": 3
+          "out_rgb_pattern": 3,
+          "rccc_enable": false
         },
         {
-          "bit": 14,
           "class": "CManualWb",
-          "enable": 1,
+          "driver_load": true,
           "gain": [2.211, 1.0, 1.0, 1.755]
         },
         {
           "bit": 13,
           "ccmatrix": [
             1.7998492028419131, -0.5534284323383218, -0.2464207705035912,
-	    -0.2560071385525397, 1.6359493842950346, -0.3799422457424950, 
-	    0.0086439102341468, -0.7236911038426508, 1.7150471936085041
+            -0.2560071385525397, 1.6359493842950346, -0.3799422457424950, 
+            0.0086439102341468, -0.7236911038426508, 1.7150471936085041
           ],
-          "ccoffset": [0.0, 0.0, 0.0],
+          "ccoffset": [0, 0, 0],
           "class": "CCcm",
-          "enable": 1
+          "driver_load": true
         },
         {
           "class": "CDgain",
-          "digital_gain_b": 1.0,
-          "digital_gain_gb": 1.0,
-          "digital_gain_gr": 1.0,
-          "digital_gain_r": 1.0,
-          "enable": 0
+          "digital_gain_b": 1,
+          "digital_gain_gb": 1,
+          "digital_gain_gr": 1,
+          "digital_gain_r": 1,
+          "driver_load": true
         },
         {
-          "bit": 24,
-          "bls": [262144, 262144, 262144, 262144],
+          "bit": 20,
+          "bls": [64, 64, 64, 64],
           "bls_enable": true,
           "class": "CCpdv1",
-          "compress_enable": false,
-          "enable": false,
-          "expand_curve_x": [
-            21, 20, 18, 14, 20, 18, 14, 13, 20, 18, 14, 13, 20, 18, 14, 20, 18,
-            14, 20, 18, 14, 13, 20, 18, 14, 20, 18, 14, 13, 20, 18, 14, 20, 18,
-            14, 13, 20, 18, 14, 13, 15
-          ],
-          "expand_curve_y": [
-            8192, 14640, 16256, 16352, 29232, 32464, 32672, 32768, 58576, 65024,
-            65440, 65744, 117360, 130272, 131072, 234320, 260128, 261744,
-            467824, 519456, 522672, 524288, 937264, 1040512, 1046960, 1871312,
-            2077792, 2090704, 2097152, 3749056, 4162048, 4187856, 7485216,
-            8311168, 8362800, 8388608, 14996256, 16648160, 16751408, 16777215,
-            16777215
-          ],
           "compress_curve_x": [
             21, 20, 18, 14, 20, 18, 14, 13, 20, 18, 14, 13, 20, 18, 14, 20, 18,
             14, 20, 18, 14, 13, 20, 18, 14, 20, 18, 14, 13, 20, 18, 14, 20, 18,
-            14, 13, 20, 18, 14, 13, 15
+            14, 13, 20, 18, 14, 13, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0
           ],
           "compress_curve_y": [
             8192, 14640, 16256, 16352, 29232, 32464, 32672, 32768, 58576, 65024,
             65440, 65744, 117360, 130272, 131072, 234320, 260128, 261744,
             467824, 519456, 522672, 524288, 937264, 1040512, 1046960, 1871312,
             2077792, 2090704, 2097152, 3749056, 4162048, 4187856, 7485216,
-            8311168, 8362800, 8388608, 14996256, 16648160, 16751408, 16777215,
-            16777215
+            8311168, 8362800, 8388608, 14996256, 16648160, 16751408, 16777216,
+            16777216, 16777216, 16777216, 16777216, 16777216, 16777216,
+            16777216, 16777216, 16777216, 16777216, 16777216, 16777216,
+            16777216, 16777216, 16777216, 16777216, 16777216, 16777216,
+            16777216, 16777216, 16777216, 16777216, 16777216, 16777216
+          ],
+          "compress_enable": false,
+          "compress_use_out_y_curve": false,
+          "enable": false,
+          "expand_curve_x": [
+            21, 20, 18, 16, 13, 12, 21, 17, 16, 14, 15, 14, 13, 12, 16, 15, 17,
+            15, 18, 14, 18, 17, 16, 19, 17, 16, 15, 13, 20, 17, 16, 14, 12, 17,
+            16, 15, 14, 13, 12, 18, 17, 15, 13, 19, 17, 15, 14, 13, 12, 20, 17,
+            14, 20, 19, 18, 17, 14, 21, 20, 17, 14, 13, 0, 0
+          ],
+          "expand_curve_y": [
+            512, 898, 995, 1019, 1022, 1024, 1953, 2011, 2040, 2048, 3140, 3686,
+            3959, 4096, 6826, 8192, 14745, 16384, 31804, 32768, 51492, 60854,
+            65536, 110636, 121911, 127548, 130367, 131072, 239662, 253236,
+            260023, 261719, 262144, 395296, 461872, 495160, 511804, 520126,
+            524288, 840839, 999114, 1038683, 1048576, 1815534, 2007274, 2055208,
+            2079176, 2091160, 2097152, 3935751, 4165575, 4194304, 6412778,
+            7522016, 8076634, 8353944, 8388608, 13717350, 16381722, 16714768,
+            16756399, 16777215, 16777215, 16777215
           ],
           "expand_enable": false,
-          "compress_use_out_y_curve": false,
           "expand_use_out_y_curve": false
         },
         {
           "class": "CGamma64",
           "curve": [
-            154, 211, 254, 290, 321, 349, 374, 397, 419, 440, 459, 478, 496,
+            89, 164, 214, 262, 307, 349, 374, 397, 419, 440, 459, 478, 496,
             513, 529, 545, 560, 575, 589, 603, 617, 630, 643, 655, 667, 679,
             691, 703, 714, 725, 736, 747, 757, 768, 778, 788, 798, 807, 817,
             827, 836, 845, 854, 863, 872, 881, 889, 898, 906, 915, 923, 931,
             939, 947, 955, 963, 971, 979, 986, 994, 1001, 1009, 1016, 1023
           ],
-          "enable": 1,
-          "standard": 1,
-          "standard_val": 2.2000000476837158
+          "driver_load": true,
+          "standard": true,
+          "standard_val": 2.2
         },
         {
-          "bypass": true,
-          "class": "CDpcc",
-          "enable": 1,
-          "bpt_enable": 0,
+          "bpt_enable": false,
           "bpt_num": 3,
           "bpt_out_mode": 0,
           "bpt_pos_x": [4, 24, 4],
           "bpt_pos_y": [10, 20, 8],
+          "bypass": true,
+          "class": "CDpcc",
+          "enable": true,
           "line_mad_fac": [
             [4, 24, 4],
             [4, 16, 4]
@@ -161,8 +166,23 @@
           "set_use": 7
         },
         {
+          "class": "CDpf",
+          "div": 0,
+          "enable": true,
+          "gain": 24,
+          "gradient": 2,
+          "min": 2.5,
+          "noise_curve": [
+            4092, 4092, 4092, 4092, 4092, 4092, 4092, 4092, 4092, 4092, 4092,
+            4092, 4092, 4092, 4092, 4092, 4092
+          ],
+          "offset": 1,
+          "sigma_g": 1,
+          "sigma_rb": 1
+        },
+        {
           "class": "CLscv2",
-          "enable": 1,
+          "enable": true,
           "matrix": [
             [
               2783, 2613, 2424, 2264, 2149, 1982, 1882, 1808, 1715, 1643, 1594, 1542, 1498, 1469, 1434, 1416, 1409, 1382, 1408, 1414, 1427, 1452, 1478, 1503, 1567, 1601, 1643, 1695, 1789, 1856, 1948, 2053, 2151,
@@ -306,170 +326,80 @@
             ]
           ],
           "x_size": [
-            47, 53, 57, 60, 67, 69, 74, 80, 84, 87, 93, 97, 104, 105, 109, 110,
-	     110, 109, 105, 104, 97, 93, 87, 84, 80, 74, 69, 67, 60, 57, 53, 47
+            47, 53, 57, 60, 67, 69, 74, 80, 84, 87, 93, 97, 104, 105, 109, 110, 110, 109, 105, 104, 97, 93, 87, 84, 80, 74, 69, 67, 60, 57, 53, 47
           ],
           "y_size": [
             43, 48, 48, 52, 54, 57, 59, 62, 63, 65, 67, 68, 71, 72, 71, 72
           ]
         },
         {
-          "class": "CGtm",
-          "enable": 0,
-          "gtm_rgb_coef": [43, 42, 43],
-          "gtm_lightness_weight": 128,
-          "gtm_color_weight": [43, 42, 43],
-          "bwcor_enable": 0,
-          "bwcor_mode": 0,
-          "bwcor_min_log": 0,
-          "bwcor_max_log": 24,
-          "bwcor_damp_coef": 0,
-          "gtm_curve_mode": 1,
-          "gtm_curve_select": 0,
-          "shift_bit": 4,
-          "pwl_knee_x_log": 24,
-          "pwl_knee_y_log": 20,
-          "pwl_max_log": 24,
-          "pwl_min_log": 0,
-          "log_knee_x_log": 10,
-          "log_knee_slope": 16,
-          "user_curve": [
-            0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6,
-            7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 28, 32, 36, 40, 44, 48,
-            56, 64, 72, 80, 88, 96, 112, 128, 144, 160, 176, 192, 224, 256, 288,
-            320, 352, 384, 448, 512, 576, 640, 704, 768, 896, 1024, 1152, 1280,
-            1408, 1536, 1792, 2048, 2304, 2560, 2816, 3072, 3584, 4096, 4608,
-            5120, 5632, 6144, 7168, 8192, 9216, 10240, 11264, 12288, 14336,
-            16384, 18432, 20480, 22528, 24576, 28672, 32768, 36864, 40960,
-            45056, 49152, 57344, 65536, 73728, 81920, 90112, 98304, 114688,
-            131072, 147456, 163840, 180224, 196608, 229376, 262144, 294912,
-            327680, 360448, 393216, 458752, 524288, 589824, 655360, 720896,
-            786432, 851968, 917504, 983040, 1048575
+          "class": "CWdrv4",
+          "contrast": 512,
+          "enable": false,
+          "entropy": [
+            0, 0, 0, 2, 3, 6, 11, 22, 39, 67, 111, 177, 227, 266, 321, 355, 377,
+            355, 221, 0
           ],
-          "hist_contrast_limit_level": 16,
-          "hist_luma_thr_log": [6, 12, 18, 24],
-          "hist_luma_weight": [1, 1, 1, 1],
-          "hist_hlc_factor": 1.0,
-          "hist_luma_pres_weight": 0.0,
-          "hist_compress_weight": 0.0,
-          "hist_max_gain": 1048575,
-          "hist_min_gain": 1,
-          "hist_strength": 1.0,
-          "hist_damp_coef": 1.0
+          "entropy_base": 716,
+          "entropy_slope": 204,
+          "flat_strength": 1,
+          "flat_thr": 1,
+          "gamma_down": [
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 4, 9, 16, 36, 64, 136, 256, 576,
+            1023
+          ],
+          "gamma_pre": [
+            0, 31514, 36815, 42173, 47646, 53350, 59514, 66602, 75530, 88145,
+            108135, 142869, 175428, 207095, 269144, 330303, 442139, 571475,
+            810472, 1048575
+          ],
+          "gamma_up": [
+            0, 1024, 34837, 56737, 82912, 116814, 162079, 223337, 306767,
+            420749, 576707, 735048, 745499, 755950, 776852, 797754, 839557,
+            881361, 964968, 1048575
+          ],
+          "global_strength": 0,
+          "high_strength": 60,
+          "low_strength": 8,
+          "strength": 128
         },
         {
-          "class": "CWdrv5_1",
-          "driver_load": 1,
-          "comment": "wdr strength",
-          "strength": 128,
-          "high_strength": 10,
-          "low_strength": 256,
-          "comment": "local weight",
-          "contrast": 256,
-          "entropy_enable": 0,
-          "entropy_base": 0,
-          "entropy_slope": 0,
-          "wdr_luma_thr": 64,
-          "comment": "local equalization",
-          "flat_mode": 0,
-          "flat_level": 5,
-          "flat_level_inc": [
-            [3, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-            [5, 4, 3, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-            [7, 6, 5, 4, 3, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-            [10, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 0, 0, 0, 0, 0]
-          ],
-          "dark_attention_level": 0,
-          "comment": "manual global curve weight",
-          "fixed_weight": 368,
-          "comment": "global equlization",
-          "flat_level_global": 5,
-          "comment": "manual global curve",
-          "wdr_curve_select": 0,
-          "log_weight": 7,
-          "log_anchor_x_log": 0,
-          "log_anchor_slope": 16,
-          "ratio_actual": 1.0,
-          "curve2_thr": 1.0,
-          "curve2_losat": 0.7,
-          "curve2_lofactor": 1.0,
-          "curve2_hifactor": 1.0,
-          "comment": "degamma function",
-          "degamma": 1.0,
-          "comment": "gain limitation",
-          "max_gain": 8192,
-          "min_gain": 0,
-          "comment": "defringe fuction(focus on high contrast edge)",
-          "diff_high": 100,
-          "diff_low": 100,
-          "comment": "saturation adjustment function",
-          "sat_range": 0.0,
-          "sat_thr_gaindown": 1,
-          "sat_thr_gainup": 16,
-          "comment": "halo color fading function",
-          "light_en": 1,
-          "light_sat_lothr": 140,
-          "light_sat_hithr": 240,
-          "light_red_thr_log": [0, 0, 0, 15],
-          "light_green_thr_log": [0, 16, 20, 20],
-          "light_blue_thr_log": [0, 16, 20, 20],
-          "light_yellow_thr_log": [0, 0, 0, 0],
-          "light_cyan_thr_log": [0, 0, 0, 0],
-          "light_magenta_thr_log": [0, 0, 0, 0],
-          "comment": "highlight compensation function",
-          "hlc_base_log": 0,
-          "hlc_slope": 0,
-          "comment": "damping function",
-          "damp_mode": 0,
-          "damp_curve_coef": 127,
-          "damp_curve_max": 127,
-          "damp_curve_min": 0,
-          "damp_avg_coef": 127,
-          "damp_avg_max": 127,
-          "damp_avg_min": 0,
-          "damp_coef_dec_limit": 127,
-          "damp_coef_inc_limit": 127,
-          "damp_filter_size": 12,
-          "damp_hithr_log": 0,
-          "damp_lothr_log": 0,
-          "comment": "color weight",
-          "wdr_rgb_coef": [38, 75, 15],
-          "wdr_lightness_weight": 128,
-          "wdr_color_weight": [128, 0, 0]
+          "blend_motion": 80,
+          "blend_slope": 2,
+          "blend_static": 20,
+          "class": "C3dnrv3_1",
+          "dialte_h": 7,
+          "enable": 1,
+          "filter_len": 20,
+          "filter_len2": 5,
+          "motion_dilate_en": 1,
+          "motion_erode_en": 1,
+          "nlm_en": 1,
+          "noise_level": 128,
+          "noisemodel_a": 16.49220085144043,
+          "noisemodel_b": 785.5836181640625,
+          "pregamma_en": 1,
+          "preweight": 8,
+          "range_h": 7,
+          "range_v": 7,
+          "sadweight": 16,
+          "sigma": 4,
+          "strength": 110,
+          "thr_motion_slope": 16,
+          "tnr_en": 0
         },
         {
-          "class": "C3dnrv1",
-          "delta": 2,
-          "driver_load": true,
-          "motion_inv": 64,
-          "strength": 110
-        },
-        {
-          "class": "C2dnrv5_1",
-          "driver_load": true,
-          "luma_curve_x": [
-            0, 32, 64, 96, 128, 196, 256, 512, 768, 1024, 2048, 4096
-          ],
-          "luma_curve_y": [
-            256, 256, 256, 256, 256, 256, 256, 128, 32, 16, 16, 16
-          ],
-          "pregamma_strength": 1,
-          "sigma": 4.0,
-          "strength": 110
-        },
-        {
-          "bright": 0.0,
+          "bright": 0,
           "chroma_out": 2,
           "class": "CCproc",
-          "contrast": 1.0,
-          "enable": 1,
-          "hue": 0.0,
+          "contrast": 1,
+          "driver_load": true,
+          "hue": 0,
           "luma_in": 2,
           "luma_out": 2,
           "saturation": 1.35
         },
         {
-          "ca_en": 1,
           "ca_curve": [
             0, 16, 292, 495, 644, 752, 831, 887, 928, 957, 977, 992, 1002, 1009,
             1014, 1017, 1019, 1021, 1022, 1022, 1023, 1023, 1023, 1023, 1023,
@@ -478,43 +408,45 @@
             1023, 1023, 1023, 1023, 1023, 1023, 1023, 1023, 1024, 1024, 1024,
             1024, 1024, 1024, 1024, 1024, 1024, 1024
           ],
+          "ca_en": true,
           "ca_mode": 1,
           "class": "CEEv1",
-          "curve_en": 1,
-          "dci_en": 1,
+          "curve_en": true,
           "dci_curve": [
             0, 16, 32, 48, 64, 80, 96, 112, 128, 144, 160, 176, 192, 208, 224,
             240, 256, 272, 288, 304, 320, 336, 352, 368, 384, 400, 416, 432,
             448, 464, 480, 496, 512, 528, 544, 560, 576, 592, 608, 624, 640,
             656, 672, 688, 704, 720, 736, 752, 768, 784, 800, 816, 832, 848,
-            864, 880, 896, 912, 928, 944, 960, 976, 992, 1008, 1024
+            864, 880, 896, 912, 928, 944, 960, 976, 992, 1008, 1023
           ],
+          "dci_en": true,
           "ee_edge_gain": 2000,
           "ee_src_strength": 1,
           "ee_strength": 100,
-          "ee_uv_gain": 1024,
+          "ee_uv_gain": 0,
           "ee_y_down_gain": 3000,
           "ee_y_up_gain": 1000,
-          "enable": 1
+          "enable": true
         },
         {
-          "a_blue": 0.0,
-          "a_red": 0.0,
-          "b_blue": 0.0,
-          "b_red": 0.0,
-          "c_blue": 0.0,
-          "c_red": 0.0,
-          "cac_enable": 0,
-          "center_h_offs": 0.0,
-          "center_v_offs": 0.0,
+          "a_blue": 0,
+          "a_red": 0,
+          "b_blue": 0,
+          "b_red": 0,
+          "c_blue": 0,
+          "c_red": 0,
+          "cac_enable": false,
+          "center_h_offs": 0,
+          "center_v_offs": 0,
           "class": "CDmscv2",
           "demoire_edge_r1": 250,
           "demoire_edge_r2": 0,
           "demoire_edge_t1": 256,
           "demoire_edge_t2_shift": 4,
+          "demosaic_enable": true,
           "demosaic_thr": 4,
           "dmsc_demoire_area_thr": 32,
-          "dmsc_demoire_enable": 1,
+          "dmsc_demoire_enable": true,
           "dmsc_demoire_r1": 0,
           "dmsc_demoire_r2": 256,
           "dmsc_demoire_sat_shrink": 8,
@@ -522,17 +454,17 @@
           "dmsc_demoire_t2_shift": 4,
           "dmsc_denoise_strength": 0,
           "dmsc_depurple_cbcr_mode": 3,
-          "dmsc_depurple_enable": 0,
+          "dmsc_depurple_enable": true,
           "dmsc_depurple_sat_shrink": 8,
           "dmsc_depurple_thr": 20,
           "dmsc_dir_thr_max": 0,
           "dmsc_dir_thr_min": 0,
           "dmsc_sharpen_clip_black": 200,
           "dmsc_sharpen_clip_white": 200,
-          "dmsc_sharpen_enable": 1,
+          "dmsc_sharpen_enable": true,
           "dmsc_sharpen_factor_black": 80,
           "dmsc_sharpen_factor_white": 120,
-          "dmsc_sharpen_line_enable": 1,
+          "dmsc_sharpen_line_enable": true,
           "dmsc_sharpen_line_r1": 0,
           "dmsc_sharpen_line_r2": 0,
           "dmsc_sharpen_line_strength": 8,
@@ -542,18 +474,18 @@
           "dmsc_sharpen_r2": 128,
           "dmsc_sharpen_r3": 256,
           "dmsc_sharpen_size": 16,
-          "dmsc_sharpen_t1": 0,
-          "dmsc_sharpen_t2_shift": 0,
-          "dmsc_sharpen_t3": 0,
-          "dmsc_sharpen_t4_shift": 0,
+          "dmsc_sharpen_t1": 16,
+          "dmsc_sharpen_t2_shift": 4,
+          "dmsc_sharpen_t3": 64,
+          "dmsc_sharpen_t4_shift": 4,
           "dmsc_skin_cb_thr_max": 0,
           "dmsc_skin_cb_thr_min": 0,
           "dmsc_skin_cr_thr_max": 0,
           "dmsc_skin_cr_thr_min": 0,
-          "dmsc_skin_enable": 0,
+          "dmsc_skin_enable": false,
           "dmsc_skin_y_thr_max": 0,
           "dmsc_skin_y_thr_min": 0,
-          "enable": 1
+          "enable": true
         },
         {
           "auto_table": "imx335-2592x1944_auto.json",
@@ -568,9 +500,7 @@
           "sensor_gain": 1.0,
           "xml": "imx335-2592x1944.xml"
         }
-      ],
-      "enable": true,
-      "id": 0
+      ]
     }
   ]
 }

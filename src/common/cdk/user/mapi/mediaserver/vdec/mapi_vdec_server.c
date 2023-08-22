@@ -25,6 +25,7 @@
 
 #include <unistd.h>
 #include <pthread.h>
+#include <semaphore.h>
 #include <stdio.h>
 #include <string.h>
 #include "msg_vdec.h"
@@ -35,7 +36,7 @@
 #include "mpi_sys_api.h"
 #include "k_datafifo.h"
 
-#define MPI_VO_TEST  1
+#define MPI_VO_TEST  0
 #if MPI_VO_TEST
 #include "mpi_vo_api.h"
 #endif
@@ -584,22 +585,16 @@ static k_s32 _test_deinit_vo(k_vo_layer layer)
 {
     return kd_mpi_vo_disable_video_layer(layer);
 }
-#if 0
-static pthread_t g_config_vo_tid;
-static k_u32     g_vo_dev;
-static k_u32     g_vo_chn;
-static k_u32     g_vdec_chn;
 
+static pthread_t g_config_vo_tid;
 static void *vo_init_thread(void *arg)
 {
-    k_s32 chn_num = g_vdec_chn;
+    k_s32 chn_num = *((k_handle *)arg);
     k_vdec_chn_status status;
     while(1)
     {
         k_s32 ret;
-        mapi_vdec_error_trace("=====kd_mpi_vdec_query_status begin:%d\n",chn_num);
         ret = kd_mpi_vdec_query_status(chn_num, &status);
-        mapi_vdec_error_trace("=====kd_mpi_vdec_query_status end:ret:%d,width:%d,height:%d\n",ret,status.width,status.height);
         if (ret == K_SUCCESS)
         {
             if (status.width != 0 && status.height != 0)
@@ -616,33 +611,17 @@ static void *vo_init_thread(void *arg)
 
     mapi_vdec_error_trace("config vo width:%d,height:%d\n", g_vo_width,g_vo_height);
     _test_init_vo(ENABLE_VO_LAYER,g_vo_width,g_vo_height);
-    k_mpp_chn vdec_mpp_chn;
-    k_mpp_chn vvo_mpp_chn;
-    k_s32 ret;
-
-    vdec_mpp_chn.mod_id = K_ID_VDEC;
-    vdec_mpp_chn.dev_id = 0;
-    vdec_mpp_chn.chn_id = chn_num;
-    vvo_mpp_chn.mod_id = K_ID_VO;
-    vvo_mpp_chn.dev_id = g_vo_dev;
-    vvo_mpp_chn.chn_id = g_vo_chn;
-    ret = kd_mpi_sys_bind(&vdec_mpp_chn, &vvo_mpp_chn);
-    if (ret)
-    {
-        mapi_vdec_error_trace("kd_mpi_sys_bind failed:0x%x\n", ret);
-    }
 
     return NULL;
 }
-#endif
-
 #endif
 
 k_s32 kd_mapi_vdec_bind_vo(k_u32 chn_num, k_u32 vo_dev, k_u32 vo_chn)
 {
     CHECK_MAPI_VDEC_CHANNEL_PTR(chn_num);
 #if MPI_VO_TEST
-    _test_init_vo(ENABLE_VO_LAYER,1920,1080);
+    pthread_create(&g_config_vo_tid, NULL, vo_init_thread, &g_vdec_chn_ctl[chn_num].vdec_chn);
+
     k_mpp_chn vdec_mpp_chn;
     k_mpp_chn vvo_mpp_chn;
     k_s32 ret;
@@ -658,7 +637,6 @@ k_s32 kd_mapi_vdec_bind_vo(k_u32 chn_num, k_u32 vo_dev, k_u32 vo_chn)
     {
         mapi_vdec_error_trace("kd_mpi_sys_bind failed:0x%x\n", ret);
     }
-    return 0;
 #else
     k_mpp_chn vdec_mpp_chn;
     k_mpp_chn vvo_mpp_chn;
@@ -697,6 +675,11 @@ k_s32 kd_mapi_vdec_unbind_vo(k_u32 chn_num, k_u32 vo_dev, k_u32 vo_chn)
     ret = kd_mpi_sys_unbind(&vdec_mpp_chn, &vvo_mpp_chn);
 #if MPI_VO_TEST
     _test_deinit_vo(ENABLE_VO_LAYER);
+    if (g_config_vo_tid != 0)
+    {
+        pthread_join(g_config_vo_tid, NULL);
+        g_config_vo_tid = 0;
+    }
 #endif
     return ret;
 }

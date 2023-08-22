@@ -9,8 +9,8 @@
 ```
  Usage: ./person_detect.elf <kmodel> <pd_thresh> <nms_thresh> <input_mode> <debug_mode>
 For example:
- [for img] ./person_detect.elf yolov5n.kmodel 0.5 0.45 bus.jpg 0
- [for isp] ./person_detect.elf yolov5n.kmodel 0.5 0.45 None 0
+ [for img] ./person_detect.elf person_detect_yolov5n.kmodel 0.5 0.45 bus.jpg 0
+ [for isp] ./person_detect.elf person_detect_yolov5n.kmodel 0.5 0.45 None 0
 Options:
  1> kmodel    行人检测kmodel文件路径
  2> pd_thresh  行人检测阈值

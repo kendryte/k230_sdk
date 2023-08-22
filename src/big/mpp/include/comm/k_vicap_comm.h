@@ -51,6 +51,8 @@ extern "C" {
 #define VICAP_MIN_FRAME_COUNT     (3)
 #define VICAP_MAX_FRAME_COUNT     (10)
 
+#define VICAP_MCM_FRAME_COUNT     (4)
+
 #define VICAP_IMG_MIN_WIDTH 320
 #define VICAP_IMG_MIN_HEIGH 240
 
@@ -297,29 +299,32 @@ typedef union {
         k_u32 af_enable : 1;      /**< bit 1 */
         k_u32 ahdr_enable : 1;    /**< bit 2 */
         k_u32 awb_enable : 1;     /**< bit 3 */
-        k_u32 bls_enable : 1;     /**< bit 4 */
-        k_u32 ccm_enable : 1;     /**< bit 5 */
-        k_u32 cpd_enable : 1;     /**< bit 6 */
+        k_u32 ccm_enable : 1;     /**< bit 4 */
+        k_u32 compress_enable : 1; /**< bit 5 */
+        k_u32 expand_enable : 1;  /**< bit 6 */
         k_u32 cnr_enable : 1;     /**< bit 7 */
-        k_u32 cproc_enable : 1;   /**< bit 8 */
-        k_u32 csm_enable : 1;     /**< bit 9 */
-        k_u32 dci_enable : 1;     /**< bit 10 */
-        k_u32 demosaic_enable : 1;/**< bit 11 */
-        k_u32 dg_enable : 1;      /**< bit 12 */
-        k_u32 dpcc_enable : 1;    /**< bit 13 */
-        k_u32 dpf_enable : 1;     /**< bit 14 */
-        k_u32 ee_enable : 1;      /**< bit 15 */
-        k_u32 gc_enable : 1;      /**< bit 16 */
-        k_u32 ge_enable : 1;      /**< bit 17 */
-        k_u32 gtm_enable : 1;     /**< bit 18 */
-        k_u32 lsc_enable : 1;     /**< bit 19 */
-        k_u32 lut3d_enable : 1;   /**< bit 20 */
-        k_u32 pdaf_enable : 1;    /**< bit 21 */
-        k_u32 rgbir_enable : 1;   /**< bit 22 */
-        k_u32 wb_enable : 1;      /**< bit 23 */
-        k_u32 wdr_enable : 1;     /**< bit 24 */
-        k_u32 roi_enable : 1;     /**< bit 25 */
-        k_u32 reserved : 6;       /**< bit 26:31 */
+        k_u32 ynr_enable : 1;     /**< bit 8 */
+        k_u32 cproc_enable : 1;   /**< bit 9 */
+        k_u32 csm_enable : 1;     /**< bit 10 */
+        k_u32 dci_enable : 1;     /**< bit 11 */
+        k_u32 demosaic_enable : 1; /**< bit 12 */
+        k_u32 dg_enable : 1;      /**< bit 13 */
+        k_u32 dpcc_enable : 1;    /**< bit 14 */
+        k_u32 dpf_enable : 1;     /**< bit 15 */
+        k_u32 ee_enable : 1;      /**< bit 16 */
+        k_u32 gc_enable : 1;      /**< bit 17 */
+        k_u32 ge_enable : 1;      /**< bit 18 */
+        k_u32 gtm_enable : 1;     /**< bit 19 */
+        k_u32 lsc_enable : 1;     /**< bit 20 */
+        k_u32 lut3d_enable : 1;   /**< bit 21 */
+        k_u32 pdaf_enable : 1;    /**< bit 22 */
+        k_u32 rgbir_enable : 1;   /**< bit 23 */
+        k_u32 wb_enable : 1;      /**< bit 24 */
+        k_u32 wdr_enable : 1;     /**< bit 25 */
+        k_u32 dnr3_enable : 1;    /**< bit 26 */
+        k_u32 dnr2_enable : 1;    /**< bit 27 */
+        k_u32 roi_enable : 1;     /**< bit 28 */
+        k_u32 reserved_enable : 4;/**< bit 29:31 */
     } bits;
     k_u32 data;
 } k_vicap_isp_pipe_ctrl;
@@ -361,6 +366,7 @@ typedef struct {
     k_pixel_format pix_format;
     k_u32 buffer_num;
     k_u32 buffer_size;
+    k_u8 alignment;
 } k_vicap_chn_attr;
 
 /**
@@ -374,6 +380,9 @@ typedef struct {
     k_u32 cpature_frame;
     k_vicap_sensor_info sensor_info;
     k_bool dw_enable;
+    k_bool dev_enable;
+    k_u32 buffer_num;
+    k_u32 buffer_size;
 } k_vicap_dev_attr;
 
 /**
@@ -415,13 +424,15 @@ typedef struct
  *
  */
 typedef struct {
-    k_u64 phys_addr;
+    k_u64 phys_addr[3];
     void *virt_addr;
+    k_s32 pool_id;
     k_s32 dev_num;
     k_s32 chn_num;
     k_u32 width;
     k_u32 height;
     k_pixel_format format;
+    k_u8 alignment;
 } k_vicap_vb_info;
 
 /**
@@ -468,6 +479,7 @@ typedef struct {
     k_u32 crop_v_start;
     k_pixel_format pixel_format;
     k_u32 buf_size;
+    k_u8 alignment;
 } k_vicap_chn_set_info;
 
 

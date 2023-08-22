@@ -375,6 +375,7 @@ int main(int argc, char *argv[]) {
         vi_chn_attr_info.pixel_format = PIXEL_FORMAT_YUV_SEMIPLANAR_420;
         vi_chn_attr_info.vicap_dev = VICAP_DEV_ID_0;
         vi_chn_attr_info.vicap_chn = (k_vicap_chn)vichn_idx;
+        vi_chn_attr_info.alignment = 12;
         if (!dev_attr_info.dw_en)
             vi_chn_attr_info.buf_size = VI_ALIGN_UP(pic_width[vichn_idx] * pic_height[vichn_idx] * 3 / 2, 0x400);
         else

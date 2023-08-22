@@ -95,8 +95,8 @@ static void sample_vicap_vo_init(void)
     k_vo_display_resolution *resolution = &hx8399[0];
     k_vo_pub_attr attr;
 
-    kd_display_set_backlight();
     kd_display_reset();
+    kd_display_set_backlight();
     dwc_dsi_init();
 
     memset(&attr, 0, sizeof(attr));
@@ -857,7 +857,7 @@ chn_parse:
     k_isp_ae_roi ae_roi;
     memset(&ae_roi, 0, sizeof(k_isp_ae_roi));
 
-    k_char select;
+    k_char select = 0;
     while(K_TRUE)
     {
         if(select != '\n')

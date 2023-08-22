@@ -21,7 +21,7 @@ GENIMAGE_CFG_SPI_NOR="${GENIMAGE_CFG_DIR}/genimage-spinor.cfg"
 GENIMAGE_CFG_SPI_NAND="${GENIMAGE_CFG_DIR}/genimage-spinand.cfg"
 GENIMAGE_CFG_SD_REMOTE="${GENIMAGE_CFG_DIR}/genimage-sdcard_remote.cfg"
 
-
+cfg_data_file_path="${GENIMAGE_CFG_DIR}/data"
 quick_boot_cfg_data_file="${GENIMAGE_CFG_DIR}/data/quick_boot.bin"
 face_database_data_file="${GENIMAGE_CFG_DIR}/data/face_data.bin"
 sensor_cfg_data_file="${GENIMAGE_CFG_DIR}/data/sensor_cfg.bin"
@@ -67,7 +67,12 @@ gen_version()
 #生成可用uboot引导的linux版本文件
 gen_linux_bin ()
 {
+	local LINUX_SRC_PATH="src/little/linux"
+	local LINUX_DTS_PATH="src/little/linux/arch/riscv/boot/dts/kendryte/${CONFIG_LINUX_DTB}.dts"
+	
 	cd  "${BUILD_DIR}/images/little-core/" ; 
+	cpp -nostdinc -I ${K230_SDK_ROOT}/${LINUX_SRC_PATH}/include -I ${K230_SDK_ROOT}/${LINUX_SRC_PATH}/arch  -undef -x assembler-with-cpp ${K230_SDK_ROOT}/${LINUX_DTS_PATH}  hw/k230.dts.txt
+	
 
 	ROOTFS_BASE=`cat hw/k230.dts.txt | grep initrd-start | awk -F " " '{print $4}' | awk -F ">" '{print $1}'`
 	ROOTFS_SIZE=`ls -lt rootfs-final.cpio.gz | awk '{print $5}'`
@@ -158,22 +163,28 @@ gen_image()
 
 gen_image_spinor_proc_ai_mode()
 {
-	cd ${BUILD_DIR}/images/big-core/; #cp  root/bin/test.kmodel   root/bin/test1.kmodel;
-	rm -rf ai_mode ai_mode.bin; mkdir -p ai_mode; cp  root/bin/*.kmodel ai_mode;
-	cd ai_mode;
 	local all_kmode=""
 	local size=""
 	local start="0"
 
-	for file in $(ls *.kmodel) ; do 
-		truncate -s %128 ${file};
-		cat ${file} >> ../ai_mode.bin
-		all_kmode="${all_kmode} ${file}";
-		size=$(du -sb ${file} | cut -f1 )
-		echo "${file%%\.*}_start=\"${start}\"" >>file_size.txt;
-		echo "${file%%\.*}_size=\"${size}\"" >>file_size.txt;
-		start=$((${start}+${size}))		
-	done
+	cd ${BUILD_DIR}/images/big-core/; #cp  root/bin/test.kmodel   root/bin/test1.kmodel;
+	rm -rf ai_mode ai_mode.bin; mkdir -p ai_mode; 
+	if $(ls root/bin/*.kmodel >/dev/null 2>&1 )  ; then 
+		cp  root/bin/*.kmodel ai_mode; 
+		cd ai_mode;
+		for file in $(ls *.kmodel) ; do 
+			truncate -s %128 ${file};
+			cat ${file} >> ../ai_mode.bin
+			all_kmode="${all_kmode} ${file}";
+			size=$(du -sb ${file} | cut -f1 )
+			echo "${file%%\.*}_start=\"${start}\"" >>file_size.txt;
+			echo "${file%%\.*}_size=\"${size}\"" >>file_size.txt;
+			start=$((${start}+${size}))		
+		done
+	else 
+		cd ai_mode;
+	fi;
+	
 	echo "all_kmode=\"${all_kmode}\""  >>file_size.txt
 	echo "all_size=\"${start}\""  >>file_size.txt
 }
@@ -202,15 +213,19 @@ gen_image_spinor()
 	cd ${BUILD_DIR}/images/little-core/rootfs/; 
 	rm -rf lib/modules/;
 	rm -rf lib/libstdc++*;
-	rm -rf usr/lib/libcrypto.so*;
 	rm -rf usr/bin/fio;
+	rm -rf usr/bin/usb_test;
+	rm -rf usr/bin/hid_gadget_test;
+	rm -rf usr/bin/gadget*;
+	rm -rf usr/bin/otp_test_demo;
+	rm -rf usr/bin/iotwifi*;
+	rm -rf usr/bin/i2c-tools.sh;
 	rm -rf mnt/*;
 	rm -rf app/;
 	rm -rf lib/tuning-server;	
-	rm -rf usr/bin/stress-ng  bin/bash usr/sbin/sshd usr/bin/trace-cmd;
+	rm -rf usr/bin/stress-ng  bin/bash usr/sbin/sshd usr/bin/trace-cmd usr/bin/lvgl_demo_widgets;
 	#find . -name *.ko | xargs rm -rf ;
 	fakeroot -- ${K230_SDK_ROOT}/tools/mkcpio-rootfs.sh; 
-
 
 	#裁剪大核romfs;
 	#$(RT-SMART_SRC_PATH)/userapps/root	
@@ -223,7 +238,8 @@ gen_image_spinor()
 	#${K230_SDK_ROOT}/tools/genromfs -V ai -v -a 32 -f ai_mode.bin -d binbak/ 
 
 	#rtapp and ai mode
-	cd ${BUILD_DIR}/images/big-core/root/bin/;fasb_app_size=$(du -sb fastboot_app.elf | cut -f1);cp  fastboot_app.elf ${BUILD_DIR}/images/big-core/;
+	cd ${BUILD_DIR}/images/big-core/root/bin/;
+	if [ -f  fastboot_app.elf ];then  fasb_app_size=$(du -sb fastboot_app.elf | cut -f1) ; cp  fastboot_app.elf ${BUILD_DIR}/images/big-core/;else fasb_app_size="0";fi
 	find . -type f  -not -name init.sh   | xargs rm -rf ; 
 	echo a>fastboot_app.elf ; for file in ${all_kmode} ;do echo k>${file} ;done
 	cd ${RTSMART_SRC_DIR}/userapps/; python3 ../tools/mkromfs.py ${BUILD_DIR}/images/big-core/root/  ${RTSMART_SRC_DIR}/kernel/bsp/maix3/applications/romfs.c;
@@ -256,6 +272,10 @@ gen_image_spinor()
 	#gen_part_bin quick_boot_cfg_data_file   -n/-a/-s  name 0x80000 
 	gen_cfg_part_bin ${quick_boot_cfg_data_file} -n  quick_boot_cfg  ${CONFIG_MEM_QUICK_BOOT_CFG_BASE}
 	gen_cfg_part_bin ${face_database_data_file} -n  face_db  ${CONFIG_MEM_FACE_DATA_BASE}
+
+	if [ -f "${K230_SDK_ROOT}/src/big/mpp/userapps/src/vicap/src/isp/sdk/t_frameworks/t_database_c/calibration_data/sensor_cfg.bin" ]; then
+		cp ${K230_SDK_ROOT}/src/big/mpp/userapps/src/vicap/src/isp/sdk/t_frameworks/t_database_c/calibration_data/sensor_cfg.bin ${cfg_data_file_path}/sensor_cfg.bin
+	fi
 	gen_cfg_part_bin ${sensor_cfg_data_file} -n  sensor_cfg  ${CONFIG_MEM_SENSOR_CFG_BASE}
 	gen_cfg_part_bin ${ai_mode_data_file} -n  ai_mode ${CONFIG_MEM_AI_MODEL_BASE}
 	gen_cfg_part_bin ${speckle_data_file} -n speckle ${CONFIG_MEM_SPECKLE_BASE}
@@ -278,8 +298,13 @@ gen_image_spinand()
 	cd ${BUILD_DIR}/images/little-core/rootfs/; 
 	rm -rf lib/modules/;
 	rm -rf lib/libstdc++*;
-	rm -rf usr/lib/libcrypto.so*;
 	rm -rf usr/bin/fio;
+	rm -rf usr/bin/usb_test;
+	rm -rf usr/bin/hid_gadget_test;
+	rm -rf usr/bin/gadget*;
+	rm -rf usr/bin/otp_test_demo;
+	rm -rf usr/bin/iotwifi*;
+	rm -rf usr/bin/i2c-tools.sh;
 	rm -rf mnt/*;
 	rm -rf app/;
 	rm -rf lib/tuning-server;	
@@ -290,7 +315,8 @@ gen_image_spinand()
 
 	#裁剪大核romfs;
 	#$(RT-SMART_SRC_PATH)/userapps/root
-	cd ${BUILD_DIR}/images/big-core/root/bin/; rm -rf sample_vicap_dump.elf sample_sys_init.elf  sample_venc.elf sample_dw200.elf sample_vdss.elf sample_vdd_r.elf sample_dpu* sample_dma* ./dpu;
+	#cd ${BUILD_DIR}/images/big-core/root/bin/; rm -rf sample_vicap_dump.elf sample_sys_init.elf  sample_venc.elf sample_dw200.elf sample_vdss.elf sample_vdd_r.elf sample_dpu* sample_dma* ./dpu;
+	cd ${BUILD_DIR}/images/big-core/root/bin/;
 	cd ${RTSMART_SRC_DIR}/userapps/; python3 ../tools/mkromfs.py ${BUILD_DIR}/images/big-core/root/  ${RTSMART_SRC_DIR}/kernel/bsp/maix3/applications/romfs.c;
 	cd ${K230_SDK_ROOT};make rt-smart-kernel big-core-opensbi;
 	cd "${BUILD_DIR}/images/big-core/"
@@ -342,6 +368,8 @@ mkdir -p ${BUILD_DIR}/images/big-core/app
 cp ${K230_SDK_ROOT}/src/big/mpp/userapps/sample/elf/*   ${BUILD_DIR}/images/big-core/app
 cp ${K230_SDK_ROOT}/src/common/cdk/user/out/big/*  ${BUILD_DIR}/images/big-core/app
 
+
+
 if [ "${CONFIG_REMOTE_TEST_PLATFORM}" = "y" ] ; then 
 	${K230_SDK_ROOT}/tools/remote_test_platform.sh
 	gen_image ${GENIMAGE_CFG_SD_REMOTE}   sysimage-sdcard.img
@@ -354,8 +382,8 @@ if [ "${CONFIG_GEN_SECURITY_IMG}" = "y" ] ; then
 	gen_image ${GENIMAGE_CFG_SD_SM}  sysimage-sdcard_sm.img
 fi
 
-gen_image_spinor 
-gen_image_spinand; 
+[ "${CONFIG_SPI_NOR}" = "y" ] && gen_image_spinor 
+[ "${CONFIG_SPI_NAND}" = "y" ] && gen_image_spinand; 
 
 
 

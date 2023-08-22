@@ -30,7 +30,7 @@ int hardlock_lock(int num)
         pr_debug("hardlock-%d locked\n", num);
         return 0;
     }
-    pr_warn("hardlock-%d is busy\n", num);
+    pr_debug("hardlock-%d is busy\n", num);
     return -1;
 }
 EXPORT_SYMBOL(hardlock_lock);

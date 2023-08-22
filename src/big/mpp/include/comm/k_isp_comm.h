@@ -460,6 +460,7 @@ typedef struct {
     k_bool scale_enable;
     k_bool dw_enable __attribute__((deprecated));
     k_bool chn_enable;
+    k_u8 alignment;
 } k_isp_chn_attr;
 
 /**
@@ -478,6 +479,11 @@ typedef struct {
     char sensor_name[32];
     char calib_file[32];
     k_bool dw_enable;
+    k_bool dev_enable;
+    k_u32 buffer_num;
+    k_u32 buffer_size;
+    k_u64 *vb_phys_addr;
+    void **vb_virt_addr;
 } k_isp_dev_attr;
 
 typedef struct {

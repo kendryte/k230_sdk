@@ -44,9 +44,10 @@
 #include "mpi_vo_api.h"
 #include "vo_test_case.h"
 
-
 extern k_vo_display_resolution hx8399[20];
 
+#define VICAP_OUTPUT_BUF_NUM 6
+#define VICAP_INTPUT_BUF_NUM 4
 
 #define DISPLAY_WITDH  1088
 #define DISPLAY_HEIGHT 1920
@@ -60,8 +61,14 @@ typedef struct {
     k_u16 in_width;
     k_u16 in_height;
 
+    //for mcm
+    k_vicap_work_mode mode;
+    k_u32 in_size;
+    k_pixel_format in_format;
+
     k_bool ae_enable;
     k_bool awb_enable;
+    k_bool dnr3_enable;
 
     k_vicap_chn chn_num[VICAP_CHN_ID_MAX];
 
@@ -95,8 +102,8 @@ static void sample_vicap_vo_init(void)
     k_vo_display_resolution *resolution = &hx8399[0];
     k_vo_pub_attr attr;
 
-    kd_display_set_backlight();
     kd_display_reset();
+    kd_display_set_backlight();
     dwc_dsi_init();
 
     memset(&attr, 0, sizeof(attr));
@@ -207,11 +214,20 @@ static k_s32 sample_vicap_vb_init(vicap_device_obj *dev_obj)
         if (!dev_obj[i].dev_enable)
             continue;
         printf("%s, enable dev(%d)\n", __func__, i);
+
+        if (dev_obj[i].mode == VICAP_WORK_OFFLINE_MODE) {
+            config.comm_pool[k].blk_cnt = VICAP_INTPUT_BUF_NUM;
+            config.comm_pool[k].mode = VB_REMAP_MODE_NOCACHE;
+            config.comm_pool[k].blk_size = dev_obj[i].in_size;
+            printf("%s, dev(%d) pool(%d) in_size(%d) blk_cnt(%d)\n", __func__, i , k ,dev_obj[i].in_size, config.comm_pool[k].blk_cnt);
+            k++;
+        }
+
         for (int j = 0; j < VICAP_CHN_ID_MAX; j++) {
             if (!dev_obj[i].chn_enable[j])
                 continue;
             printf("%s, enable chn(%d), k(%d)\n", __func__, j, k);
-            config.comm_pool[k].blk_cnt = VICAP_MIN_FRAME_COUNT * 2;
+            config.comm_pool[k].blk_cnt = VICAP_OUTPUT_BUF_NUM;
             config.comm_pool[k].mode = VB_REMAP_MODE_NOCACHE;
 
             k_pixel_format pix_format = dev_obj[i].out_format[j];
@@ -237,7 +253,7 @@ static k_s32 sample_vicap_vb_init(vicap_device_obj *dev_obj)
                 break;
             }
             dev_obj[i].buf_size[j] = config.comm_pool[k].blk_size;
-            printf("%s, dev(%d) chn(%d) pool(%d) buf_size(%d)\n", __func__, i, j, k ,dev_obj[i].buf_size[j]);
+            printf("%s, dev(%d) chn(%d) pool(%d) buf_size(%d) blk_cnt(%d)\n", __func__, i, j, k ,dev_obj[i].buf_size[j], config.comm_pool[k].blk_cnt);
             k++;
         }
         if (dev_obj[i].dw_enable) {
@@ -323,8 +339,9 @@ static void sample_vicap_unbind_vo(k_s32 vicap_dev, k_s32 vicap_chn, k_s32 vo_ch
 
 static void usage(void)
 {
-    printf("usage: ./sample_vicap -dev 0 -sensor 0 -chn 0 -chn 1 -ow 640 -oh 480 -preview 1 -rotation 1\n");
+    printf("usage: ./sample_vicap -mode 0 -dev 0 -sensor 0 -chn 0 -chn 1 -ow 640 -oh 480 -preview 1 -rotation 1\n");
     printf("Options:\n");
+    printf(" -mode:         vicap work mode[0: online mode, 1: offline mode. only offline mode support multiple sensor input]\tdefault 0\n");
     printf(" -dev:          vicap device id[0,1,2]\tdefault 0\n");
     printf(" -dw:           enable dewarp[0,1]\tdefault 0\n");
     printf(" -sensor:       sensor type[0: ov9732@1280x720, 1: ov9286_ir@1280x720], 2: ov9286_speckle@1280x720]\n");
@@ -344,6 +361,16 @@ static void usage(void)
     exit(1);
 }
 
+extern unsigned int mcm_wr0_frame_cnt;
+extern unsigned int mcmwr0_done_cnt;
+extern unsigned int mcm_wr1_frame_cnt;
+extern unsigned int mcmwr1_done_cnt;
+extern unsigned int mcm_wr2_frame_cnt;
+extern unsigned int mcmwr2_done_cnt;
+
+extern k_u32 display_cnt;
+extern k_u32 drop_cnt;
+
 // static void _set_mod_log(k_mod_id mod_id,k_s32  level)
 // {
 //     k_log_level_conf level_conf;
@@ -361,6 +388,8 @@ int main(int argc, char *argv[])
 {
     // _set_mod_log(K_ID_VI, 6);
     k_s32 ret = 0;
+
+    k_u32 work_mode = VICAP_WORK_ONLINE_MODE;
 
     vicap_device_obj device_obj[VICAP_DEV_ID_MAX];
     memset(&device_obj, 0 , sizeof(device_obj));
@@ -391,6 +420,22 @@ int main(int argc, char *argv[])
         {
             usage();
         }
+        else if (strcmp(argv[i], "-mode") == 0)
+        {
+            if ((i + 1) >= argc) {
+                printf("mode parameters missing.\n");
+                return -1;
+            }
+            k_s32 mode = atoi(argv[i + 1]);
+            if (mode == 0) {
+                work_mode = VICAP_WORK_ONLINE_MODE;
+            } else if (mode == 1) {
+                work_mode = VICAP_WORK_OFFLINE_MODE;
+            } else {
+                printf("unsupport mode.\n");
+                return -1;
+            }
+        }
         else if (strcmp(argv[i], "-dev") == 0)
         {
 dev_parse:
@@ -400,7 +445,7 @@ dev_parse:
                 return -1;
             }
             cur_dev = atoi(argv[i + 1]);
-            if (cur_dev >= VICAP_DEV_ID_MAX)
+            if (cur_dev > VICAP_DEV_ID_MAX)
             {
                 printf("unsupported vicap device, the valid device num is:0, 1, 2!\n");
                 return -1;
@@ -408,14 +453,8 @@ dev_parse:
             dev_count++;
             printf("cur_dev(%d), dev_count(%d)\n", cur_dev, dev_count);
 
-            if (dev_count >= VICAP_DEV_ID_MAX)
-            {
-                printf("the vicap device number exceeds the limit!\n");
-                return -1;
-            }
-            //TODO
-            if (dev_count > 1) {
-                printf("current version only support one vicap device!!!\n");
+            if (dev_count > VICAP_DEV_ID_MAX) {
+                printf("only support three vicap device!!!\n");
                 return -1;
             }
 
@@ -423,6 +462,7 @@ dev_parse:
             device_obj[cur_dev].dev_enable = K_TRUE;
             device_obj[cur_dev].ae_enable = K_TRUE;//default enable ae
             device_obj[cur_dev].awb_enable = K_TRUE;//default enable awb
+            device_obj[cur_dev].dnr3_enable = K_FALSE;//default disable 3ndr
             //parse dev paramters
             for (i = i + 2; i < argc; i += 2)
             {
@@ -562,42 +602,100 @@ chn_parse:
                         return -1;
                     }
                     k_u16 sensor = atoi(argv[i + 1]);
-                    if (sensor == 0) {
-                        device_obj[cur_dev].sensor_type = OV_OV9732_MIPI_1280X720_30FPS_10BIT_LINEAR;
-                    } else if (sensor == 1) {
-                        device_obj[cur_dev].sensor_type = OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_IR;
-                    } else if (sensor == 2) {
-                        device_obj[cur_dev].sensor_type = OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_SPECKLE;
-                    } else if (sensor == 3) {
-                        device_obj[cur_dev].sensor_type = IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_LINEAR;
-                    } else if (sensor == 4) {
-                        device_obj[cur_dev].sensor_type = IMX335_MIPI_2LANE_RAW12_2592X1944_30FPS_LINEAR;
-                    } else if (sensor == 5) {
-                        device_obj[cur_dev].sensor_type = IMX335_MIPI_4LANE_RAW12_2592X1944_30FPS_LINEAR;
-                    } else if (sensor == 6) {
-                        device_obj[cur_dev].sensor_type = IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_MCLK_7425_LINEAR;
-                    } else if (sensor == 7) {
-                        device_obj[cur_dev].sensor_type = IMX335_MIPI_2LANE_RAW12_2592X1944_30FPS_MCLK_7425_LINEAR;
-                    } else if (sensor == 8) {
-                        device_obj[cur_dev].sensor_type = IMX335_MIPI_4LANE_RAW12_2592X1944_30FPS_MCLK_7425_LINEAR;
-                    } else if (sensor == 9) {
-                        device_obj[cur_dev].sensor_type = OV_OV9286_MIPI_1280X720_30FPS_10BIT_MCLK_25M_LINEAR_SPECKLE;
-                        kd_mpi_vicap_set_mclk(VICAP_MCLK0, VICAP_PLL0_CLK_DIV4, 32, 1);
-                    } else if (sensor == 10) {
-                        device_obj[cur_dev].sensor_type =  OV_OV9732_MIPI_1280X720_30FPS_10BIT_MCLK_16M_LINEAR ;
-                        kd_mpi_vicap_set_mclk(VICAP_MCLK1, VICAP_PLL0_CLK_DIV4, 25, 1);
-                    } else if (sensor == 11) {
-                        device_obj[cur_dev].sensor_type = OV_OV9286_MIPI_1280X720_30FPS_10BIT_MCLK_25M_LINEAR_IR;
-                        kd_mpi_vicap_set_mclk(VICAP_MCLK0, VICAP_PLL0_CLK_DIV4, 32, 1);
-                    } else if (sensor == 12) {
-                        device_obj[cur_dev].sensor_type = SC_SC035HGS_MIPI_1LANE_RAW10_640X480_120FPS_LINEAR;
-                    } else if (sensor == 13) {
-                        device_obj[cur_dev].sensor_type = SC_SC035HGS_MIPI_1LANE_RAW10_640X480_60FPS_LINEAR;
-                    } else if (sensor == 14) {
-                        device_obj[cur_dev].sensor_type = SC_SC035HGS_MIPI_1LANE_RAW10_640X480_30FPS_LINEAR;
-                    } else {
-                        printf("unsupport sensor type.\n");
-                        return -1;
+                    switch (sensor) {
+                        case 0:
+                        {
+                            device_obj[cur_dev].sensor_type = OV_OV9732_MIPI_1280X720_30FPS_10BIT_LINEAR;
+                            break;
+                        }
+                        case 1:
+                        {
+                            device_obj[cur_dev].sensor_type = OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_IR;
+                            break;
+                        }
+                        case 2:
+                        {
+                            device_obj[cur_dev].sensor_type = OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_SPECKLE;
+                            break;
+                        }
+                        case 3:
+                        {
+                            device_obj[cur_dev].sensor_type = IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_LINEAR;
+                            break;
+                        }
+                        case 4:
+                        {
+                            device_obj[cur_dev].sensor_type = IMX335_MIPI_2LANE_RAW12_2592X1944_30FPS_LINEAR;
+                            break;
+                        }
+                        case 5:
+                        {
+                            device_obj[cur_dev].sensor_type = IMX335_MIPI_4LANE_RAW12_2592X1944_30FPS_LINEAR;
+                            break;
+                        }
+                        case 6:
+                        {
+                            device_obj[cur_dev].sensor_type = IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_MCLK_7425_LINEAR;
+                            break;
+                        }
+                        case 7:
+                        {
+                            device_obj[cur_dev].sensor_type = IMX335_MIPI_2LANE_RAW12_2592X1944_30FPS_MCLK_7425_LINEAR;
+                            break;
+                        }
+                        case 8:
+                        {
+                            device_obj[cur_dev].sensor_type = IMX335_MIPI_4LANE_RAW12_2592X1944_30FPS_MCLK_7425_LINEAR;
+                            break;
+                        }
+                        case 9:
+                        {
+                            device_obj[cur_dev].sensor_type = OV_OV9286_MIPI_1280X720_30FPS_10BIT_MCLK_25M_LINEAR_SPECKLE;
+                            kd_mpi_vicap_set_mclk(VICAP_MCLK0, VICAP_PLL0_CLK_DIV4, 32, 1);
+                            break;
+                        }
+                        case 10:
+                        {
+                            device_obj[cur_dev].sensor_type =  OV_OV9732_MIPI_1280X720_30FPS_10BIT_MCLK_16M_LINEAR ;
+                            kd_mpi_vicap_set_mclk(VICAP_MCLK1, VICAP_PLL0_CLK_DIV4, 25, 1);
+                            break;
+                        }
+                        case 11:
+                        {
+                            device_obj[cur_dev].sensor_type = OV_OV9286_MIPI_1280X720_30FPS_10BIT_MCLK_25M_LINEAR_IR;
+                            kd_mpi_vicap_set_mclk(VICAP_MCLK0, VICAP_PLL0_CLK_DIV4, 32, 1);
+                            break;
+                        }
+                        case 12:
+                        {
+                            device_obj[cur_dev].sensor_type = SC_SC035HGS_MIPI_1LANE_RAW10_640X480_120FPS_LINEAR;
+                            break;
+                        }
+                        case 13:
+                        {
+                            device_obj[cur_dev].sensor_type = SC_SC035HGS_MIPI_1LANE_RAW10_640X480_60FPS_LINEAR;
+                            break;
+                        }
+                        case 14:
+                        {
+                            device_obj[cur_dev].sensor_type = SC_SC035HGS_MIPI_1LANE_RAW10_640X480_30FPS_LINEAR;
+                            break;
+                        }
+                        case 15:
+                        {
+                            device_obj[cur_dev].sensor_type = OV_OV9286_MIPI_1280X720_60FPS_10BIT_LINEAR_IR;
+                            break;
+                        }
+                        case 16:
+                        {
+                            device_obj[cur_dev].sensor_type = OV_OV9286_MIPI_1280X720_60FPS_10BIT_LINEAR_SPECKLE;
+                            break;
+                        }
+                        default:
+                        {
+                            printf("unsupport sensor type.\n");
+                            return -1;
+                        }
                     }
                 }
                 else if (strcmp(argv[i], "-pipe") == 0)
@@ -640,6 +738,22 @@ chn_parse:
                         return -1;
                     }
                 }
+                else if (strcmp(argv[i], "-dnr") == 0)
+                {
+                    if ((i + 1) >= argc) {
+                        printf("3ndr parameters missing.\n");
+                        return -1;
+                    }
+                    k_s32 dnr3_status = atoi(argv[i + 1]);
+                    if (dnr3_status == 0) {
+                        device_obj[cur_dev].dnr3_enable = K_FALSE;
+                    } else if (dnr3_status == 1) {
+                        device_obj[cur_dev].dnr3_enable = K_TRUE;
+                    } else {
+                        printf("unsupport 3dnr parameters.\n");
+                        return -1;
+                    }
+                }
                 else if (strcmp(argv[i], "-dw") == 0)
                 {
                     if ((i + 1) >= argc) {
@@ -647,8 +761,7 @@ chn_parse:
                         return -1;
                     }
                     // enable dewarp
-                    dev_attr.dw_enable = atoi(argv[i + 1]);
-                    device_obj[cur_dev].dw_enable = dev_attr.dw_enable;
+                    device_obj[cur_dev].dw_enable = atoi(argv[i + 1]);
                 }
                 else
                 {
@@ -665,6 +778,10 @@ chn_parse:
     }
 
     printf("sample_vicap: dev_count(%d), chn_count(%d)\n", dev_count, chn_count);
+    if ((dev_count > 1) && (work_mode == VICAP_WORK_ONLINE_MODE)) {
+        printf("only offline mode support multiple sensor input!!!\n");
+        return 0;
+    }
 
     sample_vicap_vo_init();
 
@@ -690,14 +807,24 @@ chn_parse:
         dev_attr.acq_win.v_start = 0;
         dev_attr.acq_win.width = device_obj[dev_num].in_width;
         dev_attr.acq_win.height = device_obj[dev_num].in_height;
-        dev_attr.mode = VICAP_WORK_ONLINE_MODE;
+        if (work_mode == VICAP_WORK_OFFLINE_MODE) {
+            dev_attr.mode = VICAP_WORK_OFFLINE_MODE;
+            dev_attr.buffer_num = VICAP_INTPUT_BUF_NUM;
+            dev_attr.buffer_size = VICAP_ALIGN_UP((device_obj[dev_num].in_width * device_obj[dev_num].in_height * 2), VICAP_ALIGN_1K);
+            device_obj[dev_num].in_size = dev_attr.buffer_size;
+            device_obj[dev_num].mode = VICAP_WORK_OFFLINE_MODE;
+        } else {
+            dev_attr.mode = VICAP_WORK_ONLINE_MODE;
+        }
 
         dev_attr.pipe_ctrl.data = pipe_ctrl;
         dev_attr.pipe_ctrl.bits.af_enable = 0;
         dev_attr.pipe_ctrl.bits.ae_enable = device_obj[dev_num].ae_enable;
         dev_attr.pipe_ctrl.bits.awb_enable = device_obj[dev_num].awb_enable;
+        dev_attr.pipe_ctrl.bits.dnr3_enable = device_obj[dev_num].dnr3_enable;
 
         dev_attr.cpature_frame = 0;
+        dev_attr.dw_enable = device_obj[dev_num].dw_enable;
 
         memcpy(&dev_attr.sensor_info, &device_obj[dev_num].sensor_info, sizeof(k_vicap_sensor_info));
 
@@ -773,8 +900,8 @@ chn_parse:
 
             if (device_obj[dev_num].crop_enable[chn_num]) {
                 chn_attr.crop_win = chn_attr.out_win;
-                chn_attr.crop_win.h_start = device_obj[cur_dev].out_win[cur_chn].h_start;
-                chn_attr.crop_win.v_start = device_obj[cur_dev].out_win[cur_chn].v_start;
+                chn_attr.crop_win.h_start = device_obj[dev_num].out_win[chn_num].h_start;
+                chn_attr.crop_win.v_start = device_obj[dev_num].out_win[chn_num].v_start;
             } else {
                 chn_attr.crop_win.width = device_obj[dev_num].in_width;
                 chn_attr.crop_win.height = device_obj[dev_num].in_height;
@@ -786,7 +913,7 @@ chn_parse:
             chn_attr.chn_enable = K_TRUE;
 
             chn_attr.pix_format = device_obj[dev_num].out_format[chn_num];
-            chn_attr.buffer_num = VICAP_MIN_FRAME_COUNT * 2;//at least 3 buffers for isp
+            chn_attr.buffer_num = VICAP_OUTPUT_BUF_NUM;
             chn_attr.buffer_size = device_obj[dev_num].buf_size[chn_num];
 
             printf("sample_vicap, set dev(%d) chn(%d) attr, buffer_size(%d), out size[%dx%d]\n", \
@@ -843,6 +970,11 @@ chn_parse:
             printf("sample_vicap, vicap dev(%d) init failed.\n", dev_num);
             goto app_exit;
         }
+    }
+
+    for (int dev_num = 0; dev_num < VICAP_DEV_ID_MAX; dev_num++) {
+        if (!device_obj[dev_num].dev_enable)
+            continue;
 
         printf("sample_vicap, vicap dev(%d) start stream\n", dev_num);
         ret = kd_mpi_vicap_start_stream(dev_num);
@@ -854,11 +986,10 @@ chn_parse:
 
     sample_vicap_vo_enable();
 
-
     k_isp_ae_roi ae_roi;
     memset(&ae_roi, 0, sizeof(k_isp_ae_roi));
 
-    k_char select;
+    k_char select = 0;
     while(K_TRUE)
     {
         if(select != '\n')
@@ -892,6 +1023,7 @@ chn_parse:
                     ret = kd_mpi_vicap_dump_frame(dev_num, chn_num, VICAP_DUMP_YUV, &dump_info, 1000);
                     if (ret) {
                         printf("sample_vicap, dev(%d) chn(%d) dump frame failed.\n", dev_num, chn_num);
+                        continue;
                     }
 
                     static k_u32 dump_count = 0;
@@ -931,6 +1063,8 @@ chn_parse:
                         } else {
                             printf("sample_vicap, open dump file failed(%s)\n", strerror(errno));
                         }
+
+                        kd_mpi_sys_munmap(virt_addr, data_size);
                     } else {
                         printf("sample_vicap, map dump addr failed.\n");
                     }
@@ -939,7 +1073,7 @@ chn_parse:
 
                     ret = kd_mpi_vicap_dump_release(dev_num, chn_num, &dump_info);
                     if (ret) {
-                        printf("sample_vicap, dev(%d) chn(%d) dump frame failed.\n", dev_num, chn_num);
+                        printf("sample_vicap, dev(%d) chn(%d) release dump frame failed.\n", dev_num, chn_num);
                     }
                     dump_count++;
                 }
@@ -1009,6 +1143,10 @@ app_exit:
         if (ret) {
             printf("sample_vicap, vicap dev(%d) stop stream failed.\n", dev_num);
         }
+        printf("mcm_wr0_frame_cnt[%d], mcmwr0_done_cnt[%d]\n", mcm_wr0_frame_cnt, mcmwr0_done_cnt);
+        printf("mcm_wr1_frame_cnt[%d], mcmwr1_done_cnt[%d]\n", mcm_wr1_frame_cnt, mcmwr1_done_cnt);
+        printf("mcm_wr2_frame_cnt[%d], mcmwr2_done_cnt[%d]\n", mcm_wr2_frame_cnt, mcmwr2_done_cnt);
+        printf("display_cnt[%d], drop_cnt[%d]\n", display_cnt, drop_cnt);
 
         printf("sample_vicap, vicap dev(%d) deinit\n", dev_num);
         ret = kd_mpi_vicap_deinit(dev_num);

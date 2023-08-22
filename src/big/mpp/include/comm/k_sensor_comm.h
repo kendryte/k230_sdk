@@ -80,6 +80,10 @@ typedef enum {
     OV_OV9286_MIPI_1280X720_30FPS_10BIT_MCLK_25M_LINEAR_SPECKLE,
     OV_OV9286_MIPI_1280X720_30FPS_10BIT_MCLK_25M_LINEAR_IR,
     OV_OV9732_MIPI_1280X720_30FPS_10BIT_MCLK_16M_LINEAR,
+
+    OV_OV9286_MIPI_1280X720_60FPS_10BIT_LINEAR_IR,//19
+    OV_OV9286_MIPI_1280X720_60FPS_10BIT_LINEAR_SPECKLE,//20
+
     SENSOR_TYPE_MAX,
 } k_vicap_sensor_type;
 
@@ -92,6 +96,12 @@ typedef enum {
     SENSOR_MODE_HDR_STITCH,
     SENSOR_MODE_HDR_NATIVE,
 } k_sensor_hdr_mode;
+
+typedef enum {
+    SENSOR_AF_MODE_NOTSUPP,
+    SENSOR_AF_MODE_CDAF,
+    SENSOR_AF_MODE_PDAF,
+} k_sensor_af_mode_e;
 
 /**
  * @brief Defines the bayer pattern of sensor
@@ -276,6 +286,12 @@ typedef struct {
     k_u32 cur_fps;
     k_sensor_auto_fps afps_info;
     k_u32 hdr_ratio;
+
+    k_u32 int_time_delay_frame;
+    k_u32 gain_delay_frame;
+
+    float ae_min_interval_frame;
+    k_u8 color_type;		//0, color image; 1, mono sensor image; 2, color sensor gray image.
 } k_sensor_ae_info;
 
 /**
@@ -347,10 +363,12 @@ typedef struct {
     k_u32 bayer_pattern;
     k_sensor_mipi_info mipi_info;
     k_sensor_ae_info ae_info;
-    // k_sensor_reg_list *reg_list;
-    k_sensor_reg *reg_list;
+    const k_sensor_reg *reg_list;
     k_u32 max_fps;
     k_sensor_clk_info *clk_info;
+    k_u32 af_mode;
+    k_u32 sensor_again;
+    k_u32 et_line;
 } k_sensor_mode;
 
 /**

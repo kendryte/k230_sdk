@@ -47,23 +47,22 @@
 //#define OV9286_REG_LONG_AGAIN_L    0x350b
 
 #define OV9286_MIN_GAIN_STEP    (1.0f/16.0f)
-static int Sensor_VTS = 0x0891;
 
-static k_sensor_reg_list ov9286_mipi2lane_1080p_30fps_linear[] = {
+static const k_sensor_reg ov9286_mipi2lane_1080p_30fps_linear[] = {
     {REG_NULL, 0x00},
 };
 
-static k_sensor_reg_list ov9286_mipi2lane_1080p_30fps_hdr[] = {
+static const k_sensor_reg ov9286_mipi2lane_1080p_30fps_hdr[] = {
     {REG_NULL, 0x00},
 };
 
-static k_sensor_reg ov9286_mipi2lane_720p_60fps_linear[] = {
+static const k_sensor_reg ov9286_mipi2lane_720p_60fps_linear[] = {
     {0x0103, 0x01},
     {0x0100, 0x00},
-    {0x0300, 0x06},
-    {0x0301, 0x01},
-    {0x0302, 0x90},
-    {0x030a, 0x01},
+    {0x0300, 0x01},
+    {0x0301, 0x00},
+    {0x0302, 0x32},
+    {0x030a, 0x00},
     {0x030d, 0x50},
     {0x030f, 0x03},
     {0x0312, 0x07},
@@ -81,14 +80,14 @@ static k_sensor_reg ov9286_mipi2lane_720p_60fps_linear[] = {
     {0x303f, 0x03},
     {0x31ff, 0x01},
     {0x3210, 0x04},
-    {0x3500, 0x00},
-    {0x3501, 0x48},
-    {0x3502, 0x00},
+    //{0x3500, 0x00},
+    //{0x3501, 0x0f},
+    //{0x3502, 0x10},
     {0x3503, 0x08},
     {0x3505, 0x8c},
     {0x3507, 0x03},
     {0x3508, 0x00},
-    {0x3509, 0x10},
+    {0x3509, 0x10},	//gain
     {0x350d, 0x07},
     {0x3510, 0x00},
     {0x3511, 0x00},
@@ -125,23 +124,23 @@ static k_sensor_reg ov9286_mipi2lane_720p_60fps_linear[] = {
     {0x37aa, 0x52},
     {0x37ab, 0x3c},
     {0x3800, 0x00},
-    {0x3801, 0x18},
+    {0x3801, 0x00},
     {0x3802, 0x00},
-    {0x3803, 0xc8},
+    {0x3803, 0xc8},	//y start: 200
     {0x3804, 0x05},
-    {0x3805, 0x27},
+    {0x3805, 0x3f},	//x end: 1344 = 32 + 1280 +32
     {0x3806, 0x03},
-    {0x3807, 0xa7},
+    {0x3807, 0x9f},	//y end: 0x3a7 = 936, 0x39f = 928
     {0x3808, 0x05},
     {0x3809, 0x00},
     {0x380a, 0x02},
     {0x380b, 0xd0},
-    {0x380c, 0x02},
-    {0x380d, 0xe8},
-    {0x380e, 0x04},
-    {0x380f, 0xa4},
+    {0x380c, 0x02},	//HTS = 0x2b8 = 696
+    {0x380d, 0xb8},
+    {0x380e, 0x07},	//VTS = 0x77b = 1915
+    {0x380f, 0x7b},
     {0x3810, 0x00},
-    {0x3811, 0x08},
+    {0x3811, 0x20},
     {0x3812, 0x00},
     {0x3813, 0x08},
     {0x3814, 0x11},
@@ -194,7 +193,7 @@ static k_sensor_reg ov9286_mipi2lane_720p_60fps_linear[] = {
     {0x393e, 0x00},
     {0x393f, 0x00},
     {0x4001, 0x00},
-    {0x4003, 0x40},
+    {0x4003, 0x10},	//black level target
     {0x4008, 0x02},
     {0x4009, 0x09},
     {0x400a, 0x01},
@@ -235,15 +234,15 @@ static k_sensor_reg ov9286_mipi2lane_720p_60fps_linear[] = {
     {0x5e00, 0x00},
     {0x38b1, 0x02},
     {0x3880, 0x00},
-    {0x3500, 0x00},
-    {0x3501, 0x48},
-    {0x3502, 0xb0},
-    {0x0302, 0x2c},
+    //{0x3500, 0x00},
+    //{0x3501, 0x0c},
+    //{0x3502, 0x90},
+    //{0x0302, 0x2c},
     {0x4837, 0x1b},
-    {0x380c, 0x03},
-    {0x380d, 0xe0},
-    {0x380e, 0x05},
-    {0x380f, 0x3e},
+    //{0x380c, 0x02},	//HTS = 0x2b8 = 696
+    //{0x380d, 0xb8},
+    //{0x380e, 0x07},	//VTS = 0x77b = 1915
+    //{0x380f, 0x7b},
     {0x3006, 0xea},
     {0x3210, 0x10},
     {0x3007, 0x02},
@@ -270,20 +269,20 @@ static k_sensor_reg ov9286_mipi2lane_720p_60fps_linear[] = {
     {0x3670, 0x68},
     {0x3006, 0xea},
     {0x3208, 0x00},
-    {0x3501, 0x52},
-    {0x3502, 0x50},
-    {0x3509, 0x20},
-    {0x3927, 0x02},
-    {0x3928, 0xa9},
-    {0x3929, 0x05},
-    {0x392a, 0x36},
+    {0x3501, 0x11},	//ET = 287, 2.5ms
+    {0x3502, 0xf0},	//
+   //{0x3509, 0x10},	//gain = 1x
+    {0x3927, 0x00},	//strobe width
+    {0x3928, 0x73},
+    {0x3929, 0x07},	//strobe start point
+    {0x392a, 0x08},	// -7 : 01
     {0x3208, 0x10},
     {0x3208, 0xa0},
     // {0x0100, 0x01},
     {REG_NULL, 0x00},
 };
 
-static k_sensor_reg ov9286_mipi2lane_720p_30fps_linear[] = {
+static const k_sensor_reg ov9286_mipi2lane_720p_30fps_linear[] = {
     {0x0103, 0x01},
     {0x0100, 0x00},
     {0x0300, 0x04},	//MIPI clock: 500Mbps, PLL1: 50MHz
@@ -423,7 +422,7 @@ static k_sensor_reg ov9286_mipi2lane_720p_30fps_linear[] = {
     {0x393e, 0x00},
     {0x393f, 0x00},
     {0x4001, 0x00},
-    {0x4003, 0x40},
+    {0x4003, 0x10},
     {0x4008, 0x02},
     {0x4009, 0x09},
     {0x400a, 0x01},
@@ -501,7 +500,7 @@ static k_sensor_reg ov9286_mipi2lane_720p_30fps_linear[] = {
     {REG_NULL, 0x00},
 };
 
-static k_sensor_reg ov9286_mipi2lane_720p_30fps_mclk_25m_linear[] = {
+static const k_sensor_reg ov9286_mipi2lane_720p_30fps_mclk_25m_linear[] = {
     {0x0103, 0x01},
     {0x0100, 0x00},
     // {0x0300, 0x04},	//MIPI clock: 500Mbps, PLL1: 50MHz
@@ -649,7 +648,7 @@ static k_sensor_reg ov9286_mipi2lane_720p_30fps_mclk_25m_linear[] = {
     {0x393e, 0x00},
     {0x393f, 0x00},
     {0x4001, 0x00},
-    {0x4003, 0x40},
+    {0x4003, 0x10},
     {0x4008, 0x02},
     {0x4009, 0x09},
     {0x400a, 0x01},
@@ -716,17 +715,17 @@ static k_sensor_reg ov9286_mipi2lane_720p_30fps_mclk_25m_linear[] = {
     {0x3208, 0x00},
     // {0x3501, 0x09},  // ET = 0x9c = 156 ET line (2.371ms)
     // {0x3502, 0xc0},
-        {0x3501, 0x02},  // ET = 0x9c = 156 ET line (2.371ms)
-        {0x3502, 0xd0},
+    {0x3501, 0x02},  // ET = 0x9c = 156 ET line (2.371ms)
+    {0x3502, 0xd0},
     {0x3509, 0x10},
     // {0x3927, 0x02}, // 20ms
     // {0x3928, 0xcf}, // 20ms
-        {0x3927, 0x00}, // 20ms
-        {0x3928, 0x42}, // 20ms
+    {0x3927, 0x00}, // 20ms
+    {0x3928, 0x42}, // 20ms
     // {0x3929, 0x04},
     // {0x392a, 0x9c},
-        {0x3929, 0x08},
-        {0x392a, 0x48},
+    {0x3929, 0x08},
+    {0x392a, 0x48},
     {0x3208, 0x10},
     {0x3208, 0xa0},
     //{0x0100, 0x01},
@@ -867,6 +866,51 @@ static k_sensor_mode ov9286_mode_info[] = {
         },
         .reg_list = ov9286_mipi2lane_720p_30fps_mclk_25m_linear,
     },
+    {
+        .index = 6,
+        .sensor_type = OV_OV9286_MIPI_1280X720_60FPS_10BIT_LINEAR_IR,
+        .size = {
+            .bounds_width = 1280,
+            .bounds_height = 720,
+            .top = 0,
+            .left = 0,
+            .width = 1280,
+            .height = 720,
+        },
+        .fps = 30000,
+        .hdr_mode = SENSOR_MODE_LINEAR,
+        .bit_width = 10,
+        .bayer_pattern = BAYER_BGGR,
+        .mipi_info = {
+            .csi_id = 0,
+            .mipi_lanes = 1,
+            .data_type = 0x2B, //RAW10
+        },
+        .reg_list = ov9286_mipi2lane_720p_60fps_linear,
+    },
+    {
+        .index = 7,
+        .sensor_type = OV_OV9286_MIPI_1280X720_60FPS_10BIT_LINEAR_SPECKLE,
+        .size = {
+            .bounds_width = 1280,
+            .bounds_height = 720,
+            .top = 0,
+            .left = 0,
+            .width = 1280,
+            .height = 720,
+        },
+        .fps = 30000,
+        .hdr_mode = SENSOR_MODE_LINEAR,
+        .bit_width = 10,
+        .bayer_pattern = BAYER_BGGR,
+        .mipi_info = {
+            .csi_id = 0,
+            .mipi_lanes = 1,
+            .data_type = 0x2B, //RAW10
+        },
+        .reg_list = ov9286_mipi2lane_720p_60fps_linear,
+    },
+
 };
 
 static k_sensor_mode *current_mode = NULL;
@@ -973,7 +1017,6 @@ static k_s32 ov9286_sensor_init(void *ctx, k_sensor_mode mode)
     case 5:
         ret = sensor_reg_list_write(&dev->i2c_info, current_mode->reg_list);
 
-///////////////////
         current_mode->ae_info.frame_length = 2193;
         current_mode->ae_info.cur_frame_length = current_mode->ae_info.frame_length;
         current_mode->ae_info.one_line_exp_time = 0.0000152;//s
@@ -982,29 +1025,19 @@ static k_s32 ov9286_sensor_init(void *ctx, k_sensor_mode mode)
         current_mode->ae_info.min_gain = 1.0;
         current_mode->ae_info.max_gain = 15.9375;
 
+        current_mode->ae_info.int_time_delay_frame = 0;
+        current_mode->ae_info.gain_delay_frame = 0;
+        current_mode->ae_info.ae_min_interval_frame =1.0;
+        current_mode->ae_info.color_type = 1;	//mono sensor
+
         current_mode->ae_info.integration_time_increment = current_mode->ae_info.one_line_exp_time;
         current_mode->ae_info.gain_increment = OV9286_MIN_GAIN_STEP;
 
-        //current_mode->ae_info.max_long_integraion_line = current_mode->ae_info.frame_length;
-        //current_mode->ae_info.min_long_integraion_line =     current_mode->ae_info.frame_length - 1;
-
-        //current_mode->ae_info.max_integraion_line = current_mode->ae_info.frame_length - 25;
-        current_mode->ae_info.max_integraion_line = 165;	//2.5ms	//197;	// 3ms
+        current_mode->ae_info.max_integraion_line = 165;    //2.5ms //197;  // 3ms
         current_mode->ae_info.min_integraion_line = 1;
 
         current_mode->ae_info.max_vs_integraion_line = current_mode->ae_info.frame_length;
         current_mode->ae_info.min_vs_integraion_line =     current_mode->ae_info.frame_length - 1;
-
-        //current_mode->ae_info.max_vvs_integraion_line = current_mode->ae_info.frame_length;
-        //current_mode->ae_info.min_vvs_integraion_line =     current_mode->ae_info.frame_length - 1;
-
-        //current_mode->ae_info.max_long_integraion_time = \
-            current_mode->ae_info.integration_time_increment * \
-            current_mode->ae_info.max_long_integraion_line;
-
-        //current_mode->ae_info.min_long_integraion_time = \
-            current_mode->ae_info.integration_time_increment * \
-            current_mode->ae_info.min_long_integraion_line;
 
         current_mode->ae_info.max_integraion_time = \
             current_mode->ae_info.integration_time_increment * \
@@ -1022,37 +1055,15 @@ static k_s32 ov9286_sensor_init(void *ctx, k_sensor_mode mode)
             current_mode->ae_info.integration_time_increment * \
             current_mode->ae_info.min_vs_integraion_line;
 
-/*        current_mode->ae_info.max_vvs_integraion_time = \
-            current_mode->ae_info.integration_time_increment * \
-            current_mode->ae_info.max_vvs_integraion_line;
-
-        current_mode->ae_info.min_vvs_integraion_time = \
-            current_mode->ae_info.integration_time_increment * \
-            current_mode->ae_info.min_vvs_integraion_line;
-*/
-
-/////
-        //current_mode->ae_info.cur_long_integration_time = 0.0;
         current_mode->ae_info.cur_integration_time = 0.0;
         current_mode->ae_info.cur_vs_integration_time = 0.0;
-        //current_mode->ae_info.cur_vvs_integration_time = 0.0;
 
-/////
-        //current_mode->ae_info.cur_long_again = 0.0;
-        //current_mode->ae_info.cur_long_dgain = 0.0;
 
         current_mode->ae_info.cur_again = 0.0;
         current_mode->ae_info.cur_dgain = 0.0;
 
         current_mode->ae_info.cur_vs_again = 0.0;
         current_mode->ae_info.cur_vs_dgain = 0.0;
-
-        //current_mode->ae_info.cur_vvs_again = 0.0;
-        //current_mode->ae_info.cur_vvs_dgain = 0.0;
-/////
-        //current_mode->ae_info.a_long_gain.max = 0.0;//
-        //current_mode->ae_info.a_long_gain.min = 0.0;//
-        //current_mode->ae_info.a_long_gain.step = 0.0;//
 
         current_mode->ae_info.a_gain.min = 1.0;
         current_mode->ae_info.a_gain.max = 15.9375;
@@ -1062,13 +1073,74 @@ static k_s32 ov9286_sensor_init(void *ctx, k_sensor_mode mode)
         current_mode->ae_info.a_vs_gain.max = 15.9375;
         current_mode->ae_info.a_vs_gain.step = (1.0f/16.0f);//
 
-        //current_mode->ae_info.a_vvs_gain.min = 1.0;
-        //current_mode->ae_info.a_vvs_gain.max = 15.9375;
-        //current_mode->ae_info.a_vvs_gain.step = (1.0f/16.0f);//
-/////
-        //current_mode->ae_info.d_long_gain.max = 0.0;//
-        //current_mode->ae_info.d_long_gain.min = 0.0;//
-        //current_mode->ae_info.d_long_gain.step = 0.0;//
+        current_mode->ae_info.d_gain.max = 1.0;
+        current_mode->ae_info.d_gain.min = 1.0;
+        current_mode->ae_info.d_gain.step = (1.0f/1024.0f);
+
+        current_mode->ae_info.d_vs_gain.max = 1.0;
+        current_mode->ae_info.d_vs_gain.min = 1.0;
+        current_mode->ae_info.d_vs_gain.step = (1.0f/1024.0f);//
+        current_mode->ae_info.cur_fps = current_mode->fps;
+        break;
+
+    case 6:
+    case 7:
+        ret = sensor_reg_list_write(&dev->i2c_info, current_mode->reg_list);
+
+        current_mode->ae_info.frame_length = 1915;
+        current_mode->ae_info.cur_frame_length = current_mode->ae_info.frame_length;
+        current_mode->ae_info.one_line_exp_time = 0.0000087;//s
+        current_mode->ae_info.gain_accuracy = 1024;
+
+        current_mode->ae_info.min_gain = 1.0;
+        current_mode->ae_info.max_gain = 15.9375;
+
+        current_mode->ae_info.int_time_delay_frame = 0;
+        current_mode->ae_info.gain_delay_frame = 0;
+        current_mode->ae_info.ae_min_interval_frame =1.2;
+        current_mode->ae_info.color_type = 1;	//mono sensor
+
+        current_mode->ae_info.integration_time_increment = current_mode->ae_info.one_line_exp_time;
+        current_mode->ae_info.gain_increment = OV9286_MIN_GAIN_STEP;
+
+        current_mode->ae_info.max_integraion_line = 287;	// 2.5ms
+        current_mode->ae_info.min_integraion_line = 1;
+
+        current_mode->ae_info.max_vs_integraion_line = current_mode->ae_info.frame_length;
+        current_mode->ae_info.min_vs_integraion_line =     current_mode->ae_info.frame_length - 1;
+
+        current_mode->ae_info.max_integraion_time = \
+            current_mode->ae_info.integration_time_increment * \
+            current_mode->ae_info.max_integraion_line;
+
+        current_mode->ae_info.min_integraion_time = \
+            current_mode->ae_info.integration_time_increment * \
+            current_mode->ae_info.min_integraion_line;
+
+        current_mode->ae_info.max_vs_integraion_time = \
+            current_mode->ae_info.integration_time_increment * \
+            current_mode->ae_info.max_vs_integraion_line;
+
+        current_mode->ae_info.min_vs_integraion_time = \
+            current_mode->ae_info.integration_time_increment * \
+            current_mode->ae_info.min_vs_integraion_line;
+
+        current_mode->ae_info.cur_integration_time = 0.0;
+        current_mode->ae_info.cur_vs_integration_time = 0.0;
+
+        current_mode->ae_info.cur_again = 0.0;
+        current_mode->ae_info.cur_dgain = 0.0;
+
+        current_mode->ae_info.cur_vs_again = 0.0;
+        current_mode->ae_info.cur_vs_dgain = 0.0;
+
+        current_mode->ae_info.a_gain.min = 1.0;
+        current_mode->ae_info.a_gain.max = 15.9375;
+        current_mode->ae_info.a_gain.step = (1.0f/16.0f);
+
+        current_mode->ae_info.a_vs_gain.min = 1.0;
+        current_mode->ae_info.a_vs_gain.max = 15.9375;
+        current_mode->ae_info.a_vs_gain.step = (1.0f/16.0f);//
 
         current_mode->ae_info.d_gain.max = 1.0;
         current_mode->ae_info.d_gain.min = 1.0;
@@ -1078,12 +1150,9 @@ static k_s32 ov9286_sensor_init(void *ctx, k_sensor_mode mode)
         current_mode->ae_info.d_vs_gain.min = 1.0;
         current_mode->ae_info.d_vs_gain.step = (1.0f/1024.0f);//
 
-        //current_mode->ae_info.d_vvs_gain.max = 1.0;//
-        //current_mode->ae_info.d_vvs_gain.min = 1.0;//
-        //current_mode->ae_info.d_vvs_gain.step = (1.0f/1024.0f);//
-
         current_mode->ae_info.cur_fps = current_mode->fps;
-
+        current_mode->sensor_again = 0;
+        current_mode->et_line = 0;
         break;
 
     default:
@@ -1095,7 +1164,7 @@ static k_s32 ov9286_sensor_init(void *ctx, k_sensor_mode mode)
     k_u16 exp_time;
     float again = 0, dgain = 0;
 
-	ret = sensor_reg_read(&dev->i2c_info, OV9286_REG_LONG_AGAIN, &again_h);
+    ret = sensor_reg_read(&dev->i2c_info, OV9286_REG_LONG_AGAIN, &again_h);
     //ret = sensor_reg_read(&dev->i2c_info, OV9286_REG_LONG_AGAIN_H, &again_h);
     //ret = sensor_reg_read(&dev->i2c_info, OV9286_REG_LONG_AGAIN_L, &again_l);
     again =  (float)again_h / 16.0f;
@@ -1216,15 +1285,19 @@ k_s32 ov9286_sensor_set_again(void *ctx, k_sensor_gain gain)
     struct sensor_driver_dev *dev = ctx;
 
     if (gain.exp_frame_type == SENSOR_EXPO_FRAME_TYPE_1FRAME) {
-        again = (k_u32)(gain.gain[SENSOR_LINEAR_PARAS] * 16);
-        ret = sensor_reg_write(&dev->i2c_info, OV9286_REG_LONG_AGAIN,(again & 0xff));
-        current_mode->ae_info.cur_again = (float)again/16.0f;
+        again = (k_u32)(gain.gain[SENSOR_LINEAR_PARAS] * 16 + 0.5);
+        //if(current_mode->sensor_again !=again)
+        {
+	        ret = sensor_reg_write(&dev->i2c_info, OV9286_REG_LONG_AGAIN,(again & 0xff));
+	        current_mode->sensor_again = again;
+        }
+        current_mode->ae_info.cur_again = (float)current_mode->sensor_again/16.0f;
     } else if (gain.exp_frame_type == SENSOR_EXPO_FRAME_TYPE_2FRAMES) {
-        again = (k_u32)(gain.gain[SENSOR_DUAL_EXP_L_PARAS]* 16);
+        again = (k_u32)(gain.gain[SENSOR_DUAL_EXP_L_PARAS]* 16 + 0.5);
         ret = sensor_reg_write(&dev->i2c_info, OV9286_REG_LONG_AGAIN,(again & 0xff));
         current_mode->ae_info.cur_again = (float)again/16.0f;
 
-        again = (k_u32)(gain.gain[SENSOR_DUAL_EXP_S_PARAS] * 16);
+        again = (k_u32)(gain.gain[SENSOR_DUAL_EXP_S_PARAS] * 16 + 0.5);
         //TODO
         current_mode->ae_info.cur_vs_again = (float)again/16.0f;
     } else {
@@ -1320,32 +1393,35 @@ k_s32 ov9286_sensor_set_intg_time(void *ctx, k_sensor_intg_time time)
 
         exp_line = integraion_time / current_mode->ae_info.one_line_exp_time;
         exp_line = MIN(current_mode->ae_info.max_integraion_line, MAX(1, exp_line));
+        //if (current_mode->et_line != exp_line)
+        {
+	        ret |= sensor_reg_write(&dev->i2c_info, OV9286_REG_LONG_EXP_TIME_H, ( exp_line >> 4) & 0xff);
+	        ret |= sensor_reg_write(&dev->i2c_info, OV9286_REG_LONG_EXP_TIME_L, ( exp_line << 4) & 0xf0);
+	        current_mode->et_line = exp_line;
 
-        ret |= sensor_reg_write(&dev->i2c_info, OV9286_REG_LONG_EXP_TIME_H, ( exp_line >> 4) & 0xff);
-        ret |= sensor_reg_write(&dev->i2c_info, OV9286_REG_LONG_EXP_TIME_L, ( exp_line << 4) & 0xf0);
-        
-        //set strobe
-        Strobe_Width = exp_line + 32;
-        //Strobe_StartPoint = Sensor_VTS - Strobe_Width - 7;
-        Strobe_StartPoint = Sensor_VTS - Strobe_Width;
-        ret |= sensor_reg_write(&dev->i2c_info, 0x3927, ( Strobe_Width >> 8) & 0xff);	//strobe width
-        ret |= sensor_reg_write(&dev->i2c_info, 0x3928,  Strobe_Width & 0xff);
-        ret |= sensor_reg_write(&dev->i2c_info, 0x3929, ( Strobe_StartPoint >> 8) & 0xff);	//strobe start point
-        ret |= sensor_reg_write(&dev->i2c_info, 0x392a,  Strobe_StartPoint & 0xff);
+/*	        //set strobe
+	        Strobe_Width = (exp_line + 52)/3;
+	        Strobe_StartPoint = Sensor_VTS - Strobe_Width - 7;
+	        //Strobe_StartPoint = Sensor_VTS - Strobe_Width;
 
-        current_mode->ae_info.cur_integration_time = exp_line * current_mode->ae_info.one_line_exp_time;
+	        ret |= sensor_reg_write(&dev->i2c_info, 0x3927, ( Strobe_Width >> 8) & 0xff);	//strobe width
+	        ret |= sensor_reg_write(&dev->i2c_info, 0x3928,  Strobe_Width & 0xff);
+	        ret |= sensor_reg_write(&dev->i2c_info, 0x3929, ( Strobe_StartPoint >> 8) & 0xff);	//strobe start point
+	        ret |= sensor_reg_write(&dev->i2c_info, 0x392a,  Strobe_StartPoint & 0xff);*/
+	    }
+	    current_mode->ae_info.cur_integration_time = (float)current_mode->et_line * current_mode->ae_info.one_line_exp_time;
     } else if (time.exp_frame_type == SENSOR_EXPO_FRAME_TYPE_2FRAMES) {
         integraion_time = time.intg_time[SENSOR_DUAL_EXP_L_PARAS];
         exp_line = integraion_time / current_mode->ae_info.one_line_exp_time;
         exp_line = MIN(current_mode->ae_info.max_integraion_line, MAX(1, exp_line));
 
-        current_mode->ae_info.cur_integration_time = exp_line * current_mode->ae_info.one_line_exp_time;
+        current_mode->ae_info.cur_integration_time = (float)exp_line * current_mode->ae_info.one_line_exp_time;
 
         integraion_time = time.intg_time[SENSOR_DUAL_EXP_S_PARAS];
         exp_line = integraion_time / current_mode->ae_info.one_line_exp_time;
         exp_line = MIN(current_mode->ae_info.max_integraion_line, MAX(1, exp_line));
 
-        current_mode->ae_info.cur_vs_integration_time = exp_line * current_mode->ae_info.one_line_exp_time;
+        current_mode->ae_info.cur_vs_integration_time = (float)exp_line * current_mode->ae_info.one_line_exp_time;
     } else {
         pr_err("%s, unsupport exposure frame.\n", __func__);
         return -1;

@@ -219,6 +219,35 @@ k_s32 kd_mpi_ai_set_vqe_attr(k_audio_dev ai_dev, k_ai_chn ai_chn, const k_bool v
 k_s32 kd_mpi_ai_get_vqe_attr(k_audio_dev ai_dev, k_ai_chn ai_chn, k_bool *vqe_enable);
 
 
+/**
+ * @brief Set pitch shift attributes
+ *
+ * @param [in] ai_dev  audio device
+ * @param [in] ai_chn  audio channel
+ * @param [in] k_ai_chn_pitch_shift_param pitch-shift param
+ * @return k_s32
+ * @retval 0 success
+ * @retval "not 0" see err code
+ * @see K_ERR_CODE_E
+ *
+ */
+k_s32 kd_mpi_ai_set_pitch_shift_attr(k_audio_dev ai_dev, k_ai_chn ai_chn, const k_ai_chn_pitch_shift_param *param);
+
+/**
+ * @brief Get pitch shift attributes
+ *
+ * @param [in] ai_dev  audio device
+ * @param [in] ai_chn  audio channel
+ * @param [out] k_ai_chn_pitch_shift_param pitch-shift param
+ * @return k_s32
+ * @retval 0 success
+ * @retval "not 0" see err code
+ * @see K_ERR_CODE_E
+ *
+ */
+k_s32 kd_mpi_ai_get_pitch_shift_attr(k_audio_dev ai_dev, k_ai_chn ai_chn, k_ai_chn_pitch_shift_param *param);
+
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

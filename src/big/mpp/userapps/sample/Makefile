@@ -3,7 +3,7 @@ all:
 	@cd sample_audio; make || exit 1
 	@cd sample_dma; make || exit 1
 	@cd sample_mmz; make || exit 1
-	@cd sample_nonai_2d; make || exit 1
+#	@cd sample_nonai_2d; make || exit 1
 	@cd sample_vb; make || exit 1
 	@cd sample_vdec; make || exit 1
 	@cd sample_venc; make || exit 1
@@ -29,6 +29,8 @@ all:
 	@cd sample_dpu_vicap; make || exit 1
 	@cd sample_dpu_vo; make || exit 1
 	@cd sample_pwm; make || exit 1
+	@cd sample_pm; make || exit 1
+	@cd sample_fft; make || exit 1
 clean:
 	@cd sample_audio; make clean
 	@cd sample_dma; make clean
@@ -59,4 +61,6 @@ clean:
 	@cd sample_dpu_vicap; make clean
 	@cd sample_dpu_vo; make clean
 	@cd sample_pwm; make clean
+	@cd sample_pm; make clean
+	@cd sample_fft; make clean
 

@@ -73,7 +73,8 @@ MultiFramedRTPSource
   fReorderingBuffer = new ReorderingPacketBuffer(packetFactory);
 
   // Try to use a big receive buffer for RTP:
-  increaseReceiveBufferTo(env, RTPgs->socketNum(), 50*1024);
+  // increaseReceiveBufferTo(env, RTPgs->socketNum(), 50*1024);
+  increaseReceiveBufferTo(env, RTPgs->socketNum(), 1024 * 1024);
 }
 
 void MultiFramedRTPSource::reset() {

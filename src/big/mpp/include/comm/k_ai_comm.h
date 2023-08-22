@@ -50,6 +50,12 @@ typedef struct
     k_u32 usr_frame_depth;
 } k_ai_chn_param;
 
+typedef struct
+{
+    k_s32 semitones; // [-12, 12]
+} k_ai_chn_pitch_shift_param;
+
+
 #define K_ERR_AI_NOTREADY          K_DEF_ERR(K_ID_AI, K_ERR_LEVEL_ERROR, K_ERR_NOTREADY)
 #define K_ERR_AI_INVALID_DEVID     K_DEF_ERR(K_ID_AI, K_ERR_LEVEL_ERROR, K_ERR_INVALID_DEVID)
 #define K_ERR_AI_INVALID_CHNID     K_DEF_ERR(K_ID_AI, K_ERR_LEVEL_ERROR, K_ERR_INVALID_CHNID)

@@ -23,6 +23,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "face_detection.h"
+#include "k230_math.h"
 
 extern float kAnchors320[4200][4];
 extern float kAnchors640[16800][4];
@@ -251,10 +252,10 @@ void FaceDetection::get_final_box(FrameSize &frame_size, vector<FaceDetectionInf
         }
 
         auto &b = results[i].bbox;
-        float x1 = (b.x + b.w) * max_src_size;
-        float x0 = (b.x) * max_src_size;
-        float y0 = (b.y) * max_src_size;
-        float y1 = (b.y + b.h) * max_src_size;
+        float x1 = (b.x + b.w / 2) * max_src_size;
+        float x0 = (b.x - b.w / 2) * max_src_size;
+        float y0 = (b.y - b.h / 2) * max_src_size;
+        float y1 = (b.y + b.h / 2) * max_src_size;
         x1 = std::max(float(0), std::min(x1, float(frame_size.width)));
         x0 = std::max(float(0), std::min(x0, float(frame_size.width)));
         y0 = std::max(float(0), std::min(y0, float(frame_size.height)));
@@ -351,11 +352,11 @@ Bbox FaceDetection::get_box(float *boxes, int obj_index)
     h = boxes_[obj_index * LOC_SIZE + 3];
     cx = g_anchors[obj_index][0] + cx * 0.1 * g_anchors[obj_index][2];
     cy = g_anchors[obj_index][1] + cy * 0.1 * g_anchors[obj_index][3];
-    w = g_anchors[obj_index][2] * expf(w * 0.2);
-    h = g_anchors[obj_index][3] * expf(h * 0.2);
+    w = g_anchors[obj_index][2] * k230_expf(w * 0.2);
+    h = g_anchors[obj_index][3] * k230_expf(h * 0.2);
     Bbox box;
-    box.x = cx - w / 2;
-    box.y = cy - w / 2;
+    box.x = cx;
+    box.y = cy;
     box.w = w;
     box.h = h;
     return box;

@@ -22,7 +22,12 @@ mkdir -p ${k230_bin}
 
 cp -a ../../big/kmodel/ai_poc/kmodel/*.kmodel ${k230_bin}
 cp -a ../../big/kmodel/ai_poc/images/* ${k230_bin}
+mkdir ${k230_bin}/bytetrack_data/output
+cp -a ../../big/kmodel/ai_poc/utils/* ${k230_bin}
 cp -a shell/* ${k230_bin}
+cp -a sq_handkp_ocr/dict_6625.txt ${k230_bin}
+
+/opt/toolchain/Xuantie-900-gcc-linux-5.10.4-glibc-x86_64-V2.6.0/bin/riscv64-unknown-linux-gnu-g++ -O3 llamac/llama_run.cc -o out/llama_run -lm
 
 if [ -f out/bin/face_detection.elf ]; then
       cp out/bin/face_detection.elf ${k230_bin}
@@ -52,6 +57,10 @@ if [ -f out/bin/face_gender.elf ]; then
       cp out/bin/face_gender.elf ${k230_bin}
 fi
 
+if [ -f out/bin/face_parse.elf ]; then
+      cp out/bin/face_parse.elf ${k230_bin}
+fi
+
 if [ -f out/bin/sq_hand_det.elf ]; then
       cp out/bin/sq_hand_det.elf ${k230_bin}
 fi
@@ -68,8 +77,28 @@ if [ -f out/bin/sq_handreco.elf ]; then
       cp out/bin/sq_handreco.elf ${k230_bin}
 fi
 
+if [ -f out/bin/sq_handkp_ocr.elf ]; then
+      cp out/bin/sq_handkp_ocr.elf ${k230_bin}
+fi
+
+if [ -f out/bin/licence_det.elf ]; then
+      cp out/bin/licence_det.elf ${k230_bin}
+fi
+
+if [ -f out/bin/licence_det_rec.elf ]; then
+      cp out/bin/licence_det_rec.elf ${k230_bin}
+fi
+
 if [ -f out/bin/ob_det.elf ]; then
       cp out/bin/ob_det.elf ${k230_bin}
+fi
+
+if [ -f out/bin/seg.elf ]; then
+      cp out/bin/seg.elf ${k230_bin}
+fi
+
+if [ -f out/llama_run ]; then
+      cp out/llama_run ${k230_bin}
 fi
 
 if [ -f out/bin/person_detect.elf ]; then
@@ -82,6 +111,26 @@ fi
 
 if [ -f out/bin/pose_detect.elf ]; then
       cp out/bin/pose_detect.elf ${k230_bin}
+fi
+
+if [ -f out/bin/person_attr.elf ]; then
+      cp out/bin/person_attr.elf ${k230_bin}
+fi
+
+if [ -f out/bin/vehicle_attr.elf ]; then
+      cp out/bin/vehicle_attr.elf ${k230_bin}
+fi
+
+if [ -f out/bin/fitness.elf ]; then
+      cp out/bin/fitness.elf ${k230_bin}
+fi
+
+if [ -f out/bin/bytetrack.elf ]; then
+      cp out/bin/bytetrack.elf ${k230_bin}
+fi
+
+if [ -f out/bin/pphumanseg.elf ]; then
+      cp out/bin/pphumanseg.elf ${k230_bin}
 fi
 
 rm -rf out

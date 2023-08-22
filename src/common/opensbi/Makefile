@@ -211,7 +211,7 @@ CFLAGS		+=	-mcmodel=$(PLATFORM_RISCV_CODE_MODEL)
 CFLAGS		+=	$(GENFLAGS)
 CFLAGS		+=	$(platform-cflags-y)
 CFLAGS		+=	-fno-pie -no-pie
-CFLAGS		+=	$(firmware-cflags-y)
+CFLAGS		+=	$(firmware-cflags-y)  $(KCFLAGS)
 
 ifdef K230_LITTLE_CORE
 CFLAGS		+=	-DK230_LITTLE_CORE

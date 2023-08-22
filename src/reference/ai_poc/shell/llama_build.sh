@@ -1,0 +1,1 @@
+./llama_run llama.bin 0.9 100 love
