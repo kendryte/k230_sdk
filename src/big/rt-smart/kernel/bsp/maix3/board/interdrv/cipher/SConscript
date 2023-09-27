@@ -6,7 +6,7 @@ cwd     = GetCurrentDir()
 src     = Glob('*.c') + Glob('*.S')
 CPPPATH = [cwd]
 
-group = DefineGroup('OTP', src, depend = ['RT_USING_OTP'], CPPPATH = CPPPATH)
+group = DefineGroup('Cipher', src, depend = [''], CPPPATH = CPPPATH)
 
 objs = [group]
 

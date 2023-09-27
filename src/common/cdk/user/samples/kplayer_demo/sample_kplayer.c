@@ -7,12 +7,13 @@
 
 static sem_t g_stop_player_sem;
 
-static void sig_handler(int sig) {
+static void sig_handler(int sig)
+{
     printf("receive SIGINT \n");
     kd_player_stop();
 }
 
-static  k_s32 player_event_cb(K_PLAYER_EVENT_E enEvent, void* pData)
+static k_s32 player_event_cb(K_PLAYER_EVENT_E enEvent, void *pData)
 {
     if (enEvent == K_PLAYER_EVENT_EOF)
     {
@@ -20,8 +21,19 @@ static  k_s32 player_event_cb(K_PLAYER_EVENT_E enEvent, void* pData)
     }
 }
 
+static void showpicture(const char* pic_path)
+{
+    kd_player_init(K_TRUE);
+    kd_picture_init();
+    kd_picture_show(pic_path);
+    sleep(5);
+    kd_picture_deinit();
+    kd_player_deinit(K_TRUE);
+}
+
 int main(int argc, char *argv[])
 {
+#if 1
     signal(SIGINT, sig_handler);
 
     if (argc < 2) {
@@ -31,7 +43,7 @@ int main(int argc, char *argv[])
 
     printf("file pathname:%s\n",argv[1]);
     sem_init(&g_stop_player_sem,0,0);
-    kd_player_init();
+    kd_player_init(K_TRUE);
 
     kd_player_regcallback(player_event_cb,NULL);
 
@@ -39,8 +51,36 @@ int main(int argc, char *argv[])
     kd_player_start();
     sem_wait(&g_stop_player_sem);
     kd_player_stop();
-    kd_player_deinit();
+    kd_player_deinit(K_TRUE);
     sem_destroy(&g_stop_player_sem);
+#else
+    if (argc < 2) {
+        printf("Usage: ./%s <*.mp4> \n",argv[0]);
+        return 0;
+    }
+
+    #if 1
+    kd_player_init(K_TRUE);
+    kd_picture_init();
+
+    printf("==========show next \n");
+    kd_picture_show("/clip/snapshot/stay_0.jpg");
+    sleep(5);
+    printf("==========show next \n");
+    kd_picture_show("/clip/snapshot/stay_1.jpg");
+    sleep(5);
+    printf("==========show next \n");
+    kd_picture_show("/clip/snapshot/stay_2.jpg");
+    sleep(5);
+    //kd_picture_show("/clip/snapshot/1.jpg");
+    sleep(1000);
+    #else
+
+    showpicture("/clip/snapshot/stay_0.jpg");
+    showpicture("/clip/snapshot/stay_1.jpg");
+    showpicture("/clip/snapshot/stay_2.jpg");
+    #endif
+#endif
 
     return 0;
 }

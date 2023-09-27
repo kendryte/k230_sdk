@@ -138,14 +138,14 @@ private:
     float anchors_2[3][2] = { { 140,113 }, { 161,172 }, { 245,276 } };
 
     /**
-     * @brief 获取2个检测框的iou
+     * @brief 非极大值抑制
      * @param input_boxes     后处理之后的基于原始图像的{检测框坐标点、得分和标签}集合
      * @return None
      */
     void nms(std::vector<BoxInfo> &input_boxes);
 
     /**
-     * @brief 获取2个检测框的iou
+     * @brief 预处理模型输出结果
      * @param data              指向模型推理得到的首个roi置信度的指针
      * @param stride            模型推理得到的feature相比模型输入的下采样倍数
      * @param frame_size        原始图像/帧宽高，用于将结果放到原始图像大小

@@ -124,11 +124,11 @@ build-image:
 .generate_version: &generate_version
   - echo "----------get version from file----------"
   - pwd
-  - cat ./tools/post_copy_rootfs/etc/version/release_version || exit 1
-  - ver=$(cat ./tools/post_copy_rootfs//etc/version/release_version | grep ".*-gitlab-runner") || exit 1
+  - cat ./board/common/post_copy_rootfs/etc/version/release_version || exit 1
+  - ver=$(cat ./board/common/post_copy_rootfs//etc/version/release_version | grep ".*-gitlab-runner") || exit 1
   - echo ${ver}
   - echo "----------save version file to output----------"
-  - cp ./tools/post_copy_rootfs/etc/version/release_version ${SRC_DIR}/version || exit 1
+  - cp ./board/common/post_copy_rootfs/etc/version/release_version ${SRC_DIR}/version || exit 1
   - ls -alht ${SRC_DIR}/version || exit 1
   - cat ${SRC_DIR}/version || exit 1
 

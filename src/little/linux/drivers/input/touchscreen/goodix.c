@@ -727,20 +727,20 @@ static int goodix_reset(struct goodix_ts_data *ts)
 	if (error)
 		return error;
 
-	msleep(20);				/* T2: > 10ms */
+	msleep(1);				/* T2: > 10ms */
 
 	/* HIGH: 0x28/0x29, LOW: 0xBA/0xBB */
 	error = goodix_irq_direction_output(ts, ts->client->addr == 0x14);
 	if (error)
 		return error;
 
-	usleep_range(100, 2000);		/* T3: > 100us */
+	usleep_range(100, 150);		/* T3: > 100us */
 
 	error = gpiod_direction_output(ts->gpiod_rst, 1);
 	if (error)
 		return error;
 
-	usleep_range(6000, 10000);		/* T4: > 5ms */
+	usleep_range(5000, 6000);		/* T4: > 5ms */
 
 	/* end select I2C slave addr */
 	error = gpiod_direction_input(ts->gpiod_rst);

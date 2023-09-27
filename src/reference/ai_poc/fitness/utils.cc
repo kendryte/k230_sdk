@@ -23,14 +23,11 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <iostream>
-#include <numeric>
 #include "utils.h"
-#include "pose_action.h"
 
 
 using std::ofstream;
 using std::vector;
-
 auto cache = cv::Mat::zeros(1,1,CV_32FC1);
 
 void Utils::dump_binary_file(const char *file_name, char *data, const size_t size)
@@ -385,15 +382,10 @@ void Utils::padding_resize_params(cv::Vec4d& params,FrameCHWSize ori_shape, Fram
     int new_h = (int)(ratio * ori_h);
     float dw = (float)(width - new_w) / 2;
     float dh = (float)(height - new_h) / 2;
-    // int top = (int)(roundf(dh - 0.1));
-    // int bottom = (int)(roundf(dh + 0.1));
-    // int left = (int)(roundf(dw - 0.1));
-    // int right = (int)(roundf(dw - 0.1));
-
+  
     int top = (int)(roundf(dh ));
     int bottom = (int)(roundf(dh ));
     int left = (int)(roundf(dw ));
-    // int right = (int)(roundf(dw - 0.1));
     int right = (int)(roundf(dw ));
 
     params[0] = ratio;
@@ -641,7 +633,6 @@ void Utils::DrawPred(cv::Mat& img, std::vector<OutputPose>& results,
         width = result.box.width;
         height = result.box.height;
 
-        
         std::string label = "person:  " + std::to_string(result.confidence).substr(0, 4);
         int baseLine;
         cv::Size labelSize = cv::getTextSize(label, cv::FONT_HERSHEY_SIMPLEX, 0.5, 1, &baseLine);
@@ -678,61 +669,15 @@ void Utils::DrawPred(cv::Mat& img, std::vector<OutputPose>& results,
                 cv::line(img, {pos1_x, pos1_y}, {pos2_x, pos2_y}, limb_color);
             }
  
-        // 跌倒检测
-            float pt5_x = kps[5*3];
-            float pt5_y = kps[5*3 + 1];
-            float pt6_x = kps[6*3];
-            float pt6_y = kps[6*3+1];
-            float center_up_x = (pt5_x + pt6_x) /2.0f ;
-            float center_up_y = (pt5_y + pt6_y) / 2.0f;
-            cv::Point center_up = cv::Point((int)center_up_x, (int)center_up_y);
- 
-            float pt11_x = kps[11*3];
-            float pt11_y = kps[11*3 + 1];
-            float pt12_x = kps[12*3];
-            float pt12_y = kps[12*3 + 1];
-            float center_down_x = (pt11_x + pt12_x) / 2.0f;
-            float center_down_y = (pt11_y + pt12_y) / 2.0f;
-            cv::Point center_down = cv::Point((int)center_down_x, (int)center_down_y);
- 
- 
-            float right_angle_point_x = center_down_x;
-            float righ_angle_point_y = center_up_y;
-            cv::Point right_angl_point = cv::Point((int)right_angle_point_x, (int)righ_angle_point_y);
- 
- 
-            float a = abs(right_angle_point_x - center_up_x);
-            float b = abs(center_down_y - righ_angle_point_y);
- 
-            float tan_value = a / b;
-            float Pi = acos(-1);
-            float angle = atan(tan_value) * 180.0f/ Pi;
-            std::string angel_label = "";
-            putText(img, angel_label, cv::Point(left, top-40), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,255), 2);
- 
-            if (angle > 60.0f || center_down_y <= center_up_y || (double)width/ height > 5.0f/3.0f) // 宽高比小于0.6为站立，大于5/3为跌倒
-            {
-                std::string fall_down_label = "person fall down!!!!";
-                putText(img, fall_down_label , cv::Point(left, top-20), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,255), 2);
- 
-                printf("angel:%f width/height:%f\n",angle, (double)width/ height );
-            }
- 
-            // cv::line(img, center_up, center_down,
-            //          Scalar(0,0,255), 2, 8);
-            // cv::line(img, center_up, right_angl_point,
-            //          Scalar(0,0,255), 2, 8);
-            // cv::line(img, right_angl_point, center_down,
-            //          Scalar(0,0,255), 2, 8);
- 
         }
     }
 }
 
+
 void Utils::DrawPred_video(cv::Mat& img, FrameSize frame_size, std::vector<OutputPose>& results,
               const std::vector<std::vector<unsigned int>> &SKELLTON,
               const std::vector<std::vector<unsigned int>> &KPS_COLORS,
-              const std::vector<std::vector<unsigned int>> &LIMB_COLORS,float thres_conf,cv::Mat& osd_frame_put )
+              const std::vector<std::vector<unsigned int>> &LIMB_COLORS,float thres_conf  )
 {
     int osd_width= img.cols;
     int osd_height = img.rows;
@@ -740,12 +685,11 @@ void Utils::DrawPred_video(cv::Mat& img, FrameSize frame_size, std::vector<Outpu
     int SENSOR_HEIGHT = frame_size.height;
     int SENSOR_WIDTH = frame_size.width;
 
-    
-    cv::Mat osd_frame_vertical;
-    cv::Mat osd_frame_horizontal;
     cv::Point origin;
 
     const int num_point =17;
+    std::vector<KKeyPoint> keypoints;
+
     for (auto &result:results){
         int  left,top,width, height;
         left = result.box.x;
@@ -758,10 +702,27 @@ void Utils::DrawPred_video(cv::Mat& img, FrameSize frame_size, std::vector<Outpu
         cv::Size labelSize = cv::getTextSize(label, cv::FONT_HERSHEY_SIMPLEX, 0.5, 1, &baseLine);
         top = std::max(top, labelSize.height) -10 ;
  
-        cv::Point fitness_center_down;
-
         // 连线
+
+        keypoints.clear();
         auto &kps = result.kps;
+
+        for( int k=0;k<17;k++ )
+        {
+            int kps_x = std::round(kps[k*3]);
+            int kps_y = std::round(kps[k*3 + 1]);
+            float kps_s = kps[k*3 + 2];
+
+            int kps_x1 = (float)kps_x / SENSOR_WIDTH * osd_width;
+            int kps_y1 =  (float)kps_y / SENSOR_HEIGHT  * osd_height;
+
+
+            cv::Point2f p(kps_x1,kps_y1);
+            float prob = kps_s;
+
+            keypoints.push_back( { p,prob } );
+        }
+
         for (int k=0; k<num_point+2; k++){// 不要设置为>0.5f ,>0.0f显示效果比较好
             // 关键点绘制
             if (k<num_point){
@@ -769,13 +730,12 @@ void Utils::DrawPred_video(cv::Mat& img, FrameSize frame_size, std::vector<Outpu
                 int kps_y = std::round(kps[k*3 + 1]);
                 float kps_s = kps[k*3 + 2];
  
-                int kps_x1 = (float)kps_x / SENSOR_WIDTH * osd_width;
-                int kps_y1 =  (float)kps_y / SENSOR_HEIGHT  * osd_height;
+                int kps_x1 =  (float)kps_x / SENSOR_WIDTH * osd_width;
+                int kps_y1 =   (float)kps_y / SENSOR_HEIGHT  * osd_height;
 
                 if (kps_s > 0.0f){
                     cv::Scalar kps_color = cv::Scalar(255,KPS_COLORS[k][0],KPS_COLORS[k][1],KPS_COLORS[k][2]);
                     cv::circle(img, {kps_x1, kps_y1}, 5, kps_color, -3);
-
                 }
             }
  
@@ -783,8 +743,7 @@ void Utils::DrawPred_video(cv::Mat& img, FrameSize frame_size, std::vector<Outpu
             int pos1_x = std::round(kps[(ske[0] -1) * 3]);
             int pos1_y = std::round(kps[(ske[0] -1) * 3 + 1]);
 
-
-            int pos1_x_ = (float)pos1_x / SENSOR_WIDTH * osd_width;
+            int pos1_x_ =  (float)pos1_x / SENSOR_WIDTH * osd_width;
             int pos1_y_ =  (float)pos1_y / SENSOR_HEIGHT  * osd_height;
 
             int pos2_x = std::round(kps[(ske[1] -1) * 3]);
@@ -800,104 +759,18 @@ void Utils::DrawPred_video(cv::Mat& img, FrameSize frame_size, std::vector<Outpu
                 cv::Scalar limb_color = cv::Scalar(255,LIMB_COLORS[k][0], LIMB_COLORS[k][1], LIMB_COLORS[k][3]);
                 cv::line(img, {pos1_x_, pos1_y_}, {pos2_x_, pos2_y_}, limb_color,3);
             }
- 
-            // 跌倒检测
-            float pt5_x = kps[5*3];
-            float pt5_y = kps[5*3 + 1];
-            float pt6_x = kps[6*3];
-            float pt6_y = kps[6*3+1];
-            float center_up_x = (pt5_x + pt6_x) /2.0f ;
-            float center_up_y = (pt5_y + pt6_y) / 2.0f;
-            cv::Point center_up = cv::Point((int)center_up_x, (int)center_up_y);
- 
-            float pt11_x = kps[11*3];
-            float pt11_y = kps[11*3 + 1];
-            float pt12_x = kps[12*3];
-            float pt12_y = kps[12*3 + 1];
-            float center_down_x = (pt11_x + pt12_x) / 2.0f;
-            float center_down_y = (pt11_y + pt12_y) / 2.0f;
-            cv::Point center_down = cv::Point((int)center_down_x, (int)center_down_y);
-            fitness_center_down = center_down;
- 
-            float right_angle_point_x = center_down_x;
-            float righ_angle_point_y = center_up_y;
-            cv::Point right_angl_point = cv::Point((int)right_angle_point_x, (int)righ_angle_point_y);
- 
- 
-            float a = abs(right_angle_point_x - center_up_x);
-            float b = abs(center_down_y - righ_angle_point_y);
- 
-            float tan_value = a / b;
-            float Pi = acos(-1);
-            float angle = atan(tan_value) * 180.0f/ Pi;
-            //string angel_label = "angle: " + to_string(angle);
-            std::string angel_label = "";
-            // putText(img, angel_label, cv::Point(left, top-40), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255,0,0,255), 2);
- 
-            if (angle > 60.0f || center_down_y <= center_up_y || (double)width/ height > 5.0f/3.0f) // 宽高比小于0.6为站立，大于5/3为跌倒
-            {
-                std::string fall_down_label = "person fall down!!!!";
-                // putText(img, fall_down_label , cv::Point(left, top-20), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255,0,0,255), 2);
- 
-                // printf("angel:%f width/height:%f\n",angle, (double)width/ height );
-            }
- 
-            // cv::line(img, center_up, center_down,
-            //          Scalar(255,255,0,255), 2, 8);
-            // cv::line(img, center_up, right_angl_point,
-            //          Scalar(255,255,0,255), 2, 8);
-            // cv::line(img, right_angl_point, center_down,
-            //          Scalar(255,255,0,255), 2, 8);
- 
         }
-
-        //健身动作识别
-        static std::vector<float> fitness_y;
-        static int deepdownAll;
-        int deepdown;
-        fitness_y.push_back(fitness_center_down.y);
-        float mean_y = accumulate(fitness_y.begin(), fitness_y.end(), 0) / fitness_y.size();
-
-        float fitness_y_a = fitness_y[fitness_y.size()];
-        float fitness_y_b;
-        float fitness_y_c;
-        if(fitness_y.size() < 2)
-        {
-            fitness_y_b = fitness_y[fitness_y.size()];
-        }
-        else
-        {
-            fitness_y_b = fitness_y[fitness_y.size()-1];
-        }    
-
-        if( (( fitness_y_a - mean_y ) < 0) && ( ( fitness_y_b - mean_y ) > 0 ))
-        {
-            deepdown = 1;
-        }
-        else
-        {
-            deepdown = 0;
-        }
-
-        
-
-        deepdownAll = deepdownAll + deepdown;
-        std::string deep = "deep-down:" + std::to_string(deepdownAll/2);
-
-        int x2 = left * 1.0 / SENSOR_WIDTH * osd_width;
-        int y2 = top * 1.0 / SENSOR_HEIGHT  * osd_height;
-
-        origin.x = 300;
-        origin.y = 80;
-
-        cv::putText(img, deep, origin, cv::FONT_HERSHEY_COMPLEX, 2, cv::Scalar(255, 0, 255, 255), 1, 8, 0);
-        
-        
-
     }
-    cv::flip(img, osd_frame_vertical, 0);
-    cv::flip(osd_frame_vertical, osd_frame_horizontal, 1);
-    osd_frame_put = osd_frame_horizontal;
-    
+
+    action_count( img,keypoints,thres_conf );
+
+}
+
+
+void Utils::action_count( cv::Mat& image, std::vector<KKeyPoint> keypoints, float thresh)
+{
+    int deepdown = PoseAction::single_action_check(keypoints, thresh, 3, 2);
+    std::string deep = "deep-down:" + std::to_string(deepdown);
+    cv::putText(image, deep, cv::Point(240, 80), cv::FONT_HERSHEY_COMPLEX, 3, cv::Scalar(255, 0, 255, 255), 3, 8, 0);
 }
 

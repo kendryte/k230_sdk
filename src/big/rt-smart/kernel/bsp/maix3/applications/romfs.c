@@ -15,8 +15,8 @@ const static unsigned char _bin_init_sh[] = {
 };
 
 const static struct romfs_dirent _bin[] = {
-	{ROMFS_DIRENT_FILE, "test.kmodel", (char*)0x1fc00000, 0x9ff00},
-	{ROMFS_DIRENT_FILE, "fastboot_app.elf", (char*)0x18000000, 7572672},
+	{ROMFS_DIRENT_FILE, "test.kmodel", (char*)0x1fc00000, 0x9ff80},
+	{ROMFS_DIRENT_FILE, "fastboot_app.elf", (char*)0x18000000, 8677592},
 	{ROMFS_DIRENT_FILE, "init.sh", _bin_init_sh, sizeof(_bin_init_sh)},
 };
 

@@ -105,17 +105,7 @@ void video_proc(char *argv[])
         seg.inference();
         cv::Mat mask = seg.post_process( );
 
-        // flip-180
-        cv::Mat mask_flip = cv::Mat::ones(mask.cols, mask.rows, CV_8UC1) * 255;
-        for(int i=0;i<mask.cols;i++)
-        {
-            for(int j=0;j<mask.rows;j++)
-            {
-                mask_flip.at<uchar>(i, j)  = mask.at<uchar>( mask.cols - i, mask.rows - j) ;
-            }
-        }
-
-        cv::resize(mask_flip, mask, cv::Size(osd_width, osd_height), 0, 0); 
+        cv::resize(mask, mask, cv::Size(osd_width, osd_height), 0, 0); 
 
         cv::Mat osd_frame(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
         osd_frame.setTo(cv::Scalar(255,255, 255, 255), mask);

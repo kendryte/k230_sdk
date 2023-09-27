@@ -74,9 +74,6 @@ void Pulc::pre_process(cv::Mat ori_img, BoxInfo &bbox)
     Utils::hwc_to_chw(cropped_image, chw_vec);
     Utils::padding_resize({cropped_image.channels(), cropped_image.rows, cropped_image.cols}, chw_vec, {input_shapes_[0][3], input_shapes_[0][2]}, ai2d_out_tensor_, cv::Scalar(114, 114, 114));
 
-    // auto vaddr_out_buf = ai2d_out_tensor_.impl()->to_host().unwrap()->buffer().as_host().unwrap().map(map_access_::map_read).unwrap().buffer();
-    // unsigned char *output0 = reinterpret_cast<unsigned char *>(vaddr_out_buf.data());
-    // Utils::dump_color_image("color_image.jpg",{input_shapes_[0][3],input_shapes_[0][2]},output0);
 
 }
 

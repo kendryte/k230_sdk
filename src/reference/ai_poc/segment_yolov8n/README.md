@@ -5,7 +5,7 @@
 # 2.应用使用说明
 
 ## 2.1 使用帮助
-开发板需求：需要用lp4(2G)的开发板
+开发板需求：需要用lp4(2G)、lp3(512M)的开发板
 
 ```
 "Usage: " << seg.elf << "<kmodel_seg> <conf_thres> <nms_thres> <mask_thres> <input_mode> <debug_mode>"

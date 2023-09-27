@@ -40,7 +40,7 @@ add_executable(${bin} ${src})
 
 target_link_libraries(${bin} -Wl,--start-group rvv Nncase.Runtime.Native nncase.rt_modules.k230 functional_k230 sys vicap vb cam_device cam_engine
  hal oslayer ebase fpga isp_drv binder auto_ctrol common cam_caldb isi 3a buffer_management cameric_drv video_in virtual_hal start_engine cmd_buffer
- switch cameric_reg_drv t_database_c t_mxml_c t_json_c t_common_c vo sensor atomic dma ipcmsg dpu -Wl,--end-group)
+ switch cameric_reg_drv t_database_c t_mxml_c t_json_c t_common_c vo sensor connector atomic dma ipcmsg dpu -Wl,--end-group)
 
 target_link_libraries(${bin} opencv_core opencv_imgcodecs opencv_imgproc opencv_highgui opencv_videoio opencv_core zlib libjpeg-turbo libopenjp2 libpng libtiff libwebp csi_cv)
 

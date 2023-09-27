@@ -6,6 +6,46 @@
 */
 #include <dt-bindings/interrupt-controller/irq.h>
 / {
+                gpio18: gpio18@9140b000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140b000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <50 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+
+			port18: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<18>;
+			};
+		};
+
+		gpio20: gpio20@9140b000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140b000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <52 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+
+			port20: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<20>;
+			};
+		};
+
 		gpio27: gpio27@9140b000 {
 			#address-cells = <1>;
 			#size-cells = <0>;
@@ -144,6 +184,26 @@
 				ngpios = <1>;
 				reg-bank = <0>;
 				id = <34>;
+			};
+		};
+
+		gpio53: gpio53@9140c000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <85 IRQ_TYPE_EDGE_FALLING>;
+			hardlock = <0>;
+
+			port53: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<53>;
 			};
 		};
 };

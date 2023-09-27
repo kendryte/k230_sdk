@@ -114,7 +114,6 @@ void video_proc(char *argv[])
             memcpy(pic_vaddr, osd_frame.data, osd_width * osd_height * 4);
             // 显示通道插入帧
             kd_mpi_vo_chn_insert_frame(osd_id + 3, &vf_info); // K_VO_OSD0
-            // printf("kd_mpi_vo_chn_insert_frame success \n");
 
             ret = kd_mpi_vicap_dump_release(vicap_dev, VICAP_CHN_ID_1, &dump_info);
             if (ret)

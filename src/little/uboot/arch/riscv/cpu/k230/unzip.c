@@ -214,7 +214,7 @@ int stand_gunzip(void *dst, int dstlen, unsigned char *src, unsigned long *lenp)
 
 int k230_priv_unzip(void *dst, int dstlen, unsigned char *src, unsigned long *lenp){
     struct ugzip_reg  *pUgzipReg = (struct ugzip_reg  *)UGZIP_BASE_ADDR; //0x80808000ULL 
-    //struct sdma_ch_cfg *ch_cfg= (struct sdma_ch_cfg *)0x80800050;
+    struct sdma_ch_cfg *ch_cfg= (struct sdma_ch_cfg *)SDMA_CH_CFG;
     struct gsdma_ctrl *gsct = (struct gsdma_ctrl *)GSDMA_CTRL_ADDR;
 
     int ret = 3;
@@ -304,6 +304,7 @@ int k230_priv_unzip(void *dst, int dstlen, unsigned char *src, unsigned long *le
     }
 	/*Restore sram mapping*/
     writel(0, (volatile void   *)&pUgzipReg->gzip_src_size);
+    writel(0, (volatile void   *)((uint64_t)&ch_cfg->ch_cfg));
     return ret;    
 }
 

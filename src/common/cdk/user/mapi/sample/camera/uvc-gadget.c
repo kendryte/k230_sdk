@@ -180,7 +180,7 @@ static void uvc_video_fill_buffer_standalone(struct uvc_device *dev, struct v4l2
         bpl = dev->width * 2;
         for (i = 0; i < dev->height; ++i)
             memset(dev->mem[buf->index].start + i * bpl, dev->color++, bpl);
-		
+
         buf->bytesused = bpl * dev->height;
 		// printf("uvc_video_fill_buffer %d \n", buf->bytesused);
         break;
@@ -284,7 +284,7 @@ static int uvc_video_process_userptr(struct uvc_device* dev)
     {
         return ret;
     }
-    if (g_standalone) 
+    if (g_standalone)
     {
         uvc_video_fill_buffer_standalone(dev, &buf);
     }else
@@ -324,7 +324,8 @@ static int uvc_video_reqbufs_userptr(struct uvc_device* dev, int nbufs)
              strerror(errno), errno);
         return ret;
     }
-
+    if (!rb.count)
+		return 0;
     dev->nbufs = rb.count;
 
  //   INFO("%u buffers allocated.\n", rb.count);
@@ -406,7 +407,7 @@ static int uvc_video_stream_userptr(struct uvc_device* dev, int enable)
         buf.type   = V4L2_BUF_TYPE_VIDEO_OUTPUT;
         buf.memory = V4L2_MEMORY_USERPTR;
 
-        if (g_standalone) 
+        if (g_standalone)
         {
             uvc_video_fill_buffer_standalone(dev, &buf);
         }else
@@ -501,7 +502,7 @@ static const struct uvc_frame_info uvc_frames_h265[] =
 };
 
 static const struct uvc_format_info uvc_formats[] =
-{ 
+{
     {V4L2_PIX_FMT_NV12, uvc_frames_nv12},
     { V4L2_PIX_FMT_MJPEG, uvc_frames_mjpeg },
     { V4L2_PIX_FMT_H264,  uvc_frames_h264  },
@@ -527,7 +528,7 @@ static void disable_uvc_video(struct uvc_device* dev)
     unsigned int i;
 
     uvc_streamoff(dev);
-
+    uvc_video_reqbufs_userptr(dev, 0);
     if(g_standalone)
     {
         for (i = 0; i < dev->nbufs; ++i)
@@ -557,7 +558,6 @@ static void enable_uvc_video(struct uvc_device* dev)
 {
     encoder_property p;
 
-    disable_uvc_video(dev);
     if(g_standalone == 0)
     {
         clear_ok_queue();
@@ -568,7 +568,6 @@ static void enable_uvc_video(struct uvc_device* dev)
         p.compsite = 0;
 
         kstream_set_enc_property(&p);
-        kstream_shutdown();
         kstream_startup();
     }
 
@@ -1217,7 +1216,7 @@ static const char* to_string(unsigned int format)
         case V4L2_PIX_FMT_YUV420:
             return "YUV420";
             break;
-        
+
         case V4L2_PIX_FMT_NV12:
             return "NV12";
             break;
@@ -1365,6 +1364,7 @@ static void uvc_events_process_data(struct uvc_device* dev, struct uvc_request_d
 
         if (dev->bulk != 0)
         {
+            disable_uvc_video(dev);
             enable_uvc_video(dev);
         }
     }
@@ -1385,7 +1385,7 @@ static void uvc_events_process(struct uvc_device* dev)
     // INFO("#############uvc_events_process\n");
 
     ret = ioctl(dev->fd, VIDIOC_DQEVENT, &v4l2_event);
-    
+
     if (ret < 0)
     {
         LOG("VIDIOC_DQEVENT failed: %s (%d)\n", strerror(errno),
@@ -1432,14 +1432,9 @@ static void uvc_events_process(struct uvc_device* dev)
         //0x08000003
     case UVC_EVENT_STREAMOFF:
         INFO("UVC_EVENT_STREAMOFF\n");
-        // if (!dev->bulk)
-        // {
-        //     disable_uvc_video(dev);
-        // }
-        if (dev->streaming) {
+        if (!dev->bulk)
+        {
             disable_uvc_video(dev);
-            uvc_video_reqbufs_userptr(dev, 0);
-            dev->streaming = 0;
         }
 
         return;
@@ -1493,7 +1488,7 @@ image_load(struct uvc_device *dev, const char *img)
 		return;
 	}
     dev->img_used = 0;
-	dev->imgsize = lseek(fd, 0, SEEK_END);
+	// dev->imgsize = lseek(fd, 0, SEEK_END);
 	lseek(fd, 0, SEEK_SET);
 	dev->imgdata = malloc(dev->imgsize);
 	if (dev->imgdata == NULL) {
@@ -1501,7 +1496,7 @@ image_load(struct uvc_device *dev, const char *img)
 		dev->imgsize = 0;
 		return;
 	}
-    
+
 	read(fd, dev->imgdata, dev->imgsize);
 	close(fd);
 }
@@ -1550,13 +1545,7 @@ int close_uvc_device()
 {
     if (__uvc_device != 0)
     {
-        // disable_uvc_video(__uvc_device);
-        if (__uvc_device->streaming) {
-            disable_uvc_video(__uvc_device);
-            uvc_video_reqbufs_userptr(__uvc_device, 0);
-            __uvc_device->streaming = 0;
-        }
-
+        disable_uvc_video(__uvc_device);
         uvc_close(__uvc_device);
     }
 

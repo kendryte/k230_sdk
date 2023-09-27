@@ -17,31 +17,7 @@ config RISCV_THEAD
 	imply SPL_OPENSBI
 	imply SPL_LOAD_FIT
 
-choice
-	prompt "ddr typy freq"
-	depends on TARGET_K230_EVB
-	default LPDDR3_800
-	
-config LPDDR3_800
-	bool "ddr3 800"
 
-config LPDDR3_2133
-	bool  "ddr3 2133"
-	
-
-config LPDDR4_1066
-	bool  "ddr4 1066"
-
-config LPDDR4_2667
-	bool  "ddr4 2667"	
-
-config SIPLP4_3200_WODT
-	bool  "sip ddr4 3200 with write odt"
-	
-config SIPLP4_3200_WALLODT
-	bool  "sip ddr4 3200 with all odt"
-
-endchoice
 
 config DDR_SIZE
 	hex "DDR  Size"

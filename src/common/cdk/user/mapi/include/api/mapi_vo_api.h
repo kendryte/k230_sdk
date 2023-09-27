@@ -38,7 +38,8 @@
 #include "k_mapi_module.h"
 #include "mpi_vo_api.h"
 #include "k_vo_comm.h"
-
+#include "k_connector_comm.h"
+#include "mpi_connector_api.h"
 
 #define K_MAPI_ERR_VO_ILLEGAL_PARAM    K_MAPI_DEF_ERR(K_MAPI_MOD_VO, K_ERR_LEVEL_ERROR, K_ERR_ILLEGAL_PARAM)
 #define K_MAPI_ERR_VO_NULL_PTR         K_MAPI_DEF_ERR(K_MAPI_MOD_VO, K_ERR_LEVEL_ERROR, K_ERR_NULL_PTR)
@@ -423,6 +424,72 @@ k_s32 kd_mapi_vo_chn_dump_frame(k_u32 chn_num, k_video_frame_info *vf_info, k_u3
  * - Only the video frame obtained by ::kd_mpi_vo_chn_dump_frame can be released
  */
 k_s32 kd_mapi_vo_chn_dump_release(k_u32 chn_num, const k_video_frame_info *vf_info);
+
+
+
+/**
+ * @brief get connetor infor
+ *
+ * @param [in] connector_type  connector type
+ * @param [in] connector_info  connector info
+ * @return k_s32
+ * @retval 0 success
+ * @retval "not 0" see err code
+ * @see K_ERR_CODE_E
+ * @note
+ * - Currently the writeback data format can only be yuv420
+ * - target_size: needs to be a valid size for vo output
+ */
+k_s32 kd_mapi_get_connector_info(k_connector_type connector_type, k_connector_info *connector_info);
+
+
+
+/**
+ * @brief open connector dev
+ *
+ * @param [in] connector_name  dev name
+ * @return k_s32
+ * @retval 0 success
+ * @retval "not 0" see err code
+ * @see K_ERR_CODE_E
+ * @note
+ * - Currently the writeback data format can only be yuv420
+ * - target_size: needs to be a valid size for vo output
+ */
+k_s32 kd_mapi_connector_open(const char *connector_name);
+
+
+/**
+ * @brief open connector power
+ *
+ * @param [in] fd  dev name
+ * @param [in] on  opne / close
+ * @return k_s32
+ * @retval 0 success
+ * @retval "not 0" see err code
+ * @see K_ERR_CODE_E
+ * @note
+ * - Currently the writeback data format can only be yuv420
+ * - target_size: needs to be a valid size for vo output
+ */
+k_s32 kd_mapi_connector_power_set(k_s32 fd, k_bool on);
+
+
+
+/**
+ * @brief connector init
+ *
+ * @param [in] fd  dev name
+ * @param [in] k_connector_info  connector info
+ * @return k_s32
+ * @retval 0 success
+ * @retval "not 0" see err code
+ * @see K_ERR_CODE_E
+ * @note
+ * - Currently the writeback data format can only be yuv420
+ * - target_size: needs to be a valid size for vo output
+ */
+k_s32 kd_mapi_connector_init(k_s32 fd, k_connector_info *info);
 
 /** @} */ /** <!-- ==== MAPI_VVI End ==== */
 

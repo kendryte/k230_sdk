@@ -10,6 +10,9 @@
 #include "util.h"
 #include "mpi_sys_api.h"
 
+#include "k_connector_comm.h"
+#include "mpi_connector_api.h"
+
 using namespace nncase;
 using namespace nncase::runtime;
 using namespace nncase::runtime::detail;
@@ -321,7 +324,6 @@ int ipc_send_thread(ipc_msg_cmd_t cmd)
     kd_ipcmsg_send_only(s32Id1, pReq);
     kd_ipcmsg_destroy_message(pReq);
     usleep(SEND_TIME_INTERVAL_US * 3);
-    printf("test2\n");
     return 0;
 }
 
@@ -352,7 +354,6 @@ void handle_feature(k_s32 s32Id, k_ipcmsg_message_t* msg)
             snprintf(content, 64, "modle:%d, cmd:%08x, is not found.", msg->u32Module, msg->u32CMD);
             s32Ret = -1;
     }
-    printf("ipc_msg cmd\n");
     switch(msg->u32CMD)
     {
         case MSG_CMD_IMPORT:
@@ -361,7 +362,6 @@ void handle_feature(k_s32 s32Id, k_ipcmsg_message_t* msg)
             ipc_send_thread(MSG_CMD_IMPORT_RESULT);
             break;
         case MSG_CMD_SIGNUP:
-            printf("can not recongnise ipc_msg cmd\n");
             key_press = true;
             name = (char*)msg->pBody;
             ipc_send_thread(MSG_CMD_SIGNUP_RESULT);
@@ -434,12 +434,6 @@ k_vo_draw_frame vo_frame = (k_vo_draw_frame) {
     1
 };
 
-k_vo_display_resolution hx8399[20] =
-{
-    //{74250, 445500, 1340, 1080, 20, 20, 220, 1938, 1920, 5, 8, 10},           // display  evblp3
-    {37125, 222750, 1240, 1080, 20, 20, 120, 1988, 1920, 5, 8, 55},
-};
-
 int vo_creat_layer_test(k_vo_layer chn_id, layer_info *info)
 {
     k_vo_video_layer_attr attr;
@@ -483,129 +477,49 @@ int vo_creat_layer_test(k_vo_layer chn_id, layer_info *info)
     return 0;
 }
 
-static void hx8399_v2_init(k_u8 test_mode_en)
+k_s32 sample_connector_init(void)
 {
-    k_u8 param1[] = {0xB9, 0xFF, 0x83, 0x99};
-    k_u8 param21[] = {0xD2, 0xAA};
-    k_u8 param2[] = {0xB1, 0x02, 0x04, 0x71, 0x91, 0x01, 0x32, 0x33, 0x11, 0x11, 0xab, 0x4d, 0x56, 0x73, 0x02, 0x02};
-    k_u8 param3[] = {0xB2, 0x00, 0x80, 0x80, 0xae, 0x05, 0x07, 0x5a, 0x11, 0x00, 0x00, 0x10, 0x1e, 0x70, 0x03, 0xd4};
-    k_u8 param4[] = {0xB4, 0x00, 0xFF, 0x02, 0xC0, 0x02, 0xc0, 0x00, 0x00, 0x08, 0x00, 0x04, 0x06, 0x00, 0x32, 0x04, 0x0a, 0x08, 0x21, 0x03, 0x01, 0x00, 0x0f, 0xb8, 0x8b, 0x02, 0xc0, 0x02, 0xc0, 0x00, 0x00, 0x08, 0x00, 0x04, 0x06, 0x00, 0x32, 0x04, 0x0a, 0x08, 0x01, 0x00, 0x0f, 0xb8, 0x01};
-    k_u8 param5[] = {0xD3, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x10, 0x04, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x05, 0x05, 0x07, 0x00, 0x00, 0x00, 0x05, 0x40};
-    k_u8 param6[] = {0xD5, 0x18, 0x18, 0x19, 0x19, 0x18, 0x18, 0x21, 0x20, 0x01, 0x00, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x2f, 0x2f, 0x30, 0x30, 0x31, 0x31, 0x18, 0x18, 0x18, 0x18};
-    k_u8 param7[] = {0xD6, 0x18, 0x18, 0x19, 0x19, 0x40, 0x40, 0x20, 0x21, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x00, 0x01, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x2f, 0x2f, 0x30, 0x30, 0x31, 0x31, 0x40, 0x40, 0x40, 0x40};
-    k_u8 param8[] = {0xD8, 0xa2, 0xaa, 0x02, 0xa0, 0xa2, 0xa8, 0x02, 0xa0, 0xb0, 0x00, 0x00, 0x00, 0xb0, 0x00, 0x00, 0x00};
-    k_u8 param9[] = {0xBD, 0x01};
-    k_u8 param10[] = {0xD8, 0xB0, 0x00, 0x00, 0x00, 0xB0, 0x00, 0x00, 0x00, 0xE2, 0xAA, 0x03, 0xF0, 0xE2, 0xAA, 0x03, 0xF0};
-    k_u8 param11[] = {0xBD, 0x02};
-    k_u8 param12[] = {0xD8, 0xE2, 0xAA, 0x03, 0xF0, 0xE2, 0xAA, 0x03, 0xF0};
-    k_u8 param13[] = {0xBD, 0x00};
-    k_u8 param14[] = {0xB6, 0x8D, 0x8D};
-    k_u8 param15[] = {0xCC, 0x05};
-    k_u8 param16[] = {0xC6, 0xFF, 0xF9};
-    k_u8 param22[] = {0xE0, 0x00, 0x12, 0x1f, 0x1a, 0x40, 0x4a, 0x59, 0x55, 0x5e, 0x67, 0x6f, 0x75, 0x7a, 0x82, 0x8b, 0x90, 0x95, 0x9f, 0xa3, 0xad, 0xa2, 0xb2, 0xB6, 0x5e, 0x5a, 0x65, 0x77, 0x00, 0x12, 0x1f, 0x1a, 0x40, 0x4a, 0x59, 0x55, 0x5e, 0x67, 0x6f, 0x75, 0x7a, 0x82, 0x8b, 0x90, 0x95, 0x9f, 0xa3, 0xad, 0xa2, 0xb2, 0xB6, 0x5e, 0x5a, 0x65, 0x77};
-    k_u8 param23[] = {0x11};
-    k_u8 param24[] = {0x29};
+    k_u32 ret = 0;
+    k_s32 connector_fd;
+    k_connector_type connector_type = HX8377_V2_MIPI_4LAN_1080X1920_30FPS;
+    k_connector_info connector_info;
 
-    k_u8 pag20[50] = {0xB2, 0x0b, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77};               // ��ɫ
+    memset(&connector_info, 0, sizeof(k_connector_info));
 
-
-    kd_mpi_dsi_send_cmd(param1, sizeof(param1));
-    kd_mpi_dsi_send_cmd(param21, sizeof(param21));
-    kd_mpi_dsi_send_cmd(param2, sizeof(param2));
-    kd_mpi_dsi_send_cmd(param3, sizeof(param3));
-    kd_mpi_dsi_send_cmd(param4, sizeof(param4));
-    kd_mpi_dsi_send_cmd(param5, sizeof(param5));
-    kd_mpi_dsi_send_cmd(param6, sizeof(param6));
-    kd_mpi_dsi_send_cmd(param7, sizeof(param7));
-    kd_mpi_dsi_send_cmd(param8, sizeof(param8));
-    kd_mpi_dsi_send_cmd(param9, sizeof(param9));
-
-    if (test_mode_en == 1)
-    {
-        kd_mpi_dsi_send_cmd(pag20, 10);                   // test  mode
+    //connector get sensor info
+    ret = kd_mpi_get_connector_info(connector_type, &connector_info);
+    if (ret) {
+        printf("sample_vicap, the sensor type not supported!\n");
+        return ret;
     }
 
-    kd_mpi_dsi_send_cmd(param10, sizeof(param10));
-    kd_mpi_dsi_send_cmd(param11, sizeof(param11));
-    kd_mpi_dsi_send_cmd(param12, sizeof(param12));
-    kd_mpi_dsi_send_cmd(param13, sizeof(param13));
-    kd_mpi_dsi_send_cmd(param14, sizeof(param14));
-    kd_mpi_dsi_send_cmd(param15, sizeof(param15));
-    kd_mpi_dsi_send_cmd(param16, sizeof(param16));
-    kd_mpi_dsi_send_cmd(param22, sizeof(param22));
-    kd_mpi_dsi_send_cmd(param23, 1);
-    usleep(300);
-    kd_mpi_dsi_send_cmd(param24, 1);
-    usleep(100);
-}
+    connector_fd = kd_mpi_connector_open(connector_info.connector_name);
+    if (connector_fd < 0) {
+        printf("%s, connector open failed.\n", __func__);
+        return K_ERR_VO_NOTREADY;
+    }
 
-void dwc_dsi_init(void)
-{
+    // set connect power
+    kd_mpi_connector_power_set(connector_fd, K_TRUE);
+    // connector init
+    kd_mpi_connector_init(connector_fd, connector_info);
 
-    k_vo_display_resolution *resolution = NULL;
-    int resolution_index = 0;
-    resolution = &hx8399[resolution_index];
-    k_vo_dsi_attr attr;
-
-    k_vo_mipi_phy_attr phy_attr;
-    int enable = 1;
-    int screen_test_mode = 0;
-
-    memset(&attr, 0, sizeof(k_vo_dsi_attr));
-
-
-    // config phy
-    phy_attr.phy_lan_num = K_DSI_4LAN;
-    phy_attr.m = 295;
-    phy_attr.n = 15;
-    phy_attr.voc = 0x17;
-    phy_attr.hs_freq = 0x96;
-    kd_mpi_set_mipi_phy_attr(&phy_attr);
-
-
-    attr.lan_num = K_DSI_4LAN;
-    attr.cmd_mode = K_VO_LP_MODE;
-    attr.lp_div = 8;
-    memcpy(&attr.resolution, resolution, sizeof(k_vo_display_resolution));
-    // set dsi timing
-    kd_mpi_dsi_set_attr(&attr);
-
-    // config scann
-    hx8399_v2_init(screen_test_mode);
-
-    // enable dsi
-    kd_mpi_dsi_enable(enable);
-
+    return 0;
 }
 
 static k_s32 vo_layer_vdss_bind_vo_config(void)
 {
-    k_vo_display_resolution *resolution = NULL;
-    k_s32 resolution_index = 0;
-    resolution = &hx8399[resolution_index];
-
-    k_vo_pub_attr attr;
     layer_info info;
-
     k_vo_layer chn_id = K_VO_LAYER1;
 
-    memset(&attr, 0, sizeof(attr));
     memset(&info, 0, sizeof(info));
 
-    attr.bg_color = 0x808000;
-    attr.intf_sync = K_VO_OUT_1080P30;
-    attr.intf_type = K_VO_INTF_MIPI;
-    attr.sync_info = resolution;
-
-    // vo init
-    kd_mpi_vo_init();
-    // set vo timing
-    kd_mpi_vo_set_dev_param(&attr);
+    sample_connector_init();
 
     info.act_size.width = ISP_CHN1_WIDTH;//1080;//640;//1080;
     info.act_size.height = ISP_CHN1_HEIGHT;//1920;//480;//1920;
     info.format = PIXEL_FORMAT_YVU_PLANAR_420;
-    info.func = K_ROTATION_270;////K_ROTATION_90;
+    info.func = K_ROTATION_270 | K_VO_GRAY_ENABLE;////K_ROTATION_90;
     info.global_alptha = 0xff;
     info.offset.x = (1080-ISP_CHN1_WIDTH)/2;//(1080-w)/2,
     info.offset.y = (1920-ISP_CHN1_HEIGHT)/2;//(1920-h)/2;
@@ -623,17 +537,13 @@ static k_s32 vo_layer_vdss_bind_vo_config(void)
 
         vo_creat_osd_test(osd_id, &osd);
     }
-    kd_mpi_vo_enable();
     return 0;
 }
 
 static void sample_vo_fn(void *arg)
 {
     // set hardware reset;
-    kd_display_set_backlight();
-	// rst display subsystem
-    kd_display_reset();
-    dwc_dsi_init();
+    usleep(10000);
     vo_layer_vdss_bind_vo_config();
     sample_sys_bind_init();
     return;
@@ -642,10 +552,7 @@ static void sample_vo_fn(void *arg)
 
 static int sample_vo_init(void)
 {
-    kd_display_set_backlight();
-	// rst display subsystem
-    kd_display_reset();
-    dwc_dsi_init();
+    usleep(10000);
     vo_layer_vdss_bind_vo_config();
     return 0;
 }
@@ -690,7 +597,7 @@ int sample_sys_bind_init(void)
     k_mpp_chn vo_mpp_chn;
     vicap_mpp_chn.mod_id = K_ID_VI;
     vicap_mpp_chn.dev_id = VICAP_DEV_ID_0;
-    vicap_mpp_chn.chn_id = VICAP_CHN_ID_0;
+    vicap_mpp_chn.chn_id = VICAP_CHN_ID_1;
 
     vo_mpp_chn.mod_id = K_ID_VO;
     vo_mpp_chn.dev_id = K_VO_DISPLAY_DEV_ID;
@@ -709,24 +616,38 @@ int sample_vb_init(void)
     memset(&config, 0, sizeof(config));
     config.max_pool_cnt = 64;
 {
-    config.comm_pool[0].blk_cnt = VICAP_MAX_FRAME_COUNT;
-    config.comm_pool[0].mode = VB_REMAP_MODE_NOCACHE;
-    config.comm_pool[0].blk_size = VICAP_ALIGN_UP((ISP_CHN1_HEIGHT * ISP_CHN1_WIDTH * 3 / 2), VICAP_ALIGN_1K);
+    // config.comm_pool[0].blk_cnt = 3;
+    // config.comm_pool[0].mode = VB_REMAP_MODE_NOCACHE;
+    // config.comm_pool[0].blk_size = VICAP_ALIGN_UP((ISP_CHN1_HEIGHT * ISP_CHN1_WIDTH * 3 / 2), VICAP_ALIGN_1K);
 
-    //VB for dev 1 chn 0 YUV420SP dummy output, if chn0 disable, chn1 rgb888p will failed
-    config.comm_pool[1].blk_cnt = VICAP_MAX_FRAME_COUNT;
+    // // VB for dev 1 chn 0 YUV420SP dummy output, if chn0 disable, chn1 rgb888p will failed
+    config.comm_pool[1].blk_cnt = 3;
     config.comm_pool[1].mode = VB_REMAP_MODE_NOCACHE;
     config.comm_pool[1].blk_size = VICAP_ALIGN_UP((ISP_CHN1_HEIGHT * ISP_CHN1_WIDTH * 3 / 2), VICAP_ALIGN_1K);
-    //VB for RGB888 output
-    config.comm_pool[2].blk_cnt = VICAP_MAX_FRAME_COUNT;
+    // VB for RGB888 output
+    config.comm_pool[2].blk_cnt = 3;
     config.comm_pool[2].mode = VB_REMAP_MODE_NOCACHE;
     config.comm_pool[2].blk_size = VICAP_ALIGN_UP((ISP_CHN1_HEIGHT * ISP_CHN1_WIDTH * 3 ), VICAP_ALIGN_1K);
+      
+
+    config.comm_pool[3].blk_cnt = 2;
+    config.comm_pool[3].mode = VB_REMAP_MODE_NOCACHE;
+    config.comm_pool[3].blk_size = VICAP_ALIGN_UP((ISP_CHN1_HEIGHT * ISP_CHN1_WIDTH * 2), VICAP_ALIGN_1K);
+
+    config.comm_pool[4].blk_cnt = 2;
+    config.comm_pool[4].mode = VB_REMAP_MODE_NOCACHE;
+    config.comm_pool[4].blk_size = VICAP_ALIGN_UP((ISP_CHN1_HEIGHT * ISP_CHN1_WIDTH * 2), VICAP_ALIGN_1K);
 
     /* dpu vb init */
-    config.comm_pool[3].blk_cnt = (4);
-    config.comm_pool[3].blk_size = 5 * 1024 * 1024;
-    // config.comm_pool[3].blk_size = ISP_CHN1_HEIGHT * ISP_CHN1_WIDTH * 2;
-    config.comm_pool[3].mode = VB_REMAP_MODE_NOCACHE;
+    config.comm_pool[5].blk_cnt = 1;
+    config.comm_pool[5].blk_size = 3 * 1024 * 1024;
+    config.comm_pool[5].mode = VB_REMAP_MODE_NOCACHE;
+
+    /* dma vb init */
+    config.comm_pool[6].blk_cnt = 2;
+    config.comm_pool[6].blk_size = VICAP_ALIGN_UP((ISP_CHN1_HEIGHT * ISP_CHN1_WIDTH * 3), VICAP_ALIGN_1K);
+    config.comm_pool[6].mode = VB_REMAP_MODE_NOCACHE;
+
 }
     ret = kd_mpi_vb_set_config(&config);
     if (ret) {
@@ -754,7 +675,7 @@ int sample_vivcap_init( void )
 {
     k_s32 ret = 0;
     memset(&sensor_info, 0, sizeof(k_vicap_sensor_info));
-    ret = kd_mpi_vicap_get_sensor_info(OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_IR, &sensor_info);
+    ret = kd_mpi_vicap_get_sensor_info(OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_IR_SPECKLE, &sensor_info);
     if (ret) {
         printf("sample_vicap, the sensor type not supported!\n");
         return ret;
@@ -765,12 +686,12 @@ int sample_vivcap_init( void )
     dev_attr.acq_win.v_start = 0;
     dev_attr.acq_win.width = sensor_info.width;
     dev_attr.acq_win.height = sensor_info.height;
-    dev_attr.mode = VICAP_WORK_OFFLINE_MODE;
+    dev_attr.mode = VICAP_WORK_ONLINE_MODE;
 
     dev_attr.dw_enable = K_FALSE;
     dev_attr.dev_enable = K_TRUE;
 
-    dev_attr.buffer_num = 4;
+    dev_attr.buffer_num = 2;
     dev_attr.buffer_size = VICAP_ALIGN_UP((dev_attr.acq_win.width * dev_attr.acq_win.height * 2), VICAP_ALIGN_1K);
 
     dev_attr.pipe_ctrl.data = 0xFFFFFFFF;
@@ -797,7 +718,7 @@ int sample_vivcap_init( void )
     // chn_attr.dw_enable = K_FALSE;
     chn_attr.chn_enable = K_TRUE;
     chn_attr.pix_format = PIXEL_FORMAT_YVU_PLANAR_420;
-    chn_attr.buffer_num = VICAP_MAX_FRAME_COUNT;//at least 3 buffers for isp
+    chn_attr.buffer_num = 3;//at least 3 buffers for isp
     chn_attr.buffer_size = config.comm_pool[1].blk_size;
 
 
@@ -816,7 +737,7 @@ int sample_vivcap_init( void )
     // chn_attr.dw_enable = K_FALSE;
     chn_attr.chn_enable = K_TRUE;
     chn_attr.pix_format = PIXEL_FORMAT_BGR_888_PLANAR;
-    chn_attr.buffer_num = VICAP_MAX_FRAME_COUNT;//at least 3 buffers for isp
+    chn_attr.buffer_num = 3;//at least 3 buffers for isp
     chn_attr.buffer_size = config.comm_pool[2].blk_size;
 
     ret = kd_mpi_vicap_set_chn_attr(VICAP_DEV_ID_0, VICAP_CHN_ID_1, chn_attr);
@@ -825,81 +746,79 @@ int sample_vivcap_init( void )
         return ret;
     }
     // -sensor 2 -mode 1 -chn 0 -rotation 1
-    memset(&sensor_info, 0, sizeof(k_vicap_sensor_info));
-    ret = kd_mpi_vicap_get_sensor_info(OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_SPECKLE, &sensor_info);
-    if (ret) {
-        printf("sample_vicap, the sensor type not supported!\n");
-        return ret;
-    }
+    // memset(&sensor_info, 0, sizeof(k_vicap_sensor_info));
+    // ret = kd_mpi_vicap_get_sensor_info(OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_SPECKLE, &sensor_info);
+    // if (ret) {
+    //     printf("sample_vicap, the sensor type not supported!\n");
+    //     return ret;
+    // }
 
-    memset(&dev_attr, 0, sizeof(k_vicap_dev_attr));
-    dev_attr.acq_win.h_start = 0;
-    dev_attr.acq_win.v_start = 0;
-    dev_attr.acq_win.width = sensor_info.width;
-    dev_attr.acq_win.height = sensor_info.height;
-    dev_attr.mode = VICAP_WORK_OFFLINE_MODE;
+    // memset(&dev_attr, 0, sizeof(k_vicap_dev_attr));
+    // dev_attr.acq_win.h_start = 0;
+    // dev_attr.acq_win.v_start = 0;
+    // dev_attr.acq_win.width = sensor_info.width;
+    // dev_attr.acq_win.height = sensor_info.height;
+    // dev_attr.mode = VICAP_WORK_OFFLINE_MODE;
 
-    dev_attr.dw_enable = K_FALSE;
-    dev_attr.dev_enable = K_TRUE;
+    // dev_attr.dw_enable = K_FALSE;
+    // dev_attr.dev_enable = K_TRUE;
 
-    dev_attr.buffer_num = 4;
-    dev_attr.buffer_size = VICAP_ALIGN_UP((dev_attr.acq_win.width * dev_attr.acq_win.height * 2), VICAP_ALIGN_1K);
+    // dev_attr.buffer_num = 2;
+    // dev_attr.buffer_size = VICAP_ALIGN_UP((dev_attr.acq_win.width * dev_attr.acq_win.height * 2), VICAP_ALIGN_1K);
 
-    dev_attr.pipe_ctrl.data = 0xFFFFFFFF;
-    dev_attr.pipe_ctrl.bits.af_enable = 0;
-    dev_attr.pipe_ctrl.bits.ahdr_enable = 0;
-    dev_attr.pipe_ctrl.bits.dnr3_enable = 0;
-    dev_attr.cpature_frame = 0;
-    memcpy(&dev_attr.sensor_info, &sensor_info, sizeof(k_vicap_sensor_info));
+    // dev_attr.pipe_ctrl.data = 0xFFFFFFFF;
+    // dev_attr.pipe_ctrl.bits.af_enable = 0;
+    // dev_attr.pipe_ctrl.bits.ahdr_enable = 0;
+    // dev_attr.pipe_ctrl.bits.dnr3_enable = 0;
+    // dev_attr.cpature_frame = 0;
+    // memcpy(&dev_attr.sensor_info, &sensor_info, sizeof(k_vicap_sensor_info));
 
-    ret = kd_mpi_vicap_set_dev_attr(VICAP_DEV_ID_1, dev_attr);
-    if (ret) {
-        printf("sample_vicap, kd_mpi_vicap_set_dev_attr failed.\n");
-        return ret;
-    }
-    memset(&chn_attr, 0, sizeof(k_vicap_chn_attr));
-    //set chn0 output yuv420sp
-    chn_attr.out_win = dev_attr.acq_win;
-    chn_attr.crop_win = chn_attr.out_win;
-    chn_attr.scale_win = chn_attr.out_win;
-    chn_attr.crop_enable = K_FALSE;
-    chn_attr.scale_enable = K_FALSE;
-    // chn_attr.dw_enable = K_FALSE;
-    chn_attr.chn_enable = K_TRUE;
-    chn_attr.pix_format = PIXEL_FORMAT_YVU_PLANAR_420;
-    chn_attr.buffer_num = VICAP_MAX_FRAME_COUNT;//at least 3 buffers for isp
-    chn_attr.buffer_size = config.comm_pool[0].blk_size;
+    // ret = kd_mpi_vicap_set_dev_attr(VICAP_DEV_ID_1, dev_attr);
+    // if (ret) {
+    //     printf("sample_vicap, kd_mpi_vicap_set_dev_attr failed.\n");
+    //     return ret;
+    // }
+    // memset(&chn_attr, 0, sizeof(k_vicap_chn_attr));
+    // //set chn0 output yuv420sp
+    // chn_attr.out_win = dev_attr.acq_win;
+    // chn_attr.crop_win = chn_attr.out_win;
+    // chn_attr.scale_win = chn_attr.out_win;
+    // chn_attr.crop_enable = K_FALSE;
+    // chn_attr.scale_enable = K_FALSE;
+    // // chn_attr.dw_enable = K_FALSE;
+    // chn_attr.chn_enable = K_TRUE;
+    // chn_attr.pix_format = PIXEL_FORMAT_YVU_PLANAR_420;
+    // chn_attr.buffer_num = 3;//at least 3 buffers for isp
+    // chn_attr.buffer_size = config.comm_pool[0].blk_size;
 
-    // printf("sample_vicap ...kd_mpi_vicap_set_chn_attr, buffer_size[%d]\n", chn_attr.buffer_size);
-    ret = kd_mpi_vicap_set_chn_attr(VICAP_DEV_ID_1, VICAP_CHN_ID_0, chn_attr);
-    if (ret) {
-        printf("sample_vicap, kd_mpi_vicap_set_chn_attr failed.\n");
-        return ret;
-    }
-    // printf("sample_vicap ...kd_mpi_vicap_set_database_parse_mode\n");
+    // ret = kd_mpi_vicap_set_chn_attr(VICAP_DEV_ID_1, VICAP_CHN_ID_0, chn_attr);
+    // if (ret) {
+    //     printf("sample_vicap, kd_mpi_vicap_set_chn_attr failed.\n");
+    //     return ret;
+    // }
     ret = kd_mpi_vicap_set_database_parse_mode(VICAP_DEV_ID_0, VICAP_DATABASE_PARSE_HEADER);
     if (ret) {
         printf("sample_vicap, kd_mpi_vicap_set_database_parse_mode failed.\n");
         return ret;
     }
 
-    ret = kd_mpi_vicap_set_database_parse_mode(VICAP_DEV_ID_1, VICAP_DATABASE_PARSE_HEADER);
-    if (ret) {
-        printf("sample_vicap, kd_mpi_vicap_set_database_parse_mode failed.\n");
-        return ret;
-    }
+    // ret = kd_mpi_vicap_set_database_parse_mode(VICAP_DEV_ID_1, VICAP_DATABASE_PARSE_HEADER);
+    // if (ret) {
+    //     printf("sample_vicap, kd_mpi_vicap_set_database_parse_mode failed.\n");
+    //     return ret;
+    // }
     ret = kd_mpi_vicap_init(VICAP_DEV_ID_0);
     if (ret) {
         printf("sample_vicap, kd_mpi_vicap_init VICAP_DEV_ID_0 failed.\n");
         return ret;
         // goto err_exit;
     }
-    ret = kd_mpi_vicap_init(VICAP_DEV_ID_1);
-    if (ret) {
-        printf("sample_vicap, kd_mpi_vicap_init VICAP_DEV_ID_1 failed.\n");
-        return ret;
-        // goto err_exit;
-    }
+    // ret = kd_mpi_vicap_init(VICAP_DEV_ID_1);
+    // if (ret) {
+    //     printf("sample_vicap, kd_mpi_vicap_init VICAP_DEV_ID_1 failed.\n");
+    //     return ret;
+    //     // goto err_exit;
+    // }
     printf("sample_vicap ...kd_mpi_vicap_start_stream\n");
     ret = kd_mpi_vicap_start_stream(VICAP_DEV_ID_0);
     if (ret) {
@@ -907,12 +826,12 @@ int sample_vivcap_init( void )
         return ret;
         // goto err_exit;
     }
-    ret = kd_mpi_vicap_start_stream(VICAP_DEV_ID_1);
-    if (ret) {
-        printf("sample_vicap, kd_mpi_vicap_init failed.\n");
-        return ret;
-        // goto err_exit;
-    }
+    // ret = kd_mpi_vicap_start_stream(VICAP_DEV_ID_1);
+    // if (ret) {
+    //     printf("sample_vicap, kd_mpi_vicap_init failed.\n");
+    //     return ret;
+    //     // goto err_exit;
+    // }
     return ret;
 }
 
@@ -924,6 +843,7 @@ static void *exit_app(void *arg)
         usleep(10000);
     }
     app_run = false;
+    pthread_exit(0);
 }
 
 void draw_result(cv::Mat& src_img,box_t& bbox,FaceMaskInfo& result, bool pic_mode,bool is_label,std::vector<cv::Point2f> points1,bool ir_pred,bool depth_pred)
@@ -970,16 +890,7 @@ void draw_result(cv::Mat& src_img,box_t& bbox,FaceMaskInfo& result, bool pic_mod
                 cv::putText(src_img, text, {std::max(int(x-10),0), std::max(int(y - 10),0)}, cv::FONT_HERSHEY_COMPLEX, 2.5, cv::Scalar(255,0, 0, 255), 4, 8, 0);
             is_label = false;
         }
-        // if(depth_pred == false)
-        // {
-        //     cv::putText(src_img, "depth fail", {std::max(int(x),0), std::max(int(y - 10),0)}, cv::FONT_HERSHEY_COMPLEX, 2.5, cv::Scalar(255,255, 0, 0), 4, 8, 0);
-        // }
-        // if(ir_pred == false && depth_pred == true)
-        // {
-        //     cv::putText(src_img, "ir fail", {std::max(int(x),0), std::max(int(y - 10),0)}, cv::FONT_HERSHEY_COMPLEX, 2.5, cv::Scalar(255,255, 0, 0), 4, 8, 0);
-        // }
-
-        
+       
     }
     return;  
 }
@@ -1016,7 +927,7 @@ static int sample_dma_start() {
     k_gdma_chn_attr_t *gdma_attr;
 
     gdma_attr = &dma_chn_attr[0].gdma_attr;
-    gdma_attr->buffer_num = 3;
+    gdma_attr->buffer_num = 1;
     gdma_attr->rotation = DEGREE_90;
     gdma_attr->x_mirror = K_FALSE;
     gdma_attr->y_mirror = K_FALSE;
@@ -1028,7 +939,7 @@ static int sample_dma_start() {
     gdma_attr->pixel_format = DMA_PIXEL_FORMAT_YUV_400_8BIT;
 
     gdma_attr = &dma_chn_attr[1].gdma_attr;
-    gdma_attr->buffer_num = 3;
+    gdma_attr->buffer_num = 1;
     gdma_attr->rotation = DEGREE_270;
     gdma_attr->x_mirror = K_FALSE;
     gdma_attr->y_mirror = K_FALSE;
@@ -1071,12 +982,8 @@ static int sample_dma_start() {
         printf("start chn(1) error\r\n");
         goto err_dma_dev;
     }
-
     return K_SUCCESS;
 
-    /************************************************************
-     * This part is used to stop the DMA
-     ***********************************************************/
     ret = kd_mpi_dma_stop_chn(0);
     if (ret != K_SUCCESS) {
         printf("stop chn error\r\n");
@@ -1110,7 +1017,7 @@ static void sample_dma_stop() {
 static int sample_dpu_start() {
     int ret;
     dpu_init.start_num = 0;
-    dpu_init.buffer_num = 3;
+    dpu_init.buffer_num = 1;
     ret = kd_mpi_dpu_init(&dpu_init);
     if (ret) {
         printf("kd_mpi_dpu_init failed\n");
@@ -1122,8 +1029,6 @@ static int sample_dpu_start() {
                                 &lcn_attr.lcn_param,
                                 &ir_attr.ir_param,
                                 &g_temp_space);
-    printf("g_temp_space.virt_addr:%p, g_temp_space.phys_addr:%lx\n",
-        g_temp_space.virt_addr, g_temp_space.phys_addr);
     if (g_temp_space.virt_addr == NULL) {
         printf("g_temp_space.virt_addr is NULL\n");
 
@@ -1145,11 +1050,10 @@ static int sample_dpu_start() {
     }
 
     /* set reference image */
-    ret = kd_mpi_dpu_set_ref_image(REF_PATH);
+    ret = kd_mpi_dpu_set_aligned_ref_image(REF_PATH);
     if (ret) {
         printf("kd_mpi_dpu_set_ref_image failed\n");
     }
-
     /* set template image */
     ret = kd_mpi_dpu_set_template_image(&g_temp_space);
     if (ret) {
@@ -1198,6 +1102,7 @@ static int sample_dpu_stop() {
 
     return K_SUCCESS;
 }
+
 static void sample_dpu_fn(void *arg)
 {
     // set hardware reset;
@@ -1211,31 +1116,31 @@ static void *sample_dpu_thread(void *arg)
     return NULL;
 }
 
-k_u64 m_start_time,m_stop_time0,m_stop_time1,m_stop_time2;
 int main(int argc, char *argv[])
 {
-    // m_start_time = perf_get_smodecycles();
-    // if (argc != 5)
-    // {
-    //     std::cerr << "Usage: " << argv[0] << " <kmodel>" << std::endl;
-    //     return -1;
-    // }
+    if (argc != 5)
+    {
+        std::cerr << "Usage: " << argv[0] << " <kmodel>" << std::endl;
+        return -1;
+    }
+    bool is_triger = true;
+    bool is_dpu = true;
+    TEST_BOOT_TIME_INIT();
+    if(is_triger == true)
+    {
+        TEST_BOOT_TIME_TRIGER();
+    }
     k_u32 display_ms = 1000 / 33;
     DetectResult detect_result;
     std::vector<float> feature_result;
-    std::vector<box_t> _draw_result;
-
     float score_max = 0;
     int score_index = 0;
     float score_threshold = 0.82f;
-    bool is_label = false;
-    bool is_triger = true;
+    bool is_label = false; 
     pthread_t vo_thread_handle;
     pthread_t exit_thread_handle;
     pthread_t dpu_thread_handle;
-    // pthread_t key_opreation_handle;
     pthread_t ipc_message_handle;
-    k_u64 start_time,stop_time;
     size_t size = CHANNEL * ISP_CHN1_HEIGHT * ISP_CHN1_WIDTH;
     void *vaddr_u8 = nullptr, *vaddr_u16 = nullptr;
     size_t paddr_u8 = 0, paddr_u16 = 0;
@@ -1243,36 +1148,34 @@ int main(int argc, char *argv[])
     k_vb_pool_config pool_config;
     k_video_frame_info vf_info;
     void *pic_vaddr = NULL; 
+
     int ret = kd_mpi_sys_mmz_alloc_cached(&paddr_u8, &vaddr_u8, "allocate", "anonymous", size);
     if (ret)
     {
         std::cerr << "physical_memory_block::allocate failed: ret = " << ret << ", errno = " << strerror(errno) << std::endl;
         std::abort();
-    }
-    TEST_BOOT_TIME_INIT();
-    if(is_triger == true)
-    {
-        TEST_BOOT_TIME_TRIGER();
-    }
+    }   
     read_mem_feature();
-    // m_stop_time2 = perf_get_smodecycles();
-
     MobileRetinaface retinaface((const char*)argv[1], CHANNEL, ISP_CHN1_HEIGHT, ISP_CHN1_WIDTH);
     Mobilenetv2Depth depth((const char*)argv[2], 1, ISP_CHN1_HEIGHT, ISP_CHN1_WIDTH);
     Mobilenetv2Ir ir((const char*)argv[3], CHANNEL, ISP_CHN1_HEIGHT, ISP_CHN1_WIDTH);
     MobileFace mf((const char*)argv[4], CHANNEL, ISP_CHN1_HEIGHT, ISP_CHN1_WIDTH);
-
-    pthread_create(&dpu_thread_handle, NULL, sample_dpu_thread, NULL);
+    if(is_triger == true)
+    {
+        TEST_BOOT_TIME_TRIGER();
+    }
+    TEST_TIME(ret = sample_vb_init(), "sample_vb_init");  
+    TEST_TIME(ret = sample_vivcap_init(),"sample_vicap_init"); 
+    pthread_create(&vo_thread_handle, NULL, sample_vo_thread, NULL);
+    
+    // pthread_join(vo_thread_handle, NULL);
+    TEST_TIME(ret = sample_dpu_start(), "sample_dpu_start");
+    // pthread_create(&dpu_thread_handle, NULL, sample_dpu_thread, NULL); 
     pthread_create(&ipc_message_handle, NULL, ipc_msg_server, NULL);
     pthread_create(&exit_thread_handle, NULL, exit_app, NULL);
-    pthread_create(&vo_thread_handle, NULL, sample_vo_thread, NULL);
-
-    TEST_TIME(ret = sample_vb_init(), "sample_vb_init");
-    TEST_TIME(ret = sample_vivcap_init(),"sample_vicap_init");
+    // pthread_join(dpu_thread_handle, NULL);
     TEST_TIME(ret = sample_dma_start(), "sample_dma_start");
-
-    // m_stop_time1 = perf_get_smodecycles();
-    // printf("pipe1 use time:%d ms\n",(m_stop_time1 - m_start_time) / TIME_RATE);
+    
     if (vicap_install_osd == 1)
     {
         memset(&pool_config, 0, sizeof(pool_config));
@@ -1293,106 +1196,95 @@ int main(int argc, char *argv[])
     {
         TEST_BOOT_TIME_TRIGER();
     }
-    
-    // DetectResult detect_result;
-    // std::vector<float> feature_result;
-    size_t face_count = 0;
-    int x1 = 0, y1 = 0, face_w = 0, face_h = 0;
     size_t depth_size = 2 * ISP_CHN1_HEIGHT * ISP_CHN1_WIDTH;
+
     while(app_run)
     {
         if(sensor_process == true)
         {
-            k_video_frame_info ir_info, ir_rotated, speckle_info, speckle_rotated_info, depth_frame;
+            k_video_frame_info ir_info,ir_info_pre,ir_rotated, speckle_info, speckle_info_pre,speckle_rotated_info;
             k_dpu_chn_result_u lcn_result;
             box_t face_box;
 
             // dump ir, dev1 chn1, should be dev 0 chn 0 but there are some problems, anyway it works
             memset(&ir_info, 0 , sizeof(k_video_frame_info));
             memset(&ir_rotated, 0 , sizeof(k_video_frame_info));
+            memset(&ir_info_pre, 0 , sizeof(k_video_frame_info));
+            memset(&speckle_info_pre, 0 , sizeof(k_video_frame_info));
             memset(&speckle_info, 0, sizeof(k_video_frame_info));
             memset(&speckle_rotated_info, 0, sizeof(k_video_frame_info));
             memset(&lcn_result, 0, sizeof(k_dpu_chn_result_u));
-            memset(&depth_frame, 0, sizeof(depth_frame));
-            k_u64 start_time1 = perf_get_smodecycles();
- 
-            CKE(kd_mpi_vicap_dump_frame(VICAP_DEV_ID_0, VICAP_CHN_ID_1, VICAP_DUMP_YUV, &ir_info, 1000),continue)
-            // printf(" ir time:%lu ms\n",ir_info.v_frame.pts);
-            VideoFrame ir_frame(&ir_info, VICAP_DEV_ID_0, VICAP_CHN_ID_1);
-            
-            CKE(kd_mpi_vicap_dump_frame(VICAP_DEV_ID_1, VICAP_CHN_ID_0, VICAP_DUMP_YUV, &speckle_info, 1000),continue)
-            // printf(" speckle_info time:%lu ms\n",speckle_info.v_frame.pts);
-            VideoFrame speckle_frame(&speckle_info, VICAP_DEV_ID_1, VICAP_CHN_ID_0);
- 
-            k_u64 stop_time1 = perf_get_smodecycles();
-            // printf("get pic use time:%d ms\n",(stop_time1 - start_time1) / TIME_RATE);
-            /* rotate */
+
+            CKE(kd_mpi_vicap_dump_frame(VICAP_DEV_ID_0, VICAP_CHN_ID_1, VICAP_DUMP_YUV, &ir_info_pre, 1000),continue)
+            if(ir_info_pre.v_frame.priv_data == VICAP_FILL_LIGHT_CTRL_IR)
             {
-                #if ENABLE_PROFILING
-                    ScopedTiming st("yuv_rotate_90");
-                #endif
-
-                CKE(kd_mpi_dma_send_frame(1, &ir_info, 300),continue);
-                CKE(kd_mpi_dma_get_frame(1, &ir_rotated, 300),continue);
-                VideoFrame ir_rotated_frame(&ir_rotated, 1);
-
-                BufferMap ir_map(ir_rotated.v_frame.phys_addr[0], ISP_CHN1_WIDTH * ISP_CHN1_HEIGHT, true);
-
-                CKE(ir_map.vir == NULL,continue)
-
-                memcpy((char*)vaddr_u8, (char*)ir_map.vir, ISP_CHN1_WIDTH * ISP_CHN1_HEIGHT);
-                memcpy((char*)vaddr_u8 + ISP_CHN1_WIDTH * ISP_CHN1_HEIGHT, (char*)ir_map.vir, ISP_CHN1_WIDTH * ISP_CHN1_HEIGHT);
-                memcpy((char*)vaddr_u8 + ISP_CHN1_WIDTH * ISP_CHN1_HEIGHT * 2, (char*)ir_map.vir, ISP_CHN1_WIDTH * ISP_CHN1_HEIGHT);
-
-                kd_mpi_sys_mmz_flush_cache(paddr_u8, vaddr_u8, size);
+                memcpy(&ir_info,&ir_info_pre,sizeof(k_video_frame_info));
             }
-
+            else
             {
-            #if ENABLE_PROFILING
-                ScopedTiming st("GMDA+DPU");
-            #endif
-                
-
-                // GDMA rotate speckle
-                CKE(kd_mpi_dma_send_frame(0, &speckle_info, 1000),continue)
-                CKE(kd_mpi_dma_get_frame(0, &speckle_rotated_info, 1000),continue)
-                VideoFrame speckle_rotated_frame(&speckle_rotated_info, 0);
-            #if ENABLE_DEBUG
-                {
-                    auto size = HEIGHT * WIDTH;
-                    void *v_u8 = kd_mpi_sys_mmap(speckle_rotated_info.v_frame.phys_addr[0], size);
-                    dump_to_bin("speckle_rotated_info.bin", v_u8, size);
-                    kd_mpi_sys_munmap(v_u8, size);
+                ret = kd_mpi_vicap_dump_release(VICAP_DEV_ID_0, VICAP_CHN_ID_1, &ir_info_pre);
+                if (ret) {
+                    printf("sample_vicap...kd_mpi_vicap_dump_release failed.\n");
                 }
-            #endif
-                // to DPU
-                // start_time = perf_get_smodecycles();
-                CKE(kd_mpi_dpu_send_frame(0, speckle_rotated_info.v_frame.phys_addr[0], 1000),continue)
-                CKE(kd_mpi_dpu_get_frame(0, &lcn_result, 1000),continue)
-                
-                
+                CKE(kd_mpi_vicap_dump_frame(VICAP_DEV_ID_0, VICAP_CHN_ID_1, VICAP_DUMP_YUV, &ir_info_pre, 1000),continue)
+                memcpy(&ir_info,&ir_info_pre,sizeof(k_video_frame_info));    
+                if(is_triger == true)
+                {
+                    TEST_BOOT_TIME_TRIGER();
+                }            
             }
-            VideoFrame dpu_frame;
-            BufferMap dpu_map(lcn_result.lcn_result.depth_out.depth_phys_addr, depth_size);
-            CKE(dpu_map.vir == NULL, continue);
-            paddr_u16 = dpu_map.phy;
-            vaddr_u16 = dpu_map.vir;
-            // stop_time = perf_get_smodecycles();
-            // printf("pic process use time:%d ms\n",(stop_time - stop_time1) / TIME_RATE);
+            
+            CKE(kd_mpi_vicap_dump_frame(VICAP_DEV_ID_0, VICAP_CHN_ID_0, VICAP_DUMP_YUV, &speckle_info_pre, 1000),continue) 
+            if(is_triger == true)
+            {
+                TEST_BOOT_TIME_TRIGER();
+            }    
+            if(speckle_info_pre.v_frame.priv_data == VICAP_FILL_LIGHT_CTRL_SPECKLE)
+            {
+                memcpy(&speckle_info,&speckle_info_pre,sizeof(k_video_frame_info));
+            }            
+            else
+            {
+                ret = kd_mpi_vicap_dump_release(VICAP_DEV_ID_0, VICAP_CHN_ID_0, &speckle_info_pre);
+                if (ret) {
+                    printf("sample_vicap...kd_mpi_vicap_dump_release failed.\n");
+                }
+                CKE(kd_mpi_vicap_dump_frame(VICAP_DEV_ID_0, VICAP_CHN_ID_0, VICAP_DUMP_YUV, &speckle_info_pre, 1000),continue)       
+                memcpy(&speckle_info,&speckle_info_pre,sizeof(k_video_frame_info));
+            }
+            // CKE(kd_mpi_vicap_dump_frame(VICAP_DEV_ID_0, VICAP_CHN_ID_1, VICAP_DUMP_YUV, &ir_info, 1000),continue)
+            // VideoFrame ir_frame(&ir_info, VICAP_DEV_ID_0, VICAP_CHN_ID_1);
+
+            // CKE(kd_mpi_vicap_dump_frame(VICAP_DEV_ID_0, VICAP_CHN_ID_0, VICAP_DUMP_YUV, &speckle_info, 1000),continue)
+            // VideoFrame speckle_frame(&speckle_info, VICAP_DEV_ID_1, VICAP_CHN_ID_0);
+
+
             #if ENABLE_DEBUG
                     dump_to_bin("depth_rot.bin", vaddr_u16, depth_size);
             #endif
-            // start_time = perf_get_smodecycles();
+
+            #if ENABLE_PROFILING
+                ScopedTiming st("yuv_rotate_90");
+            #endif
+            CKE(kd_mpi_dma_send_frame(1, &ir_info, 300),continue);
+            CKE(kd_mpi_dma_get_frame(1, &ir_rotated, 300),continue);
+            VideoFrame ir_rotated_frame(&ir_rotated, 1);
+            BufferMap ir_map(ir_rotated.v_frame.phys_addr[0], ISP_CHN1_WIDTH * ISP_CHN1_HEIGHT, true);
+
+            CKE(ir_map.vir == NULL,continue)
+
+            memcpy((char*)vaddr_u8, (char*)ir_map.vir, ISP_CHN1_WIDTH * ISP_CHN1_HEIGHT);
+            memcpy((char*)vaddr_u8 + ISP_CHN1_WIDTH * ISP_CHN1_HEIGHT, (char*)ir_map.vir, ISP_CHN1_WIDTH * ISP_CHN1_HEIGHT);
+            memcpy((char*)vaddr_u8 + ISP_CHN1_WIDTH * ISP_CHN1_HEIGHT * 2, (char*)ir_map.vir, ISP_CHN1_WIDTH * ISP_CHN1_HEIGHT);
+
+            kd_mpi_sys_mmz_flush_cache(paddr_u8, vaddr_u8, size);
             detect_result.boxes.clear();
             detect_result.landmarks.clear();
-
             // 1. run retinaface
             retinaface.run(reinterpret_cast<uintptr_t>(vaddr_u8), reinterpret_cast<uintptr_t>(paddr_u8));
-
             // get face boxes
             detect_result = retinaface.get_result();
-            // stop_time = perf_get_smodecycles();
-            // printf("detect use time:%d ms\n",(stop_time - start_time) / TIME_RATE);
+
             cv::Mat osd_frame(ISP_CHN1_HEIGHT, ISP_CHN1_WIDTH, CV_8UC4, cv::Scalar(0, 0, 0, 0));
             #if ENABLE_DEBUG
             {
@@ -1443,33 +1335,6 @@ int main(int argc, char *argv[])
                     point.y = detect_result.landmarks[i].points[2*t + 1];
                     points1.push_back(point);
                 }
-                start_time = perf_get_smodecycles();
-                depth.update_ai2d_config(face_box.x, face_box.y, face_box.w, face_box.h);
-                depth.run(reinterpret_cast<uintptr_t>(vaddr_u16), reinterpret_cast<uintptr_t>(paddr_u16));
-                depth_pred = depth.get_result();
-                stop_time = perf_get_smodecycles();
-                // printf("dpu use time:%d ms\n",(stop_time - start_time) / TIME_RATE);
-                // std::cout << "depth result : " << depth_pred << std::endl;
-                // if (!depth_pred)
-                // {
-                //     // continue;
-                // }
-                if(is_triger == true)
-                {
-                    TEST_BOOT_TIME_TRIGER();
-                    // is_triger = false;
-                }
-                start_time = perf_get_smodecycles();
-                ir.update_ai2d_config(face_box.x, face_box.y, face_box.w, face_box.h);
-                ir.run(reinterpret_cast<uintptr_t>(vaddr_u8), reinterpret_cast<uintptr_t>(paddr_u8));
-                ir_pred = ir.get_result();
-                stop_time = perf_get_smodecycles();
-                // printf("ir use time:%d ms\n",(stop_time - start_time) / TIME_RATE);
-                // std::cout << "ir result : " << ir_pred << std::endl;
-                // if (!ir_pred)
-                // {
-                //     // continue;
-                // }
 
                 mf.update_ai2d_config(detect_result.landmarks[i]);
                 mf.run(reinterpret_cast<uintptr_t>(vaddr_u8), reinterpret_cast<uintptr_t>(paddr_u8));
@@ -1487,40 +1352,84 @@ int main(int argc, char *argv[])
                     key_press = false;
                     
                 }
-
-                if(ir_pred && depth_pred)
+                pthread_mutex_lock(&mutex); 
+                score_index = calulate_score(mem_feature_data->count, feature_result, &score_max);
+                if(is_triger == true)
                 {
-                    pthread_mutex_lock(&mutex); 
-                    score_index = calulate_score(mem_feature_data->count, feature_result, &score_max);
-                    if(is_triger == true)
+                    TEST_BOOT_TIME_TRIGER();
+                }
+                pthread_mutex_unlock(&mutex);
+                if (score_max >= score_threshold)
+                {
                     {
-                        TEST_BOOT_TIME_TRIGER();
-                        is_triger = false;
+                        //ir kmodel
+                        ir.update_ai2d_config(face_box.x, face_box.y, face_box.w, face_box.h);
+                        ir.run(reinterpret_cast<uintptr_t>(vaddr_u8), reinterpret_cast<uintptr_t>(paddr_u8));
+                        ir_pred = ir.get_result();
                     }
+                    if(ir_pred == 1)
+                    {
+                        #if ENABLE_PROFILING
+                            ScopedTiming st("GMDA+DPU");
+                        #endif
+                            // if(is_dpu == true)
+                            // {
+                            //     // TEST_TIME(ret = sample_dpu_start(), "sample_dpu_start");
+                            //     is_dpu = false;
+                            // }
+                            // GDMA rotate speckle
+                            CKE(kd_mpi_dma_send_frame(0, &speckle_info, 1000),continue)
+                            CKE(kd_mpi_dma_get_frame(0, &speckle_rotated_info, 1000),continue)
+                            VideoFrame speckle_rotated_frame(&speckle_rotated_info, 0);
+                        #if ENABLE_DEBUG
+                            {
+                                auto size = HEIGHT * WIDTH;
+                                void *v_u8 = kd_mpi_sys_mmap(speckle_rotated_info.v_frame.phys_addr[0], size);
+                                dump_to_bin("speckle_rotated_info.bin", v_u8, size);
+                                kd_mpi_sys_munmap(v_u8, size);
+                            }
+                        #endif
+                            // to DPU
 
-                    pthread_mutex_unlock(&mutex);
-                    if (score_max >= score_threshold)
+                            CKE(kd_mpi_dpu_send_frame(0, speckle_rotated_info.v_frame.phys_addr[0], 1000),continue)
+                            CKE(kd_mpi_dpu_get_frame(0, &lcn_result, 1000),continue)
+                            VideoFrame dpu_frame;
+                            BufferMap dpu_map(lcn_result.lcn_result.depth_out.depth_phys_addr, depth_size);
+                            CKE(dpu_map.vir == NULL, continue);
+                            paddr_u16 = dpu_map.phy;
+                            vaddr_u16 = dpu_map.vir;  
+
+                            depth.update_ai2d_config(face_box.x, face_box.y, face_box.w, face_box.h);
+                            depth.run(reinterpret_cast<uintptr_t>(vaddr_u16), reinterpret_cast<uintptr_t>(paddr_u16));
+                            depth_pred = depth.get_result();        
+                    }
+                    if(ir_pred && depth_pred)
                     {
                         fm_result.label = mem_feature_data->feature_db_data[score_index].name;
-                        is_label = true;                   
-                    }
-                    
-                }                                    
+                        is_label = true;  
+                        if(is_triger == true)
+                        {
+                            TEST_BOOT_TIME_TRIGER();
+                            is_triger = false;
+                        }                          
+                    }  
+                }
+                               
                 draw_result(osd_frame,face_box,fm_result,false,is_label,points1,ir_pred,depth_pred);
                 
             }
 
             memcpy(pic_vaddr, osd_frame.data, ISP_CHN1_WIDTH * ISP_CHN1_HEIGHT * 4);
             kd_mpi_vo_chn_insert_frame(osd_id + 3, &vf_info);
+            ret = kd_mpi_vicap_dump_release(VICAP_DEV_ID_0, VICAP_CHN_ID_0, &speckle_info_pre);
+            if (ret) {
+                printf("sample_vicap...kd_mpi_vicap_dump_release failed.\n");
+            }
+            ret = kd_mpi_vicap_dump_release(VICAP_DEV_ID_0, VICAP_CHN_ID_1, &ir_info_pre);
+            if (ret) {
+                printf("sample_vicap...kd_mpi_vicap_dump_release failed.\n");
+            }
 
-            ret = kd_mpi_vicap_dump_release(VICAP_DEV_ID_0, VICAP_CHN_ID_1, &dump_info);
-            if (ret) {
-                printf("sample_vicap...kd_mpi_vicap_dump_release failed.\n");
-            }
-            ret = kd_mpi_vicap_dump_release(VICAP_DEV_ID_1, VICAP_CHN_ID_0, &dump_info);
-            if (ret) {
-                printf("sample_vicap...kd_mpi_vicap_dump_release failed.\n");
-            }
         }
         else
         {
@@ -1567,14 +1476,9 @@ int main(int argc, char *argv[])
 app_exit:
     close(mem_fd);
     munmap(mem_feature_data, CONFIG_MEM_FACE_DATA_SIZE);
-    pthread_join(vo_thread_handle, NULL);
-    pthread_join(dpu_thread_handle, NULL);
     pthread_join(exit_thread_handle, NULL);
-    // pthread_join(key_opreation_handle, NULL);
     kd_ipcmsg_disconnect(s32Id1);
-
     pthread_join(ipc_message_handle, NULL);
-
     kd_ipcmsg_del_service(IPC_MSG);      
     vo_osd_release_block();
     kd_mpi_sys_munmap(pic_vaddr, osd_width * osd_height * 4);

@@ -211,8 +211,6 @@ k_s32 kd_mpi_isp_dump_frame(k_isp_dev dev_num, k_isp_chn chn_num, k_vicap_dump_f
  */
 k_s32 kd_mpi_isp_dump_release(k_isp_dev dev_num, k_isp_chn chn_num, const k_video_frame_info *vf_info);
 
-/** @} */ /** <!-- ==== ISP End ==== */
-
 k_s32 kd_mpi_submodule_control(k_isp_dev dev_num);
 
 k_s32 kd_mpi_submodule_control_h(k_isp_dev dev_num, const void *auto_data, const void *manual_data);
@@ -270,6 +268,23 @@ k_s32 kd_mpi_isp_ae_roi_set_enable(k_isp_dev dev_num, k_bool enable);
  */
 k_s32 kd_mpi_isp_ae_set_roi_by_chn(k_isp_dev dev_num, k_isp_chn chn_num, k_isp_ae_roi user_roi);
 
+/**
+ * @brief isp load user image data
+ *
+ * @param [in] dev_num device number
+ * @param [in] image_data
+ * @param [in] data_len
+ * @return k_s32
+ * @retval 0 success
+ * @retval "not 0" see err code
+ * @see K_ERR_CODE_E
+ * @note
+ */
+k_s32 kd_mpi_isp_load_image(k_isp_dev dev_num, const void *image_data, k_u32 data_len);
+
+k_s32 kd_mpi_isp_dump_register(k_isp_dev dev_num, const char *file_name);
+
+/** @} */ /** <!-- ==== ISP End ==== */
 
 #ifdef __cplusplus
 }

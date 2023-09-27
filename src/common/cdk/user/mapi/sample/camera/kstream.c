@@ -76,6 +76,15 @@ int kstream_init(void)
     return 0;
 }
 
+int kstream_deinit(void)
+{
+    if (get_kstream()->mpi_sc_ops &&
+        get_kstream()->mpi_sc_ops->deinit)
+        return get_kstream()->mpi_sc_ops->deinit();
+
+    return 0;
+}
+
 int kstream_startup(void)
 {
     int ret = 0;

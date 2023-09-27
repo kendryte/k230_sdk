@@ -80,8 +80,8 @@ void sample_vdd_vicap_config(k_u32 ch)
     ret = kd_mpi_vicap_get_sensor_info(sensor_info.sensor_type, &sensor_info);
     VDD_CHECK_RET(ret, __func__, __LINE__);
 
-    dev_attr.acq_win.width = vdd_cfg->img_width;
-    dev_attr.acq_win.height = vdd_cfg->img_height;
+    dev_attr.acq_win.width = sensor_info.width;
+    dev_attr.acq_win.height = sensor_info.height;
     dev_attr.mode = VICAP_WORK_ONLINE_MODE;
 
     memcpy(&dev_attr.sensor_info, &sensor_info, sizeof(k_vicap_sensor_info));
@@ -89,7 +89,9 @@ void sample_vdd_vicap_config(k_u32 ch)
     ret = kd_mpi_vicap_set_dev_attr(vicap_dev, dev_attr);
     VDD_CHECK_RET(ret, __func__, __LINE__);
 
-    chn_attr.out_win = dev_attr.acq_win;
+    chn_attr.out_win.width = vdd_cfg->img_width;
+    chn_attr.out_win.height = vdd_cfg->img_height;
+
     chn_attr.crop_win = chn_attr.out_win;
     chn_attr.scale_win = chn_attr.out_win;
     chn_attr.crop_enable = K_FALSE;

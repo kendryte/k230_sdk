@@ -154,7 +154,7 @@ void video_proc(char *argv[])
 
             {
                 ScopedTiming st("osd_draw_text", atoi(argv[6]));
-                Utils::draw_text(float(sort_vtd[1].x), float(sort_vtd[1].y),osd_frame,results_reco,{osd_width, osd_height}, {SENSOR_WIDTH, SENSOR_HEIGHT});
+                Utils::draw_text(float(sort_vtd[3].x), float(sort_vtd[3].y),osd_frame,results_reco,{osd_width, osd_height}, {SENSOR_WIDTH, SENSOR_HEIGHT});
             }
         }
 
@@ -169,7 +169,6 @@ void video_proc(char *argv[])
             memcpy(pic_vaddr, osd_frame.data, osd_width * osd_height * 4);
             //显示通道插入帧
             kd_mpi_vo_chn_insert_frame(osd_id+3, &vf_info);  //K_VO_OSD0
-            printf("kd_mpi_vo_chn_insert_frame success \n");
 
             ret = kd_mpi_vicap_dump_release(vicap_dev, VICAP_CHN_ID_1, &dump_info);
             if (ret) {

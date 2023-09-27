@@ -23,10 +23,14 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <unistd.h>
+#include <pthread.h>
+#include <stdio.h>
+#include <fcntl.h>
 #include "msg_ao.h"
 #include "mapi_ao_api.h"
 #include "mapi_ao_comm.h"
 #include "mapi_sys_api.h"
+#include "k_acodec_comm.h"
 
 
 #define CHECK_MAPI_AO_NULL_PTR(paraname, ptr)                                 \
@@ -37,6 +41,30 @@
         }                                                                      \
     } while (0)
 
+static k_s32 g_acodec_fd = -1;
+static k_s32 acodec_check_open(void)
+{
+    if (g_acodec_fd < 0)
+    {
+        g_acodec_fd = open("/dev/acodec_device", O_RDWR);
+        if (g_acodec_fd < 0)
+        {
+            perror("open err\n");
+            return -1;
+        }
+    }
+    return 0;
+}
+
+static k_s32 acodec_check_close(void)
+{
+    if (g_acodec_fd >= 0)
+    {
+        close(g_acodec_fd);
+        g_acodec_fd = -1;
+    }
+    return 0;
+}
 
 k_s32 kd_mapi_ao_init(k_u32 dev, k_u32 chn, const k_aio_dev_attr *dev_attr,k_handle* ao_hdl)
 {
@@ -56,7 +84,7 @@ k_s32 kd_mapi_ao_init(k_u32 dev, k_u32 chn, const k_aio_dev_attr *dev_attr,k_han
 
 k_s32 kd_mapi_ao_deinit(k_handle ao_hdl)
 {
-
+    acodec_check_close();
     return K_SUCCESS;
 }
 
@@ -73,7 +101,7 @@ k_s32 kd_mapi_ao_start(k_handle ao_hdl)
         return K_FAILED;
     }
 
-    if (chn <0 || chn > 1)
+    if (chn <0 || chn > 2)
     {
         mapi_ao_error_trace("chn value not supported\n");
         return K_FAILED;
@@ -85,10 +113,24 @@ k_s32 kd_mapi_ao_start(k_handle ao_hdl)
         return K_FAILED;
     }
 
-    ret = kd_mpi_ao_enable_chn(dev,chn);
+    if (2 == chn)
+    {
+        for (int i =0;i < 2;i ++)
+        {
+            ret = kd_mpi_ao_enable_chn(dev,i);
+            if(ret != K_SUCCESS) {
+                mapi_ao_error_trace("kd_mpi_ao_enable_chn(%d) failed:0x%x\n",i, ret);
+                return K_FAILED;
+            }
+        }
+    }
+    else
+    {
+        ret = kd_mpi_ao_enable_chn(dev,chn);
         if(ret != K_SUCCESS) {
         mapi_ao_error_trace("kd_mpi_ao_enable_chn failed:0x%x\n", ret);
         return K_FAILED;
+        }
     }
 
     return ret;
@@ -107,16 +149,30 @@ k_s32 kd_mapi_ao_stop(k_handle ao_hdl)
         return K_FAILED;
     }
 
-    if (chn <0 || chn > 1)
+    if (chn <0 || chn > 2)
     {
         mapi_ao_error_trace("chn value not supported\n");
         return K_FAILED;
     }
 
-    ret = kd_mpi_ao_disable_chn(dev,chn);
-    if(ret != K_SUCCESS) {
+    if (2 == chn)
+    {
+        for (int i =0;i < 2;i ++)
+        {
+            ret = kd_mpi_ao_disable_chn(dev,i);
+            if(ret != K_SUCCESS) {
+            mapi_ao_error_trace("kd_mpi_ao_disable_chn(%d) failed:0x%x\n",i, ret);
+            return K_FAILED;
+            }
+        }
+    }
+    else
+    {
+        ret = kd_mpi_ao_disable_chn(dev,chn);
+        if(ret != K_SUCCESS) {
         mapi_ao_error_trace("kd_mpi_ao_disable_chn failed:0x%x\n", ret);
         return K_FAILED;
+        }
     }
 
     ret = kd_mpi_ao_disable(dev);
@@ -156,4 +212,18 @@ k_s32 kd_mapi_ao_send_frame(k_handle ao_hdl, const k_audio_frame *frame)
     }
 
     return ret;
+}
+
+
+k_s32 kd_mapi_ao_set_volume(k_handle ao_hdl,float volume)
+{
+    float gain_value = volume;
+    if (acodec_check_open())
+        return K_FAILED;
+    ioctl(g_acodec_fd, k_acodec_set_gain_hpoutl, &gain_value);
+    ioctl(g_acodec_fd, k_acodec_set_gain_hpoutr, &gain_value);
+
+    ioctl(g_acodec_fd, k_acodec_set_dacl_volume, &gain_value);
+    ioctl(g_acodec_fd, k_acodec_set_dacr_volume, &gain_value);
+    return K_SUCCESS;
 }

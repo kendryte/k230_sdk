@@ -66,12 +66,14 @@ public:
     /**
      * @brief 图片预处理，（ai2d for image）
      * @param ori_img 原始图片
+     * @param bbox 检测到的手在原图上的位置坐标(x,y,w,h)
      * @return None
      */
     void pre_process(cv::Mat ori_img, Bbox &bbox);
 
     /**
      * @brief 视频流预处理（ai2d for isp）
+     * @param bbox 检测到的手在原图上的位置坐标(x,y,w,h)
      * @return None
      */
     void pre_process(Bbox &bbox);

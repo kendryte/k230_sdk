@@ -86,7 +86,6 @@ JpegFrameParser& JpegFrameParser::operator = (const JpegFrameParser& other) {
     _qFactor = other._qFactor;
     _qTablesLength = other._qTablesLength;
     _restartInterval = other._restartInterval;
-    _qTables = new unsigned char[128 * 2];
     memcpy(_qTables, other._qTables, _qTablesLength);
     return *this;
 }

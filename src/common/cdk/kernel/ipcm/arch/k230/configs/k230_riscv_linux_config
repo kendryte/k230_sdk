@@ -1,0 +1,23 @@
+
+platform=k230
+node_id=0
+arch_type="riscv"
+node_name="c908"
+os_type="linux"
+top_role="master"
+ipcm_irq=109
+max_nodes=2
+cdev=y
+sharefs=y
+
+virt_tty_role = "server"
+
+shm_phys_1to0=0x00
+shm_size_1to0=0x00
+shm_phys_0to1=0x00
+shm_size_0to1=0x00
+
+cross_compile=riscv64-unknown-linux-gnu-
+cc_flags=
+ld_flags=
+kernel_dir=../../../../little/linux/

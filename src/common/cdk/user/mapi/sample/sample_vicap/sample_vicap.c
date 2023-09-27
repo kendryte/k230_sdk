@@ -219,7 +219,7 @@ int main(int argc, char * const argv[])
     k_vicap_dev arg_dev = VICAP_DEV_ID_0; // 0
     k_vicap_chn arg_chn = VICAP_CHN_ID_0; // 0
     k_pixel_format arg_pixel_format = PIXEL_FORMAT_YUV_SEMIPLANAR_420; // 30
-    k_vicap_sensor_type arg_sensor = OV_OV9732_MIPI_1920X1080_30FPS_10BIT_LINEAR; // 0
+    k_vicap_sensor_type arg_sensor = OV_OV9732_MIPI_1280X720_30FPS_10BIT_LINEAR; // 0
     k_bool dw_en = 0; // 0
 
     int c;

@@ -28,7 +28,7 @@ extern "C" {
 
 #include "pufs_ka.h"
 #include "pufs_ka_regs.h"
-// #include "pufs_kwp_regs.h"
+#include "pufs_kwp_regs.h"
 
 /*****************************************************************************
  * Macros

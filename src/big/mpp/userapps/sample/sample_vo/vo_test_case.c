@@ -41,6 +41,8 @@
 #include "k_vo_comm.h"
 
 #include "vo_test_case.h"
+#include "k_connector_comm.h"
+#include "mpi_connector_api.h"
 
 #if 0
 k_vo_display_resolution hx8399[20] = {
@@ -882,8 +884,6 @@ k_s32 vo_osd_insert_multi_frame_test(void)
     }
 
 #endif
-
-
     getchar();
 
     // close plane
@@ -892,8 +892,6 @@ k_s32 vo_osd_insert_multi_frame_test(void)
     vo_release_frame(block);
     vo_release_frame(block2);
     vo_release_frame(block3);
-
-
     vo_release_private_poll();
 
     // free(read_addr);
@@ -916,7 +914,7 @@ int vo_creat_layer_test(k_vo_layer chn_id, layer_info *info)
         return -1 ;
     }
 
-    // check scaler
+    memset(&attr, 0, sizeof(attr));
 
     // set offset
     attr.display_rect = info->offset;
@@ -1342,6 +1340,83 @@ k_s32 vo_layer0_scaler_test(void)
 
     // close plane
     kd_mpi_vo_disable_video_layer(chn_id);
+    vo_release_frame(block);
+    vo_release_private_poll();
+    // fclose(fd);
+    //exit ;
+    return 0;
+}
+
+k_s32 sample_connector_init(void)
+{
+    k_u32 ret = 0;
+    k_s32 connector_fd;
+    k_connector_type connector_type = HX8377_V2_MIPI_4LAN_1080X1920_30FPS;
+    k_connector_info connector_info;
+
+    memset(&connector_info, 0, sizeof(k_connector_info));
+
+    //connector get sensor info
+    ret = kd_mpi_get_connector_info(connector_type, &connector_info);
+    if (ret) {
+        printf("sample_vicap, the sensor type not supported!\n");
+        return ret;
+    }
+
+    connector_fd = kd_mpi_connector_open(connector_info.connector_name);
+    if (connector_fd < 0) {
+        printf("%s, connector open failed.\n", __func__);
+        return K_ERR_VO_NOTREADY;
+    }
+
+    // set connect power
+    kd_mpi_connector_power_set(connector_fd, 1);
+    // connector init
+    kd_mpi_connector_init(connector_fd, connector_info);
+
+    return 0;
+}
+
+
+k_s32 sample_connector_osd_install_frame(void)
+{
+    osd_info osd;
+    void *pic_vaddr = NULL;
+    k_vo_osd osd_id = K_VO_OSD3;
+    k_vb_blk_handle block;
+    k_video_frame_info vf_info;
+
+    osd.act_size.width = 640 ;
+    osd.act_size.height = 480;
+    osd.offset.x = 10;
+    osd.offset.y = 10;
+    osd.global_alptha = 0xff;
+    osd.format = PIXEL_FORMAT_ARGB_8888;//PIXEL_FORMAT_ARGB_4444; //PIXEL_FORMAT_ARGB_1555;//PIXEL_FORMAT_ARGB_8888;
+
+    sample_connector_init();
+
+    vo_creat_private_poll();
+    // config osd
+    vo_creat_osd_test(osd_id, &osd);
+    // set frame
+    memset(&vf_info, 0, sizeof(vf_info));
+    vf_info.v_frame.width = osd.act_size.width;
+    vf_info.v_frame.height = osd.act_size.height;
+    vf_info.v_frame.stride[0] = osd.act_size.width;
+    vf_info.v_frame.pixel_format = osd.format;
+    block = vo_insert_frame(&vf_info, &pic_vaddr);
+
+    vo_osd_filling_color(&osd, pic_vaddr);
+
+    getchar();
+    kd_mpi_vo_chn_insert_frame(osd_id + 3, &vf_info);  //K_VO_OSD0
+
+    printf("Press Enter to exit \n");
+
+    getchar();
+
+    // close plane
+    kd_mpi_vo_osd_disable(osd_id);
     vo_release_frame(block);
     vo_release_private_poll();
     // fclose(fd);

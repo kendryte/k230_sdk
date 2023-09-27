@@ -44,9 +44,8 @@
 #include "sample_dpu_vicap.h"
 
 #include "vo_test_case.h"
-
-extern k_vo_display_resolution hx8399[20];
-
+#include "k_connector_comm.h"
+#include "mpi_connector_api.h"
 
 #define DISPLAY_WITDH  1088
 #define DISPLAY_HEIGHT 1920
@@ -90,24 +89,35 @@ typedef struct {
     k_bool enable[MAX_VO_LAYER_NUM];
 } k_vicap_vo_layer_conf;
 
-static void sample_vicap_vo_init(void)
+
+static k_u32 sample_vicap_vo_init(void)
 {
-    k_vo_display_resolution *resolution = &hx8399[0];
-    k_vo_pub_attr attr;
+    k_u32 ret = 0;
+    k_s32 connector_fd;
+    k_connector_type connector_type = HX8377_V2_MIPI_4LAN_1080X1920_30FPS;
+    k_connector_info connector_info;
 
-    kd_display_reset();
-    kd_display_set_backlight();
-    dwc_dsi_init();
+    memset(&connector_info, 0, sizeof(k_connector_info));
 
-    memset(&attr, 0, sizeof(attr));
+    //connector get sensor info
+    ret = kd_mpi_get_connector_info(connector_type, &connector_info);
+    if (ret) {
+        printf("sample_vicap, the sensor type not supported!\n");
+        return ret;
+    }
 
-    attr.bg_color = 0x808000;
-    attr.intf_sync = K_VO_OUT_1080P30;
-    attr.intf_type = K_VO_INTF_MIPI;
-    attr.sync_info = resolution;
+    connector_fd = kd_mpi_connector_open(connector_info.connector_name);
+    if (connector_fd < 0) {
+        printf("%s, connector open failed.\n", __func__);
+        return K_ERR_VO_NOTREADY;
+    }
 
-    kd_mpi_vo_init();
-    kd_mpi_vo_set_dev_param(&attr);
+    // set connect power
+    kd_mpi_connector_power_set(connector_fd, K_TRUE);
+    // connector init
+    kd_mpi_connector_init(connector_fd, connector_info);
+
+    return 0;
 }
 
 static k_s32 sample_vicap_vo_layer_init(k_vicap_vo_layer_conf *layer_conf)
@@ -183,10 +193,6 @@ static k_s32 sample_vicap_vo_layer_init(k_vicap_vo_layer_conf *layer_conf)
     return ret;
 }
 
-static void sample_vicap_vo_enable(void)
-{
-    kd_mpi_vo_enable();
-}
 
 static void sample_vicap_disable_vo_layer(k_vo_layer layer)
 {
@@ -683,6 +689,7 @@ chn_parse:
 
         dev_attr.pipe_ctrl.data = pipe_ctrl;
         dev_attr.pipe_ctrl.bits.af_enable = 0;
+        dev_attr.pipe_ctrl.bits.ahdr_enable = 0;
         dev_attr.pipe_ctrl.bits.ae_enable = device_obj[dev_num].ae_enable;
         dev_attr.pipe_ctrl.bits.awb_enable = device_obj[dev_num].awb_enable;
 
@@ -850,9 +857,6 @@ chn_parse:
             goto app_exit;
         }
     }
-
-    sample_vicap_vo_enable();
-
 
     k_isp_ae_roi ae_roi;
     memset(&ae_roi, 0, sizeof(k_isp_ae_roi));

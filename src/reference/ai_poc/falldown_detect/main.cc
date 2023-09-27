@@ -113,8 +113,6 @@ void video_proc(char *argv[])
         fdd.post_process({SENSOR_WIDTH, SENSOR_HEIGHT}, results);
 
         cv::Mat osd_frame(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-        cv::Mat osd_frame_vertical;
-        cv::Mat osd_frame_horizontal;
 
         std::string text;
         cv::Point origin;
@@ -145,9 +143,6 @@ void video_proc(char *argv[])
             
         }
 
-        cv::flip(osd_frame, osd_frame_vertical, 0);
-        cv::flip(osd_frame_vertical, osd_frame_horizontal, 1);
-        osd_frame = osd_frame_horizontal;
 
         {
             ScopedTiming st("osd copy", atoi(argv[5]));

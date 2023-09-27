@@ -61,6 +61,8 @@ typedef struct {
 
     k_bool ae_enable;
     k_bool awb_enable;
+    k_bool dnr3_enable;
+    k_bool hdr_enable;
 
     k_vicap_chn chn_num[VICAP_CHN_ID_MAX];
 
@@ -397,6 +399,8 @@ dev_parse:
             device_obj[cur_dev].dev_enable = K_TRUE;
             device_obj[cur_dev].ae_enable = K_TRUE;//default enable ae
             device_obj[cur_dev].awb_enable = K_TRUE;//default enable awb
+            device_obj[cur_dev].dnr3_enable = K_FALSE;//default disable 3ndr
+            device_obj[cur_dev].hdr_enable = K_FALSE;//default disable hdr
             //parse dev paramters
             for (i = i + 2; i < argc; i += 2)
             {
@@ -593,6 +597,38 @@ chn_parse:
                         return -1;
                     }
                 }
+                else if (strcmp(argv[i], "-hdr") == 0)
+                {
+                    if ((i + 1) >= argc) {
+                        printf("hdr parameters missing.\n");
+                        return -1;
+                    }
+                    k_s32 hdr_status = atoi(argv[i + 1]);
+                    if (hdr_status == 0) {
+                        device_obj[cur_dev].hdr_enable = K_FALSE;
+                    } else if (hdr_status == 1) {
+                        device_obj[cur_dev].hdr_enable = K_TRUE;
+                    } else {
+                        printf("unsupport hdr parameters.\n");
+                        return -1;
+                    }
+                }
+                else if (strcmp(argv[i], "-dnr") == 0)
+                {
+                    if ((i + 1) >= argc) {
+                        printf("3ndr parameters missing.\n");
+                        return -1;
+                    }
+                    k_s32 dnr3_status = atoi(argv[i + 1]);
+                    if (dnr3_status == 0) {
+                        device_obj[cur_dev].dnr3_enable = K_FALSE;
+                    } else if (dnr3_status == 1) {
+                        device_obj[cur_dev].dnr3_enable = K_TRUE;
+                    } else {
+                        printf("unsupport 3dnr parameters.\n");
+                        return -1;
+                    }
+                }
                 else if (strcmp(argv[i], "-dw") == 0)
                 {
                     if ((i + 1) >= argc) {
@@ -650,6 +686,8 @@ chn_parse:
         dev_attr.pipe_ctrl.bits.af_enable = 0;
         dev_attr.pipe_ctrl.bits.ae_enable = device_obj[dev_num].ae_enable;
         dev_attr.pipe_ctrl.bits.awb_enable = device_obj[dev_num].awb_enable;
+        dev_attr.pipe_ctrl.bits.dnr3_enable = device_obj[dev_num].dnr3_enable;
+        dev_attr.pipe_ctrl.bits.ahdr_enable = device_obj[dev_num].hdr_enable;
 
         dev_attr.cpature_frame = 0;
 

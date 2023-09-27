@@ -141,6 +141,16 @@ k_s32 kd_mpi_dpu_get_chn_attr(k_dpu_chn_lcn_attr_t *lcn_attr, k_dpu_chn_ir_attr_
 k_s32 kd_mpi_dpu_set_ref_image(const k_char *ref_path);
 
 /**
+ * @brief Set 64bit aligned reference image address
+ * @param [in] ref_path Path of the reference image
+ * @return k_s32
+ * @retval 0 success
+ * @retval "not 0" see err code
+ * @see K_ERR_CODE_E
+ */
+k_s32 kd_mpi_dpu_set_aligned_ref_image(const k_char *ref_path);
+
+/**
  * @brief Set the processed reference image address
  * @param [in] ref_path Path of the processed reference image
  * @return k_s32 

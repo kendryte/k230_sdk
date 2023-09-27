@@ -109,6 +109,7 @@ typedef struct
 typedef struct
 {
     k_audio_type audio_type;/* audio type */
+    k_bool avsync;
     union
     {
         k_audio_pdm_attr pdm_attr;

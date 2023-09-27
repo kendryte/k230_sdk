@@ -84,8 +84,8 @@ int ocr_process(OCRBox &ocrbox, OCRReco &ocrreco,cv::Mat ori_img, cv::Mat& osd_f
         for(int j = 0; j < 4; j++)
         {
             cv::Point tmp = ocrbox_results[i].vertices[j];
-            tmp.x = osd_width - (1.0*(tmp.x+xmin)/SENSOR_WIDTH)*osd_width;
-            tmp.y = osd_height - (1.0*(tmp.y+ymin)/SENSOR_HEIGHT)*osd_height;
+            tmp.x = (1.0*(tmp.x+xmin)/SENSOR_WIDTH)*osd_width;
+            tmp.y = (1.0*(tmp.y+ymin)/SENSOR_HEIGHT)*osd_height;
 
             vec.push_back(tmp);
         }
@@ -194,8 +194,8 @@ void video_proc(char *argv[])
                     int w = r.x2 - r.x1 + 1;
                     int h = r.y2 - r.y1 + 1;
                     
-                    int rect_x = osd_width - r.x2/ SENSOR_WIDTH * osd_width;
-                    int rect_y = osd_height - r.y2 / SENSOR_HEIGHT  * osd_height;
+                    int rect_x = r.x1/ SENSOR_WIDTH * osd_width;
+                    int rect_y = r.y1 / SENSOR_HEIGHT  * osd_height;
                     int rect_w = (float)w / SENSOR_WIDTH * osd_width;
                     int rect_h = (float)h / SENSOR_HEIGHT  * osd_height;
                     cv::rectangle(osd_frame, cv::Rect(rect_x, rect_y , rect_w, rect_h), cv::Scalar( 255,255, 255, 255), 2, 2, 0);
@@ -209,8 +209,8 @@ void video_proc(char *argv[])
                     for(int i=0;i< frameTrackingResult.size();i++)
                     {
                         auto tb = frameTrackingResult[i];
-                        int rect_x = osd_width - (tb.box.x+tb.box.width)/ SENSOR_WIDTH * osd_width;
-                        int rect_y = osd_height - (tb.box.y+tb.box.height) / SENSOR_HEIGHT  * osd_height;
+                        int rect_x = tb.box.x / SENSOR_WIDTH * osd_width;
+                        int rect_y = tb.box.y / SENSOR_HEIGHT  * osd_height;
                         int rect_w = (float)tb.box.width / SENSOR_WIDTH * osd_width;
                         int rect_h = (float)tb.box.height / SENSOR_HEIGHT  * osd_height;
                         cv::rectangle(osd_frame, cv::Rect(rect_x, rect_y , rect_w + 20, rect_h + 20), cv::Scalar( 255,255, 0, 255), 2, 2, 0);
@@ -236,85 +236,58 @@ void video_proc(char *argv[])
                         float *pred = hk.get_out()[0];
                         int draw_x,draw_y;
 
-                        left_top.x = pred[(index1+1)*4*2] * w_1 + x1_1;
-                        left_top.y = pred[(index1+1)*4*2+1] * h_1 + y1_1;
-                        draw_x = osd_width - left_top.x / SENSOR_WIDTH * osd_width;
-                        draw_y = osd_height - left_top.y / SENSOR_HEIGHT * osd_height;
+                        float pred_x = std::max(std::min(pred[(index1+1)*4*2], 1.0f), 0.0f);
+                        float pred_y = std::max(std::min(pred[(index1+1)*4*2+1], 1.0f), 0.0f);
+
+                        left_top.x = pred_x * w_1 + x1_1;
+                        left_top.y = pred_y * h_1 + y1_1;
+                        draw_x = left_top.x / SENSOR_WIDTH * osd_width;
+                        draw_y = left_top.y / SENSOR_HEIGHT * osd_height;
 
                         cv::circle(osd_frame, cv::Point(draw_x, draw_y), 6, cv::Scalar(255, 0,0,0), 3);
                         cv::circle(osd_frame, cv::Point(draw_x, draw_y), 5, cv::Scalar(255, 0,0,0), 3);
 
+
                         ScopedTiming st("osd draw", atoi(argv[10]));
                         hk.draw_keypoints(osd_frame, num, bbox, false);
+
                     }
 
                     int x_min = std::max(static_cast<int>(left_top.x-500), 0);
                     int x_max = std::min(static_cast<int>(left_top.x), SENSOR_WIDTH);
                     int y_min = std::max(static_cast<int>(left_top.y-300), 0);
                     int y_max = std::min(static_cast<int>(left_top.y), SENSOR_HEIGHT);
-                    Bbox box_info = {x_min,y_min, (x_max-x_min+1),(y_max-y_min+1)};
+                    Bbox box_info = {x_min,y_min, (x_max-x_min),(y_max-y_min)};
 
+                    if ((x_max-x_min>32) && (y_max-y_min>32))
                     {
-                        int matsize = SENSOR_WIDTH * SENSOR_HEIGHT;
-                        
-                        cv::Mat ori_img;
-                        cv::Mat ori_img_R = cv::Mat(SENSOR_HEIGHT, SENSOR_WIDTH, CV_8UC1, vaddr);
-                        cv::Mat ori_img_G = cv::Mat(SENSOR_HEIGHT, SENSOR_WIDTH, CV_8UC1, vaddr + 1 * matsize);
-                        cv::Mat ori_img_B = cv::Mat(SENSOR_HEIGHT, SENSOR_WIDTH, CV_8UC1, vaddr + 2 * matsize);
-                        std::vector<cv::Mat> sensor_rgb;
-                        sensor_rgb.push_back(ori_img_B);
-                        sensor_rgb.push_back(ori_img_G);
-                        sensor_rgb.push_back(ori_img_R); 
-                        cv::merge(sensor_rgb, ori_img);
-
-                        cropped_img = Utils::crop(ori_img, box_info);
-
                         {
-                            ScopedTiming st("ocr time", atoi(argv[10]));
-                            ocr_det_size = ocr_process(ocrbox, ocrreco, cropped_img, osd_frame, x_min,y_min);
-                        }
-                    }
+                            int matsize = SENSOR_WIDTH * SENSOR_HEIGHT;
+                            
+                            cv::Mat ori_img;
+                            cv::Mat ori_img_R = cv::Mat(SENSOR_HEIGHT, SENSOR_WIDTH, CV_8UC1, vaddr);
+                            cv::Mat ori_img_G = cv::Mat(SENSOR_HEIGHT, SENSOR_WIDTH, CV_8UC1, vaddr + 1 * matsize);
+                            cv::Mat ori_img_B = cv::Mat(SENSOR_HEIGHT, SENSOR_WIDTH, CV_8UC1, vaddr + 2 * matsize);
+                            std::vector<cv::Mat> sensor_rgb;
+                            sensor_rgb.push_back(ori_img_B);
+                            sensor_rgb.push_back(ori_img_G);
+                            sensor_rgb.push_back(ori_img_R); 
+                            cv::merge(sensor_rgb, ori_img);
 
-                    int x = osd_width - 1.0 * x_max/ SENSOR_WIDTH * osd_width;
-                    int y = osd_height - 1.0 * y_max / SENSOR_HEIGHT  * osd_height;
-                    int w = 1.0 * (x_max-x_min) / SENSOR_WIDTH * osd_width;
-                    int h = 1.0 * (y_max-y_min) / SENSOR_HEIGHT  * osd_height;
-                    cv::rectangle(osd_frame, cv::Rect(x, y , w, h), cv::Scalar( 255,0, 255, 255), 2, 2, 0);
+                            cropped_img = Utils::crop(ori_img, box_info);
 
-                    {
-                        cv::Mat tmp_mat_R, tmp_mat_G, tmp_mat_B;
-
-                        int matsize = SENSOR_WIDTH * SENSOR_HEIGHT;
-                        cv::Mat ori_img_R = cv::Mat(SENSOR_HEIGHT, SENSOR_WIDTH, CV_8UC1, vaddr);
-                        cv::Mat ori_img_G = cv::Mat(SENSOR_HEIGHT, SENSOR_WIDTH, CV_8UC1, vaddr + 1 * matsize);
-                        cv::Mat ori_img_B = cv::Mat(SENSOR_HEIGHT, SENSOR_WIDTH, CV_8UC1, vaddr + 2 * matsize);
-
-
-                        cv::resize(ori_img_R, tmp_mat_R, cv::Size(osd_width, osd_height), cv::INTER_AREA);
-                        cv::resize(ori_img_G, tmp_mat_G, cv::Size(osd_width, osd_height), cv::INTER_AREA);
-                        cv::resize(ori_img_B, tmp_mat_B, cv::Size(osd_width, osd_height), cv::INTER_AREA);
-
-                        uint8_t *p_r_addr = reinterpret_cast<uint8_t *>(tmp_mat_R.data);
-                        uint8_t *p_g_addr = reinterpret_cast<uint8_t *>(tmp_mat_G.data);
-                        uint8_t *p_b_addr = reinterpret_cast<uint8_t *>(tmp_mat_B.data);
-
-                        for(uint32_t hh = 0; hh < osd_height; hh++)
-                        {
-                            for(uint32_t ww = 0; ww < osd_width; ww++)
                             {
-                                int new_hh = osd_height - 1 - hh;
-                                int new_ww = osd_width - 1 - ww;
-                                int osd_channel_index = (new_hh * osd_width + new_ww) * 4;
-                                if(osd_frame.data[osd_channel_index + 0] == 0)                        
-                                {
-                                    int ori_pix_index = hh * osd_width + ww;
-                                    osd_frame.data[osd_channel_index + 0] = 255;
-                                    osd_frame.data[osd_channel_index + 1] =  p_r_addr[ori_pix_index];
-                                    osd_frame.data[osd_channel_index + 2] =  p_g_addr[ori_pix_index];
-                                    osd_frame.data[osd_channel_index + 3] =  p_b_addr[ori_pix_index]; 
-                                }                        
+                                ScopedTiming st("ocr time", atoi(argv[10]));
+                                ocr_det_size = ocr_process(ocrbox, ocrreco, cropped_img, osd_frame, x_min,y_min);
                             }
                         }
+
+                        int x = 1.0 * x_min/ SENSOR_WIDTH * osd_width;
+                        int y = 1.0 * y_min / SENSOR_HEIGHT  * osd_height;
+                        int w = 1.0 * (x_max-x_min) / SENSOR_WIDTH * osd_width;
+                        int h = 1.0 * (y_max-y_min) / SENSOR_HEIGHT  * osd_height;
+
+                        cv::rectangle(osd_frame, cv::Rect(x, y , w, h), cv::Scalar( 255,0, 255, 255), 2, 2, 0);
                     }
                 }
                 {
@@ -419,8 +392,11 @@ int main(int argc, char *argv[])
 
             float *pred = hk.get_out()[0];
 
-            left_top.x = pred[(index1+1)*4*2] * w_1 + x1_1;
-            left_top.y = pred[(index1+1)*4*2+1] * h_1 + y1_1;
+            float pred_x = std::max(std::min(pred[(index1+1)*4*2], 1.0f), 0.0f);
+            float pred_y = std::max(std::min(pred[(index1+1)*4*2+1], 1.0f), 0.0f);
+
+            left_top.x = pred_x * w_1 + x1_1;
+            left_top.y = pred_y * h_1 + y1_1;
 
             cv::circle(img_draw, left_top, 6, cv::Scalar(0,0,0), 3);
             cv::circle(img_draw, left_top, 5, cv::Scalar(0,0,0), 3);
@@ -431,50 +407,53 @@ int main(int argc, char *argv[])
             int x_max = std::min(static_cast<int>(left_top.x), origin_w);
             int y_min = std::max(static_cast<int>(left_top.y-300), 0);
             int y_max = std::min(static_cast<int>(left_top.y), origin_h);
-            Bbox box_info = {x_min,y_min, (x_max-x_min+1),(y_max-y_min+1)};
+            Bbox box_info = {x_min,y_min, (x_max-x_min),(y_max-y_min)};
 
-            cv::Mat cropped_img = Utils::crop(img, box_info);
-
-            ocrbox.pre_process(cropped_img);
-            ocrbox.inference();
-
-            vector<Boxb> ocrbox_results;
-            ocrbox.post_process({500, 300}, ocrbox_results);
-
-            std::sort(ocrbox_results.begin(), ocrbox_results.end(), sortBoxesByY);
-
-            std::cout<<"ocr识别结果："<<endl;
-            for(int i = 0; i < ocrbox_results.size(); i++)
+            if ((x_max!=x_min) && (y_max!=y_min))
             {
-                vector<Point> vec;
-                vec.clear();
-                for(int j = 0; j < 4; j++)
+                cv::Mat cropped_img = Utils::crop(img, box_info);
+
+                ocrbox.pre_process(cropped_img);
+                ocrbox.inference();
+
+                vector<Boxb> ocrbox_results;
+                ocrbox.post_process({500, 300}, ocrbox_results);
+
+                std::sort(ocrbox_results.begin(), ocrbox_results.end(), sortBoxesByY);
+
+                std::cout<<"ocr识别结果："<<endl;
+                for(int i = 0; i < ocrbox_results.size(); i++)
                 {
-                    vec.push_back(ocrbox_results[i].vertices[j]);
+                    vector<Point> vec;
+                    vec.clear();
+                    for(int j = 0; j < 4; j++)
+                    {
+                        vec.push_back(ocrbox_results[i].vertices[j]);
+                    }
+                    cv::RotatedRect rect = cv::minAreaRect(vec);
+                    cv::Point2f ver[4];
+                    rect.points(ver);
+                    cv::Mat crop;
+                    Utils::warppersp(cropped_img, crop, ocrbox_results[i]);
+
+                    ocrreco.pre_process(crop);
+                    ocrreco.inference();
+
+                    vector<string> ocrreco_results;
+                    
+                    ocrreco.post_process(ocrreco_results);
+                    for (int i=0;i<ocrreco_results.size();i++)
+                    {
+                        std::cout<<ocrreco_results[i];
+                    }
+                    std::cout<<endl;
+
+                    for(int i = 0; i < 4; i++)
+                        line(img_draw, cv::Point2f(ver[i].x+x_min,ver[i].y+y_min), cv::Point2f(ver[(i + 1) % 4].x+x_min,ver[(i + 1) % 4].y+y_min), Scalar(255, 0, 0), 3);
                 }
-                cv::RotatedRect rect = cv::minAreaRect(vec);
-                cv::Point2f ver[4];
-                rect.points(ver);
-                cv::Mat crop;
-                Utils::warppersp(cropped_img, crop, ocrbox_results[i]);
 
-                ocrreco.pre_process(crop);
-                ocrreco.inference();
-
-                vector<string> ocrreco_results;
-                
-                ocrreco.post_process(ocrreco_results);
-                for (int i=0;i<ocrreco_results.size();i++)
-                {
-                    std::cout<<ocrreco_results[i];
-                }
-                std::cout<<endl;
-
-                for(int i = 0; i < 4; i++)
-                    line(img_draw, cv::Point2f(ver[i].x+x_min,ver[i].y+y_min), cv::Point2f(ver[(i + 1) % 4].x+x_min,ver[(i + 1) % 4].y+y_min), Scalar(255, 0, 0), 3);
+                cv::rectangle(img_draw, cv::Rect(x_min, y_min , (x_max-x_min), (y_max-y_min)), cv::Scalar(255, 255, 0), 2, 2, 0);
             }
-
-            cv::rectangle(img_draw, cv::Rect(x_min, y_min , (x_max-x_min), (y_max-y_min)), cv::Scalar(255, 255, 0), 2, 2, 0);
         }
 
         cv::imwrite("handocr_result.jpg", img_draw);

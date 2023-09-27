@@ -1057,8 +1057,8 @@ static struct usb_function_instance *uvc_alloc_inst(void)
 	ed->baSourceID[0]      	= 2;
 	ed->bNumControls		= 15;
 	ed->bControlSize		= 2;
-	ed->bmControls[0]		= 0xff;
-	ed->bmControls[1]		= 0x1;
+	ed->bmControls[0]		= 0x0;
+	ed->bmControls[1]		= 0x0;
 	ed->iExtension			= 0;
 
 	od = &opts->uvc_output_terminal;

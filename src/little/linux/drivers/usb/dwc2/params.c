@@ -192,6 +192,32 @@ static void dwc2_set_stm32mp15_hsotg_params(struct dwc2_hsotg *hsotg)
 	p->power_down = DWC2_POWER_DOWN_PARAM_NONE;
 }
 
+void k230_otg_phy_init(struct dwc2_hsotg *hsotg)
+{
+    struct platform_device *pdev = to_platform_device(hsotg->dev);
+
+    #define USB_IDPULLUP0 		(1<<4)
+    #define USB_DMPULLDOWN0 	(1<<8)
+    #define USB_DPPULLDOWN0 	(1<<9)
+
+    u32 usb_ctl3 = 0;
+    if(!strcmp(pdev->name, "91500000.usb-otg")) usb_ctl3 = readl(hsotg->hs_regs + 0x7c);
+    else usb_ctl3 = readl(hsotg->hs_regs + 0x9c);
+    usb_ctl3 |= USB_IDPULLUP0;
+    if (dwc2_is_host_mode(hsotg))
+    {
+        usb_ctl3 |= (USB_DMPULLDOWN0 | USB_DPPULLDOWN0);
+    }
+    else
+    {
+        usb_ctl3 &= ~(USB_DMPULLDOWN0 | USB_DPPULLDOWN0);
+    }
+
+    if(!strcmp(pdev->name, "91500000.usb-otg")) writel(usb_ctl3, hsotg->hs_regs + 0x7c);
+    else writel(usb_ctl3, hsotg->hs_regs + 0x9c);;
+
+}
+
 static void dwc2_set_k230_otg_params(struct dwc2_hsotg *hsotg)
 {
 	struct dwc2_core_params *p = &hsotg->params;
@@ -206,6 +232,7 @@ static void dwc2_set_k230_otg_params(struct dwc2_hsotg *hsotg)
 	p->host_perio_tx_fifo_size = 1024;
 	p->ahbcfg = GAHBCFG_HBSTLEN_INCR16 <<
 		GAHBCFG_HBSTLEN_SHIFT;
+    hsotg->kendryte_phy_init = k230_otg_phy_init;
 }
 
 const struct of_device_id dwc2_of_match_table[] = {
@@ -434,6 +461,8 @@ static void dwc2_set_default_params(struct dwc2_hsotg *hsotg)
 		p->g_np_tx_fifo_size = 1024;
 		dwc2_set_param_tx_fifo_sizes(hsotg);
 	}
+    hsotg->kendryte_phy_init = 0;
+    hsotg->hs_regs = 0;
 }
 
 /**

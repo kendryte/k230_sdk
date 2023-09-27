@@ -31,12 +31,16 @@ extern struct sensor_driver_dev ov9732_sensor_drv;
 extern struct sensor_driver_dev ov9286_sensor_drv;
 extern struct sensor_driver_dev imx335_sensor_drv;
 extern struct sensor_driver_dev sc035hgs_sensor_drv;
+extern struct sensor_driver_dev ov5647_sensor_drv;
+extern struct sensor_driver_dev sc201cs_sensor_drv;
 
 struct sensor_driver_dev *sensor_drv_list[SENSOR_NUM_MAX] = {
     &ov9732_sensor_drv,
     &ov9286_sensor_drv,
     &imx335_sensor_drv,
     &sc035hgs_sensor_drv,
+    &ov5647_sensor_drv,
+    &sc201cs_sensor_drv,
 };
 
 void sensor_drv_list_init(struct sensor_driver_dev *drv_list[])
@@ -121,6 +125,22 @@ k_s32 sensor_reg_list_write(k_sensor_i2c_info *i2c_info, const k_sensor_reg *reg
             rt_kprintf("%s err, [0x%04x] = [0x%02x]\n", __func__, reg_list[i].addr, reg_list[i].val);
             return -1;
         }
+	}
+	return ret;
+}
+
+k_s32 sensor_reg_list_read(k_sensor_i2c_info *i2c_info, const k_sensor_reg *reg_list)
+{
+	k_s32 ret = 0;
+	k_u16 i, val;
+
+	for (i = 0; reg_list[i].addr != REG_NULL; i++) {
+		ret = sensor_reg_read(i2c_info, reg_list[i].addr, &val);
+        if (ret) {
+            rt_kprintf("%s err, [0x%04x] = [0x%02x]\n", __func__, reg_list[i].addr, reg_list[i].val);
+            return -1;
+        }
+        rt_kprintf("{%04x, %02x}\n", reg_list[i].addr, val);
 	}
 	return ret;
 }
@@ -710,3 +730,107 @@ k_s32 sensor_priv_ioctl(struct sensor_driver_dev *dev, k_u32 cmd, void *args)
 	return ret;
 }
 
+static void i2c_read(k_s32 argc, char** argv)
+{
+    k_sensor_i2c_info i2c_info;
+    k_u16 i2c_id;
+    k_u16 salve_addr;
+    k_u16 reg_addr;
+    k_u16 reg_val = 0;
+
+    if(argc < 4) {
+        rt_kprintf("USAGE: i2c_read i2c_id salve_addr reg_addr\n");
+        return;
+    }
+
+    i2c_id = (k_u16) strtoul(argv[1], 0, 0);
+    salve_addr = (k_u16) strtoul(argv[2], 0, 0);
+    reg_addr = (k_u16) strtoul(argv[3], 0, 0);
+
+    rt_kprintf("i2c_read %d 0x%02x 0x%04x\n", i2c_id, salve_addr, reg_addr);
+
+    switch (i2c_id) {
+        case 0:
+            i2c_info.i2c_name = "i2c0";
+            break;
+        case 1:
+            i2c_info.i2c_name = "i2c1";
+            break;
+        case 2:
+            i2c_info.i2c_name = "i2c2";
+            break;
+        case 3:
+            i2c_info.i2c_name = "i2c3";
+            break;
+        default:
+            rt_kprintf("i2c id error\n");
+            return;
+    }
+    i2c_info.i2c_bus = rt_i2c_bus_device_find(i2c_info.i2c_name);
+    if (i2c_info.i2c_bus == RT_NULL) {
+        rt_kprintf("can't find %s deivce", i2c_info.i2c_name);
+        return;
+    }
+    i2c_info.slave_addr = salve_addr;
+    i2c_info.size = SENSOR_REG_VALUE_8BIT;
+
+    if (sensor_reg_read(&i2c_info, reg_addr, &reg_val)) {
+        rt_kprintf("i2c read failed\n");
+        return;
+    }
+    rt_kprintf("0x%04x=0x%02x\n", reg_addr, reg_val);
+    return;
+}
+MSH_CMD_EXPORT(i2c_read, i2c register read)
+
+static void i2c_write(k_s32 argc, char** argv)
+{
+    k_sensor_i2c_info i2c_info;
+    k_u16 i2c_id;
+    k_u16 salve_addr;
+    k_u16 reg_addr;
+    k_u16 reg_val;
+
+    if(argc < 5) {
+        rt_kprintf("USAGE: i2c_write i2c_id salve_addr reg_addr reg_val\n");
+        return;
+    }
+
+    i2c_id = (k_u16) strtoul(argv[1], 0, 0);
+    salve_addr = (k_u16) strtoul(argv[2], 0, 0);
+    reg_addr = (k_u16) strtoul(argv[3], 0, 0);
+    reg_val = (k_u16) strtoul(argv[4], 0, 0);
+
+    rt_kprintf("i2c_write %d 0x%02x 0x%04x 0x%02x\n", i2c_id, salve_addr, reg_addr, reg_val);
+    switch (i2c_id) {
+        case 0:
+            i2c_info.i2c_name = "i2c0";
+            break;
+        case 1:
+            i2c_info.i2c_name = "i2c1";
+            break;
+        case 2:
+            i2c_info.i2c_name = "i2c2";
+            break;
+        case 3:
+            i2c_info.i2c_name = "i2c3";
+            break;
+        default:
+            rt_kprintf("i2c id error\n");
+            return;
+    }
+    i2c_info.i2c_bus = rt_i2c_bus_device_find(i2c_info.i2c_name);
+    if (i2c_info.i2c_bus == RT_NULL) {
+        rt_kprintf("can't find %s deivce", i2c_info.i2c_name);
+        return;
+    }
+    i2c_info.slave_addr = salve_addr;
+    i2c_info.size = SENSOR_REG_VALUE_8BIT;
+
+    if (sensor_reg_write(&i2c_info, reg_addr, reg_val)) {
+        rt_kprintf("i2c write failed\n");
+        return;
+    }
+    return;
+}
+MSH_CMD_EXPORT(i2c_write, i2c register write)

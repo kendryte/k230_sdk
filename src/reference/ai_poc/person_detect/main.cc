@@ -122,8 +122,8 @@ void video_proc(char *argv[])
             ScopedTiming st("draw boxes", atoi(argv[5]));
             text = pd.labels[r.label] + ":" + std::to_string(round(r.score * 100) / 100).substr(0,4);
 
-            int x1 =  osd_width - r.x2 / SENSOR_WIDTH * osd_width;
-            int y1 = osd_height -  r.y2 / SENSOR_HEIGHT  * osd_height;
+            int x1 =   r.x1 / SENSOR_WIDTH * osd_width;
+            int y1 =  r.y1 / SENSOR_HEIGHT  * osd_height;
 
             int w = (r.x2-r.x1) / SENSOR_WIDTH * osd_width;
             int h = (r.y2-r.y1) / SENSOR_HEIGHT  * osd_height;

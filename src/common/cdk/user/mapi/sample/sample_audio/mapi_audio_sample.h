@@ -35,6 +35,7 @@ extern "C" {
 k_s32 audio_mapi_sample_ai_aenc(k_u32 sample_rate,k_u32 channels,k_bool enable_audio_codec, const char* filename);
 k_s32 audio_mapi_sample_adec_ao(k_u32 sample_rate,k_u32 channels,k_bool enable_audio_codec,const char* filename);
 k_s32 audio_mapi_sample_audio_loopback(k_u32 sample_rate,k_u32 channels);
+k_s32 audio_mapi_sample_audio_double_loopback(k_u32 sample_rate,k_u32 channels,k_bool enable_audio_codec);
 
 #ifdef __cplusplus
 }

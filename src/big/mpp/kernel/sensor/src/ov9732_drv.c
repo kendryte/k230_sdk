@@ -391,51 +391,6 @@ static const k_sensor_reg ov9732_mipi2lane_720p_30fps_mclk_16m_linear[] = {
 static k_sensor_mode ov9732_mode_info[] = {
     {
         .index = 0,
-        .sensor_type = OV_OV9732_MIPI_1920X1080_30FPS_10BIT_LINEAR,
-        .size = {
-            .bounds_width = 1920,
-            .bounds_height = 1080,
-            .top = 0,
-            .left = 0,
-            .width = 1920,
-            .height = 1080,
-        },
-        .fps = 30000,
-        .hdr_mode = SENSOR_MODE_LINEAR,
-        .bit_width = 10,
-        .bayer_pattern = BAYER_BGGR,
-        .mipi_info = {
-            .csi_id = 0,
-            .mipi_lanes = 2,
-            .data_type = 0x2B, //RAW10
-        },
-        .reg_list = ov9732_mipi2lane_1080p_30fps_linear,
-    },
-    {
-        .index = 1,
-        .sensor_type = OV_OV9732_MIPI_1920X1080_30FPS_10BIT_HDR,
-        .size = {
-        .bounds_width = 1920,
-        .bounds_height = 1080,
-        .top = 0,
-        .left = 0,
-        .width = 1920,
-        .height = 1080,
-        },
-        .fps = 30000,
-        .hdr_mode = SENSOR_MODE_HDR_STITCH,
-        .stitching_mode = SENSOR_STITCHING_DUAL_DCG,
-        .bit_width = 10,
-        .bayer_pattern = BAYER_BGGR,
-        .mipi_info = {
-            .csi_id = 0,
-            .mipi_lanes = 2,
-            .data_type = 0x2B, //RAW10
-        },
-        .reg_list = ov9732_mipi2lane_1080p_30fps_hdr,
-    },
-    {
-        .index = 2,
         .sensor_type = OV_OV9732_MIPI_1280X720_30FPS_10BIT_LINEAR,
         .size = {
             .bounds_width = 1280,
@@ -448,7 +403,7 @@ static k_sensor_mode ov9732_mode_info[] = {
         .fps = 30000,
         .hdr_mode = SENSOR_MODE_LINEAR,
         .bit_width = 10,
-        .bayer_pattern = BAYER_BGGR,
+        .bayer_pattern = BAYER_PAT_BGGR,
         .mipi_info = {
             .csi_id = 0,
             .mipi_lanes = 1,
@@ -457,7 +412,7 @@ static k_sensor_mode ov9732_mode_info[] = {
         .reg_list = ov9732_mipi2lane_720p_30fps_linear,
     },
     {
-        .index = 3,
+        .index = 1,
         .sensor_type = OV_OV9732_MIPI_1280X720_30FPS_10BIT_MCLK_16M_LINEAR,
         .size = {
             .bounds_width = 1280,
@@ -470,7 +425,7 @@ static k_sensor_mode ov9732_mode_info[] = {
         .fps = 30000,
         .hdr_mode = SENSOR_MODE_LINEAR,
         .bit_width = 10,
-        .bayer_pattern = BAYER_BGGR,
+        .bayer_pattern = BAYER_PAT_BGGR,
         .mipi_info = {
             .csi_id = 0,
             .mipi_lanes = 1,
@@ -573,17 +528,7 @@ static k_s32 ov9732_sensor_init(void *ctx, k_sensor_mode mode)
 
     switch (current_mode->index) {
     case 0:
-        ret = sensor_reg_list_write(&dev->i2c_info, current_mode->reg_list);
-        break;
-
     case 1:
-        ret = sensor_reg_list_write(&dev->i2c_info, current_mode->reg_list);
-        break;
-
-    case 2:
-        ret = sensor_reg_list_write(&dev->i2c_info, current_mode->reg_list);
-
-    case 3:
         ret = sensor_reg_list_write(&dev->i2c_info, current_mode->reg_list);
 
 ///////////////////
@@ -595,10 +540,10 @@ static k_s32 ov9732_sensor_init(void *ctx, k_sensor_mode mode)
         current_mode->ae_info.min_gain = 1.0;
         current_mode->ae_info.max_gain = 63.9375;
 
-        current_mode->ae_info.int_time_delay_frame = 0;
-        current_mode->ae_info.gain_delay_frame = 0;
-        current_mode->ae_info.ae_min_interval_frame = 2.5;
-        current_mode->ae_info.color_type = 0;	//color sensor
+        current_mode->ae_info.int_time_delay_frame = 2;
+        current_mode->ae_info.gain_delay_frame = 2;
+        //current_mode->ae_info.ae_min_interval_frame = 2.5;
+        current_mode->ae_info.color_type = SENSOR_COLOR;	//color sensor
 
         current_mode->ae_info.integration_time_increment = current_mode->ae_info.one_line_exp_time;
         current_mode->ae_info.gain_increment = OV9732_MIN_GAIN_STEP;
@@ -720,6 +665,8 @@ static k_s32 ov9732_sensor_init(void *ctx, k_sensor_mode mode)
 
     dgain = 1.0;
     current_mode->ae_info.cur_gain = again * dgain;
+    current_mode->ae_info.cur_long_gain = current_mode->ae_info.cur_gain;
+    current_mode->ae_info.cur_vs_gain = current_mode->ae_info.cur_gain;
 
     ret = sensor_reg_read(&dev->i2c_info, OV9732_REG_LONG_EXP_TIME_H, &exp_time_h);
     ret = sensor_reg_read(&dev->i2c_info, OV9732_REG_LONG_EXP_TIME_L, &exp_time_l);
@@ -822,9 +769,9 @@ k_s32 ov9732_sensor_get_again(void *ctx, k_sensor_gain *gain)
 
     pr_info("%s enter\n", __func__);
 
-    if (gain->exp_frame_type == SENSOR_EXPO_FRAME_TYPE_1FRAME) {
+    if (current_mode->hdr_mode == SENSOR_MODE_LINEAR) {
         gain->gain[SENSOR_LINEAR_PARAS] = current_mode->ae_info.cur_again;
-    } else if (gain->exp_frame_type == SENSOR_EXPO_FRAME_TYPE_2FRAMES) {
+    } else if (current_mode->hdr_mode == SENSOR_MODE_HDR_STITCH) {
         gain->gain[SENSOR_DUAL_EXP_L_PARAS] = current_mode->ae_info.cur_again;
         gain->gain[SENSOR_DUAL_EXP_S_PARAS] = current_mode->ae_info.cur_vs_again;
     } else {
@@ -838,11 +785,11 @@ k_s32 ov9732_sensor_get_again(void *ctx, k_sensor_gain *gain)
 k_s32 ov9732_sensor_set_again(void *ctx, k_sensor_gain gain)
 {
     k_s32 ret = 0;
-    k_u32 again;
+    k_u16 again;
     struct sensor_driver_dev *dev = ctx;
 
-    if (gain.exp_frame_type == SENSOR_EXPO_FRAME_TYPE_1FRAME) {
-        again = (k_u32)(gain.gain[SENSOR_LINEAR_PARAS] * 16 + 0.5);
+    if (current_mode->hdr_mode == SENSOR_MODE_LINEAR) {
+        again = (k_u16)(gain.gain[SENSOR_LINEAR_PARAS] * 16 + 0.5);
         if(current_mode->sensor_again !=again)
         {
 	        ret = sensor_reg_write(&dev->i2c_info, OV9732_REG_LONG_AGAIN_H,(again & 0x0300)>>8);
@@ -850,20 +797,20 @@ k_s32 ov9732_sensor_set_again(void *ctx, k_sensor_gain gain)
 	        current_mode->sensor_again = again;
         }
         current_mode->ae_info.cur_again = (float)current_mode->sensor_again/16.0f;
-    } else if (gain.exp_frame_type == SENSOR_EXPO_FRAME_TYPE_2FRAMES) {
-        again = (k_u32)(gain.gain[SENSOR_DUAL_EXP_L_PARAS]  * 16 + 0.5);
+    } else if (current_mode->hdr_mode == SENSOR_MODE_HDR_STITCH) {
+        again = (k_u16)(gain.gain[SENSOR_DUAL_EXP_L_PARAS]  * 16 + 0.5);
         ret = sensor_reg_write(&dev->i2c_info, OV9732_REG_LONG_AGAIN_H,(again & 0x0300)>>8);
         ret |= sensor_reg_write(&dev->i2c_info, OV9732_REG_LONG_AGAIN_L,(again & 0xff));
         current_mode->ae_info.cur_again = (float)again/16.0f;
 
-        again = (k_u32)(gain.gain[SENSOR_DUAL_EXP_S_PARAS] * 16 + 0.5);
+        again = (k_u16)(gain.gain[SENSOR_DUAL_EXP_S_PARAS] * 16 + 0.5);
         //TODO
         current_mode->ae_info.cur_vs_again = (float)again/16.0f;
     } else {
         pr_err("%s, unsupport exposure frame.\n", __func__);
         return -1;
     }
-    pr_debug("%s, exp_frame_type(%d), cur_again(%u)\n", __func__, gain.exp_frame_type, (k_u32)(current_mode->ae_info.cur_again*1000) );
+    pr_debug("%s, hdr_mode(%d), cur_again(%u)\n", __func__, current_mode->hdr_mode, (k_u32)(current_mode->ae_info.cur_again*1000) );
 
     return ret;
 }
@@ -874,9 +821,9 @@ k_s32 ov9732_sensor_get_dgain(void *ctx, k_sensor_gain *gain)
 
     pr_info("%s enter\n", __func__);
 
-    if (gain->exp_frame_type == SENSOR_EXPO_FRAME_TYPE_1FRAME) {
+    if (current_mode->hdr_mode == SENSOR_MODE_LINEAR) {
         gain->gain[SENSOR_LINEAR_PARAS] = current_mode->ae_info.cur_dgain;
-    } else if (gain->exp_frame_type == SENSOR_EXPO_FRAME_TYPE_2FRAMES) {
+    } else if (current_mode->hdr_mode == SENSOR_MODE_HDR_STITCH) {
         gain->gain[SENSOR_DUAL_EXP_L_PARAS] = current_mode->ae_info.cur_dgain;
         gain->gain[SENSOR_DUAL_EXP_S_PARAS] = current_mode->ae_info.cur_vs_dgain;
     } else {
@@ -893,14 +840,14 @@ k_s32 ov9732_sensor_set_dgain(void *ctx, k_sensor_gain gain)
     k_u32 dgain;
     struct sensor_driver_dev *dev = ctx;
 
-    pr_info("%s enter exp_frame_type(%d)\n", __func__, gain.exp_frame_type);
-    if (gain.exp_frame_type == SENSOR_EXPO_FRAME_TYPE_1FRAME) {
+    pr_info("%s enter hdr_mode(%d)\n", __func__, current_mode->hdr_mode);
+    if (current_mode->hdr_mode == SENSOR_MODE_LINEAR) {
         dgain = (k_u32)(gain.gain[SENSOR_LINEAR_PARAS] * 1024);
         //ret = sensor_reg_write(&dev->i2c_info, OV9732_REG_LONG_AGAIN_H,(again & 0x0300)>>8);
         //ret |= sensor_reg_write(&dev->i2c_info, OV9732_REG_LONG_AGAIN_L,(again & 0xff));
         current_mode->ae_info.cur_dgain = (float)dgain/1024.0f;
 
-    } else if (gain.exp_frame_type == SENSOR_EXPO_FRAME_TYPE_2FRAMES) {
+    } else if (current_mode->hdr_mode == SENSOR_MODE_HDR_STITCH) {
         dgain = (k_u32)(gain.gain[SENSOR_DUAL_EXP_L_PARAS] * 1024);
         //ret = sensor_reg_write(&dev->i2c_info, OV9732_REG_LONG_AGAIN_H,(again & 0x0300)>>8);
         //ret |= sensor_reg_write(&dev->i2c_info, OV9732_REG_LONG_AGAIN_L,(again & 0xff));
@@ -926,9 +873,9 @@ k_s32 ov9732_sensor_get_intg_time(void *ctx, k_sensor_intg_time *time)
 
     pr_info("%s enter\n", __func__);
 
-    if (time->exp_frame_type == SENSOR_EXPO_FRAME_TYPE_1FRAME) {
+    if (current_mode->hdr_mode == SENSOR_MODE_LINEAR) {
         time->intg_time[SENSOR_LINEAR_PARAS] = current_mode->ae_info.cur_integration_time;
-    } else if (time->exp_frame_type == SENSOR_EXPO_FRAME_TYPE_2FRAMES) {
+    } else if (current_mode->hdr_mode == SENSOR_MODE_HDR_STITCH) {
         time->intg_time[SENSOR_DUAL_EXP_L_PARAS] = current_mode->ae_info.cur_integration_time;
         time->intg_time[SENSOR_DUAL_EXP_S_PARAS] = current_mode->ae_info.cur_vs_integration_time;
     } else {
@@ -942,11 +889,11 @@ k_s32 ov9732_sensor_get_intg_time(void *ctx, k_sensor_intg_time *time)
 k_s32 ov9732_sensor_set_intg_time(void *ctx, k_sensor_intg_time time)
 {
     k_s32 ret = 0;
-    k_u32 exp_line = 0;
+    k_u16 exp_line = 0;
     float integraion_time = 0;
     struct sensor_driver_dev *dev = ctx;
 
-    if (time.exp_frame_type == SENSOR_EXPO_FRAME_TYPE_1FRAME) {
+    if (current_mode->hdr_mode == SENSOR_MODE_LINEAR) {
         integraion_time = time.intg_time[SENSOR_LINEAR_PARAS];
 
         exp_line = integraion_time / current_mode->ae_info.one_line_exp_time;
@@ -958,7 +905,7 @@ k_s32 ov9732_sensor_set_intg_time(void *ctx, k_sensor_intg_time time)
 	        current_mode->et_line = exp_line;
         }
         current_mode->ae_info.cur_integration_time = (float)current_mode->et_line * current_mode->ae_info.one_line_exp_time;
-    } else if (time.exp_frame_type == SENSOR_EXPO_FRAME_TYPE_2FRAMES) {
+    } else if (current_mode->hdr_mode == SENSOR_MODE_HDR_STITCH) {
         integraion_time = time.intg_time[SENSOR_DUAL_EXP_L_PARAS];
         exp_line = integraion_time / current_mode->ae_info.one_line_exp_time;
         exp_line = MIN(current_mode->ae_info.max_integraion_line, MAX(1, exp_line));
@@ -974,8 +921,8 @@ k_s32 ov9732_sensor_set_intg_time(void *ctx, k_sensor_intg_time time)
         pr_err("%s, unsupport exposure frame.\n", __func__);
         return -1;
     }
-    pr_debug("%s exp_frame_type(%d), exp_line(%d), integraion_time(%u)\n",\
-        __func__, time.exp_frame_type, exp_line, (k_u32)(integraion_time * 1000000000));
+    pr_debug("%s hdr_mode(%d), exp_line(%d), integraion_time(%u)\n",\
+        __func__, current_mode->hdr_mode, exp_line, (k_u32)(integraion_time * 1000000000));
 
     return ret;
 }

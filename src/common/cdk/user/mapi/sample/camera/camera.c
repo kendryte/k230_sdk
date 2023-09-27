@@ -64,7 +64,7 @@ static int __open()
 static int __close()
 {
     get_kuvc()->close();
-    kstream_shutdown();
+    kstream_deinit();
 
     return 0;
 }
@@ -98,8 +98,3 @@ kcamera* get_kcamera()
 {
     return &__k_camera;
 }
-
-void release_kcamera(kcamera *camera)
-{
-}
-

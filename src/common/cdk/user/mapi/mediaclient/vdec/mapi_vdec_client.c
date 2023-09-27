@@ -112,6 +112,7 @@ static k_s32 _vdec_deinit_datafifo(k_u32 vdec_chn)
         mapi_vdec_error_trace("mapi_send_sync failed\n");
     }
 
+    kd_datafifo_close(g_vdec_chn_datafifo[vdec_chn].data_hdl);
     return ret;
 }
 

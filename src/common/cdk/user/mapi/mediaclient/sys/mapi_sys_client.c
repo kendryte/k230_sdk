@@ -85,6 +85,14 @@ k_s32 kd_mapi_sys_deinit(void)
     return ret;
 }
 
+/* workaround at the moment, will be removed in the near future!!!
+*/
+void kd_mapi_media_init_workaround(k_bool media_init_flag) {
+    pthread_mutex_lock(&g_media_init_lock);
+    g_media_init = media_init_flag;
+    pthread_mutex_unlock(&g_media_init_lock);
+}
+
 k_s32 kd_mapi_media_init(const k_mapi_media_attr_t *media_attr)
 {
     k_s32 ret;

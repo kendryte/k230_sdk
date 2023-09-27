@@ -17,7 +17,8 @@ all:
 	@cd sample_adc; make || exit 1
 	@cd sample_dw200; make || exit 1
 	@cd sample_log; make || exit 1
-	@cd sample_cipher; make || exit 1
+	@cd sample_cipher/sample_hash; make || exit 1
+	@cd sample_cipher/sample_hwhash; make || exit 1
 	@cd sample_vdd_r; make || exit 1
 	@cd sample_wdt; make || exit 1
 	@cd sample_av; make || exit 1
@@ -31,6 +32,8 @@ all:
 	@cd sample_pwm; make || exit 1
 	@cd sample_pm; make || exit 1
 	@cd sample_fft; make || exit 1
+	@cd sample_canaan_uart_rx; make || exit 1
+	@cd sample_canaan_uart_tx; make || exit 1
 clean:
 	@cd sample_audio; make clean
 	@cd sample_dma; make clean
@@ -49,7 +52,8 @@ clean:
 	@cd sample_adc; make clean
 	@cd sample_dw200; make clean
 	@cd sample_log; make clean
-	@cd sample_cipher; make clean
+	@cd sample_cipher/sample_hash; make clean
+	@cd sample_cipher/sample_hwhash; make clean
 	@cd sample_vdd_r; make clean
 	@cd sample_wdt; make clean
 	@cd sample_av; make clean
@@ -63,4 +67,6 @@ clean:
 	@cd sample_pwm; make clean
 	@cd sample_pm; make clean
 	@cd sample_fft; make clean
+	@cd sample_canaan_uart_rx; make clean
+	@cd sample_canaan_uart_tx; make clean
 

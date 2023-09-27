@@ -6,7 +6,7 @@
 */
 #include <dt-bindings/gpio/gpio.h>
 / {
-        gpio_keys {
+        gpio_key: gpio_keys {
             compatible = "gpio-keys";
             key1 {
                 label = "gpio-key-33";
@@ -25,3 +25,4 @@
 
         };
 };
+

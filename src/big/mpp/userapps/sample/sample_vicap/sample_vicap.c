@@ -30,10 +30,12 @@
 #include <sys/mman.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stdint.h>
 
 #include "k_module.h"
 #include "k_type.h"
 #include "k_vb_comm.h"
+#include "k_vicap_comm.h"
 #include "k_video_comm.h"
 #include "k_sys_comm.h"
 #include "mpi_vb_api.h"
@@ -44,10 +46,13 @@
 #include "mpi_vo_api.h"
 #include "vo_test_case.h"
 
+#include "k_connector_comm.h"
+#include "mpi_connector_api.h"
+
 extern k_vo_display_resolution hx8399[20];
 
 #define VICAP_OUTPUT_BUF_NUM 6
-#define VICAP_INTPUT_BUF_NUM 4
+#define VICAP_INPUT_BUF_NUM 4
 
 #define DISPLAY_WITDH  1088
 #define DISPLAY_HEIGHT 1920
@@ -66,9 +71,17 @@ typedef struct {
     k_u32 in_size;
     k_pixel_format in_format;
 
+    k_vicap_input_type input_type;
+    k_vicap_image_pattern pattern;
+    const char *file_path;//input raw image file
+    const char *calib_file;
+    void *image_data;
+    k_u32 dalign;
+
     k_bool ae_enable;
     k_bool awb_enable;
     k_bool dnr3_enable;
+    k_bool hdr_enable;
 
     k_vicap_chn chn_num[VICAP_CHN_ID_MAX];
 
@@ -84,6 +97,7 @@ typedef struct {
 
     k_bool preview[VICAP_CHN_ID_MAX];
     k_u16 rotation[VICAP_CHN_ID_MAX];
+    k_u8 fps[VICAP_CHN_ID_MAX];
     k_bool dw_enable;
 } vicap_device_obj;
 
@@ -97,24 +111,36 @@ typedef struct {
     k_bool enable[MAX_VO_LAYER_NUM];
 } k_vicap_vo_layer_conf;
 
-static void sample_vicap_vo_init(void)
+static k_s32 sample_vicap_vo_init(void)
 {
-    k_vo_display_resolution *resolution = &hx8399[0];
-    k_vo_pub_attr attr;
 
-    kd_display_reset();
-    kd_display_set_backlight();
-    dwc_dsi_init();
+    k_u32 ret = 0;
+    k_s32 connector_fd;
+    k_connector_type connector_type = HX8377_V2_MIPI_4LAN_1080X1920_30FPS;
+    k_connector_info connector_info;
 
-    memset(&attr, 0, sizeof(attr));
+    memset(&connector_info, 0, sizeof(k_connector_info));
 
-    attr.bg_color = 0x808000;
-    attr.intf_sync = K_VO_OUT_1080P30;
-    attr.intf_type = K_VO_INTF_MIPI;
-    attr.sync_info = resolution;
+    //connector get sensor info
+    ret = kd_mpi_get_connector_info(connector_type, &connector_info);
+    if (ret) {
+        printf("sample_vicap, the sensor type not supported!\n");
+        return ret;
+    }
 
-    kd_mpi_vo_init();
-    kd_mpi_vo_set_dev_param(&attr);
+    connector_fd = kd_mpi_connector_open(connector_info.connector_name);
+    if (connector_fd < 0) {
+        printf("%s, connector open failed.\n", __func__);
+        return K_ERR_VO_NOTREADY;
+    }
+
+    // set connect power
+    kd_mpi_connector_power_set(connector_fd, 1);
+    // connector init
+    kd_mpi_connector_init(connector_fd, connector_info);
+
+    return 0;
+
 }
 
 static k_s32 sample_vicap_vo_layer_init(k_vicap_vo_layer_conf *layer_conf)
@@ -216,7 +242,7 @@ static k_s32 sample_vicap_vb_init(vicap_device_obj *dev_obj)
         printf("%s, enable dev(%d)\n", __func__, i);
 
         if (dev_obj[i].mode == VICAP_WORK_OFFLINE_MODE) {
-            config.comm_pool[k].blk_cnt = VICAP_INTPUT_BUF_NUM;
+            config.comm_pool[k].blk_cnt = VICAP_INPUT_BUF_NUM;
             config.comm_pool[k].mode = VB_REMAP_MODE_NOCACHE;
             config.comm_pool[k].blk_size = dev_obj[i].in_size;
             printf("%s, dev(%d) pool(%d) in_size(%d) blk_cnt(%d)\n", __func__, i , k ,dev_obj[i].in_size, config.comm_pool[k].blk_cnt);
@@ -342,34 +368,42 @@ static void usage(void)
     printf("usage: ./sample_vicap -mode 0 -dev 0 -sensor 0 -chn 0 -chn 1 -ow 640 -oh 480 -preview 1 -rotation 1\n");
     printf("Options:\n");
     printf(" -mode:         vicap work mode[0: online mode, 1: offline mode. only offline mode support multiple sensor input]\tdefault 0\n");
+
+    printf(" -itype:        vicap input type[0,1]\t0: sensor input, 1: user raw image input, default 0\n");
+    printf(" -ifile:        the input raw image file, only used for user raw image input\n");
+    printf(" -iw:           the input raw image width, only used for user raw image input\n");
+    printf(" -ih:           the input image height, only used for user raw image input\n");
+    printf(" -ipat:         the input raw image bayerpattern, only used for user raw image input\n");
+    printf(" -icalf:        the input raw image calibration file, only used for user raw image input\n");
+
     printf(" -dev:          vicap device id[0,1,2]\tdefault 0\n");
     printf(" -dw:           enable dewarp[0,1]\tdefault 0\n");
     printf(" -sensor:       sensor type[0: ov9732@1280x720, 1: ov9286_ir@1280x720], 2: ov9286_speckle@1280x720]\n");
     printf(" -ae:           ae status[0: disable AE, 1: enable AE]\tdefault enable\n");
     printf(" -awb:          awb status[0: disable AWB, 1: enable AWb]\tdefault enable\n");
+    printf(" -hdr:          hdr status[0: disable HDR, 1: enable HDR]\tdefault disable\n");
+
     printf(" -chn:          vicap output channel id[0,1,2]\tdefault 0\n");
     printf(" -ow:           the output image width, default same with input width\n");
     printf(" -oh:           the output image height, default same with input height\n");
     printf(" -ox:           the output image start position of x\n");
     printf(" -oy:           the output image start position of y\n");
+    printf(" -fps:          frame-per-second, 0 if unused\n");
     printf(" -crop:         crop enable[0: disable, 1: enable]\n");
     printf(" -ofmt:         the output pixel format[0: yuv, 1: rgb888, 2: rgb888p, 3: raw], only channel 0 support raw data, default yuv\n");
     printf(" -preview:      the output preview enable[0: disable, 1: enable], only support 2 output channel preview\n");
-    printf(" -rotation:     display rotaion[0: degree 0, 1: degree 90, 2: degree 270, 3: degree 180, 4: unsupport rotaion]\n");
+    printf(" -rotation:     display rotaion[0: degree 0, 1: degree 90, 2: degree 180, 3: degree 270, 4: unsupport rotaion]\n");
+    printf(" -dalign:       dump data align mode[0: lsb align, 1: msb align]\tdefault 0\n");
+
     printf(" -help:         print this help\n");
 
     exit(1);
 }
 
-extern unsigned int mcm_wr0_frame_cnt;
-extern unsigned int mcmwr0_done_cnt;
-extern unsigned int mcm_wr1_frame_cnt;
-extern unsigned int mcmwr1_done_cnt;
-extern unsigned int mcm_wr2_frame_cnt;
-extern unsigned int mcmwr2_done_cnt;
-
 extern k_u32 display_cnt;
 extern k_u32 drop_cnt;
+extern uint32_t hdr_buf_base_phy_addr;
+extern void *hdr_buf_base_vir_addr;
 
 // static void _set_mod_log(k_mod_id mod_id,k_s32  level)
 // {
@@ -463,6 +497,7 @@ dev_parse:
             device_obj[cur_dev].ae_enable = K_TRUE;//default enable ae
             device_obj[cur_dev].awb_enable = K_TRUE;//default enable awb
             device_obj[cur_dev].dnr3_enable = K_FALSE;//default disable 3ndr
+            device_obj[cur_dev].hdr_enable = K_FALSE;//default disable hdr
             //parse dev paramters
             for (i = i + 2; i < argc; i += 2)
             {
@@ -524,6 +559,11 @@ chn_parse:
                             k_u16 rotation = atoi(argv[i + 1]);
                             device_obj[cur_dev].rotation[cur_chn] = rotation;
                         }
+                        else if (strcmp(argv[i], "-fps") == 0)
+                        {
+                            k_u16 fps = atoi(argv[i + 1]);
+                            device_obj[cur_dev].fps[cur_chn] = fps;
+                        }
                         else if (strcmp(argv[i], "-crop") == 0)
                         {
                             k_u16 crop = atoi(argv[i + 1]);
@@ -563,6 +603,15 @@ chn_parse:
                                 printf("unsupported pixel format\n");
                                 return -1;
                             }
+                        }
+                        else if (strcmp(argv[i], "-dalign") == 0)
+                        {
+                            k_u16 dalign = atoi(argv[i + 1]);
+                            if (dalign > 1) {
+                                printf("invalid dalign paramters.\n");
+                                usage();
+                            }
+                            device_obj[cur_dev].dalign = dalign;
                         }
                         else if (strcmp(argv[i], "-preview") == 0)
                         {
@@ -691,10 +740,129 @@ chn_parse:
                             device_obj[cur_dev].sensor_type = OV_OV9286_MIPI_1280X720_60FPS_10BIT_LINEAR_SPECKLE;
                             break;
                         }
+                        case 17:
+                        {
+                            device_obj[cur_dev].sensor_type = IMX335_MIPI_4LANE_RAW10_2XDOL;
+                            break;
+                        }
+                        case 18:
+                        {
+                            device_obj[cur_dev].sensor_type = IMX335_MIPI_4LANE_RAW10_3XDOL;
+                            break;
+                        }
+                        case 19:
+                        {
+                            device_obj[cur_dev].sensor_type = OV_OV5647_MIPI_1920X1080_30FPS_10BIT_LINEAR;
+                            break;
+                        }
+                        case 20:
+                        {
+                            device_obj[cur_dev].sensor_type = OV_OV5647_MIPI_2592x1944_10FPS_10BIT_LINEAR;
+                            break;
+                        }
+                        case 21:
+                        {
+                            k_vicap_drop_frame frame;
+                            frame.m = 1;
+                            frame.n = 1;
+                            frame.mode = VICAP_LINERA_MODE;
+
+                            kd_mpi_vicap_set_vi_drop_frame(VICAP_CSI2, &frame, 1);
+                            device_obj[cur_dev].sensor_type = OV_OV5647_MIPI_640x480_60FPS_10BIT_LINEAR;
+                            break;
+                        }
+                        case 22:
+                        {
+                            device_obj[cur_dev].sensor_type = SC_SC201CS_MIPI_1LANE_RAW10_1600X1200_30FPS_LINEAR;
+                            kd_mpi_vicap_set_mclk(VICAP_MCLK0, VICAP_PLL1_CLK_DIV4, 22, 1);         // set mclk1 = 27 M = 2376 / 4 / 22
+                            break;
+                        }
+                        case 23:
+                        {
+                            device_obj[cur_dev].sensor_type = OV_OV5647_MIPI_CSI0_1920X1080_30FPS_10BIT_LINEAR;
+                            kd_mpi_vicap_set_mclk(VICAP_MCLK0, VICAP_PLL0_CLK_DIV4, 16, 1);
+                            break;
+                        }
+                        case 24:
+                        {
+                            device_obj[cur_dev].sensor_type = OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_IR_SPECKLE;
+                            break;
+                        }
                         default:
                         {
                             printf("unsupport sensor type.\n");
                             return -1;
+                        }
+                    }
+                }
+                else if (strcmp(argv[i], "-itype") == 0)
+                {
+                    if ((i + 1) >= argc) {
+                        printf("mode parameters missing.\n");
+                        return -1;
+                    }
+                    k_s32 type = atoi(argv[i + 1]);
+                    if (type == 0) {
+                        device_obj[cur_dev].input_type = VICAP_INPUT_TYPE_SENSOR;
+                    } else if (type == 1) {
+                        device_obj[cur_dev].input_type = VICAP_INPUT_TYPE_IMAGE;
+                    } else {
+                        printf("unsupport type.\n");
+                        return -1;
+                    }
+
+                    //parse itype parameters
+                    for (i = i + 2; i < argc; i += 2)
+                    {
+                        if ((i + 1) >= argc) {
+                            printf("chn parameters(%s) error.\n", argv[i]);
+                            usage();
+                        }
+                        if (strcmp(argv[i], "-ifile") == 0)
+                        {
+                            device_obj[cur_dev].file_path = argv[i + 1];
+                        }
+                        else if (strcmp(argv[i], "-iw") == 0)
+                        {
+                            k_u16 in_width = atoi(argv[i + 1]);
+                            device_obj[cur_dev].in_width = in_width;
+                        }
+                        else if (strcmp(argv[i], "-ih") == 0)
+                        {
+                            k_u16 in_height = atoi(argv[i + 1]);
+                            device_obj[cur_dev].in_height = in_height;
+                        }
+                        else if (strcmp(argv[i], "-ipat") == 0)
+                        {
+                            if (strcmp(argv[i + 1], "RGGB") == 0) {
+                                device_obj[cur_dev].pattern = BAYER_PAT_RGGB;
+                            } else if (strcmp(argv[i + 1], "GRBG") == 0) {
+                                device_obj[cur_dev].pattern = BAYER_PAT_GRBG;
+                            } else if (strcmp(argv[i + 1], "GBRG") == 0) {
+                                device_obj[cur_dev].pattern = BAYER_PAT_GBRG;
+                            } else if (strcmp(argv[i + 1], "BGGR") == 0) {
+                                device_obj[cur_dev].pattern = BAYER_PAT_BGGR;
+                            } else {
+                                printf("unspported pattern.\n");
+                                return -1;
+                            }
+                        }
+                        else if (strcmp(argv[i], "-icalf") == 0)
+                        {
+                            device_obj[cur_dev].calib_file = argv[i + 1];
+                        }
+                        else if (strcmp(argv[i], "-chn") == 0)
+                        {
+                            goto chn_parse;
+                        }
+                        else if (strcmp(argv[i], "-dev") == 0)
+                        {
+                            goto dev_parse;
+                        }
+                        else
+                        {
+                            printf("invalid type paramters.\n");
+                            usage();
                         }
                     }
                 }
@@ -735,6 +903,22 @@ chn_parse:
                         device_obj[cur_dev].awb_enable = K_TRUE;
                     } else {
                         printf("unsupport awb parameters.\n");
+                        return -1;
+                    }
+                }
+                else if (strcmp(argv[i], "-hdr") == 0)
+                {
+                    if ((i + 1) >= argc) {
+                        printf("hdr parameters missing.\n");
+                        return -1;
+                    }
+                    k_s32 hdr_status = atoi(argv[i + 1]);
+                    if (hdr_status == 0) {
+                        device_obj[cur_dev].hdr_enable = K_FALSE;
+                    } else if (hdr_status == 1) {
+                        device_obj[cur_dev].hdr_enable = K_TRUE;
+                    } else {
+                        printf("unsupport hdr parameters.\n");
                         return -1;
                     }
                 }
@@ -783,22 +967,29 @@ chn_parse:
         return 0;
     }
 
-    sample_vicap_vo_init();
-
-    printf("sample_vicap ...kd_mpi_vicap_get_sensor_info\n");
-
     for (int dev_num = 0; dev_num < VICAP_DEV_ID_MAX; dev_num++) {
         if (!device_obj[dev_num].dev_enable)
             continue;
 
-        //vicap get sensor info
-        ret = kd_mpi_vicap_get_sensor_info(device_obj[dev_num].sensor_type, &device_obj[dev_num].sensor_info);
-        if (ret) {
-            printf("sample_vicap, the sensor type not supported!\n");
-            return ret;
+        if (device_obj[dev_num].input_type == VICAP_INPUT_TYPE_SENSOR) {
+            dev_attr.input_type = VICAP_INPUT_TYPE_SENSOR;
+            //vicap get sensor info
+            ret = kd_mpi_vicap_get_sensor_info(device_obj[dev_num].sensor_type, &device_obj[dev_num].sensor_info);
+            if (ret) {
+                printf("sample_vicap, the sensor type not supported!\n");
+                return ret;
+            }
+            memcpy(&dev_attr.sensor_info, &device_obj[dev_num].sensor_info, sizeof(k_vicap_sensor_info));
+
+            device_obj[dev_num].in_width = device_obj[dev_num].sensor_info.width;
+            device_obj[dev_num].in_height = device_obj[dev_num].sensor_info.height;
+        } else {
+            dev_attr.input_type = VICAP_INPUT_TYPE_IMAGE;
+            work_mode = VICAP_WORK_LOAD_IMAGE_MODE;
+            device_obj[dev_num].ae_enable = 0;
+            device_obj[dev_num].awb_enable = 0;
         }
-        device_obj[dev_num].in_width = device_obj[dev_num].sensor_info.width;
-        device_obj[dev_num].in_height = device_obj[dev_num].sensor_info.height;
+
         printf("sample_vicap, dev[%d] in size[%dx%d]\n", \
             dev_num, device_obj[dev_num].in_width, device_obj[dev_num].in_height);
 
@@ -807,12 +998,17 @@ chn_parse:
         dev_attr.acq_win.v_start = 0;
         dev_attr.acq_win.width = device_obj[dev_num].in_width;
         dev_attr.acq_win.height = device_obj[dev_num].in_height;
-        if (work_mode == VICAP_WORK_OFFLINE_MODE) {
-            dev_attr.mode = VICAP_WORK_OFFLINE_MODE;
-            dev_attr.buffer_num = VICAP_INTPUT_BUF_NUM;
+        if ((work_mode == VICAP_WORK_OFFLINE_MODE) || (work_mode == VICAP_WORK_LOAD_IMAGE_MODE)) {
+            dev_attr.mode = work_mode;
+            dev_attr.buffer_num = VICAP_INPUT_BUF_NUM;
             dev_attr.buffer_size = VICAP_ALIGN_UP((device_obj[dev_num].in_width * device_obj[dev_num].in_height * 2), VICAP_ALIGN_1K);
             device_obj[dev_num].in_size = dev_attr.buffer_size;
             device_obj[dev_num].mode = VICAP_WORK_OFFLINE_MODE;
+            if (work_mode == VICAP_WORK_LOAD_IMAGE_MODE) {
+                dev_attr.image_pat = device_obj[dev_num].pattern;
+                dev_attr.sensor_info.sensor_name = device_obj[dev_num].calib_file;
+                device_obj[dev_num].image_data = NULL;
+            }
         } else {
             dev_attr.mode = VICAP_WORK_ONLINE_MODE;
         }
@@ -822,16 +1018,49 @@ chn_parse:
         dev_attr.pipe_ctrl.bits.ae_enable = device_obj[dev_num].ae_enable;
         dev_attr.pipe_ctrl.bits.awb_enable = device_obj[dev_num].awb_enable;
         dev_attr.pipe_ctrl.bits.dnr3_enable = device_obj[dev_num].dnr3_enable;
+        dev_attr.pipe_ctrl.bits.ahdr_enable = device_obj[dev_num].hdr_enable;
 
         dev_attr.cpature_frame = 0;
         dev_attr.dw_enable = device_obj[dev_num].dw_enable;
-
-        memcpy(&dev_attr.sensor_info, &device_obj[dev_num].sensor_info, sizeof(k_vicap_sensor_info));
 
         ret = kd_mpi_vicap_set_dev_attr(dev_num, dev_attr);
         if (ret) {
             printf("sample_vicap, kd_mpi_vicap_set_dev_attr failed.\n");
             return ret;
+        }
+
+        if (work_mode == VICAP_WORK_LOAD_IMAGE_MODE) {
+            //open raw image file
+            if (device_obj[dev_num].file_path) {
+                printf("open raw image file:%s\n", device_obj[dev_num].file_path);
+                k_u32 file_len = 0;
+                FILE *raw_file = fopen(device_obj[dev_num].file_path, "rb");
+                if (raw_file) {
+                    fseek(raw_file, 0, SEEK_END);
+                    file_len = ftell(raw_file);
+                    device_obj[dev_num].image_data = malloc(file_len);
+                    if (device_obj[dev_num].image_data != NULL) {
+                        fseek(raw_file, 0, SEEK_SET);
+                        if (file_len != fread(device_obj[dev_num].image_data, 1, file_len, raw_file)) {
+                            printf("%s, read file failed(%s).\n", __func__, strerror(errno));
+                        }
+                        ret = kd_mpi_vicap_load_image(dev_num, device_obj[dev_num].image_data, file_len);
+                        if (ret) {
+                            printf("sample_vicap, kd_mpi_vicap_load_image failed.\n");
+                            return ret;
+                        }
+                    } else {
+                        printf("%s, malloc image data mem failed.\n", __func__);
+                    }
+                    fclose(raw_file);
+                } else {
+                    printf("%s, open raw image file(%s) failed(%s).\n", __func__, device_obj[dev_num].file_path, strerror(errno));
+                    return -1;
+                }
+            } else {
+                printf("please input raw image file!!!\n");
+                return 0;
+            }
         }
 
         for (int chn_num = 0; chn_num < VICAP_CHN_ID_MAX; chn_num++) {
@@ -871,6 +1100,12 @@ chn_parse:
                 device_obj[dev_num].out_win[chn_num].h_start, device_obj[dev_num].out_win[chn_num].v_start, \
                 device_obj[dev_num].out_win[chn_num].width, device_obj[dev_num].out_win[chn_num].height);
         }
+    }
+
+    ret = sample_vicap_vo_init();
+    if (ret) {
+        printf("sample_vicap_vo_init failed\n");
+        return -1;
     }
 
     ret = sample_vicap_vb_init(device_obj);
@@ -915,6 +1150,7 @@ chn_parse:
             chn_attr.pix_format = device_obj[dev_num].out_format[chn_num];
             chn_attr.buffer_num = VICAP_OUTPUT_BUF_NUM;
             chn_attr.buffer_size = device_obj[dev_num].buf_size[chn_num];
+            chn_attr.fps = device_obj[dev_num].fps[chn_num];
 
             printf("sample_vicap, set dev(%d) chn(%d) attr, buffer_size(%d), out size[%dx%d]\n", \
                 dev_num, chn_num, chn_attr.buffer_size, chn_attr.out_win.width, chn_attr.out_win.height);
@@ -998,8 +1234,11 @@ chn_parse:
             printf(" Input character to select test option\n");
             printf("---------------------------------------\n");
             printf(" d: dump data addr test\n");
+            printf(" h: dump hdr ddr buffer.\n");
             printf(" s: set isp ae roi test\n");
             printf(" g: get isp ae roi test\n");
+            printf(" t: toggle TPG\n");
+            printf(" r: dump register config to file.\n");
             printf(" q: to exit\n");
             printf("---------------------------------------\n");
             printf("please Input:\n\n");
@@ -1029,11 +1268,15 @@ chn_parse:
                     static k_u32 dump_count = 0;
                     k_char *suffix;
                     k_u32 data_size = 0;
-                    void *virt_addr = NULL;
+                    k_u8 lbit = 0;
+                    k_u8 *virt_addr = NULL;
                     k_char filename[256];
 
                     if (dump_info.v_frame.pixel_format == PIXEL_FORMAT_YUV_SEMIPLANAR_420) {
                         suffix = "yuv420sp";
+                        data_size = dump_info.v_frame.width * dump_info.v_frame.height * 3 /2;
+                    } else if (dump_info.v_frame.pixel_format == PIXEL_FORMAT_YUV_SEMIPLANAR_422) {
+                        suffix = "yuv422sp";
                         data_size = dump_info.v_frame.width * dump_info.v_frame.height * 3 /2;
                     } else if (dump_info.v_frame.pixel_format == PIXEL_FORMAT_RGB_888) {
                         suffix = "rgb888";
@@ -1043,6 +1286,18 @@ chn_parse:
                         data_size = dump_info.v_frame.width * dump_info.v_frame.height * 3;
                     } else if (dump_info.v_frame.pixel_format == PIXEL_FORMAT_RGB_BAYER_10BPP) {
                         suffix = "raw10";
+                        lbit = 6;
+                        data_size = dump_info.v_frame.width * dump_info.v_frame.height * 2;
+                    } else if (dump_info.v_frame.pixel_format == PIXEL_FORMAT_RGB_BAYER_12BPP) {
+                        suffix = "raw12";
+                        lbit = 4;
+                        data_size = dump_info.v_frame.width * dump_info.v_frame.height * 2;
+                    } else if (dump_info.v_frame.pixel_format == PIXEL_FORMAT_RGB_BAYER_14BPP) {
+                        suffix = "raw14";
+                        lbit = 2;
+                        data_size = dump_info.v_frame.width * dump_info.v_frame.height * 2;
+                    } else if (dump_info.v_frame.pixel_format == PIXEL_FORMAT_RGB_BAYER_16BPP) {
+                        suffix = "raw16";
                         data_size = dump_info.v_frame.width * dump_info.v_frame.height * 2;
                     } else {
                         suffix = "unkown";
@@ -1058,7 +1313,15 @@ chn_parse:
                         printf("save dump data to file(%s)\n", filename);
                         FILE *file = fopen(filename, "wb+");
                         if (file) {
-                            fwrite(virt_addr, 1, data_size, file);
+                            if (device_obj[dev_num].dalign && lbit) {
+                                for (k_u32 index = 0; index < data_size; index += 2) {
+                                    k_u16 raw_data = (virt_addr[index + 1] << 8 ) | virt_addr[index];
+                                    raw_data = raw_data << lbit;
+                                    fwrite(&raw_data, sizeof(raw_data), 1, file);
+                                }
+                            } else {
+                                fwrite(virt_addr, 1, data_size, file);
+                            }
                             fclose(file);
                         } else {
                             printf("sample_vicap, open dump file failed(%s)\n", strerror(errno));
@@ -1076,6 +1339,47 @@ chn_parse:
                         printf("sample_vicap, dev(%d) chn(%d) release dump frame failed.\n", dev_num, chn_num);
                     }
                     dump_count++;
+                }
+            }
+            break;
+        case 'h':
+            for (int dev_num = 0; dev_num < VICAP_DEV_ID_MAX; dev_num++) {
+                if (!device_obj[dev_num].dev_enable)
+                    continue;
+
+                k_u32 hdr_frame = 0;
+                k_u32 data_size = 0;
+                k_char filename[256];
+
+                data_size = device_obj[dev_num].in_width * device_obj[dev_num].in_height * 3/2;
+                if ((device_obj[dev_num].sensor_info.hdr_mode == VICAP_VCID_HDR_2FRAME)
+                  || (device_obj[dev_num].sensor_info.hdr_mode == VICAP_VCID_HDR_2FRAME)) {
+                    hdr_frame = 2;
+                } else if ((device_obj[dev_num].sensor_info.hdr_mode == VICAP_VCID_HDR_3FRAME)
+                  || (device_obj[dev_num].sensor_info.hdr_mode == VICAP_VCID_HDR_3FRAME)){
+                    hdr_frame = 3;
+                } else {
+                    hdr_frame = 0;
+                }
+
+                for (int index = 0; index < hdr_frame; index++) {
+                    hdr_buf_base_vir_addr += data_size * index;
+                    printf("sample_vicap, dump hdr buf(%p) data size:%u\n", hdr_buf_base_vir_addr, data_size);
+                    if (hdr_buf_base_vir_addr) {
+                        memset(filename, 0 , sizeof(filename));
+                        snprintf(filename, sizeof(filename), "dev_%02d_%dx%d_hdr_%02d.raw", \
+                            dev_num, device_obj[dev_num].in_width, device_obj[dev_num].in_height, index);
+                        printf("save dump hdr buffer to file(%s)\n", filename);
+                        FILE *file = fopen(filename, "wb+");
+                        if (file) {
+                            fwrite(hdr_buf_base_vir_addr, data_size, 1, file);
+                            fclose(file);
+                        } else {
+                            printf("sample_vicap, open dump hdr file failed(%s)\n", strerror(errno));
+                        }
+                    } else {
+                        printf("sample_vicap, map dump hdr addr failed.\n");
+                    }
                 }
             }
             break;
@@ -1125,6 +1429,26 @@ chn_parse:
                 }
             }
             break;
+        case 't': {
+            static k_bool tpg_enable = 0;
+            // toggle
+            tpg_enable ^= 1;
+            kd_mpi_vicap_tpg_enable(tpg_enable);
+            break;
+        }
+        case 'r':
+            printf("sample_vicap... save isp register config.\n");
+            for (int dev_num = 0; dev_num < VICAP_DEV_ID_MAX; dev_num++) {
+                if (!device_obj[dev_num].dev_enable)
+                    continue;
+
+                k_char filename[256];
+                memset(filename, 0 , sizeof(filename));
+                snprintf(filename, sizeof(filename), "dev_%02d_reg_dump.txt", dev_num);
+                printf("save dump register to file(%s)\n", filename);
+                kd_mpi_vicap_dump_register(dev_num, filename);
+            }
+            break;
         case 'q':
             goto app_exit;
         default:
@@ -1143,15 +1467,19 @@ app_exit:
         if (ret) {
             printf("sample_vicap, vicap dev(%d) stop stream failed.\n", dev_num);
         }
-        printf("mcm_wr0_frame_cnt[%d], mcmwr0_done_cnt[%d]\n", mcm_wr0_frame_cnt, mcmwr0_done_cnt);
-        printf("mcm_wr1_frame_cnt[%d], mcmwr1_done_cnt[%d]\n", mcm_wr1_frame_cnt, mcmwr1_done_cnt);
-        printf("mcm_wr2_frame_cnt[%d], mcmwr2_done_cnt[%d]\n", mcm_wr2_frame_cnt, mcmwr2_done_cnt);
         printf("display_cnt[%d], drop_cnt[%d]\n", display_cnt, drop_cnt);
 
         printf("sample_vicap, vicap dev(%d) deinit\n", dev_num);
         ret = kd_mpi_vicap_deinit(dev_num);
         if (ret) {
             printf("sample_vicap, vicap dev(%d) deinit failed.\n", dev_num);
+        }
+
+        if (work_mode == VICAP_WORK_LOAD_IMAGE_MODE) {
+            if (device_obj[dev_num].image_data != NULL) {
+                free(device_obj[dev_num].image_data);
+                device_obj[dev_num].image_data = NULL;
+            }
         }
     }
     vo_count = 0;

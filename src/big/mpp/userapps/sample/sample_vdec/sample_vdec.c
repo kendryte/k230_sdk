@@ -47,6 +47,9 @@
 #include "k_vvo_comm.h"
 #include "vo_test_case.h"
 
+#include "k_connector_comm.h"
+#include "mpi_connector_api.h"
+
 #define ENABLE_VDEC_DEBUG    1
 #define BIND_VO_LAYER   1
 
@@ -253,6 +256,55 @@ static void *input_thread(void *arg)
     return arg;
 }
 
+k_s32 sample_vdec_vo_init(layer_bind_config *config)
+{
+    k_vo_pub_attr attr;
+    layer_info info;
+    k_vo_layer chn_id = config->ch;
+    k_u32 ret = 0;
+    k_s32 connector_fd;
+    k_connector_type connector_type = HX8377_V2_MIPI_4LAN_1080X1920_30FPS;
+    k_connector_info connector_info;
+
+    memset(&attr, 0, sizeof(attr));
+    memset(&info, 0, sizeof(info));
+    memset(&connector_info, 0, sizeof(k_connector_info));
+
+    //connector get sensor info
+    ret = kd_mpi_get_connector_info(connector_type, &connector_info);
+    if (ret) {
+        printf("sample_vicap, the sensor type not supported!\n");
+        return ret;
+    }
+
+    connector_fd = kd_mpi_connector_open(connector_info.connector_name);
+    if (connector_fd < 0) {
+        printf("%s, connector open failed.\n", __func__);
+        return K_ERR_VO_NOTREADY;
+    }
+
+    // set connect power
+    kd_mpi_connector_power_set(connector_fd, K_TRUE);
+    // connector init
+    kd_mpi_connector_init(connector_fd, connector_info);
+
+    printf("%s>w %d, h %d\n", __func__, config->w, config->h);
+    // config lyaer
+    info.act_size.width = config->w;//1080;//640;//1080;
+    info.act_size.height = config->h;//1920;//480;//1920;
+    info.format = PIXEL_FORMAT_YVU_PLANAR_420;
+    info.func = config->ro;
+    info.global_alptha = 0xff;
+    info.offset.x = 0;//(1080-w)/2,
+    info.offset.y = 0;//(1920-h)/2;
+    // info.attr.out_size.width = 1080;//640;
+    // info.attr.out_size.height = 1920;//480;
+    vo_creat_layer_test(chn_id, &info);
+
+    //exit ;
+    return 0;
+}
+
 static void *output_thread(void *arg)
 {
     sample_vdec_conf_t *vdec_conf;
@@ -296,7 +348,7 @@ static void *output_thread(void *arg)
                 config.ro = 0;
             }
 
-            vo_layer_bind_config(&config);
+            sample_vdec_vo_init(&config);
 
             first = 1;
         }
@@ -438,10 +490,8 @@ int main(int argc, char *argv[])
     attr.frame_buf_cnt = OUTPUT_BUF_CNT;
     attr.frame_buf_size = FRAME_BUF_SIZE;
     attr.stream_buf_size = STREAM_BUF_SIZE;
-    attr.pic_format = PIXEL_FORMAT_YUV_SEMIPLANAR_420;
     attr.type = type;
 	attr.frame_buf_pool_id = g_vdec_conf[ch].output_pool_id;
-    g_vdec_conf[ch].pic_format = attr.pic_format;
     ret = kd_mpi_vdec_create_chn(ch, &attr);
     CHECK_RET(ret, __func__, __LINE__);
 

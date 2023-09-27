@@ -806,3 +806,161 @@ k_s32 audio_mapi_sample_audio_loopback(k_u32 sample_rate,k_u32 channels)
 
     return 0;
 }
+
+k_s32 audio_mapi_sample_audio_double_loopback(k_u32 sample_rate,k_u32 channels,k_bool enable_audio_codec)
+{
+    k_s32 ret;
+
+    ret = _mapi_sample_vb_init(K_TRUE, sample_rate);
+    if (ret != K_SUCCESS)
+    {
+        printf("audio_sample_vb_init failed\n");
+        return -1;
+    }
+
+    //pdm in 1 channel enable
+    k_handle ai_pdm_hdl = 0;
+    k_aio_dev_attr ai_pdm_dev_attr;
+    ai_pdm_dev_attr.audio_type = KD_AUDIO_INPUT_TYPE_PDM;
+    ai_pdm_dev_attr.kd_audio_attr.pdm_attr.sample_rate = sample_rate;
+    ai_pdm_dev_attr.kd_audio_attr.pdm_attr.bit_width = KD_AUDIO_BIT_WIDTH_16;
+    ai_pdm_dev_attr.kd_audio_attr.pdm_attr.chn_cnt = 4; // max pdm channel
+    ai_pdm_dev_attr.kd_audio_attr.pdm_attr.snd_mode = (1 == channels) ? KD_AUDIO_SOUND_MODE_MONO : KD_AUDIO_SOUND_MODE_STEREO;
+    ai_pdm_dev_attr.kd_audio_attr.pdm_attr.frame_num = AUDIO_PERSEC_DIV_NUM;
+    ai_pdm_dev_attr.kd_audio_attr.pdm_attr.pdm_oversample = KD_AUDIO_PDM_INPUT_OVERSAMPLE_64;
+    ai_pdm_dev_attr.kd_audio_attr.pdm_attr.point_num_per_frame = sample_rate / ai_pdm_dev_attr.kd_audio_attr.pdm_attr.frame_num;
+    if (K_SUCCESS != kd_mapi_ai_init(1,0, &ai_pdm_dev_attr,&ai_pdm_hdl))
+    {
+        printf("kd_mapi_ai_init failed\n");
+        return K_FAILED;
+    }
+
+    if (K_SUCCESS != kd_mapi_ai_start(ai_pdm_hdl))
+    {
+        printf("pdm kd_mapi_ai_start failed\n");
+        return K_FAILED;
+    }
+
+    //i2s in 1 channel enable
+    k_handle ai_i2s_hdl = 0;
+    k_aio_dev_attr ai_i2s_dev_attr;
+    ai_i2s_dev_attr.audio_type = KD_AUDIO_INPUT_TYPE_I2S;
+    ai_i2s_dev_attr.kd_audio_attr.i2s_attr.sample_rate = sample_rate;
+    ai_i2s_dev_attr.kd_audio_attr.i2s_attr.bit_width = KD_AUDIO_BIT_WIDTH_16;
+    ai_i2s_dev_attr.kd_audio_attr.i2s_attr.chn_cnt = 2;
+    ai_i2s_dev_attr.kd_audio_attr.i2s_attr.snd_mode = (1==channels)?KD_AUDIO_SOUND_MODE_MONO:KD_AUDIO_SOUND_MODE_STEREO;
+    ai_i2s_dev_attr.kd_audio_attr.i2s_attr.i2s_mode = K_RIGHT_JUSTIFYING_MODE;
+    ai_i2s_dev_attr.kd_audio_attr.i2s_attr.frame_num = AUDIO_PERSEC_DIV_NUM;
+    ai_i2s_dev_attr.kd_audio_attr.i2s_attr.point_num_per_frame = sample_rate / ai_i2s_dev_attr.kd_audio_attr.i2s_attr.frame_num;
+    ai_i2s_dev_attr.kd_audio_attr.i2s_attr.i2s_type = g_enable_audio_codec ? K_AIO_I2STYPE_INNERCODEC : K_AIO_I2STYPE_EXTERN;
+    if (K_SUCCESS != kd_mapi_ai_init(0,0, &ai_i2s_dev_attr,&ai_i2s_hdl))
+    {
+        printf("kd_mapi_ai_init failed\n");
+        return K_FAILED;
+    }
+
+    if (K_SUCCESS != kd_mapi_ai_start(ai_i2s_hdl))
+    {
+        printf("i2s kd_mapi_ai_start failed\n");
+        return K_FAILED;
+    }
+
+    //i2s out 2 channel enable
+    k_handle ao_i2s_hdl = 0;
+    k_aio_dev_attr ao_dev_attr;
+    ao_dev_attr.audio_type = KD_AUDIO_OUTPUT_TYPE_I2S;
+    ao_dev_attr.kd_audio_attr.i2s_attr.sample_rate = sample_rate;
+    ao_dev_attr.kd_audio_attr.i2s_attr.bit_width = KD_AUDIO_BIT_WIDTH_16;
+    ao_dev_attr.kd_audio_attr.i2s_attr.chn_cnt = 2;
+    ao_dev_attr.kd_audio_attr.i2s_attr.snd_mode = (1==channels)?KD_AUDIO_SOUND_MODE_MONO:KD_AUDIO_SOUND_MODE_STEREO;
+    ao_dev_attr.kd_audio_attr.i2s_attr.i2s_mode = K_RIGHT_JUSTIFYING_MODE;
+    ao_dev_attr.kd_audio_attr.i2s_attr.frame_num = AUDIO_PERSEC_DIV_NUM;
+    ao_dev_attr.kd_audio_attr.i2s_attr.point_num_per_frame = sample_rate / ao_dev_attr.kd_audio_attr.i2s_attr.frame_num;
+    ao_dev_attr.kd_audio_attr.i2s_attr.i2s_type = g_enable_audio_codec ? K_AIO_I2STYPE_INNERCODEC : K_AIO_I2STYPE_EXTERN;
+
+
+    if (K_SUCCESS != kd_mapi_ao_init(0,2/*all channel*/, &ao_dev_attr,&ao_i2s_hdl))
+    {
+        printf("kd_mapi_ao_init failed\n");
+        return K_FAILED;
+    }
+
+    if (K_SUCCESS != kd_mapi_ao_start(ao_i2s_hdl))
+    {
+        printf("kd_mapi_ao_start failed\n");
+        return K_FAILED;
+    }
+
+    //sysbind
+    //ai_0(i2s) bind ao_1(i2s)
+    ret = kd_mapi_ai_bind_ao(ai_i2s_hdl,(((0) << 16) | ((1) & 0xFFFF)));
+    if(ret != K_SUCCESS) {
+        printf("i2s->i2s kd_mapi_ai_bind_ao error: %x\n", ret);
+        return -1;
+    }
+
+    //ai_1(pdm) bind ao_0(i2s)
+    ret = kd_mapi_ai_bind_ao(ai_pdm_hdl,(((0) << 16) | ((0) & 0xFFFF)));
+    if(ret != K_SUCCESS) {
+        printf("pdm->i2s kd_mapi_ai_bind_ao error: %x\n", ret);
+        return -1;
+    }
+
+    //modify ao audio volume
+    kd_mapi_ao_set_volume(ao_i2s_hdl,6);
+    //modify ai audio volume
+    kd_mapi_ai_set_volume(ai_i2s_hdl,-3);
+
+    printf("=======audio_double_loop ok\n");
+    while(1)
+    {
+        if (0 == _get_quit_key())
+        {
+            break;
+        }
+    }
+
+    //sys unbind
+    //ai_0(i2s) unbind ao_1(i2s)
+    ret = kd_mapi_ai_unbind_ao(ai_i2s_hdl,(((0) << 16) | ((1) & 0xFFFF)));
+    if(ret != K_SUCCESS) {
+        printf("i2s->i2s kd_mapi_ai_unbind_ao error: %x\n", ret);
+        return -1;
+    }
+
+    //ai_1(pdm) unbind ao_0(i2s)
+    ret = kd_mapi_ai_unbind_ao(ai_pdm_hdl,(((0) << 16) | ((0) & 0xFFFF)));
+    if(ret != K_SUCCESS) {
+        printf("pdm->i2s kd_mapi_ai_unbind_ao error: %x\n", ret);
+        return -1;
+    }
+
+    ret = _deinit_ao(ao_i2s_hdl);
+    if(ret != K_SUCCESS) {
+        printf("_deinit_ao error: %x\n", ret);
+        return -1;
+    }
+
+    ret = _deinit_ai(ai_i2s_hdl);
+    if(ret != K_SUCCESS) {
+        printf("_deinit_ai error: %x\n", ret);
+        return -1;
+    }
+
+    ret = _deinit_ai(ai_pdm_hdl);
+    if(ret != K_SUCCESS) {
+        printf("_deinit_ai error: %x\n", ret);
+        return -1;
+    }
+
+    //reset audio codec
+    kd_mapi_acodec_reset();
+
+    ret = _mapi_sample_vb_deinit();
+    if(ret != K_SUCCESS) {
+        printf("_mapi_sample_vb_deinit error: %x\n", ret);
+        return -1;
+    }
+
+    return 0;
+}

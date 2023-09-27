@@ -1,0 +1,26 @@
+if TARGET_K230_CANMV
+
+config SYS_CPU
+	default "k230"
+    
+config SYS_VENDOR
+    default "canaan"
+
+config SYS_BOARD
+    default "k230_canmv"
+
+config SYS_CONFIG_NAME
+    default "k230_evb"
+
+
+config BOARD_SPECIFIC_OPTIONS # dummy
+	def_bool y
+	select RISCV_THEAD
+choice
+	prompt "ddr typy freq"
+    default CANMV_LPDDR3_2133
+
+    config CANMV_LPDDR3_2133
+        bool  "k230 canmv ddr3 2133"    
+endchoice
+endif

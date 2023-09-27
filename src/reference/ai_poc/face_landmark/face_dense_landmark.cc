@@ -103,7 +103,6 @@ void FaceDenseLandmark::pre_process(cv::Mat ori_img, Bbox &bbox)
     // auto vaddr_out_buf = ai2d_out_tensor_.impl()->to_host().unwrap()->buffer().as_host().unwrap().map(map_access_::map_read).unwrap().buffer();
     // unsigned char *output = reinterpret_cast<unsigned char *>(vaddr_out_buf.data());
     // Utils::dump_color_image("FaceDenseLandmark_input_color.png", {input_shapes_[0][3],input_shapes_[0][2]},output);
-    // Utils::dump_gray_image("FaceDenseLandmark_input_gray.png",{input_shapes_[0][3],input_shapes_[0][2]},output);
 }
 
 // ai2d for video
@@ -158,10 +157,6 @@ void FaceDenseLandmark::draw_contour(cv::Mat src_img, bool pic_mode)
 {
     ScopedTiming st(model_name_ + " draw_contour", debug_mode_);
     // 定义多边形的顶点坐标
-    // std::vector<std::vector<cv::Point>> polygons = {
-    //     {{100, 100}, {200, 100}, {200, 200}, {100, 200}},  // 多边形1
-    //     {{300, 100}, {400, 100}, {400, 200}},              // 多边形2
-    // };
     float *pred = p_outputs_[0];
     int src_width = src_img.cols, src_height = src_img.rows;
     for (int sub_part_index = 0; sub_part_index < dict_kp_seq.size(); ++sub_part_index)
@@ -180,8 +175,8 @@ void FaceDenseLandmark::draw_contour(cv::Mat src_img, bool pic_mode)
             }
             else
             {
-                x = src_width - pred[real_kp_index * 2]/isp_shape_.width*src_width;
-                y = src_height - pred[real_kp_index * 2 + 1] / isp_shape_.height*src_height;
+                x = pred[real_kp_index * 2] / isp_shape_.width*src_width;
+                y = pred[real_kp_index * 2 + 1] / isp_shape_.height*src_height;
             }
             face_sub_part_point_set.push_back({int(x), int(y)});
         }

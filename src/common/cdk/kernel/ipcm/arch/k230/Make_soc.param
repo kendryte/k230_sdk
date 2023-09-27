@@ -1,0 +1,19 @@
+
+PLATFORM_PATH = ${MODULE_DIR}/arch/${__PLATFORM__}
+
+ifeq (${ARCH_TYPE},"riscv")
+	arch_type = riscv
+endif
+
+
+ifeq (${OS_TYPE},"linux")
+	os_type = linux
+	PLATFORM_SRCS := arch/${__PLATFORM__}/platform_${arch_type}_${os_type}.c
+endif
+
+ifeq (${OS_TYPE},"rtsmart")
+	os_type = rtsmart
+	PLATFORM_SRCS := ${PLATFORM_PATH}/platform_${arch_type}_${os_type}.c
+endif
+
+

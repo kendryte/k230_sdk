@@ -34,6 +34,7 @@
  *  STATIC PROTOTYPES
  **********************/
 int map(int x, int in_min, int in_max, int out_min, int out_max);
+static void map0(int *evdev_root_x, int *evdev_root_y);
 
 /**********************
  *  STATIC VARIABLES
@@ -222,6 +223,7 @@ void evdev_read(lv_indev_drv_t * drv, lv_indev_data_t * data)
     data->point.x = map(evdev_root_x, EVDEV_HOR_MIN, EVDEV_HOR_MAX, 0, drv->disp->driver->hor_res);
     data->point.y = map(evdev_root_y, EVDEV_VER_MIN, EVDEV_VER_MAX, 0, drv->disp->driver->ver_res);
 #else
+    map0(&evdev_root_x, &evdev_root_y);
     data->point.x = evdev_root_x;
     data->point.y = evdev_root_y;
 #endif
@@ -246,6 +248,21 @@ void evdev_read(lv_indev_drv_t * drv, lv_indev_data_t * data)
 int map(int x, int in_min, int in_max, int out_min, int out_max)
 {
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
+static void map0(int *evdev_root_x, int *evdev_root_y)
+{
+    int x, y;
+
+    x = 1080 - *evdev_root_x;
+    y = 1920 - *evdev_root_y;
+
+    // y limit
+    y = y < 0 ? 0 : y;
+    x = x < 0 ? 0 : x;
+
+    *evdev_root_y = y;
+    *evdev_root_x = x;
 }
 
 #endif

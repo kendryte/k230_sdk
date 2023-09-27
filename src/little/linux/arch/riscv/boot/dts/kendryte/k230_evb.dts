@@ -89,7 +89,6 @@
                 reg = <0x00080000 0x00180000>;
                 label = "uboot";
             };
-
             partition@200000 {
                 reg = <0x200000 0x80000>;
                 label = "quick_boot_cfg ";
@@ -106,23 +105,24 @@
                 reg = <0x640000 0x200000>;
                 label = "speckle";
             };
-            partition@840000 {
-                reg = <0x840000 0x1c0000>;
-                label = "rttk";
-            };
             partition@a00000 {
                 reg = <0xa00000 0x5c0000>;
                 label = "rttapp";
             };
+            partition@840000 {
+                reg = <0x840000 0x1c0000>;
+                label = "rttk";
+            };
+           
             partition@fc0000 {
                 reg = <0xfc0000 0x700000>;
                 label = "linux";
             };
+
             partition@16c0000 {
                 reg = <0x16c0000 0x900000>;
                 label = "rootfs";
             };
-
             partition@2000000 {
                 /* 32MB for  update image*/
                 reg = <0 0x2000000>;
@@ -131,4 +131,7 @@
 		};
 	};
 
+};
+&mmc_sd1{
+			cd-gpios = <&port53 0 GPIO_ACTIVE_LOW>;
 };

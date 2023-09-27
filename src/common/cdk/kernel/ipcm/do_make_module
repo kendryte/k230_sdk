@@ -1,0 +1,111 @@
+
+top_dir := .
+
+include ${top_dir}/config.mk
+
+export CROSS_COMPILE ?= ${CFG_COMPILE}
+
+ipcm:
+	@echo "ipcm real make"
+	@echo ${CROSS_COMPILE}
+	@if [ ${OS_TYPE} = "linux" ];then \
+		echo "os: linux"; \
+		make -C ${PWD}/class/cdev/linux/ all; \
+	elif [ ${OS_TYPE} = "rtsmart" ]; then \
+		echo "os: rtsmart"; \
+		cd ${PWD}/class/cdev/rtsmart/; \
+		make -f ${PWD}/class/cdev/rtsmart/Makefile all || exit 1; \
+		cd -; \
+	elif [ ${OS_TYPE} = "null" ]; then \
+		echo "os: null, ${ARCH_TYPE}"; \
+		cd ${PWD}/class/cdev/bare/; \
+		make -f ${PWD}/class/cdev/bare/Makefile all; \
+		cd -; \
+	else \
+		echo "os: error parameter!!"; \
+	fi
+
+ipcm_clean:
+	@echo "ipcm real make clean"
+	@if [ ${OS_TYPE} = "linux" ];then \
+		echo "os: linux"; \
+		make -C ${PWD}/class/cdev/linux/ clean; \
+	elif [ ${OS_TYPE} = "rtsmart" ]; then \
+		echo "os: rtsmart"; \
+		cd ${PWD}/class/cdev/rtsmart/; \
+		make -f ${PWD}/class/cdev/rtsmart/Makefile clean; \
+		cd -; \
+	elif [ ${OS_TYPE} = "null" ]; then \
+		echo "os: null arch: ${ARCH_TYPE}"; \
+		cd ${PWD}/class/cdev/bare/; \
+		make -f ${PWD}/class/cdev/bare/Makefile clean; \
+		cd -; \
+	else \
+		echo "os: error parameter!!"; \
+	fi
+
+virt_tty:
+ifdef VIRT_TTY_ROLE
+	@echo "virt-tty real make"
+	@echo ${CROSS_COMPILE}
+	if [ ${OS_TYPE} = "linux" ]; then \
+		make -C ${PWD}/class/virt-tty/linux/ all || exit 1 ; \
+		make -C ${PWD}/class/virt-tty/app/ all || exit 1 ; \
+	elif [ ${OS_TYPE} = "rtsmart" ]; then \
+		cd ${PWD}/class/virt-tty/rt-smart/; \
+		make -f ${PWD}/class/virt-tty/rt-smart/Makefile all; \
+		cd -; \
+	else \
+		echo "os: error parameter!!"; \
+	fi
+endif
+
+virt_tty_clean:
+ifdef VIRT_TTY_ROLE
+	@echo "virt-tty make clean"
+	@echo ${CROSS_COMPILE}
+	if [ ${OS_TYPE} = "linux" ];then \
+		make -C ${PWD}/class/virt-tty/linux/ clean; \
+		make -C ${PWD}/class/virt-tty/app/ clean; \
+	elif [ ${OS_TYPE} = "rtsmart" ]; then \
+		cd ${PWD}/class/virt-tty/rt-smart/; \
+		make -f ${PWD}/class/virt-tty/rt-smart/Makefile clean; \
+		cd -; \
+	else \
+		echo "os: error parameter!!"; \
+	fi
+endif
+
+sharefs:
+ifdef SHAREFS
+ifeq ($(SHAREFS), y)
+	@echo "sharefs real make"
+	@echo ${CROSS_COMPILE}
+	if [ ${OS_TYPE} = "linux" ]; then \
+		make -C ${PWD}/class/sharefs/linux all || exit 1; \
+	elif [ ${OS_TYPE} = "rtsmart" ]; then \
+		cd ${PWD}/class/sharefs/rtsmart/; \
+		make -f ${PWD}/class/sharefs/rtsmart/Makefile all; \
+		cd -; \
+	else \
+		echo "os: error parameter!!"; \
+	fi
+endif
+endif
+
+sharefs_clean:
+ifdef SHAREFS
+ifeq ($(SHAREFS), y)
+	@echo "sharefs make clean"
+	@echo ${CROSS_COMPILE}
+	if [ ${OS_TYPE} = "linux" ];then \
+		make -C ${PWD}/class/sharefs/linux clean; \
+	elif [ ${OS_TYPE} = "rtsmart" ]; then \
+		cd ${PWD}/class/sharefs/rt-smart; \
+		make -f ${PWD}/class/sharefs/rtsmart/Makefile clean; \
+		cd -; \
+	else \
+		echo "os: error parameter!!"; \
+	fi
+endif
+endif

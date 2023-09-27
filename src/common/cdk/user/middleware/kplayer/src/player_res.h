@@ -36,14 +36,14 @@ extern "C" {
 #endif
 #endif
 
-k_s32 sys_init();
-k_s32 sys_deinit();
+k_s32 sys_init(k_bool init_vo);
+k_s32 sys_deinit(k_bool deinit_vo);
 
 k_s32 disp_open(k_payload_type video_dec_type,k_u32 width,k_u32 height);//K_PT_H264/K_PT_H265
 k_s32 disp_play(k_u8*pdata,k_u32 len,k_u64 timestamp,k_bool end_stream);
 k_s32 disp_close();
 
-k_s32 ao_open(k_s32 s32SampleRate, k_s32 s32ChanNum,k_payload_type audio_dec_type);//K_PT_G711A/K_PT_G711U
+k_s32 ao_open(k_s32 s32SampleRate, k_s32 s32ChanNum,k_payload_type audio_dec_type, k_bool avsync);//K_PT_G711A/K_PT_G711U
 k_s32 ao_play(k_u8*pdata,k_u32 len,k_u64 timestamp);
 k_s32 ao_close();
 

@@ -38,6 +38,8 @@
 #include "k_vo_comm.h"
 #include "mpi_vo_api.h"
 #include "mpi_sys_api.h"
+#include "k_connector_comm.h"
+#include "mpi_connector_api.h"
 
 #ifdef __cplusplus
 #if __cplusplus
@@ -74,6 +76,10 @@ typedef enum {
     MSG_CMD_MEDIA_VO_INSTALL_FRAME,
     MSG_CMD_MEDIA_VO_DUMP_FRAME,
     MSG_CMD_MEDIA_VO_RELEASE_FRAME,
+    MSG_CMD_MEDIA_GET_CONNECTOR_INFO,
+    MSG_CMD_MEDIA_OPEN_CONNECTOR,
+    MSG_CMD_MEDIA_SET_CONNECTOR_POWER,
+    MSG_CMD_MEDIA_CONNECTOR_INIT,
 } msg_media_vo_cmd_t;
 
 
@@ -139,6 +145,40 @@ typedef struct
 } msg_vo_pub_attr;
 
 
+typedef struct {
+    char connector_name[64];
+    k_u32 screen_test_mode;
+    k_u32 dsi_test_mode;
+    k_u32 bg_color;
+    k_u32 intr_line;
+    k_dsi_lan_num lan_num;
+    k_dsi_work_mode work_mode;
+    k_vo_dsi_cmd_mode cmd_mode;
+    k_connectori_phy_attr phy_attr;
+    k_vo_display_resolution resolution;
+    k_connector_type type;
+} msg_connector_info;
+
+
+typedef struct
+{
+    k_connector_type connector_type;
+    msg_connector_info connector_info;
+} msg_connector_info_t;
+
+
+typedef struct
+{
+    k_s32 fd;
+    k_bool on;
+} msg_connector_power_t;
+
+
+typedef struct
+{
+    k_s32 fd;
+    k_connector_info info;
+} msg_connector_init_t;
 
 /** @}*/  /** <!-- ==== COMM End ====*/
 #ifdef __cplusplus

@@ -10,9 +10,10 @@
 
 | 链接 | 说明  |
 | ------ | ---- |
-| [K230 SDK](https://github.com/kendryte/k230_sdk) | Kendryte K230 SDK Github Repo |
+|[K230 SDK](https://github.com/kendryte/k230_sdk) | Kendryte K230 SDK Github Repo |
 |[K230 Docs](https://github.com/kendryte/k230_docs)| Kendryte K230 Docs Github Repo |
-| [K230 SDK Gitee mirror](https://gitee.com/kendryte/k230_sdk) | Kendryte K230 SDK Gitee mirror Repo |
+|[K230 Training scripts](https://github.com/kendryte/K230_training_scripts/)| Kendryte K230 Training Scripts Github Repo |
+|[K230 SDK Gitee mirror](https://gitee.com/kendryte/k230_sdk) | Kendryte K230 SDK Gitee mirror Repo |
 |[K230 Docs Gitee mirror](https://gitee.com/kendryte/k230_docs)| Kendryte K230 Docs Gitee mirror Repo |
 |[K230 SDK Release mirror](https://kendryte-download.canaan-creative.com/k230/release/sdk/k230_sdk.tar.gz)| 嘉楠勘智K230 SDK release k230_sdk.tar.gz下载 |
 |[K230 Docs Release mirror](https://kendryte-download.canaan-creative.com/k230/release/docs/k230_docs.tar.gz)| 嘉楠勘智K230 Docs release k230_docs.tar.gz下载 |

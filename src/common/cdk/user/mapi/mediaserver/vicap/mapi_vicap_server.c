@@ -106,7 +106,7 @@ k_s32 kd_mapi_vicap_set_dev_attr(k_vicap_dev_set_info dev_info)
         return K_FAILED;
     }
 
-    if(dev_info.sensor_type > SENSOR_TYPE_MAX || dev_info.sensor_type < OV_OV9732_MIPI_1920X1080_30FPS_10BIT_LINEAR)
+    if(dev_info.sensor_type > SENSOR_TYPE_MAX || dev_info.sensor_type < OV_OV9732_MIPI_1280X720_30FPS_10BIT_LINEAR)
     {
         mapi_vicap_error_trace("kd_mapi_vicap_set_dev_attr failed, sensor_type %d out of range\n", dev_info.sensor_type);
         return K_FAILED;
@@ -134,6 +134,7 @@ k_s32 kd_mapi_vicap_set_dev_attr(k_vicap_dev_set_info dev_info)
     dev_attr.pipe_ctrl.data = dev_info.pipe_ctrl.data;
     // af need disable
     dev_attr.pipe_ctrl.bits.af_enable = 0;
+    dev_attr.pipe_ctrl.bits.ahdr_enable = 0;
     dev_attr.cpature_frame = 0;
     memcpy(&dev_attr.sensor_info, &sensor_info[dev_info.vicap_dev], sizeof(k_vicap_sensor_info));
     ret = kd_mpi_vicap_set_dev_attr(dev_info.vicap_dev, dev_attr);

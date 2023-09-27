@@ -33,7 +33,7 @@
 #include "sys/ioctl.h"
 #include <stdio.h>
 #include "stdio.h"
-
+#include "k_autoconf_comm.h"
 #define KD_GPIO_HIGH     1
 #define KD_GPIO_LOW      0
 
@@ -62,9 +62,13 @@ typedef struct kd_pin_mode
 } pin_mode_t;
 
 
+#if defined(CONFIG_BOARD_K230_CANMV)
+#define LED_PIN_NUM1    52
+#define LED_PIN_NUM2    53
+#else
 #define LED_PIN_NUM1    33
 #define LED_PIN_NUM2    32
-
+#endif
 
 int unitest_gpio_read_write(int fd)
 {
@@ -108,7 +112,47 @@ int unitest_gpio_read_write(int fd)
     }
 }
 
+int unitest_gpio_key(int fd)
+{
+    int ret;
+    pin_mode_t mode52;
+    pin_mode_t mode53;
 
+    mode52.pin = LED_PIN_NUM1;
+    mode53.pin = LED_PIN_NUM2;
+
+    ret = ioctl(fd, GPIO_DM_INPUT, &mode52);
+    if (ret)
+    {
+        perror("ioctl /dev/pin err\n");
+        return -1;
+    }
+
+    ret = ioctl(fd, GPIO_DM_INPUT, &mode53);
+    if (ret)
+    {
+        perror("ioctl /dev/pin err\n");
+        return -1;
+    }
+
+    while(1)
+    {
+        ioctl(fd, GPIO_READ_VALUE, &mode53);
+        if(mode53.mode == KD_GPIO_LOW)
+        {
+            printf("[S1] key press!\n");
+        }
+
+        ioctl(fd, GPIO_READ_VALUE, &mode52);
+        if(mode52.mode == KD_GPIO_LOW)
+        {
+            printf("[S2] key press!\n");
+        }
+        mode53.mode = KD_GPIO_HIGH;
+        mode52.mode = KD_GPIO_HIGH;
+    }
+    return 0;
+}
 
 
 int main(void)
@@ -122,8 +166,11 @@ int main(void)
         return -1;
     }
 
+#if defined(CONFIG_BOARD_K230_CANMV)
+    unitest_gpio_key(gpio_fd);
+#else
     unitest_gpio_read_write(gpio_fd);
-
+#endif
     close(gpio_fd);
 
     return 0;

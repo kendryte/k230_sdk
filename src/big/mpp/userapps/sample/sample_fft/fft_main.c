@@ -64,12 +64,13 @@ short o_h_imag[FFT_MAX_POINT];
 short o_h_ifft_real[FFT_MAX_POINT];
 short o_h_ifft_imag[FFT_MAX_POINT];
 
-struct timespec write_begain;
-struct timespec write_end;
+struct timespec begain_time;
+struct timespec fft_end;
+struct timespec ifft_end;
     
 
 int g_log_verbs = 1;
-int g_dma_channel = 0xff;
+
 #define k230_log(out_loglevel, fmt, ...) \
     if ( g_log_verbs >= out_loglevel) \
         printf(fmt, ##__VA_ARGS__)  
@@ -105,7 +106,7 @@ static int display_calc_result(int point)
     k_s16 max_diff_real=0, max_diff_real_index = 0;
     k_s16 max_diff_imag=0, max_diff_imag_index = 0;
     k_s16 diff_r,diff_i;
-    k_u64 time;
+    k_u64 fft_time,ifft_time;
 
     k230_log(0,"-----fft ifft point %04hd  -------\n", point);
 
@@ -139,13 +140,14 @@ static int display_calc_result(int point)
     k230_log(1,"\ti=%04d imag  hf %04hx  hif %04hx org %04hx dif %04hx\n", \
                     i,  o_h_imag[i],o_h_ifft_imag[i], i_imag[i], max_diff_imag);
 
-    //time = (write_end.tv_sec *1000 + write_end.tv_nsec/1000000) - (write_begain.tv_sec *1000 + write_begain.tv_nsec/1000000);
-    time = (write_end.tv_sec-write_begain.tv_sec)*1000000 + (write_end.tv_nsec - write_begain.tv_nsec)/1000;
+    //fft_time = (fft_end.tv_sec *1000 + write_end.tv_nsec/1000000) - (begain_time.tv_sec *1000 + begain_time.tv_nsec/1000000);
+    fft_time = (fft_end.tv_sec-begain_time.tv_sec)*1000000 + (fft_end.tv_nsec - begain_time.tv_nsec)/1000;
+    ifft_time = (ifft_end.tv_sec-fft_end.tv_sec)*1000000 + (ifft_end.tv_nsec - fft_end.tv_nsec)/1000;
     
     if( (max_diff_real > 5 ) || (max_diff_real > 5 ) ){
-        k230_log(0,"-----fft ifft point %04hd use %ld us result: error \n\n\n", point, time);
+        k230_log(0,"-----fft ifft point %04hd use %ld us result: error \n\n\n", point, fft_time);
     }else
-        k230_log(0,"-----fft ifft point %04hd use %ld us result: ok \n\n\n", point, time);
+        k230_log(0,"-----fft ifft point %04hd use %ld us %ld us result: ok \n\n\n", point, fft_time,ifft_time);
     return 0;
 }
 static int fft_test(int point)
@@ -154,20 +156,28 @@ static int fft_test(int point)
     test_build_fft_org_data(point, i_real, i_imag);	
 
     //soft_fft_ifft_calc(point);
-    clock_gettime(CLOCK_MONOTONIC, &write_begain);
-    k230_fft_ifft(point, FFT_MODE,  RIRI,RR_II_OUT, 0, 0x555, g_dma_channel,  i_real, i_imag, o_h_real, o_h_imag);
-    k230_fft_ifft(point, IFFT_MODE, RIRI,RR_II_OUT, 0, 0xaaa, g_dma_channel,  o_h_real, o_h_imag, o_h_ifft_real, o_h_ifft_imag);
-    clock_gettime(CLOCK_MONOTONIC, &write_end);
+    clock_gettime(CLOCK_MONOTONIC, &begain_time);
+    kd_mpi_fft(point,   RIRI,RR_II_OUT, 0, 0x555,  i_real, i_imag, o_h_real, o_h_imag);
+    clock_gettime(CLOCK_MONOTONIC, &fft_end);
+    kd_mpi_ifft(point,  RIRI,RR_II_OUT, 0, 0xaaa,  o_h_real, o_h_imag, o_h_ifft_real, o_h_ifft_imag);
+    clock_gettime(CLOCK_MONOTONIC, &ifft_end);
     display_calc_result(point);
+
     return 0;
 }
+//
+//dma
+// void usage()
+// {
 
+
+
+// }
 int main(int argc, char *argv[])
 {
     if(argc >=2 )
         g_log_verbs = atoi(argv[1]);
-    if(argc >=3 )
-        g_dma_channel = atoi(argv[2]);
+
 
 
     //int fft_num=64;

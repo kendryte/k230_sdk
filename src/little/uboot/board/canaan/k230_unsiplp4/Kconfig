@@ -1,0 +1,31 @@
+if TARGET_K230_UNSIPLP4
+
+config SYS_CPU
+	default "k230"
+    
+config SYS_VENDOR
+    default "canaan"
+
+config SYS_BOARD
+    default "k230_unsiplp4"
+
+config SYS_CONFIG_NAME
+    default "k230_evb"
+
+
+config BOARD_SPECIFIC_OPTIONS # dummy
+	def_bool y
+	select RISCV_THEAD
+
+choice
+	prompt "ddr typy freq"
+	default LPDDR4_2667
+
+    config LPDDR4_1066
+        bool  "ddr4 1066"
+
+    config LPDDR4_2667
+        bool  "ddr4 2667"	
+endchoice
+
+endif

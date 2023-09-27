@@ -138,6 +138,7 @@
 #define RT_USING_ADC
 #define RT_USING_OTP
 #define RT_USING_TS
+#define RT_USING_HWHASH
 //#define RT_USING_SDIO
 #define RT_USING_HARDLOCK
 #define RT_USING_GPIO
@@ -154,7 +155,22 @@
 #define RT_MMCSD_MAX_PARTITION 16
 #define RT_USING_DEV_BUS
 #define RT_USING_REGULATOR
+/* canaan uart driver for uart1 uart2 uart4 */
+// #define RT_USING_CANAAN_UART
+// #define RT_USING_UART1
+// #define RT_USING_UART2
+// #define RT_USING_UART4
+// #define UART_BUFFER_SIZE     (1024 * 1024)
+// #define POLLIN_SIZE          (UART_BUFFER_SIZE / 2)
+// #define UART_TIMEOUT         (1000)
 
+//#define PKG_USING_CHERRYUSB
+//#define CONFIG_ENABLE_USB_DEVICE 1
+//#define PKG_CHERRYUSB_DEVICE_DWC2
+//#define PKG_CHERRYUSB_DEVICE_DWC2_PORT_HS
+//#define PKG_CHERRYUSB_DEVICE
+//#define PKG_CHERRYUSB_DEVICE_CDC
+//#define PKG_CHERRYUSB_DEVICE_MSC
 /* Using USB */
 
 /*Using fast boot*/

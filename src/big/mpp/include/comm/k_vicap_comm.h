@@ -59,6 +59,7 @@ extern "C" {
 #define VICAP_IMG_MAX_WIDTH 2960
 #define VICAP_IMG_MAX_HEIGH 2160
 
+#define VICAP_GPIO_IRQ_CTRL_PIN_MAX 63
 
 #define VICAP_ALIGN_1K 0x400
 #define VICAP_ALIGN_UP(addr, size)	(((addr)+((size)-1U))&(~((size)-1U)))
@@ -166,7 +167,7 @@ typedef enum {
  */
 typedef enum {
     VICAP_SOURCE_CSI0 = 0,   /**< vicap acquire data from the csi0*/
-    VICAP_SOURCE_CSI1 = 1,   /**< vicap acquire data from the csi0*/
+    VICAP_SOURCE_CSI1 = 1,   /**< vicap acquire data from the csi1*/
     VICAP_SOURCE_CSI1_FS_TR0 = 2,   /**<vicap acquire data from the csi1 for flash trigger 0*/
     VICAP_SOURCE_CSI1_FS_TR1 = 3,   /**<vicap acquire data from the csi0 for flash trigger 1*/
     VICAP_SOURCE_CSI2 = 4,   /**< vicap acquire data from the csi2*/
@@ -239,7 +240,23 @@ typedef struct {
 typedef enum {
     VICAP_WORK_ONLINE_MODE,
     VICAP_WORK_OFFLINE_MODE,
+    VICAP_WORK_LOAD_IMAGE_MODE,
 } k_vicap_work_mode;
+
+/**
+ * @brief Defines the input type of VICAP
+ *
+ */
+typedef enum {
+    VICAP_INPUT_TYPE_SENSOR,
+    VICAP_INPUT_TYPE_IMAGE,
+} k_vicap_input_type;
+
+/**
+ * @brief Defines the bayer pattern of raw image
+ *
+ */
+typedef k_sensor_bayer_pattern k_vicap_image_pattern;
 
 /**
  * @brief Defines the image window of a VICAP
@@ -293,6 +310,18 @@ typedef enum {
     VICAP_DATABASE_PARSE_HEADER = 1,
 } k_vicap_database_parse_mode;
 
+/**
+ * @brief Defines the fill light ctrl state of VICAP
+ *
+ */
+typedef enum {
+    VICAP_FILL_LIGHT_CTRL_NORMAL = 0,
+    VICAP_FILL_LIGHT_CTRL_IR = 100,
+    VICAP_FILL_LIGHT_CTRL_SPECKLE,
+    VICAP_FILL_LIGHT_CTRL_MAX = 255,
+} k_vicap_fill_light_ctrl_state;
+
+
 typedef union {
     struct {
         k_u32 ae_enable : 1;      /**< bit 0: 0-disable 1-enable */
@@ -305,26 +334,25 @@ typedef union {
         k_u32 cnr_enable : 1;     /**< bit 7 */
         k_u32 ynr_enable : 1;     /**< bit 8 */
         k_u32 cproc_enable : 1;   /**< bit 9 */
-        k_u32 csm_enable : 1;     /**< bit 10 */
-        k_u32 dci_enable : 1;     /**< bit 11 */
-        k_u32 demosaic_enable : 1; /**< bit 12 */
-        k_u32 dg_enable : 1;      /**< bit 13 */
-        k_u32 dpcc_enable : 1;    /**< bit 14 */
-        k_u32 dpf_enable : 1;     /**< bit 15 */
-        k_u32 ee_enable : 1;      /**< bit 16 */
-        k_u32 gc_enable : 1;      /**< bit 17 */
-        k_u32 ge_enable : 1;      /**< bit 18 */
-        k_u32 gtm_enable : 1;     /**< bit 19 */
-        k_u32 lsc_enable : 1;     /**< bit 20 */
-        k_u32 lut3d_enable : 1;   /**< bit 21 */
-        k_u32 pdaf_enable : 1;    /**< bit 22 */
-        k_u32 rgbir_enable : 1;   /**< bit 23 */
-        k_u32 wb_enable : 1;      /**< bit 24 */
-        k_u32 wdr_enable : 1;     /**< bit 25 */
-        k_u32 dnr3_enable : 1;    /**< bit 26 */
-        k_u32 dnr2_enable : 1;    /**< bit 27 */
-        k_u32 roi_enable : 1;     /**< bit 28 */
-        k_u32 reserved_enable : 4;/**< bit 29:31 */
+        k_u32 dci_enable : 1;     /**< bit 10 */
+        k_u32 demosaic_enable : 1; /**< bit 11 */
+        k_u32 dg_enable : 1;      /**< bit 12 */
+        k_u32 dpcc_enable : 1;    /**< bit 13 */
+        k_u32 dpf_enable : 1;     /**< bit 14 */
+        k_u32 ee_enable : 1;      /**< bit 15 */
+        k_u32 gc_enable : 1;      /**< bit 16 */
+        k_u32 ge_enable : 1;      /**< bit 17 */
+        k_u32 gtm_enable : 1;     /**< bit 18 */
+        k_u32 lsc_enable : 1;     /**< bit 19 */
+        k_u32 lut3d_enable : 1;   /**< bit 20 */
+        k_u32 pdaf_enable : 1;    /**< bit 21 */
+        k_u32 rgbir_enable : 1;   /**< bit 22 */
+        k_u32 wb_enable : 1;      /**< bit 23 */
+        k_u32 wdr_enable : 1;     /**< bit 24 */
+        k_u32 dnr3_enable : 1;    /**< bit 25 */
+        k_u32 dnr2_enable : 1;    /**< bit 26 */
+        k_u32 roi_enable : 1;     /**< bit 27 */
+        k_u32 reserved_enable : 4;/**< bit 28:31 */
     } bits;
     k_u32 data;
 } k_vicap_isp_pipe_ctrl;
@@ -335,7 +363,6 @@ typedef union {
  */
 typedef struct {
     const char *sensor_name;
-    const char *calib_file;
     k_u16 width;
     k_u16 height;
     k_vicap_csi_num csi_num;  /**< CSI NUM that the sensor connects to*/
@@ -366,7 +393,8 @@ typedef struct {
     k_pixel_format pix_format;
     k_u32 buffer_num;
     k_u32 buffer_size;
-    k_u8 alignment;
+    k_u8 alignment; // 0: 1 byte, 1: 2 byte ... 12: 4096 byte
+    k_u8 fps; // 0: original FPS
 } k_vicap_chn_attr;
 
 /**
@@ -376,6 +404,8 @@ typedef struct {
 typedef struct {
     k_vicap_window acq_win;
     k_vicap_work_mode mode;
+    k_vicap_input_type input_type;
+    k_vicap_image_pattern image_pat;
     k_vicap_isp_pipe_ctrl pipe_ctrl;
     k_u32 cpature_frame;
     k_vicap_sensor_info sensor_info;

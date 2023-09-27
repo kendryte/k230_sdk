@@ -328,6 +328,9 @@ static int dwc2_driver_remove(struct platform_device *dev)
 	if (hsotg->params.activate_stm_id_vb_detection)
 		regulator_disable(hsotg->usb33d);
 
+    if(hsotg->kendryte_phy_init)
+        iounmap(hsotg->hs_regs);
+
 	if (hsotg->ll_hw_enabled)
 		dwc2_lowlevel_hw_disable(hsotg);
 
@@ -422,27 +425,6 @@ static int dwc2_driver_probe(struct platform_device *dev)
 	struct dwc2_hsotg *hsotg;
 	struct resource *res;
 	int retval;
-
-#define USB_IDPULLUP0 		(1<<4)
-#define USB_DMPULLDOWN0 	(1<<8)
-#define USB_DPPULLDOWN0 	(1<<9)
-	u32 *hs_reg = ioremap(0x91585000, 0x1000);
-	u32 *usb0_test_ctl3 = hs_reg+(0x7c/4);
-	u32 *usb1_test_ctl3 = hs_reg+(0x9c/4);
-	u32 usb0_ctl3 = *usb0_test_ctl3;
-	u32 usb1_ctl3 = *usb1_test_ctl3;
-	usb0_ctl3 |= USB_IDPULLUP0;
-	usb1_ctl3 |= USB_IDPULLUP0;
-	// USB0 == HOST
-	usb0_ctl3 |= (USB_DMPULLDOWN0 | USB_DPPULLDOWN0);
-    
-    // USB1 == Device
-	usb1_ctl3 &= ~(USB_DMPULLDOWN0 | USB_DPPULLDOWN0);
-
-	*usb0_test_ctl3 = usb0_ctl3;
-	*usb1_test_ctl3 = usb1_ctl3;
-
-	iounmap(hs_reg);
 
 	hsotg = devm_kzalloc(&dev->dev, sizeof(*hsotg), GFP_KERNEL);
 	if (!hsotg)
@@ -539,7 +521,10 @@ static int dwc2_driver_probe(struct platform_device *dev)
 	retval = dwc2_init_params(hsotg);
 	if (retval)
 		goto error;
-
+    if(hsotg->kendryte_phy_init)
+    {
+        hsotg->hs_regs = ioremap(0x91585000, 0x1000);
+    }
 	if (hsotg->params.activate_stm_id_vb_detection) {
 		u32 ggpio;
 

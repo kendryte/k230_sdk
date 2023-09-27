@@ -33,6 +33,8 @@
 #include "mapi_sys_api.h"
 
 #include "k_vo_comm.h"
+#include "k_connector_comm.h"
+#include "mpi_connector_api.h"
 
 #define TXPHY_445_5_M                                           (295)                       // ok
 #define TXPHY_445_5_N                                           (15)
@@ -61,6 +63,7 @@ typedef enum
     DISPALY_VVI_BING_VO_OSD_DUMP_FRAME_TEST,
     DISPALY_VO_1LAN_CASE_TEST,
     DISPALY_VO_DSI_READ_ID,
+    DISPALY_VO_CONNECTOR_TEST,
     // DISPALY_VO_LAYER_FUNCTION_TEST,
 } display_test_case;
 
@@ -848,6 +851,89 @@ k_s32 sample_vo_writeback(void)
     kd_mapi_sys_deinit();
 }
 
+
+k_s32 sample_connector_init(void)
+{
+    k_s32 ret = 0;
+    char dev_name[64] = {0};
+    k_s32 connector_fd;
+    k_connector_type connector_type = HX8377_V2_MIPI_4LAN_1080X1920_30FPS;
+    k_connector_info connector_info;
+
+    memset(&connector_info, 0, sizeof(k_connector_info));
+    connector_info.connector_name = (char *)dev_name;
+
+    //connector get sensor info
+    ret = kd_mapi_get_connector_info(connector_type, &connector_info);
+    if (ret) {
+        printf("sample_vicap, the sensor type not supported!\n");
+        return ret;
+    }
+    // printf("connector_info name is %s \n", connector_info.connector_name);
+
+    connector_fd = kd_mapi_connector_open(connector_info.connector_name);
+    if (connector_fd < 0) {
+        printf("%s, connector open failed.\n", __func__);
+        return K_ERR_VO_NOTREADY;
+    }
+
+    printf("connector_fd  is %d ret is %d \n", connector_fd, ret);
+
+    // set connect power
+    kd_mapi_connector_power_set(connector_fd, 1);
+    // // connector init
+    kd_mapi_connector_init(connector_fd, &connector_info);
+
+    return 0;
+}
+
+k_s32 sample_connector_osd_install_frame(void)
+{
+    layer_info osd;
+    void *pic_vaddr = NULL;
+    k_vo_osd osd_id = K_VO_OSD3;
+    k_vb_blk_handle block;
+    k_video_frame_info vf_info;
+
+    osd.act_size.width = 640 ;
+    osd.act_size.height = 480;
+    osd.offset.x = 10;
+    osd.offset.y = 10;
+    osd.global_alptha = 0xff;
+    osd.format = PIXEL_FORMAT_ARGB_8888;//PIXEL_FORMAT_ARGB_4444; //PIXEL_FORMAT_ARGB_1555;//PIXEL_FORMAT_ARGB_8888;
+
+    sample_connector_init();
+
+    sample_vb_init();
+
+    // config osd
+    sample_vo_creat_osd(osd_id, &osd);
+    // set frame
+    memset(&vf_info, 0, sizeof(vf_info));
+    vf_info.v_frame.width = osd.act_size.width;
+    vf_info.v_frame.height = osd.act_size.height;
+    vf_info.v_frame.stride[0] = osd.act_size.width;
+    vf_info.v_frame.pixel_format = osd.format;
+    block = samble_vo_insert_frame(&vf_info, &pic_vaddr);
+
+    sample_vo_filling_color(&osd, pic_vaddr);
+
+    getchar();
+    kd_mapi_vo_chn_insert_frame(osd_id + 3, &vf_info);  //K_VO_OSD0
+
+    printf("Press Enter to exit \n");
+
+    getchar();
+
+    // close plane
+    kd_mapi_vo_osd_disable(osd_id);
+    samble_vo_release_vb();
+    // fclose(fd);
+    //exit ;
+    return 0;
+}
+
+
 int main(int argc, char * const argv[])
 {
     k_u8 i = 0;
@@ -866,6 +952,10 @@ int main(int argc, char * const argv[])
 
     switch (test_case)
     {
+        case DISPALY_VO_CONNECTOR_TEST :
+            sample_connector_osd_install_frame();
+            break;
+
         case DISPLAY_DSI_LP_MODE_TEST:
             sample_dwc_dsi_init(1);
             break;

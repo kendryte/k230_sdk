@@ -30,7 +30,8 @@
 #include "mapi_vo_api.h"
 #include "stdio.h"
 #include "k_vo_comm.h"
-
+#include "k_connector_comm.h"
+#include "mpi_connector_api.h"
 
 k_s32 msg_vo_set_backlight(k_s32 id, k_ipcmsg_message_t *msg)
 {
@@ -779,6 +780,134 @@ k_s32 msg_vo_chn_dump_release(k_s32 id, k_ipcmsg_message_t *msg)
 }
 
 
+k_s32 msg_get_connector_info(k_s32 id, k_ipcmsg_message_t *msg)
+{
+    k_s32 ret;
+    k_ipcmsg_message_t *resp_msg;
+    msg_connector_info_t *info = msg->pBody;
+    k_connector_info con_info;
+
+    memset(&con_info, 0, sizeof(con_info));
+
+    ret = kd_mapi_get_connector_info(info->connector_type, &con_info);
+    if(ret != K_SUCCESS) {
+        printf("msg_get_connector_info failed:0x%x\n", ret);
+    }
+
+    memcpy(info->connector_info.connector_name, con_info.connector_name, sizeof(con_info.connector_name));
+    info->connector_info.screen_test_mode = con_info.screen_test_mode;
+    info->connector_info.dsi_test_mode = con_info.dsi_test_mode;
+    info->connector_info.bg_color = con_info.bg_color;
+    info->connector_info.intr_line = con_info.intr_line;
+    info->connector_info.lan_num = con_info.lan_num;
+    info->connector_info.work_mode = con_info.work_mode;
+    info->connector_info.cmd_mode = con_info.cmd_mode;
+
+    memcpy(&info->connector_info.phy_attr, &con_info.phy_attr, sizeof(k_connectori_phy_attr));
+    memcpy(&info->connector_info.resolution, &con_info.resolution, sizeof(k_vo_display_resolution));
+
+    // printf(" 22 connector_type is %d connector_info.name is %s connector_info.bg_clolor is %x \n", info->connector_type, info->connector_info.connector_name, info->connector_info.bg_color);
+
+    resp_msg = kd_ipcmsg_create_resp_message(msg, ret, msg->pBody, sizeof(msg_connector_info_t));
+    if(resp_msg == NULL) {
+        printf("kd_ipcmsg_create_resp_message failed\n");
+        return K_FAILED;
+    }
+
+    ret = kd_ipcmsg_send_async(id, resp_msg, NULL);
+    if(ret != K_SUCCESS) {
+        printf(" kd_ipcmsg_send_async failed:%x\n", ret);
+    }
+    kd_ipcmsg_destroy_message(resp_msg);
+
+    return K_SUCCESS;
+}
+
+
+k_s32 msg_connector_open(k_s32 id, k_ipcmsg_message_t *msg)
+{
+    k_s32 ret;
+    k_s32 fd;
+    k_ipcmsg_message_t *resp_msg;
+    char *dev_name  = msg->pBody;
+    char name[100];
+
+    memcpy(name, dev_name, sizeof(dev_name));
+
+    ret = kd_mapi_connector_open(name);
+    if(ret < 0) {
+        printf("msg_connector_open failed:0x%x\n", ret);
+    }
+
+    resp_msg = kd_ipcmsg_create_resp_message(msg, ret, NULL, 0);
+    if(resp_msg == NULL) {
+        printf("kd_ipcmsg_create_resp_message failed\n");
+        return K_FAILED;
+    }
+
+    ret = kd_ipcmsg_send_async(id, resp_msg, NULL);
+    if(ret != K_SUCCESS) {
+        printf(" kd_ipcmsg_send_async failed:%x\n", ret);
+    }
+    kd_ipcmsg_destroy_message(resp_msg);
+
+    return K_SUCCESS;
+}
+
+
+k_s32 connector_power_set(k_s32 id, k_ipcmsg_message_t *msg)
+{
+    k_s32 ret;
+    k_ipcmsg_message_t *resp_msg;
+    msg_connector_power_t *power  = msg->pBody;
+
+    ret = kd_mapi_connector_power_set(power->fd, power->on);
+    if(ret != K_SUCCESS) {
+        printf("msg_vdss_release_frame failed:0x%x\n", ret);
+    }
+
+    resp_msg = kd_ipcmsg_create_resp_message(msg, ret, NULL, 0);
+    if(resp_msg == NULL) {
+        printf("kd_ipcmsg_create_resp_message failed\n");
+        return K_FAILED;
+    }
+
+    ret = kd_ipcmsg_send_async(id, resp_msg, NULL);
+    if(ret != K_SUCCESS) {
+        printf(" kd_ipcmsg_send_async failed:%x\n", ret);
+    }
+    kd_ipcmsg_destroy_message(resp_msg);
+
+    return K_SUCCESS;
+}
+
+
+k_s32 msg_connector_init(k_s32 id, k_ipcmsg_message_t *msg)
+{
+    k_s32 ret;
+    k_ipcmsg_message_t *resp_msg;
+    msg_connector_init_t *info = msg->pBody;
+
+    ret = kd_mapi_connector_init(info->fd, &info->info);
+    if(ret != K_SUCCESS) {
+        printf("msg_vdss_dump_frame failed:0x%x\n", ret);
+    }
+
+    resp_msg = kd_ipcmsg_create_resp_message(msg, ret, msg->pBody, sizeof(msg_connector_init_t));
+    if(resp_msg == NULL) {
+        printf("kd_ipcmsg_create_resp_message failed\n");
+        return K_FAILED;
+    }
+
+    ret = kd_ipcmsg_send_async(id, resp_msg, NULL);
+    if(ret != K_SUCCESS) {
+        printf(" kd_ipcmsg_send_async failed:%x\n", ret);
+    }
+    kd_ipcmsg_destroy_message(resp_msg);
+
+    return K_SUCCESS;
+}
+
 static msg_module_cmd_t g_module_cmd_table[] = {    
     {MSG_CMD_MEDIA_SET_BACKLIGHT,               msg_vo_set_backlight},
     {MSG_CMD_MEDIA_VO_RST,                      msg_vo_reset},
@@ -807,7 +936,13 @@ static msg_module_cmd_t g_module_cmd_table[] = {
     {MSG_CMD_MEDIA_VO_INSTALL_FRAME,            msg_vo_chn_insert_frame},
     {MSG_CMD_MEDIA_VO_DUMP_FRAME,               msg_vo_chn_dump_frame},
     {MSG_CMD_MEDIA_VO_RELEASE_FRAME,            msg_vo_chn_dump_release},
+    {MSG_CMD_MEDIA_GET_CONNECTOR_INFO,          msg_get_connector_info},
+    {MSG_CMD_MEDIA_OPEN_CONNECTOR,              msg_connector_open},
+    {MSG_CMD_MEDIA_SET_CONNECTOR_POWER,         connector_power_set},
+    {MSG_CMD_MEDIA_CONNECTOR_INIT,              msg_connector_init},
+
 };
+
 
 msg_server_module_t g_module_vo = {
     K_MAPI_MOD_VO,

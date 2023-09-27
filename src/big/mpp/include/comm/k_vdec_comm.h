@@ -68,7 +68,6 @@ typedef struct
     k_u32 stream_buf_size;      /*single input vb size*/
     k_u32 frame_buf_size;       /*single output vb size*/
     k_u32 frame_buf_cnt;        /*output vb count*/
-    k_pixel_format pic_format;  /*input pixel format*/
     k_u32 frame_buf_pool_id;
 } k_vdec_chn_attr;
 

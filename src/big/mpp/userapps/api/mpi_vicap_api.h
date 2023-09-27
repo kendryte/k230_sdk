@@ -226,7 +226,6 @@ k_s32 kd_mpi_vicap_dump_release(k_vicap_dev dev_num, k_vicap_chn chn_num, const 
  */
 k_s32 kd_mpi_vicap_set_mclk(k_vicap_mclk_id id, k_vicap_mclk_sel sel, k_u8 mclk_div, k_u8 mclk_en);
 
-
 /**
  * @brief vicap set vi drop frame
  *
@@ -241,8 +240,6 @@ k_s32 kd_mpi_vicap_set_mclk(k_vicap_mclk_id id, k_vicap_mclk_sel sel, k_u8 mclk_
  */
 k_s32 kd_mpi_vicap_set_vi_drop_frame(k_vicap_csi_num csi, k_vicap_drop_frame *frame, k_bool enable);
 
-/** @} */ /** <!-- ==== VICAP End ==== */
-
 /**
  * @brief vicap set database parse mode
  *
@@ -255,6 +252,36 @@ k_s32 kd_mpi_vicap_set_vi_drop_frame(k_vicap_csi_num csi, k_vicap_drop_frame *fr
  * @note
  */
 k_s32 kd_mpi_vicap_set_database_parse_mode(k_vicap_dev dev_num, k_vicap_database_parse_mode parse_mode);
+
+/**
+ * @brief vicap enable TPG(Test Pattern Generator)
+ *
+ * @param [in] enable 1: enable, 0: disable
+ * @return k_s32
+ * @retval 0 success
+ * @retval "not 0" see err code
+ * @see K_ERR_CODE_E
+ * @note
+ */
+k_s32 kd_mpi_vicap_tpg_enable(k_bool enable);
+
+/**
+ * @brief vicap load user image data
+ *
+ * @param [in] dev_num device number
+ * @param [in] image_data
+ * @param [in] data_len
+ * @return k_s32
+ * @retval 0 success
+ * @retval "not 0" see err code
+ * @see K_ERR_CODE_E
+ * @note
+ */
+k_s32 kd_mpi_vicap_load_image(k_vicap_dev dev_num, const void *image_data, k_u32 data_len);
+
+k_s32 kd_mpi_vicap_dump_register(k_vicap_dev dev_num, const char *path);
+
+/** @} */ /** <!-- ==== VICAP End ==== */
 
 #ifdef __cplusplus
 }

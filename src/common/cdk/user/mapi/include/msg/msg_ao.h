@@ -71,6 +71,12 @@ typedef struct
     k_audio_frame audio_frame;
 } k_msg_ao_frame_t;
 
+typedef struct
+{
+    k_handle ao_hdl;
+    float gain;
+}k_msg_ao_gain_info;
+
 /** @}*/  /** <!-- ==== COMM End ====*/
 #ifdef __cplusplus
 #if __cplusplus

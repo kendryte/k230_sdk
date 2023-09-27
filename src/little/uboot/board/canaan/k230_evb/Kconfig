@@ -17,5 +17,17 @@ config BOARD_SPECIFIC_OPTIONS # dummy
 	def_bool y
 	select RISCV_THEAD
     
+choice
+	prompt "ddr typy freq"
+	depends on TARGET_K230_EVB 
+	default LPDDR3_800
+	
+config LPDDR3_800
+	bool "ddr3 800"
+
+config LPDDR3_2133
+	bool  "ddr3 2133"
+
+endchoice
 
 endif

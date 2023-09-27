@@ -1,0 +1,1927 @@
+<?xml version="1.0" ?>
+<matfile>
+   <header type="struct" size="[1 1]">
+      <creation_date index="1" type="char" size="[1 11]">
+         20-May-2023
+      </creation_date>
+      <creator index="1" type="char" size="[1 6]">
+         CANAAN
+      </creator>
+      <sensor_name index="1" type="char" size="[1 6]">
+         ov9732
+      </sensor_name>
+      <sample_name index="1" type="char" size="[1 13]">
+         2MPlens_03_75
+      </sample_name>
+      <generator_version index="1" type="char" size="[1 6]">
+         v2.1.4
+      </generator_version>
+      <resolution index="1" type="cell" size="[1 1]">
+         <cell index="1" type="struct" size="[1 1]">
+            <name index="1" type="char" size="[1 8]">
+               1280x720
+            </name>
+            <id index="1" type="char" size="[1 10]">
+               0x00000001
+            </id>
+            <width index="1" type="double" size="[1 1]">
+               [ 1280]
+            </width>
+            <height index="1" type="double" size="[1 1]">
+               [ 720]
+            </height>
+            <framerate index="1" type="cell" size="[1 3]">
+               <cell index="1" type="struct" size="[1 1]">
+                  <name index="1" type="char" size="[1 6]">
+                     FPS_15
+                  </name>
+                  <fps index="1" type="double" size="[1 1]">
+                     [ 14.9916]
+                  </fps>
+               </cell>
+               <cell index="2" type="struct" size="[1 1]">
+                  <name index="1" type="char" size="[1 6]">
+                     FPS_10
+                  </name>
+                  <fps index="1" type="double" size="[1 1]">
+                     [ 9.9944]
+                  </fps>
+               </cell>
+               <cell index="3" type="struct" size="[1 1]">
+                  <name index="1" type="char" size="[1 6]">
+                     FPS_05
+                  </name>
+                  <fps index="1" type="double" size="[1 1]">
+                     [ 4.9972]
+                  </fps>
+               </cell>
+            </framerate>
+         </cell>
+      </resolution>
+   </header>
+   <sensor type="struct" size="[1 1]">
+      <AWB index="1" type="struct" size="[1 1]">
+         <globals index="1" type="cell" size="[1 1]">
+            <cell index="1" type="struct" size="[1 1]">
+               <name index="1" type="char" size="[1 8]">
+                  1280x720
+               </name>
+               <resolution index="1" type="char" size="[1 8]">
+                  1280x720
+               </resolution>
+               <SVDMeanValue index="1" type="double" size="[1 3]">
+                  [0.33685 0.445674 0.21748]
+               </SVDMeanValue>
+               <PCAMatrix index="1" type="double" size="[3 2]">
+                  [-0.720927 0.0285016 0.692425 0.383316 -0.815999 0.43268]
+               </PCAMatrix>
+               <CenterLine index="1" type="double" size="[1 3]">
+                  [-0.787193 -0.616706 -2.3616]
+               </CenterLine>
+               <afRg2 index="1" type="double" size="[1 16]">
+                  [1.2192 1.29658 1.34463 1.38734 1.43006 1.47277 1.51549 1.5582 1.60092 1.64363 1.68635 1.72906 1.77177 1.81449 1.8572 1.8999]
+               </afRg2>
+               <afMaxDist2 index="1" type="double" size="[1 16]">
+                  [0.0281226 0.0125986 -0.000898047 -0.0136222 -0.0246835 -0.0342102 -0.0417325 -0.0468402 -0.0492305 -0.0482542 -0.0431094 -0.0327825 -0.0163756 0.00778005 0.0396383 0.082237]
+               </afMaxDist2>
+               <afRg1 index="1" type="double" size="[1 16]">
+                  [1.2192 1.29862 1.34463 1.38734 1.43006 1.47277 1.51549 1.5582 1.60092 1.64363 1.68635 1.72906 1.77177 1.81449 1.8572 1.8999]
+               </afRg1>
+               <afMaxDist1 index="1" type="double" size="[1 16]">
+                  [-0.0181226 0.00086395 0.010898 0.0236222 0.0346835 0.0442102 0.0517325 0.0568402 0.0592305 0.0582542 0.0531094 0.0427825 0.0263756 0.00221995 -0.0296383 -0.072237]
+               </afMaxDist1>
+               <afGlobalFade2 index="1" type="double" size="[1 16]">
+                  [0.8 0.875995 0.951989 1.02798 1.10398 1.17997 1.25597 1.33196 1.40796 1.48395 1.55995 1.63594 1.71193 1.78793 1.86392 1.9399]
+               </afGlobalFade2>
+               <afGlobalGainDistance2 index="1" type="double" size="[1 16]">
+                  [0.334847 0.294888 0.257036 0.220352 0.186171 0.153785 0.12414 0.0978242 0.0757591 0.0587147 0.04799 0.046328 0.0572805 0.0869559 0.140255 0.21951]
+               </afGlobalGainDistance2>
+               <afGlobalFade1 index="1" type="double" size="[1 16]">
+                  [0.8 0.875995 0.951989 1.02798 1.10398 1.17997 1.25597 1.33196 1.40796 1.48395 1.55995 1.63594 1.71193 1.78793 1.86392 1.9399]
+               </afGlobalFade1>
+               <afGlobalGainDistance1 index="1" type="double" size="[1 16]">
+                  [-0.134847 -0.094888 -0.0570364 -0.0203519 0.013829 0.046215 0.0758599 0.102176 0.124241 0.141285 0.15201 0.153672 0.14272 0.113044 0.0597446 -0.019507]
+               </afGlobalGainDistance1>
+               <fRgProjIndoorMin index="1" type="double" size="[1 1]">
+                  [ 1.2192]
+               </fRgProjIndoorMin>
+               <fRgProjMax index="1" type="double" size="[1 1]">
+                  [ 1.8999]
+               </fRgProjMax>
+               <fRgProjMaxSky index="1" type="double" size="[1 1]">
+                  [ 1.9399]
+               </fRgProjMaxSky>
+               <fRgProjOutdoorMin index="1" type="double" size="[1 1]">
+                  [ 1.6436]
+               </fRgProjOutdoorMin>
+               <awb_clip_outdoor index="1" type="char" size="[1 3]">
+                  D50
+               </awb_clip_outdoor>
+               <K_Factor index="1" type="double" size="[1 1]">
+                  [ 22.86]
+               </K_Factor>
+               <afFade2 index="1" type="double" size="[1 6]">
+                  [0.75 1.28836 1.77672 2.164 2.6 3.0618]
+               </afFade2>
+               <afCbMinRegionMax index="1" type="double" size="[1 6]">
+                  [114 114 105 95 95 90]
+               </afCbMinRegionMax>
+               <afCrMinRegionMax index="1" type="double" size="[1 6]">
+                  [83 83 110 120 122 128]
+               </afCrMinRegionMax>
+               <afMaxCSumRegionMax index="1" type="double" size="[1 6]">
+                  [28 27 18 16 9 9]
+               </afMaxCSumRegionMax>
+               <afCbMinRegionMin index="1" type="double" size="[1 6]">
+                  [123 123 123 123 123 120]
+               </afCbMinRegionMin>
+               <afCrMinRegionMin index="1" type="double" size="[1 6]">
+                  [123 123 123 123 123 126]
+               </afCrMinRegionMin>
+               <afMaxCSumRegionMin index="1" type="double" size="[1 6]">
+                  [5 5 5 5 5 5]
+               </afMaxCSumRegionMin>
+               <RegionSize index="1" type="double" size="[1 1]">
+                  [ 1]
+               </RegionSize>
+               <RegionSizeInc index="1" type="double" size="[1 1]">
+                  [ 0.8]
+               </RegionSizeInc>
+               <RegionSizeDec index="1" type="double" size="[1 1]">
+                  [ 0.05]
+               </RegionSizeDec>
+               <IIR index="1" type="struct" size="[1 1]">
+                  <DampCoefAdd index="1" type="double" size="[1 1]">
+                     [ 0.05]
+                  </DampCoefAdd>
+                  <DampCoefSub index="1" type="double" size="[1 1]">
+                     [ 0.05]
+                  </DampCoefSub>
+                  <DampFilterThreshold index="1" type="double" size="[1 1]">
+                     [ 0.4]
+                  </DampFilterThreshold>
+                  <DampingCoefMin index="1" type="double" size="[1 1]">
+                     [ 0.5]
+                  </DampingCoefMin>
+                  <DampingCoefMax index="1" type="double" size="[1 1]">
+                     [ 0.9]
+                  </DampingCoefMax>
+                  <DampingCoefInit index="1" type="double" size="[1 1]">
+                     [ 0.5]
+                  </DampingCoefInit>
+                  <ExpPriorFilterSizeMax index="1" type="double" size="[1 1]">
+                     [ 50]
+                  </ExpPriorFilterSizeMax>
+                  <ExpPriorFilterSizeMin index="1" type="double" size="[1 1]">
+                     [ 1]
+                  </ExpPriorFilterSizeMin>
+                  <ExpPriorMiddle index="1" type="double" size="[1 1]">
+                     [ 0.5]
+                  </ExpPriorMiddle>
+               </IIR>
+            </cell>
+         </globals>
+         <illumination index="1" type="cell" size="[1 5]">
+            <cell index="1" type="struct" size="[1 1]">
+               <name index="1" type="char" size="[1 1]">
+                  A
+               </name>
+               <doorType index="1" type="char" size="[1 6]">
+                  Indoor
+               </doorType>
+               <GMM index="1" type="struct" size="[1 1]">
+                  <invCovMatrix index="1" type="double" size="[2 2]">
+                     [1383.2 1753.2 1753.2 3968.0324]
+                  </invCovMatrix>
+                  <GaussianScalingFactor index="1" type="double" size="[1 1]">
+                     [ 247.3246]
+                  </GaussianScalingFactor>
+                  <tau index="1" type="double" size="[1 2]">
+                     [1 1]
+                  </tau>
+                  <GaussianMeanValue index="1" type="double" size="[1 2]">
+                     [-0.0292167 -0.011698]
+                  </GaussianMeanValue>
+               </GMM>
+               <aLSC index="1" type="cell" size="[1 1]">
+                  <cell index="1" type="struct" size="[1 1]">
+                     <resolution index="1" type="char" size="[1 8]">
+                        1280x720
+                     </resolution>
+                     <LSC_PROFILE_LIST index="1" type="char" size="[1 14]">
+                        1280x720_A_100
+                     </LSC_PROFILE_LIST>
+                  </cell>
+               </aLSC>
+               <manualWB index="1" type="double" size="[1 4]">
+                  [1.28565 1 1 2.3643]
+               </manualWB>
+               <manualccMatrix index="1" type="double" size="[3 3]">
+                  [1.236471 0.161175 -0.39765 -0.152262 1.487563 -0.3353 0.019743 -0.7254 1.70564]
+               </manualccMatrix>
+               <manualccOffsets index="1" type="double" size="[1 3]">
+                  [0 0 0]
+               </manualccOffsets>
+               <awbType index="1" type="char" size="[1 4]">
+                  AUTO
+               </awbType>
+               <sat_CT index="1" type="struct" size="[1 1]">
+                  <gains index="1" type="double" size="[1 4]">
+                     [1 2 4 8]
+                  </gains>
+                  <sat index="1" type="double" size="[1 4]">
+                     [100 95 90 74]
+                  </sat>
+               </sat_CT>
+               <vig_CT index="1" type="struct" size="[1 1]">
+                  <gains index="1" type="double" size="[1 4]">
+                     [1 2 4 8]
+                  </gains>
+                  <vig index="1" type="double" size="[1 4]">
+                     [100 95 90 70]
+                  </vig>
+               </vig_CT>
+               <aCC index="1" type="struct" size="[1 1]">
+                  <CC_PROFILE_LIST index="1" type="char" size="[1 5]">
+                     A_100
+                  </CC_PROFILE_LIST>
+               </aCC>
+            </cell>
+            <cell index="2" type="struct" size="[1 1]">
+               <name index="1" type="char" size="[1 3]">
+                  D50
+               </name>
+               <doorType index="1" type="char" size="[1 7]">
+                  Outdoor
+               </doorType>
+               <GMM index="1" type="struct" size="[1 1]">
+                  <invCovMatrix index="1" type="double" size="[2 2]">
+                     [337.812 101.886 101.886 1621.8924]
+                  </invCovMatrix>
+                  <GaussianScalingFactor index="1" type="double" size="[1 1]">
+                     [ 116.6849]
+                  </GaussianScalingFactor>
+                  <tau index="1" type="double" size="[1 2]">
+                     [1 1]
+                  </tau>
+                  <GaussianMeanValue index="1" type="double" size="[1 2]">
+                     [0.0976101 -0.015718]
+                  </GaussianMeanValue>
+               </GMM>
+               <aLSC index="1" type="cell" size="[1 1]">
+                  <cell index="1" type="struct" size="[1 1]">
+                     <resolution index="1" type="char" size="[1 8]">
+                        1280x720
+                     </resolution>
+                     <LSC_PROFILE_LIST index="1" type="char" size="[1 16]">
+                        1280x720_D50_100
+                     </LSC_PROFILE_LIST>
+                  </cell>
+               </aLSC>
+               <manualWB index="1" type="double" size="[1 4]">
+                  [1.77106 1 1 1.6577]
+               </manualWB>
+               <manualccMatrix index="1" type="double" size="[3 3]">
+                  [1.472768 -0.19682 -0.27595 0.042422 1.291355 -0.33378 0.227206 -0.31589 1.088677]
+               </manualccMatrix>
+               <manualccOffsets index="1" type="double" size="[1 3]">
+                  [0 0 0]
+               </manualccOffsets>
+               <awbType index="1" type="char" size="[1 4]">
+                  AUTO
+               </awbType>
+               <sat_CT index="1" type="struct" size="[1 1]">
+                  <gains index="1" type="double" size="[1 4]">
+                     [1 2 4 8]
+                  </gains>
+                  <sat index="1" type="double" size="[1 4]">
+                     [100 95 90 74]
+                  </sat>
+               </sat_CT>
+               <vig_CT index="1" type="struct" size="[1 1]">
+                  <gains index="1" type="double" size="[1 4]">
+                     [1 2 4 8]
+                  </gains>
+                  <vig index="1" type="double" size="[1 4]">
+                     [100 95 90 70]
+                  </vig>
+               </vig_CT>
+               <aCC index="1" type="struct" size="[1 1]">
+                  <CC_PROFILE_LIST index="1" type="char" size="[1 7]">
+                     D50_100
+                  </CC_PROFILE_LIST>
+               </aCC>
+            </cell>
+            <cell index="3" type="struct" size="[1 1]">
+               <name index="1" type="char" size="[1 3]">
+                  D65
+               </name>
+               <doorType index="1" type="char" size="[1 7]">
+                  Outdoor
+               </doorType>
+               <GMM index="1" type="struct" size="[1 1]">
+                  <invCovMatrix index="1" type="double" size="[2 2]">
+                     [318.303 -123.362 -123.362 1349.6804]
+                  </invCovMatrix>
+                  <GaussianScalingFactor index="1" type="double" size="[1 1]">
+                     [ 102.4529]
+                  </GaussianScalingFactor>
+                  <tau index="1" type="double" size="[1 2]">
+                     [1 1]
+                  </tau>
+                  <GaussianMeanValue index="1" type="double" size="[1 2]">
+                     [0.135983 -0.011698]
+                  </GaussianMeanValue>
+               </GMM>
+               <aLSC index="1" type="cell" size="[1 1]">
+                  <cell index="1" type="struct" size="[1 1]">
+                     <resolution index="1" type="char" size="[1 8]">
+                        1280x720
+                     </resolution>
+                     <LSC_PROFILE_LIST index="1" type="char" size="[1 16]">
+                        1280x720_D65_100
+                     </LSC_PROFILE_LIST>
+                  </cell>
+               </aLSC>
+               <manualWB index="1" type="double" size="[1 4]">
+                  [1.95917 1 1 1.4975]
+               </manualWB>
+               <manualccMatrix index="1" type="double" size="[3 3]">
+                  [1.613957 -0.38111 -0.23285 0.112626 1.213138 -0.32576 0.296781 -0.24165 0.944871]
+               </manualccMatrix>
+               <manualccOffsets index="1" type="double" size="[1 3]">
+                  [0 0 0]
+               </manualccOffsets>
+               <awbType index="1" type="char" size="[1 4]">
+                  AUTO
+               </awbType>
+               <sat_CT index="1" type="struct" size="[1 1]">
+                  <gains index="1" type="double" size="[1 4]">
+                     [1 2 4 8]
+                  </gains>
+                  <sat index="1" type="double" size="[1 4]">
+                     [100 95 90 74]
+                  </sat>
+               </sat_CT>
+               <vig_CT index="1" type="struct" size="[1 1]">
+                  <gains index="1" type="double" size="[1 4]">
+                     [1 2 4 8]
+                  </gains>
+                  <vig index="1" type="double" size="[1 4]">
+                     [100 95 90 70]
+                  </vig>
+               </vig_CT>
+               <aCC index="1" type="struct" size="[1 1]">
+                  <CC_PROFILE_LIST index="1" type="char" size="[1 7]">
+                     D65_100
+                  </CC_PROFILE_LIST>
+               </aCC>
+            </cell>
+            <cell index="4" type="struct" size="[1 1]">
+               <name index="1" type="char" size="[1 10]">
+                  F11 (TL84)
+               </name>
+               <doorType index="1" type="char" size="[1 6]">
+                  Indoor
+               </doorType>
+               <GMM index="1" type="struct" size="[1 1]">
+                  <invCovMatrix index="1" type="double" size="[2 2]">
+                     [389.364 -8.03512 -8.03512 1181.8088]
+                  </invCovMatrix>
+                  <GaussianScalingFactor index="1" type="double" size="[1 1]">
+                     [ 107.9546]
+                  </GaussianScalingFactor>
+                  <tau index="1" type="double" size="[1 2]">
+                     [1 1]
+                  </tau>
+                  <GaussianMeanValue index="1" type="double" size="[1 2]">
+                     [0.0239324 -0.00089552]
+                  </GaussianMeanValue>
+               </GMM>
+               <aLSC index="1" type="cell" size="[1 1]">
+                  <cell index="1" type="struct" size="[1 1]">
+                     <resolution index="1" type="char" size="[1 8]">
+                        1280x720
+                     </resolution>
+                     <LSC_PROFILE_LIST index="1" type="char" size="[1 16]">
+                        1280x720_F11_100
+                     </LSC_PROFILE_LIST>
+                  </cell>
+               </aLSC>
+               <manualWB index="1" type="double" size="[1 4]">
+                  [1.40042 1 1 1.9134]
+               </manualWB>
+               <manualccMatrix index="1" type="double" size="[3 3]">
+                  [1.290427 -0.04503 -0.2454 -0.143759 1.369656 -0.2259 0.126272 -0.38432 1.258058]
+               </manualccMatrix>
+               <manualccOffsets index="1" type="double" size="[1 3]">
+                  [0 0 0]
+               </manualccOffsets>
+               <awbType index="1" type="char" size="[1 4]">
+                  AUTO
+               </awbType>
+               <sat_CT index="1" type="struct" size="[1 1]">
+                  <gains index="1" type="double" size="[1 4]">
+                     [1 2 4 8]
+                  </gains>
+                  <sat index="1" type="double" size="[1 4]">
+                     [100 95 90 74]
+                  </sat>
+               </sat_CT>
+               <vig_CT index="1" type="struct" size="[1 1]">
+                  <gains index="1" type="double" size="[1 4]">
+                     [1 2 4 8]
+                  </gains>
+                  <vig index="1" type="double" size="[1 4]">
+                     [100 95 90 70]
+                  </vig>
+               </vig_CT>
+               <aCC index="1" type="struct" size="[1 1]">
+                  <CC_PROFILE_LIST index="1" type="char" size="[1 7]">
+                     F11_100
+                  </CC_PROFILE_LIST>
+               </aCC>
+            </cell>
+            <cell index="5" type="struct" size="[1 1]">
+               <name index="1" type="char" size="[1 3]">
+                  F12
+               </name>
+               <doorType index="1" type="char" size="[1 6]">
+                  Indoor
+               </doorType>
+               <GMM index="1" type="struct" size="[1 1]">
+                  <invCovMatrix index="1" type="double" size="[2 2]">
+                     [582.718 354.604 354.604 1598.9311]
+                  </invCovMatrix>
+                  <GaussianScalingFactor index="1" type="double" size="[1 1]">
+                     [ 142.8837]
+                  </GaussianScalingFactor>
+                  <tau index="1" type="double" size="[1 2]">
+                     [1 1]
+                  </tau>
+                  <GaussianMeanValue index="1" type="double" size="[1 2]">
+                     [-0.0523662 0.013112]
+                  </GaussianMeanValue>
+               </GMM>
+               <aLSC index="1" type="cell" size="[1 1]">
+                  <cell index="1" type="struct" size="[1 1]">
+                     <resolution index="1" type="char" size="[1 8]">
+                        1280x720
+                     </resolution>
+                     <LSC_PROFILE_LIST index="1" type="char" size="[1 16]">
+                        1280x720_F12_100
+                     </LSC_PROFILE_LIST>
+                  </cell>
+               </aLSC>
+               <manualWB index="1" type="double" size="[1 4]">
+                  [1.14186 1 1 2.3195]
+               </manualWB>
+               <manualccMatrix index="1" type="double" size="[3 3]">
+                  [0.953248 0.227384 -0.18063 -0.426918 1.631906 -0.20499 -0.1315 -0.78274 1.914237]
+               </manualccMatrix>
+               <manualccOffsets index="1" type="double" size="[1 3]">
+                  [0 0 0]
+               </manualccOffsets>
+               <awbType index="1" type="char" size="[1 4]">
+                  AUTO
+               </awbType>
+               <sat_CT index="1" type="struct" size="[1 1]">
+                  <gains index="1" type="double" size="[1 4]">
+                     [1 2 4 8]
+                  </gains>
+                  <sat index="1" type="double" size="[1 4]">
+                     [100 95 90 74]
+                  </sat>
+               </sat_CT>
+               <vig_CT index="1" type="struct" size="[1 1]">
+                  <gains index="1" type="double" size="[1 4]">
+                     [1 2 4 8]
+                  </gains>
+                  <vig index="1" type="double" size="[1 4]">
+                     [100 95 90 70]
+                  </vig>
+               </vig_CT>
+               <aCC index="1" type="struct" size="[1 1]">
+                  <CC_PROFILE_LIST index="1" type="char" size="[1 7]">
+                     F12_100
+                  </CC_PROFILE_LIST>
+               </aCC>
+            </cell>
+         </illumination>
+      </AWB>
+      <LSC index="1" type="cell" size="[1 5]">
+         <cell index="1" type="struct" size="[1 1]">
+            <name index="1" type="char" size="[1 14]">
+               1280x720_A_100
+            </name>
+            <resolution index="1" type="char" size="[1 8]">
+               1280x720
+            </resolution>
+            <illumination index="1" type="char" size="[1 1]">
+               A
+            </illumination>
+            <LSC_sectors index="1" type="double" size="[1 1]">
+               [ 32]
+            </LSC_sectors>
+            <LSC_No index="1" type="double" size="[1 1]">
+               [ 10]
+            </LSC_No>
+            <LSC_Xo index="1" type="double" size="[1 1]">
+               [ 15]
+            </LSC_Xo>
+            <LSC_Yo index="1" type="double" size="[1 1]">
+               [ 15]
+            </LSC_Yo>
+            <LSC_SECT_SIZE_X index="1" type="double" size="[1 32]">
+               [38 39 38 39 38 38 39 38 39 38 38 39 38 39 51 51 51 51 39 38 39 38 38 39 38 39 38 38 39 38 39 38]
+            </LSC_SECT_SIZE_X>
+            <LSC_SECT_SIZE_Y index="1" type="double" size="[1 16]">
+               [22 21 22 21 22 22 21 22 21 22 22 21 22 21 29 29]
+            </LSC_SECT_SIZE_Y>
+            <vignetting index="1" type="double" size="[1 1]">
+               [ 100]
+            </vignetting>
+            <LSC_SAMPLES_red index="1" type="double" size="[33 33]">
+               [1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024]
+            </LSC_SAMPLES_red>
+            <LSC_SAMPLES_greenR index="1" type="double" size="[33 33]">
+               [	 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024]
+            </LSC_SAMPLES_greenR>
+            <LSC_SAMPLES_greenB index="1" type="double" size="[33 33]">
+               [	 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024]
+            </LSC_SAMPLES_greenB>
+            <LSC_SAMPLES_blue index="1" type="double" size="[33 33]">
+               [	 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024]
+            </LSC_SAMPLES_blue>
+         </cell>
+         <cell index="2" type="struct" size="[1 1]">
+            <name index="1" type="char" size="[1 16]">
+               1280x720_D50_100
+            </name>
+            <resolution index="1" type="char" size="[1 8]">
+               1280x720
+            </resolution>
+            <illumination index="1" type="char" size="[1 3]">
+               D50
+            </illumination>
+            <LSC_sectors index="1" type="double" size="[1 1]">
+               [ 32]
+            </LSC_sectors>
+            <LSC_No index="1" type="double" size="[1 1]">
+               [ 10]
+            </LSC_No>
+            <LSC_Xo index="1" type="double" size="[1 1]">
+               [ 15]
+            </LSC_Xo>
+            <LSC_Yo index="1" type="double" size="[1 1]">
+               [ 15]
+            </LSC_Yo>
+            <LSC_SECT_SIZE_X index="1" type="double" size="[1 32]">
+               [38 39 38 39 38 38 39 38 39 38 38 39 38 39 51 51 51 51 39 38 39 38 38 39 38 39 38 38 39 38 39 38]
+            </LSC_SECT_SIZE_X>
+            <LSC_SECT_SIZE_Y index="1" type="double" size="[1 16]">
+               [22 21 22 21 22 22 21 22 21 22 22 21 22 21 29 29]
+            </LSC_SECT_SIZE_Y>
+            <vignetting index="1" type="double" size="[1 1]">
+               [ 100]
+            </vignetting>
+            <LSC_SAMPLES_red index="1" type="double" size="[33 33]">
+               [1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024]
+            </LSC_SAMPLES_red>
+            <LSC_SAMPLES_greenR index="1" type="double" size="[33 33]">
+               [	 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024]
+            </LSC_SAMPLES_greenR>
+            <LSC_SAMPLES_greenB index="1" type="double" size="[33 33]">
+               [	 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024]
+            </LSC_SAMPLES_greenB>
+            <LSC_SAMPLES_blue index="1" type="double" size="[33 33]">
+               [	 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024]
+            </LSC_SAMPLES_blue>
+         </cell>
+         <cell index="3" type="struct" size="[1 1]">
+            <name index="1" type="char" size="[1 16]">
+               1280x720_D65_100
+            </name>
+            <resolution index="1" type="char" size="[1 8]">
+               1280x720
+            </resolution>
+            <illumination index="1" type="char" size="[1 3]">
+               D65
+            </illumination>
+            <LSC_sectors index="1" type="double" size="[1 1]">
+               [ 32]
+            </LSC_sectors>
+            <LSC_No index="1" type="double" size="[1 1]">
+               [ 10]
+            </LSC_No>
+            <LSC_Xo index="1" type="double" size="[1 1]">
+               [ 15]
+            </LSC_Xo>
+            <LSC_Yo index="1" type="double" size="[1 1]">
+               [ 15]
+            </LSC_Yo>
+            <LSC_SECT_SIZE_X index="1" type="double" size="[1 32]">
+               [38 39 38 39 38 38 39 38 39 38 38 39 38 39 51 51 51 51 39 38 39 38 38 39 38 39 38 38 39 38 39 38]
+            </LSC_SECT_SIZE_X>
+            <LSC_SECT_SIZE_Y index="1" type="double" size="[1 16]">
+               [22 21 22 21 22 22 21 22 21 22 22 21 22 21 29 29]
+            </LSC_SECT_SIZE_Y>
+            <vignetting index="1" type="double" size="[1 1]">
+               [ 100]
+            </vignetting>
+            <LSC_SAMPLES_red index="1" type="double" size="[33 33]">
+               [1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024]
+            </LSC_SAMPLES_red>
+            <LSC_SAMPLES_greenR index="1" type="double" size="[33 33]">
+               [	 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024]
+            </LSC_SAMPLES_greenR>
+            <LSC_SAMPLES_greenB index="1" type="double" size="[33 33]">
+               [	 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024]
+            </LSC_SAMPLES_greenB>
+            <LSC_SAMPLES_blue index="1" type="double" size="[33 33]">
+               [	 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024]
+            </LSC_SAMPLES_blue>
+         </cell>
+         <cell index="4" type="struct" size="[1 1]">
+            <name index="1" type="char" size="[1 16]">
+               1280x720_F11_100
+            </name>
+            <resolution index="1" type="char" size="[1 8]">
+               1280x720
+            </resolution>
+            <illumination index="1" type="char" size="[1 3]">
+               F11
+            </illumination>
+            <LSC_sectors index="1" type="double" size="[1 1]">
+               [ 32]
+            </LSC_sectors>
+            <LSC_No index="1" type="double" size="[1 1]">
+               [ 10]
+            </LSC_No>
+            <LSC_Xo index="1" type="double" size="[1 1]">
+               [ 15]
+            </LSC_Xo>
+            <LSC_Yo index="1" type="double" size="[1 1]">
+               [ 15]
+            </LSC_Yo>
+            <LSC_SECT_SIZE_X index="1" type="double" size="[1 32]">
+               [38 39 38 39 38 38 39 38 39 38 38 39 38 39 51 51 51 51 39 38 39 38 38 39 38 39 38 38 39 38 39 38]
+            </LSC_SECT_SIZE_X>
+            <LSC_SECT_SIZE_Y index="1" type="double" size="[1 16]">
+               [22 21 22 21 22 22 21 22 21 22 22 21 22 21 29 29]
+            </LSC_SECT_SIZE_Y>
+            <vignetting index="1" type="double" size="[1 1]">
+               [ 100]
+            </vignetting>
+            <LSC_SAMPLES_red index="1" type="double" size="[33 33]">
+               [1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024]
+            </LSC_SAMPLES_red>
+            <LSC_SAMPLES_greenR index="1" type="double" size="[33 33]">
+               [	 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024]
+            </LSC_SAMPLES_greenR>
+            <LSC_SAMPLES_greenB index="1" type="double" size="[33 33]">
+               [	 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024]
+            </LSC_SAMPLES_greenB>
+            <LSC_SAMPLES_blue index="1" type="double" size="[33 33]">
+               [	 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024]
+            </LSC_SAMPLES_blue>
+         </cell>
+         <cell index="5" type="struct" size="[1 1]">
+            <name index="1" type="char" size="[1 16]">
+               1280x720_F12_100
+            </name>
+            <resolution index="1" type="char" size="[1 8]">
+               1280x720
+            </resolution>
+            <illumination index="1" type="char" size="[1 3]">
+               F12
+            </illumination>
+            <LSC_sectors index="1" type="double" size="[1 1]">
+               [ 32]
+            </LSC_sectors>
+            <LSC_No index="1" type="double" size="[1 1]">
+               [ 10]
+            </LSC_No>
+            <LSC_Xo index="1" type="double" size="[1 1]">
+               [ 15]
+            </LSC_Xo>
+            <LSC_Yo index="1" type="double" size="[1 1]">
+               [ 15]
+            </LSC_Yo>
+            <LSC_SECT_SIZE_X index="1" type="double" size="[1 32]">
+               [38 39 38 39 38 38 39 38 39 38 38 39 38 39 51 51 51 51 39 38 39 38 38 39 38 39 38 38 39 38 39 38]
+            </LSC_SECT_SIZE_X>
+            <LSC_SECT_SIZE_Y index="1" type="double" size="[1 16]">
+               [22 21 22 21 22 22 21 22 21 22 22 21 22 21 29 29]
+            </LSC_SECT_SIZE_Y>
+            <vignetting index="1" type="double" size="[1 1]">
+               [ 100]
+            </vignetting>
+            <LSC_SAMPLES_red index="1" type="double" size="[33 33]">
+               [1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024]
+            </LSC_SAMPLES_red>
+            <LSC_SAMPLES_greenR index="1" type="double" size="[33 33]">
+               [	 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024]
+            </LSC_SAMPLES_greenR>
+            <LSC_SAMPLES_greenB index="1" type="double" size="[33 33]">
+               [	 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024]
+            </LSC_SAMPLES_greenB>
+            <LSC_SAMPLES_blue index="1" type="double" size="[33 33]">
+               [	 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024
+			 1024 1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024  1024]
+            </LSC_SAMPLES_blue>
+         </cell>
+      </LSC>
+      <CC index="1" type="cell" size="[1 5]">
+         <cell index="1" type="struct" size="[1 1]">
+            <name index="1" type="char" size="[1 5]">
+               A_100
+            </name>
+            <saturation index="1" type="double" size="[1 1]">
+               [ 100]
+            </saturation>
+            <ccMatrix index="1" type="double" size="[3 3]">
+               [1.236471 0.161175 -0.39765 -0.152262 1.487563 -0.3353 0.019743 -0.7254 1.70564]
+            </ccMatrix>
+            <ccOffsets index="1" type="double" size="[1 3]">
+               [0 0 0]
+            </ccOffsets>
+            <wb index="1" type="double" size="[1 4]">
+               [1.28565 1 1 2.3643]
+            </wb>
+         </cell>
+         <cell index="2" type="struct" size="[1 1]">
+            <name index="1" type="char" size="[1 7]">
+               D50_100
+            </name>
+            <saturation index="1" type="double" size="[1 1]">
+               [ 100]
+            </saturation>
+            <ccMatrix index="1" type="double" size="[3 3]">
+               [1.472768 -0.19682 -0.27595 0.042422 1.291355 -0.33378 0.227206 -0.31589 1.088677]
+            </ccMatrix>
+            <ccOffsets index="1" type="double" size="[1 3]">
+               [0 0 0]
+            </ccOffsets>
+            <wb index="1" type="double" size="[1 4]">
+               [1.77106 1 1 1.6577]
+            </wb>
+         </cell>
+         <cell index="3" type="struct" size="[1 1]">
+            <name index="1" type="char" size="[1 7]">
+               D65_100
+            </name>
+            <saturation index="1" type="double" size="[1 1]">
+               [ 100]
+            </saturation>
+            <ccMatrix index="1" type="double" size="[3 3]">
+               [1.613957 -0.38111 -0.23285 0.112626 1.213138 -0.32576 0.296781 -0.24165 0.944871]
+            </ccMatrix>
+            <ccOffsets index="1" type="double" size="[1 3]">
+               [0 0 0]
+            </ccOffsets>
+            <wb index="1" type="double" size="[1 4]">
+               [1.95917 1 1 1.4975]
+            </wb>
+         </cell>
+         <cell index="4" type="struct" size="[1 1]">
+            <name index="1" type="char" size="[1 7]">
+               F11_100
+            </name>
+            <saturation index="1" type="double" size="[1 1]">
+               [ 100]
+            </saturation>
+            <ccMatrix index="1" type="double" size="[3 3]">
+               [1.290427 -0.04503 -0.2454 -0.143759 1.369656 -0.2259 0.126272 -0.38432 1.258058]
+            </ccMatrix>
+            <ccOffsets index="1" type="double" size="[1 3]">
+               [0 0 0]
+            </ccOffsets>
+            <wb index="1" type="double" size="[1 4]">
+               [1.40042 1 1 1.9134]
+            </wb>
+         </cell>
+         <cell index="5" type="struct" size="[1 1]">
+            <name index="1" type="char" size="[1 7]">
+               F12_100
+            </name>
+            <saturation index="1" type="double" size="[1 1]">
+               [ 100]
+            </saturation>
+            <ccMatrix index="1" type="double" size="[3 3]">
+               [0.953248 0.227384 -0.18063 -0.426918 1.631906 -0.20499 -0.1315 -0.78274 1.914237]
+            </ccMatrix>
+            <ccOffsets index="1" type="double" size="[1 3]">
+               [0 0 0]
+            </ccOffsets>
+            <wb index="1" type="double" size="[1 4]">
+               [1.14186 1 1 2.3195]
+            </wb>
+         </cell>
+      </CC>
+      <AF index="1" type="struct" size="[1 1]">
+         <tbd index="1" type="double" size="[1 1]">
+            [ -1]
+         </tbd>
+      </AF>
+      <AEC index="1" type="struct" size="[1 1]">
+         <SetPoint index="1" type="double" size="[1 1]">
+            [ 50]
+         </SetPoint>
+         <ClmTolerance index="1" type="double" size="[1 1]">
+            [ 10]
+         </ClmTolerance>
+         <DampOver index="1" type="double" size="[1 1]">
+            [ 0.3]
+         </DampOver>
+         <DampUnder index="1" type="double" size="[1 1]">
+            [ 0.3]
+         </DampUnder>
+         <DampOverVideo index="1" type="double" size="[1 1]">
+            [ 0.3]
+         </DampOverVideo>
+         <DampUnderVideo index="1" type="double" size="[1 1]">
+            [ 0.3]
+         </DampUnderVideo>
+         <ECM index="1" type="cell" size="[1 3]">
+            <cell index="1" type="struct" size="[1 1]">
+               <name index="1" type="char" size="[1 15]">
+                  1280x720_FPS_15
+               </name>
+               <PrioritySchemes index="1" type="cell" size="[1 3]">
+                  <cell index="1" type="struct" size="[1 1]">
+                     <name index="1" type="char" size="[1 4]">
+                        fast
+                     </name>
+                     <OffsetT0Fac index="1" type="double" size="[1 1]">
+                        [ 1]
+                     </OffsetT0Fac>
+                     <SlopeA0 index="1" type="double" size="[1 1]">
+                        [ 2]
+                     </SlopeA0>
+                  </cell>
+                  <cell index="2" type="struct" size="[1 1]">
+                     <name index="1" type="char" size="[1 6]">
+                        normal
+                     </name>
+                     <OffsetT0Fac index="1" type="double" size="[1 1]">
+                        [ 1]
+                     </OffsetT0Fac>
+                     <SlopeA0 index="1" type="double" size="[1 1]">
+                        [ 1]
+                     </SlopeA0>
+                  </cell>
+                  <cell index="3" type="struct" size="[1 1]">
+                     <name index="1" type="char" size="[1 4]">
+                        slow
+                     </name>
+                     <OffsetT0Fac index="1" type="double" size="[1 1]">
+                        [ 2]
+                     </OffsetT0Fac>
+                     <SlopeA0 index="1" type="double" size="[1 1]">
+                        [ 1]
+                     </SlopeA0>
+                  </cell>
+               </PrioritySchemes>
+            </cell>
+            <cell index="2" type="struct" size="[1 1]">
+               <name index="1" type="char" size="[1 15]">
+                  1280x720_FPS_10
+               </name>
+               <PrioritySchemes index="1" type="cell" size="[1 3]">
+                  <cell index="1" type="struct" size="[1 1]">
+                     <name index="1" type="char" size="[1 4]">
+                        fast
+                     </name>
+                     <OffsetT0Fac index="1" type="double" size="[1 1]">
+                        [ 1]
+                     </OffsetT0Fac>
+                     <SlopeA0 index="1" type="double" size="[1 1]">
+                        [ 2]
+                     </SlopeA0>
+                  </cell>
+                  <cell index="2" type="struct" size="[1 1]">
+                     <name index="1" type="char" size="[1 6]">
+                        normal
+                     </name>
+                     <OffsetT0Fac index="1" type="double" size="[1 1]">
+                        [ 1]
+                     </OffsetT0Fac>
+                     <SlopeA0 index="1" type="double" size="[1 1]">
+                        [ 1]
+                     </SlopeA0>
+                  </cell>
+                  <cell index="3" type="struct" size="[1 1]">
+                     <name index="1" type="char" size="[1 4]">
+                        slow
+                     </name>
+                     <OffsetT0Fac index="1" type="double" size="[1 1]">
+                        [ 2]
+                     </OffsetT0Fac>
+                     <SlopeA0 index="1" type="double" size="[1 1]">
+                        [ 1]
+                     </SlopeA0>
+                  </cell>
+               </PrioritySchemes>
+            </cell>
+            <cell index="3" type="struct" size="[1 1]">
+               <name index="1" type="char" size="[1 15]">
+                  1280x720_FPS_05
+               </name>
+               <PrioritySchemes index="1" type="cell" size="[1 3]">
+                  <cell index="1" type="struct" size="[1 1]">
+                     <name index="1" type="char" size="[1 4]">
+                        fast
+                     </name>
+                     <OffsetT0Fac index="1" type="double" size="[1 1]">
+                        [ 1]
+                     </OffsetT0Fac>
+                     <SlopeA0 index="1" type="double" size="[1 1]">
+                        [ 1]
+                     </SlopeA0>
+                  </cell>
+                  <cell index="2" type="struct" size="[1 1]">
+                     <name index="1" type="char" size="[1 6]">
+                        normal
+                     </name>
+                     <OffsetT0Fac index="1" type="double" size="[1 1]">
+                        [ 2]
+                     </OffsetT0Fac>
+                     <SlopeA0 index="1" type="double" size="[1 1]">
+                        [ 0.9]
+                     </SlopeA0>
+                  </cell>
+                  <cell index="3" type="struct" size="[1 1]">
+                     <name index="1" type="char" size="[1 4]">
+                        slow
+                     </name>
+                     <OffsetT0Fac index="1" type="double" size="[1 1]">
+                        [ 4]
+                     </OffsetT0Fac>
+                     <SlopeA0 index="1" type="double" size="[1 1]">
+                        [ 0.9]
+                     </SlopeA0>
+                  </cell>
+               </PrioritySchemes>
+            </cell>
+         </ECM>
+         <aFpsMaxGain index="1" type="double" size="[1 1]">
+            [ 8]
+         </aFpsMaxGain>
+      </AEC>
+      <BLS index="1" type="cell" size="[1 1]">
+         <cell index="1" type="struct" size="[1 1]">
+            <name index="1" type="char" size="[1 8]">
+               1280x720
+            </name>
+            <resolution index="1" type="char" size="[1 8]">
+               1280x720
+            </resolution>
+            <blsData index="1" type="double" size="[1 4]">
+               [64 64 64 64]
+            </blsData>
+         </cell>
+      </BLS>
+      <DEGAMMA index="1" type="cell" size="[1 1]">
+         <cell index="1" type="struct" size="[1 1]">
+            <name index="1" type="char" size="[1 6]">
+               linear
+            </name>
+            <degamma_dx index="1" type="double" size="[1 16]">
+               [256 512 768 1024 1280 1536 1792 2048 2304 2560 2816 3072 3328 3584 3840 4096]
+            </degamma_dx>
+            <degamma_y index="1" type="double" size="[1 17]">
+               [0 256 512 768 1024 1280 1536 1792 2048 2304 2560 2816 3072 3328 3584 3840 4095]
+            </degamma_y>
+         </cell>
+      </DEGAMMA>
+      <WDR index="1" type="struct" size="[1 1]">
+         <tbd index="1" type="double" size="[1 1]">
+            [ -1]
+         </tbd>
+         <curve1 index="1" type="struct" size="[1 1]">
+            <xval index="1" type="double" size="[1 33]">
+               [-1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1]
+            </xval>
+            <yval index="1" type="double" size="[1 33]">
+               [-1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1]
+            </yval>
+         </curve1>
+         <curve2 index="1" type="struct" size="[1 1]">
+            <xval index="1" type="double" size="[1 33]">
+               [-1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1]
+            </xval>
+            <yval index="1" type="double" size="[1 33]">
+               [-1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1]
+            </yval>
+         </curve2>
+      </WDR>
+      <CAC index="1" type="cell" size="[1 1]">
+         <cell index="1" type="struct" size="[1 1]">
+            <name index="1" type="char" size="[1 8]">
+               1280x720
+            </name>
+            <resolution index="1" type="char" size="[1 8]">
+               1280x720
+            </resolution>
+            <x_normshift index="1" type="double" size="[1 1]">
+               [ 6]
+            </x_normshift>
+            <x_normfactor index="1" type="double" size="[1 1]">
+               [ 29]
+            </x_normfactor>
+            <y_normshift index="1" type="double" size="[1 1]">
+               [ 6]
+            </y_normshift>
+            <y_normfactor index="1" type="double" size="[1 1]">
+               [ 29]
+            </y_normfactor>
+            <x_offset index="1" type="double" size="[1 1]">
+               [ 0]
+            </x_offset>
+            <y_offset index="1" type="double" size="[1 1]">
+               [ 0]
+            </y_offset>
+            <red_parameters index="1" type="double" size="[1 3]">
+               [0 0 0]
+            </red_parameters>
+            <blue_parameters index="1" type="double" size="[1 3]">
+               [0 0 0]
+            </blue_parameters>
+         </cell>
+      </CAC>
+      <DPF index="1" type="cell" size="[1 1]">
+         <cell index="1" type="struct" size="[1 1]">
+            <name index="1" type="char" size="[1 8]">
+               1280x720
+            </name>
+            <resolution index="1" type="char" size="[1 8]">
+               1280x720
+            </resolution>
+            <NLL_SEGMENTATION index="1" type="double" size="[1 1]">
+               [ 1]
+            </NLL_SEGMENTATION>
+            <nll_coeff_n index="1" type="double" size="[1 17]">
+               [1023 859 589 476 410 334 288 258 235 203 182 166 143 128 117 108 101]
+            </nll_coeff_n>
+            <SigmaGreen index="1" type="double" size="[1 1]">
+               [ 4]
+            </SigmaGreen>
+            <SigmaRedBlue index="1" type="double" size="[1 1]">
+               [ 4]
+            </SigmaRedBlue>
+            <Gradient index="1" type="double" size="[1 1]">
+               [ 0.15]
+            </Gradient>
+            <Offset index="1" type="double" size="[1 1]">
+               [ 0]
+            </Offset>
+            <NlGains index="1" type="double" size="[1 4]">
+               [1 1 1 1]
+            </NlGains>
+         </cell>
+      </DPF>
+      <DPCC index="1" type="cell" size="[1 1]">
+         <cell index="1" type="struct" size="[1 1]">
+            <name index="1" type="char" size="[1 8]">
+               1280x720
+            </name>
+            <resolution index="1" type="char" size="[1 8]">
+               1280x720
+            </resolution>
+            <register index="1" type="cell" size="[1 23]">
+               <cell index="1" type="struct" size="[1 1]">
+                  <name index="1" type="char" size="[1 13]">
+                     ISP_DPCC_MODE
+                  </name>
+                  <value index="1" type="char" size="[1 6]">
+                     0x0004
+                  </value>
+               </cell>
+               <cell index="2" type="struct" size="[1 1]">
+                  <name index="1" type="char" size="[1 17]">
+                     ISP_DPCC_OUT_MODE
+                  </name>
+                  <value index="1" type="char" size="[1 6]">
+                     0x0003
+                  </value>
+               </cell>
+               <cell index="3" type="struct" size="[1 1]">
+                  <name index="1" type="char" size="[1 16]">
+                     ISP_DPCC_SET_USE
+                  </name>
+                  <value index="1" type="char" size="[1 6]">
+                     0x0007
+                  </value>
+               </cell>
+               <cell index="4" type="struct" size="[1 1]">
+                  <name index="1" type="char" size="[1 21]">
+                     ISP_DPCC_METHODS_SET1
+                  </name>
+                  <value index="1" type="char" size="[1 6]">
+                     0x1D1D
+                  </value>
+               </cell>
+               <cell index="5" type="struct" size="[1 1]">
+                  <name index="1" type="char" size="[1 21]">
+                     ISP_DPCC_METHODS_SET2
+                  </name>
+                  <value index="1" type="char" size="[1 6]">
+                     0x0707
+                  </value>
+               </cell>
+               <cell index="6" type="struct" size="[1 1]">
+                  <name index="1" type="char" size="[1 21]">
+                     ISP_DPCC_METHODS_SET3
+                  </name>
+                  <value index="1" type="char" size="[1 6]">
+                     0x1F1F
+                  </value>
+               </cell>
+               <cell index="7" type="struct" size="[1 1]">
+                  <name index="1" type="char" size="[1 22]">
+                     ISP_DPCC_LINE_THRESH_1
+                  </name>
+                  <value index="1" type="char" size="[1 6]">
+                     0x0808
+                  </value>
+               </cell>
+               <cell index="8" type="struct" size="[1 1]">
+                  <name index="1" type="char" size="[1 23]">
+                     ISP_DPCC_LINE_MAD_FAC_1
+                  </name>
+                  <value index="1" type="char" size="[1 6]">
+                     0x0404
+                  </value>
+               </cell>
+               <cell index="9" type="struct" size="[1 1]">
+                  <name index="1" type="char" size="[1 17]">
+                     ISP_DPCC_PG_FAC_1
+                  </name>
+                  <value index="1" type="char" size="[1 6]">
+                     0x0403
+                  </value>
+               </cell>
+               <cell index="10" type="struct" size="[1 1]">
+                  <name index="1" type="char" size="[1 21]">
+                     ISP_DPCC_RND_THRESH_1
+                  </name>
+                  <value index="1" type="char" size="[1 6]">
+                     0x0A0A
+                  </value>
+               </cell>
+               <cell index="11" type="struct" size="[1 1]">
+                  <name index="1" type="char" size="[1 17]">
+                     ISP_DPCC_RG_FAC_1
+                  </name>
+                  <value index="1" type="char" size="[1 6]">
+                     0x2020
+                  </value>
+               </cell>
+               <cell index="12" type="struct" size="[1 1]">
+                  <name index="1" type="char" size="[1 22]">
+                     ISP_DPCC_LINE_THRESH_2
+                  </name>
+                  <value index="1" type="char" size="[1 6]">
+                     0x100C
+                  </value>
+               </cell>
+               <cell index="13" type="struct" size="[1 1]">
+                  <name index="1" type="char" size="[1 23]">
+                     ISP_DPCC_LINE_MAD_FAC_2
+                  </name>
+                  <value index="1" type="char" size="[1 6]">
+                     0x1810
+                  </value>
+               </cell>
+               <cell index="14" type="struct" size="[1 1]">
+                  <name index="1" type="char" size="[1 17]">
+                     ISP_DPCC_PG_FAC_2
+                  </name>
+                  <value index="1" type="char" size="[1 6]">
+                     0x0403
+                  </value>
+               </cell>
+               <cell index="15" type="struct" size="[1 1]">
+                  <name index="1" type="char" size="[1 21]">
+                     ISP_DPCC_RND_THRESH_2
+                  </name>
+                  <value index="1" type="char" size="[1 6]">
+                     0x0808
+                  </value>
+               </cell>
+               <cell index="16" type="struct" size="[1 1]">
+                  <name index="1" type="char" size="[1 17]">
+                     ISP_DPCC_RG_FAC_2
+                  </name>
+                  <value index="1" type="char" size="[1 6]">
+                     0x0808
+                  </value>
+               </cell>
+               <cell index="17" type="struct" size="[1 1]">
+                  <name index="1" type="char" size="[1 22]">
+                     ISP_DPCC_LINE_THRESH_3
+                  </name>
+                  <value index="1" type="char" size="[1 6]">
+                     0x2020
+                  </value>
+               </cell>
+               <cell index="18" type="struct" size="[1 1]">
+                  <name index="1" type="char" size="[1 23]">
+                     ISP_DPCC_LINE_MAD_FAC_3
+                  </name>
+                  <value index="1" type="char" size="[1 6]">
+                     0x0404
+                  </value>
+               </cell>
+               <cell index="19" type="struct" size="[1 1]">
+                  <name index="1" type="char" size="[1 17]">
+                     ISP_DPCC_PG_FAC_3
+                  </name>
+                  <value index="1" type="char" size="[1 6]">
+                     0x0403
+                  </value>
+               </cell>
+               <cell index="20" type="struct" size="[1 1]">
+                  <name index="1" type="char" size="[1 21]">
+                     ISP_DPCC_RND_THRESH_3
+                  </name>
+                  <value index="1" type="char" size="[1 6]">
+                     0x0806
+                  </value>
+               </cell>
+               <cell index="21" type="struct" size="[1 1]">
+                  <name index="1" type="char" size="[1 17]">
+                     ISP_DPCC_RG_FAC_3
+                  </name>
+                  <value index="1" type="char" size="[1 6]">
+                     0x0404
+                  </value>
+               </cell>
+               <cell index="22" type="struct" size="[1 1]">
+                  <name index="1" type="char" size="[1 18]">
+                     ISP_DPCC_RO_LIMITS
+                  </name>
+                  <value index="1" type="char" size="[1 6]">
+                     0x0A0A
+                  </value>
+               </cell>
+               <cell index="23" type="struct" size="[1 1]">
+                  <name index="1" type="char" size="[1 17]">
+                     ISP_DPCC_RND_OFFS
+                  </name>
+                  <value index="1" type="char" size="[1 6]">
+                     0x0FFF
+                  </value>
+               </cell>
+            </register>
+         </cell>
+      </DPCC>
+   </sensor>
+   <system type="struct" size="[1 1]">
+      <AFPS index="1" type="struct" size="[1 1]">
+         <aFpsDefault index="1" type="char" size="[1 2]">
+            on
+         </aFpsDefault>
+      </AFPS>
+   </system>
+</matfile>

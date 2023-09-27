@@ -24,7 +24,7 @@
  */
 #include "sysctl.h"
 
-sysctl_boot_mode_e sysctl_boot_get_boot_mode(void)
+__weak  sysctl_boot_mode_e sysctl_boot_get_boot_mode(void)
 {
     switch(REG_SOC_BOOT_CTL & 0x3)/*bit0~1*/
     {        

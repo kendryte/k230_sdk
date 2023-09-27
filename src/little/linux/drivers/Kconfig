@@ -237,4 +237,6 @@ source "drivers/counter/Kconfig"
 source "drivers/most/Kconfig"
 
 source "drivers/canaan-hardlock/Kconfig"
+
+source "drivers/canaan-hwtimer/Kconfig"
 endmenu

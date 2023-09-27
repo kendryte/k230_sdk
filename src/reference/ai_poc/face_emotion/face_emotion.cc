@@ -45,12 +45,6 @@ cv::Scalar color_list_for_osd_emo[] = {
     cv::Scalar(255, 0, 170, 255),
     cv::Scalar(255, 0, 255, 255)};
 
-//文字属性
-int g_font_face= cv::FONT_HERSHEY_COMPLEX; //字体
-double g_font_scale=1.5;                  //缩放系数
-int g_line_type = 8;                      //线型
-int g_thickness = 3;                      //粗细
-
 FaceEmotion::FaceEmotion(const char *kmodel_file, const int debug_mode) : AIBase(kmodel_file,"FaceEmotion",debug_mode)
 {
     model_name_ = "FaceEmotion";
@@ -150,26 +144,12 @@ void FaceEmotion::draw_result(cv::Mat& src_img,Bbox& bbox,FaceEmotionInfo& resul
     }
     else
     {
-        int x = src_w - (bbox.x + bbox.w)/ isp_shape_.width * src_w;
-        int y = src_h - (bbox.y + bbox.h) / isp_shape_.height  * src_h;
+        int x = bbox.x / isp_shape_.width * src_w;
+        int y = bbox.y / isp_shape_.height * src_h;
         int w = bbox.w / isp_shape_.width * src_w;
-        int h = bbox.h / isp_shape_.height  * src_h;
+        int h = bbox.h / isp_shape_.height * src_h;
         cv::rectangle(src_img, cv::Rect(x, y , w, h), cv::Scalar(255,255, 255, 255), 2, 2, 0);
-
-		int base_line;
-		cv::Size text_size = cv::getTextSize(result.label, g_font_face, g_font_scale, g_thickness, &base_line);
-		cv::Mat text_img=cv::Mat::zeros(text_size.height+base_line+g_thickness,text_size.width,src_img.type());
-		cv::putText(text_img,text,cv::Point(0,text_img.size().height-g_thickness),g_font_face,g_font_scale,color_list_for_osd_emo[result.idx],g_thickness,g_line_type);
-		cv::rotate(text_img,text_img,cv::ROTATE_180); 
-        
-		int text_x = src_w - (bbox.x)/ isp_shape_.width * src_w - text_img.size().width;
-		text_x = std::max(0, std::min(text_x, int(src_w)));
-		int text_y =  src_h - (bbox.y) / isp_shape_.height  * src_h;
-		text_y = std::max(0, std::min(text_y, int(src_h)));
-		int text_w = std::min(text_img.size().width,src_w-text_x);
-		int text_h = std::min(text_img.size().height,src_h-text_y);
-		cv::Mat text_roi = src_img(cv::Rect(text_x,text_y,text_w,text_h));
-		text_img.copyTo(text_roi,text_img);
+		cv::putText(src_img, text , {x,std::max(int(y-10),0)}, cv::FONT_HERSHEY_COMPLEX, 2, color_list_for_osd_emo[result.idx], 2, 8, 0);
 	} 
 }
 

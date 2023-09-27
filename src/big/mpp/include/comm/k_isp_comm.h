@@ -56,7 +56,7 @@ extern "C" {
 #define ISP_IMG_MAX_WIDTH 4096
 #define ISP_IMG_MAX_HEIGH 2160
 
-#define ISP_AE_ROI_WINDOWS_MAX 8
+#define ISP_AE_ROI_WINDOWS_MAX 25
 #define ISP_AE_ROI_HOLD_FRAME 3
 /**
  * @brief Defines the input picture info of isp
@@ -80,7 +80,8 @@ typedef enum {
     ISP_MAIN_CHN  = 0,
     ISP_SELF1_CHN = 1,
     ISP_SELF2_CHN = 2,
-    ISP_CHN_ID_MAX,
+    ISP_RDMA_CHN = 3,
+    ISP_CHN_ID_MAX = 3,
 } k_isp_chn;
 
 /**
@@ -344,7 +345,6 @@ typedef enum {
     ISP_WORK_MODE_INVALID = 0,           /**< Invalid mode*/
     ISP_WORK_MODE_STREAM,                /**< Stream mode: one sensor input */
     ISP_WORK_MODE_MCM,                   /**< Reserved. */
-    ISP_WORK_MODE_TILE,                  /**< Reserved. */
     ISP_WORK_MODE_RDMA,                  /**< RDMA mode: input from DMA buffer */
     ISP_WORK_MODE_MAX
 } k_isp_work_mode;
@@ -477,7 +477,6 @@ typedef struct {
     k_sensor_mode sensor_mode;
     k_s32 sensor_fd;
     char sensor_name[32];
-    char calib_file[32];
     k_bool dw_enable;
     k_bool dev_enable;
     k_u32 buffer_num;

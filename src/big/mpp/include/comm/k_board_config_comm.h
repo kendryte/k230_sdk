@@ -42,7 +42,7 @@ extern "C" {
 
 
 // sip gpio board config 
-#if CONFIG_BOARD_K230D 
+#if defined(CONFIG_BOARD_K230D)
 // display gpio 
 #define DISPLAY_LCD_RST_GPIO                            21
 #define DISPLAY_LCD_BACKLIGHT_EN                        20
@@ -50,11 +50,9 @@ extern "C" {
 // imx335 gpio config 
 #define VICAP_IMX335_RST_GPIO                           37
 #define VICAP_IMX335_MASTER_GPIO                        33
-#endif
-
-
+#define OV5647_IIC "i2c1"
+#elif defined(CONFIG_BOARD_K230_EVB)
 // usip evb gpio config 
-#if CONFIG_BOARD_K230_EVB
 // display gpio 
 #define DISPLAY_LCD_RST_GPIO                            9
 #define DISPLAY_LCD_BACKLIGHT_EN                        31
@@ -63,6 +61,29 @@ extern "C" {
 #define VICAP_IMX335_RST_GPIO                           46
 #define VICAP_IMX335_MASTER_GPIO                        28
 
+#define OV5647_IIC "i2c1"
+
+#elif defined(CONFIG_BOARD_K230_CANMV)
+// usip evb gpio config
+// display gpio
+#define DISPLAY_LCD_RST_GPIO                            9
+#define DISPLAY_LCD_BACKLIGHT_EN                        31
+
+// imx335 gpio config
+#define VICAP_IMX335_RST_GPIO                           46
+#define VICAP_IMX335_MASTER_GPIO                        28
+#define OV5647_IIC "i2c3"
+
+
+#else
+
+#define DISPLAY_LCD_RST_GPIO                            9
+#define DISPLAY_LCD_BACKLIGHT_EN                        31
+
+// imx335 gpio config 
+#define VICAP_IMX335_RST_GPIO                           46
+#define VICAP_IMX335_MASTER_GPIO                        28
+#define OV5647_IIC "i2c1"
 #endif
 
 #ifdef __cplusplus

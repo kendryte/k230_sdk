@@ -1,0 +1,41 @@
+#!/bin/sh
+
+
+# Start all init scripts in /etc/init.d
+# executing them in numerical order.
+#
+cd /mnt
+insmod k_ipcm.ko
+cd -
+# mkdir -p /sharefs
+for i in /etc/init.d/S??* ;do
+
+     # Ignore dangling symlinks (if any).
+     [ ! -f "$i" ] && continue
+
+     case "$i" in
+	*.sh)
+	    # Source shell script for speed.
+	    (
+		trap - INT QUIT TSTP
+		set start
+		. $i
+	    )
+	    ;;
+	*)
+	    # No sh extension, so fork subprocess.
+	    $i start
+	    ;;
+    esac
+done
+cat /etc/version/release_version
+# if ! `grep mmc /proc/cmdline >/dev/null` ; then
+# 	if `grep mtd5 /proc/mtd >/dev/null`; then 
+# 		mount -t jffs2 /dev/mtdblock5 /mnt || (flash_erase /dev/mtd5 0 0; mount -t jffs2 /dev/mtdblock5 /mnt)
+# 	fi;
+# fi
+cd /mnt
+./sharefs &
+cd -
+mkdir -p /sharefs
+mount /dev/mmcblk0p4 /sharefs

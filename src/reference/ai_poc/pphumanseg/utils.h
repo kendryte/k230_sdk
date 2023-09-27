@@ -316,25 +316,7 @@ public:
      */
     static void affine(float *affine_matrix, std::unique_ptr<ai2d_builder> &builder, runtime_tensor &ai2d_in_tensor, runtime_tensor &ai2d_out_tensor);
 
-    /**
-     * @brief 非极大值抑制
-     * @input_boxes 所有候选框
-     * @NMS_THRESH NMS阈值 
-     * @return None
-    **/
-    static void nms(std::vector<BoxInfo> &input_boxes, float NMS_THRESH);
-
-    /**
-     * @brief 解码
-     * @data kmodel 推理结果
-     * @net_size kmodel 输入尺寸大小
-     * @stride 步长
-     * @num_classes 类别数
-     * @frame_size 分辨率
-     * @anchors 锚框
-     * @threshold 检测框阈值
-    **/
-    static std::vector<BoxInfo> decode_infer(float *data, int net_size, int stride, int num_classes, FrameSize frame_size, float anchors[][2], float threshold);
+   
 };
 
 #endif

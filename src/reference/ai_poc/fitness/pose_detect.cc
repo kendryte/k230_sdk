@@ -28,8 +28,7 @@
 
 
 // for image
-poseDetect::poseDetect(const char *kmodel_file, float obj_thresh,float nms_thresh,  const int debug_mode)
-: obj_thresh_(obj_thresh),nms_thresh_(nms_thresh), AIBase(kmodel_file,"poseDetect", debug_mode)
+poseDetect::poseDetect(const char *kmodel_file, float obj_thresh,float nms_thresh,  const int debug_mode): obj_thresh_(obj_thresh),nms_thresh_(nms_thresh), AIBase(kmodel_file,"poseDetect", debug_mode)
 {
     model_name_ = "poseDetect";
     
@@ -37,8 +36,7 @@ poseDetect::poseDetect(const char *kmodel_file, float obj_thresh,float nms_thres
 }   
 
 // for video
-poseDetect::poseDetect(const char *kmodel_file, float obj_thresh,float nms_thresh, FrameCHWSize isp_shape, uintptr_t vaddr, uintptr_t paddr, const int debug_mode)
-: obj_thresh_(obj_thresh),nms_thresh_(nms_thresh), AIBase(kmodel_file,"poseDetect", debug_mode)
+poseDetect::poseDetect(const char *kmodel_file, float obj_thresh,float nms_thresh, FrameCHWSize isp_shape, uintptr_t vaddr, uintptr_t paddr, const int debug_mode): obj_thresh_(obj_thresh),nms_thresh_(nms_thresh), AIBase(kmodel_file,"poseDetect", debug_mode)
 {
     model_name_ = "poseDetect";
     
@@ -58,7 +56,6 @@ poseDetect::poseDetect(const char *kmodel_file, float obj_thresh,float nms_thres
     ai2d_out_tensor_ = get_input_tensor(0);
     // fixed padding resize param
     Utils::padding_resize_params(params,isp_shape_, {input_shapes_[0][3], input_shapes_[0][2]}, ai2d_builder_, ai2d_in_tensor_, ai2d_out_tensor_, cv::Scalar(114, 114, 114));
-
 }
 
 poseDetect::~poseDetect()
@@ -73,7 +70,7 @@ void poseDetect::pre_process(cv::Mat ori_img)
     std::vector<uint8_t> chw_vec;
     Utils::hwc_to_chw(ori_img, chw_vec);
     Utils::padding_resize_params(params,{ori_img.channels(), ori_img.rows, ori_img.cols}, chw_vec, {input_shapes_[0][3], input_shapes_[0][2]}, ai2d_out_tensor_, cv::Scalar(114, 114, 114));
-
+    
 }
 
 // ai2d for video
@@ -101,7 +98,6 @@ void poseDetect::inference()
 bool poseDetect::BatchDetect(  float* all_data, std::vector<std::vector<OutputPose>>& output,cv::Vec4d params)
 {
 
-    
     _outputTensorShape = { output_shapes_[0][0], output_shapes_[0][1], output_shapes_[0][2] };
     _anchorLength = output_shapes_[0][1];
 
@@ -131,8 +127,6 @@ bool poseDetect::BatchDetect(  float* all_data, std::vector<std::vector<OutputPo
             float w = pdata[2] / params[0]; //w
             float h = pdata[3] / params[1]; //h
  
-            // int left = MAX(int(x - 0.5 *w +0.5), 0);
-            // int top = MAX(int(y - 0.5*h + 0.5), 0);
             float left = MAX(int(x - 0.5 *w +0.5), 0);
             float top = MAX(int(y - 0.5*h + 0.5), 0);
  
@@ -151,7 +145,6 @@ bool poseDetect::BatchDetect(  float* all_data, std::vector<std::vector<OutputPo
             confidences.push_back(score);
             labels.push_back(0);
             kpss.push_back(kps);
-            // boxes.push_back(Rect(left, top, int(w + 0.5), int(h + 0.5)));
             boxes.push_back(Rect(left, top, float(w + 0.5), float(h + 0.5)));
         }
         pdata += _anchorLength; //下一个预测框

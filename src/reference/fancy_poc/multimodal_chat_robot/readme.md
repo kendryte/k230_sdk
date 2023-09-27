@@ -2,7 +2,7 @@
 
 ![](./resource/example_images/canaan-cover.png)
 
-Document version: V1.0 Release date: 2023-7-17
+Document version: V1.0 Release date: 2023-8-31
 
 ## 介绍
 
@@ -100,12 +100,18 @@ Document version: V1.0 Release date: 2023-7-17
 ## 客户端准备
 
 * 在k230 docker中进入到/mnt/src/reference/fancy_poc/目录下，
+
 * 然后执行./build_app.sh，将会在/mnt/src/reference/fancy_poc/k230_bin/目录下生成相应的可执行文件**socket_gpt_image_audo**和**AIOT_GPT.elf**
+
 * 进入到开发板环境后将/dev/mmcblk0p1（linux文件系统）挂载到/sharefs下
+
 * 在k230开发板的sharefs目录下创建Multimodal_Chat_Robot目录mkdir Multimodal_Chat_Robot
-* 拷贝**socket_gpt_image_audo**和**AIOT_GPT.elf**到k230开发板sharefs目录下
-* 拷贝fancy_poc中的run.sh脚本拷贝到Multimodal_Chat_Robot下
+
+* 拷贝**socket_gpt_image_audo**和**AIOT_GPT.elf**以及src/utils中的**run.sh**到k230开发板sharefs/Multimodal_Chat_Robot目录下
+
 * 在Multimodal_Chat_Robot目录下创建临时文件，执行touch received_image.jpg、touch audio.wav、touch param.txt
+
+  芯片端所使用的文件具体可参考download.sh 脚本下载的onboard文件夹内容（可以用编译出来的**socket_gpt_image_audo**和**AIOT_GPT.elf**替换onboard内容使用）
 
 ## 程序运行
 

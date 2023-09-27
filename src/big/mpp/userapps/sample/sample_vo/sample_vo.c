@@ -142,7 +142,11 @@ int main(int argc, char *argv[])
         dwc_dsi_layer0_init();
         vo_layer0_scaler_test();
         break;
-        
+    
+    case DISPALY_VO_CONNECTOR_TEST :
+        // sample_connector_init();
+        sample_connector_osd_install_frame();
+        break;
     default :
         break;
     }

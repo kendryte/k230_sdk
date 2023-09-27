@@ -32,7 +32,8 @@
 #include <sys/mman.h>
 #include <arpa/inet.h>
 #include "k_autoconf_comm.h"
-
+#include <sys/socket.h>
+#include <linux/if_alg.h>
 #define uint32_t uint
 #define uint8_t unsigned char
 
@@ -65,9 +66,25 @@ typedef struct image_header {
 
 typedef enum {
     NONE_SECURITY = 0,
+    GCM_ONLY,
     CHINESE_SECURITY,
     INTERNATIONAL_SECURITY
 } crypto_type_e;
+
+
+static const struct aes_gcm_para
+{
+	uint32_t keybits;
+	const void *key;
+	uint32_t ivlen;
+	const void *iv;
+	uint32_t aadlen;
+	const void *aad;
+} aes_gcm = 
+{  256, "\x24\x50\x1a\xd3\x84\xe4\x73\x96\x3d\x47\x6e\xdc\xfe\x08\x20\x52\x37\xac\xfd\x49\xb5\xb8\xf3\x38\x57\xf8\x11\x4e\x86\x3f\xec\x7f",
+   12, "\x9f\xf1\x85\x63\xb9\x78\xec\x28\x1b\x3f\x27\x94",
+   0, "",
+};
 
 typedef struct __firmware_head_st
 {
@@ -105,7 +122,7 @@ typedef struct __firmware_head_st
 #define TMP_FILE_FACE_DB_SAVE_SHA256     "/tmp/face_db_sha256"
 #define TMP_FILE_FACE_DB_SAVE_VER_UH_GZIPDAT   "/tmp/face_db_ver_uh_gzd"
 #define TMP_FILE_FACE_DB_SAVE_FWh_VER_UH_GZIPDAT  "/tmp/face_db_fwh_ver_uh_gzd"
-
+#define TMP_FILE_FACE_DB_SAVE_VER_UH_GZIPDAT_ENC   "/tmp/face_db_ver_uh_gzd_enc"
 
 static int save_buff_2_file(char *buffer,long len,char *name)
 {
@@ -123,6 +140,160 @@ static int save_buff_2_file(char *buffer,long len,char *name)
 
    fclose(fp);
    //ret = system("set -e; cd /tmp;gzip ttt.bin;");
+   return 0;
+}
+
+static int read_file_2_buff(char *buffer, long len, char *name)
+{
+   int ret = 0;
+   FILE *fp = fopen(name, "rb");
+   if (!fp) {
+      perror("fopen");
+      return EXIT_FAILURE;
+   }
+
+   ret = fread(buffer, len, 1, fp);
+   if (ret != 1) {
+      fprintf(stderr, "fread() failed: %x\n", ret);
+      return (EXIT_FAILURE);
+   }
+
+   fclose(fp);
+   return 0;
+}
+
+static int cal_aes_gcm(const uint8_t *key,
+                        uint32_t keybits,
+                        unsigned int op,
+                        const uint8_t *in,
+                        uint32_t inlen,
+                        const uint8_t *aad,
+                        uint32_t aadlen,
+                        const uint8_t *iv,
+                        uint32_t ivlen,
+                        uint8_t *out)
+{
+   int tfmfd;
+	int opfd;
+	int cmsg_size;
+	int out_msg_len = (op == ALG_OP_DECRYPT) ? inlen : (inlen + 16);
+	unsigned char *buf = (unsigned char *)malloc(out_msg_len + 256);
+
+	struct sockaddr_alg sa = {
+		.salg_family = AF_ALG,
+		.salg_type = "aead",
+		.salg_name = "gcm(aes)",
+	};
+
+	// create and bind socket
+	tfmfd = socket(AF_ALG, SOCK_SEQPACKET, 0);
+	bind(tfmfd, (struct sockaddr *)&sa, sizeof(sa));
+
+	//set socket options: key, AEAD Authentication size
+	setsockopt(tfmfd, SOL_ALG, ALG_SET_KEY, key, (keybits >> 3));
+	setsockopt(tfmfd, SOL_ALG, ALG_SET_AEAD_AUTHSIZE, NULL, 16);
+	//accept connection
+	opfd = accept(tfmfd, NULL, 0);
+
+	//Prepare Message
+	struct msghdr msg = {};
+	struct cmsghdr *cmsg;
+	struct iovec iov[2];
+
+	cmsg_size = CMSG_SPACE(4);
+	cmsg_size += aadlen ? CMSG_SPACE(4) : 0;
+	cmsg_size += ivlen ? CMSG_SPACE(sizeof(struct af_alg_iv) + ivlen) : 0;
+    char *cbuf = (char *)malloc(cmsg_size);
+    memset(cbuf, 0, cmsg_size);
+
+	msg.msg_control = cbuf;
+	msg.msg_controllen = cmsg_size;
+	msg.msg_iov = iov;
+
+	//set the Headervalues for the Operation
+	cmsg = CMSG_FIRSTHDR(&msg);
+	cmsg->cmsg_level = SOL_ALG;
+	cmsg->cmsg_type = ALG_SET_OP;
+	cmsg->cmsg_len = CMSG_LEN(4);
+	*(__u32 *)CMSG_DATA(cmsg) = op;
+
+	//set headervalues for aad
+	if(aadlen)
+	{
+		cmsg = CMSG_NXTHDR(&msg, cmsg);
+        cmsg->cmsg_level = SOL_ALG;
+        cmsg->cmsg_type = ALG_SET_AEAD_ASSOCLEN;
+        cmsg->cmsg_len = CMSG_LEN(4);
+		unsigned int ad_data = (void *)CMSG_DATA(cmsg);
+        *(unsigned int *)CMSG_DATA(cmsg) = aadlen;
+
+		iov[0].iov_base = (void *)aad;
+        iov[0].iov_len = aadlen;
+        iov[1].iov_base = (void *)in;
+        iov[1].iov_len = inlen;
+        msg.msg_iovlen = 2;
+	}
+	else
+	{
+		iov[0].iov_base = (void *)in;
+		iov[0].iov_len = inlen;
+		msg.msg_iovlen = 1;
+	}
+
+	//set headervalues for iv
+	if(ivlen)
+	{
+		struct af_alg_iv *algiv;
+
+		cmsg = CMSG_NXTHDR(&msg, cmsg);
+		cmsg->cmsg_level = SOL_ALG;
+		cmsg->cmsg_type = ALG_SET_IV;
+		cmsg->cmsg_len = CMSG_LEN(sizeof(*algiv) + ivlen);
+
+		algiv = (void *)CMSG_DATA(cmsg);
+		algiv->ivlen = ivlen;
+		memcpy(algiv->iv, iv, ivlen);
+	}
+
+	// send message
+	sendmsg(opfd, &msg, MSG_DONTWAIT);
+
+	if (aadlen)
+	{
+		iov[0].iov_base = malloc(aadlen);
+		iov[0].iov_len = aadlen;
+		iov[1].iov_base = (void *)buf;
+		iov[1].iov_len = out_msg_len;
+		msg.msg_iovlen = 2;
+
+		msg.msg_control = NULL;
+		msg.msg_controllen = 0;
+
+		// receive message
+		recvmsg(opfd, &msg, MSG_DONTWAIT);
+
+		free(iov[0].iov_base);
+	}
+	else
+	{
+		iov[0].iov_base = (void *)buf;
+		iov[0].iov_len = out_msg_len;
+		msg.msg_iovlen = 1;
+
+		msg.msg_control = NULL;
+		msg.msg_controllen = 0;
+
+		// receive message
+		recvmsg(opfd, &msg, MSG_DONTWAIT);
+    }
+
+	memcpy(out, buf, (out_msg_len) * sizeof(unsigned char));
+
+	free(buf);
+   free(cbuf);
+	close(opfd);
+	close(tfmfd);
+
    return 0;
 }
 
@@ -201,17 +372,34 @@ static int add_k230_fimware_head()
 {
    char cmd[128];
    firmware_head_s fh;
+   uint32_t tmp_len;
 
    memset(&fh,0,sizeof(fh));
    
    fh.magic=MAGIC_NUM;
-   fh.length=get_size(TMP_FILE_FACE_DB_SAVE_VER_UH_GZIPDAT);
-   fh.crypto_type=NONE_SECURITY;
-   ER(calc_sha256(TMP_FILE_FACE_DB_SAVE_VER_UH_GZIPDAT,fh.verify.none_sec.signature));
-
+   tmp_len=get_size(TMP_FILE_FACE_DB_SAVE_VER_UH_GZIPDAT);
+   fh.crypto_type=GCM_ONLY;
+   uint8_t tmp_in[tmp_len];
+   uint8_t out[tmp_len + 16];
+   // copy plaintext to file
+   ER(read_file_2_buff((char*)tmp_in, tmp_len, TMP_FILE_FACE_DB_SAVE_VER_UH_GZIPDAT));
+   // encryption
+   ER(cal_aes_gcm(aes_gcm.key,
+                  aes_gcm.keybits,
+                  ALG_OP_ENCRYPT,
+                  tmp_in,
+                  tmp_len,
+                  aes_gcm.aad,
+                  aes_gcm.aadlen,
+                  aes_gcm.iv,
+                  aes_gcm.ivlen,
+                  out));
+   ER(save_buff_2_file(out, (tmp_len + 16), TMP_FILE_FACE_DB_SAVE_VER_UH_GZIPDAT_ENC));
+   fh.length=get_size(TMP_FILE_FACE_DB_SAVE_VER_UH_GZIPDAT_ENC);
    ER(save_buff_2_file((char*)&fh,sizeof(fh), TMP_FILE_FACE_DB_SAVE_FWH));
    sprintf(cmd, "cat %s %s > %s", 
-         TMP_FILE_FACE_DB_SAVE_FWH,TMP_FILE_FACE_DB_SAVE_VER_UH_GZIPDAT,TMP_FILE_FACE_DB_SAVE_FWh_VER_UH_GZIPDAT);
+         TMP_FILE_FACE_DB_SAVE_FWH,TMP_FILE_FACE_DB_SAVE_VER_UH_GZIPDAT_ENC,TMP_FILE_FACE_DB_SAVE_FWh_VER_UH_GZIPDAT);
+         
    return system(cmd);
 }
 //#define TMP_FILE_FACE_DB_SAVE_FWh_VER_UH_GZIPDAT  "/tmp/face_db_fwh_ver_uh_gzipdata"

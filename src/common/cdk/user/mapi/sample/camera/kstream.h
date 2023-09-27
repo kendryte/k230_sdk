@@ -39,6 +39,7 @@ typedef struct stream_control_ops {
     int (*init)(void);
     int (*startup)(void);
     int (*shutdown)(void);
+    int (*deinit)(void);
     int (*set_idr)(void);
     int (*set_property)(struct encoder_property *p);
 } stream_control_ops_st;
@@ -54,6 +55,7 @@ extern int kstream_register_mpi_ops(struct stream_control_ops *sc_ops);
 extern int kstream_init(void);
 extern int kstream_startup(void);
 extern int kstream_shutdown(void);
+extern int kstream_deinit(void);
 extern int kstream_set_enc_property(struct encoder_property *p);
 extern int kstream_set_enc_idr(void);
 

@@ -113,7 +113,7 @@ void FaceDetection::pre_process(cv::Mat ori_img, std::vector<uint8_t> &dst)
 {
     ScopedTiming st(model_name_ + " pre_process", debug_mode_);
     cv::Mat padding_resize_img = Utils::padding_resize(ori_img, {input_shapes_[0][3], input_shapes_[0][2]});
-    Utils::hwc_to_chw(padding_resize_img, dst);
+    Utils::bgr2rgb_and_hwc2chw(padding_resize_img,dst);
 }
 
 // ai2d for image
@@ -121,7 +121,7 @@ void FaceDetection::pre_process(cv::Mat ori_img)
 {
     ScopedTiming st(model_name_ + " pre_process image", debug_mode_);
     std::vector<uint8_t> chw_vec;
-    Utils::hwc_to_chw(ori_img, chw_vec);
+    Utils::bgr2rgb_and_hwc2chw(ori_img,chw_vec);
     Utils::padding_resize_one_side({ori_img.channels(), ori_img.rows, ori_img.cols}, chw_vec, {input_shapes_[0][3], input_shapes_[0][2]}, ai2d_out_tensor_, cv::Scalar(104, 117, 123));
 }
 
@@ -187,8 +187,8 @@ void FaceDetection::draw_result(cv::Mat& src_img,vector<FaceDetectionInfo>& resu
             }
             else
             {
-                int32_t x0 = src_w - l.points[2 * ll]/isp_shape_.width*src_w;
-                int32_t y0 = src_h - l.points[2 * ll+1]/isp_shape_.height*src_h;
+                int32_t x0 = l.points[2 * ll]/isp_shape_.width*src_w;
+                int32_t y0 = l.points[2 * ll+1]/isp_shape_.height*src_h;
                 cv::circle(src_img, cv::Point(x0, y0), 4, color_list_for_osd_det[ll], 8); 
             }
         }
@@ -203,12 +203,11 @@ void FaceDetection::draw_result(cv::Mat& src_img,vector<FaceDetectionInfo>& resu
         }
         else
         {
-            int x = src_w - (b.x + b.w)/ isp_shape_.width * src_w;
-            int y = src_h - (b.y + b.h) / isp_shape_.height  * src_h;
+            int x = b.x / isp_shape_.width * src_w;
+            int y = b.y / isp_shape_.height * src_h;
             int w = b.w / isp_shape_.width * src_w;
-            int h = b.h / isp_shape_.height  * src_h;
+            int h = b.h / isp_shape_.height * src_h;
             cv::rectangle(src_img, cv::Rect(x, y , w, h), cv::Scalar(255,255, 255, 255), 6, 2, 0);
-            // cv::putText(src_img, text , {x--10, y-10}, cv::FONT_HERSHEY_COMPLEX, 0.5, cv::Scalar(255,0, 255, 255), 1, 8, 0);
         }        
     }
 }

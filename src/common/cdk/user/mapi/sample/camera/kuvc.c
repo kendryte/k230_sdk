@@ -29,7 +29,7 @@
 #include "uvc_gadgete.h"
 
 static pthread_t g_uvc_send_data_pid;
-
+static int running = 0;
 static int __init()
 {
     return 0;
@@ -37,6 +37,7 @@ static int __init()
 
 static int __open()
 {
+    running = 1;
     const char *devpath = "/dev/video0";
 
     return open_uvc_device(devpath);
@@ -44,17 +45,22 @@ static int __open()
 
 static int __close()
 {
+    running = 0;
+    sleep(2);
     return close_uvc_device();
 }
 
 void* uvc_send_data_thread(void *p)
 {
     int status = 0;
-    int running = 1;
 
     while (running)
     {
         status = run_uvc_data();
+        if (status < 0)
+        {
+            break;
+        }
     }
 
     RLOG("uvc_send_data_thread exit, status: %d.\n", status);
@@ -65,7 +71,6 @@ void* uvc_send_data_thread(void *p)
 static int __run()
 {
     int status = 0;
-    int running = 1;
 
     pthread_create(&g_uvc_send_data_pid, 0, uvc_send_data_thread, NULL);
 
@@ -83,7 +88,7 @@ static int __run()
     }
 
     pthread_join(g_uvc_send_data_pid, NULL);
-
+    RLOG("run_uvc_device exit, status: %d.\n", status);
     return 0;
 }
 
@@ -102,6 +107,3 @@ kuvc* get_kuvc()
     return &__k_uvc;
 }
 
-void release_kuvc(kuvc *uvc)
-{
-}

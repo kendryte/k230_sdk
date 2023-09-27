@@ -19,8 +19,9 @@ void ddr4_init_3200(void);
 void ddr_init_2667(void);
 void sip_ddr_init_3200_have_wodt(void);
 void sip_ddr_init_3200_have_all_odt(void);
+void pi_ddr_init_2133(void);
 
-int ddr_init_training(void)
+__weak int ddr_init_training(void)
 {
 	#if defined(CONFIG_TARGET_K230_FPGA) 
 		return 0; //fpga not need init;
@@ -53,6 +54,8 @@ int ddr_init_training(void)
 		sip_ddr_init_3200_have_wodt();	
 	#elif  defined(CONFIG_SIPLP4_3200_WALLODT) 
 		sip_ddr_init_3200_have_all_odt();	
+	#elif defined(CONFIG_CANMV_LPDDR3_2133)
+		pi_ddr_init_2133();	
 	#endif 	
 
 	return 0;
@@ -60,7 +63,7 @@ int ddr_init_training(void)
 
 int dram_init(void)
 {
-	ddr_init_training();	
+	//ddr_init_training();	
 	return fdtdec_setup_mem_size_base();
 }
 

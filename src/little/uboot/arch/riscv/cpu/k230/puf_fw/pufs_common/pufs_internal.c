@@ -30,6 +30,36 @@
 uint8_t pufs_buffer[BUFFER_SIZE];
 
 /*****************************************************************************
+ * Hardlock
+ ****************************************************************************/
+void hardlock_config(pufs_lock_t lock_cfg)
+{
+    void *lock_base_addr = 0x911040b8;
+
+    switch(lock_cfg)
+    {
+        case lock:
+        {
+            while((*(uint32_t *)lock_base_addr) == 1);
+            *(uint32_t *)lock_base_addr = 0x1;
+
+            break;
+        }
+
+        case unlock:
+        {
+            if(*(uint32_t *)lock_base_addr)
+                *(uint32_t *)lock_base_addr = 0x0;
+
+            break;
+        }
+
+        default:
+            break;
+    }
+}
+
+/*****************************************************************************
  * Internal functions
  ****************************************************************************/
 /**

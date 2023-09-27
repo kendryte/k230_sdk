@@ -753,8 +753,8 @@ void Utils::DrawPred_video(cv::Mat& img,FrameSize frame_size, std::vector<Output
                 int kps_y = std::round(kps[k*3 + 1]);
                 float kps_s = kps[k*3 + 2];
  
-                int kps_x1 = osd_width - (float)kps_x / SENSOR_WIDTH * osd_width;
-                int kps_y1 = osd_height - (float)kps_y / SENSOR_HEIGHT  * osd_height;
+                int kps_x1 =  (float)kps_x / SENSOR_WIDTH * osd_width;
+                int kps_y1 =  (float)kps_y / SENSOR_HEIGHT  * osd_height;
 
                 if (kps_s > 0.0f){
                     cv::Scalar kps_color = cv::Scalar(255,KPS_COLORS[k][0],KPS_COLORS[k][1],KPS_COLORS[k][2]);
@@ -766,14 +766,14 @@ void Utils::DrawPred_video(cv::Mat& img,FrameSize frame_size, std::vector<Output
             int pos1_x = std::round(kps[(ske[0] -1) * 3]);
             int pos1_y = std::round(kps[(ske[0] -1) * 3 + 1]);
 
-            int pos1_x_ = osd_width - (float)pos1_x / SENSOR_WIDTH * osd_width;
-            int pos1_y_ = osd_height - (float)pos1_y / SENSOR_HEIGHT  * osd_height;
+            int pos1_x_ =  (float)pos1_x / SENSOR_WIDTH * osd_width;
+            int pos1_y_ =  (float)pos1_y / SENSOR_HEIGHT  * osd_height;
 
             int pos2_x = std::round(kps[(ske[1] -1) * 3]);
             int pos2_y = std::round(kps[(ske[1] -1) * 3 + 1]);
 
-            int pos2_x_ = osd_width - (float)pos2_x / SENSOR_WIDTH * osd_width;
-            int pos2_y_ = osd_height - (float)pos2_y / SENSOR_HEIGHT  * osd_height;
+            int pos2_x_ = (float)pos2_x / SENSOR_WIDTH * osd_width;
+            int pos2_y_ =  (float)pos2_y / SENSOR_HEIGHT  * osd_height;
  
             float pos1_s = kps[(ske[0] -1) * 3 + 2];
             float pos2_s = kps[(ske[1] -1) * 3 + 2];

@@ -192,8 +192,8 @@ static void sample_vicap_config(k_u32 ch, k_u32 width, k_u32 height, k_vicap_sen
     ret = kd_mpi_vicap_get_sensor_info(sensor_info.sensor_type, &sensor_info);
     CHECK_RET(ret, __func__, __LINE__);
 
-    dev_attr.acq_win.width = width;
-    dev_attr.acq_win.height = height;
+    dev_attr.acq_win.width = sensor_info.width;
+    dev_attr.acq_win.height = sensor_info.height;
     dev_attr.mode = VICAP_WORK_ONLINE_MODE;
 
     memcpy(&dev_attr.sensor_info, &sensor_info, sizeof(k_vicap_sensor_info));
@@ -201,7 +201,9 @@ static void sample_vicap_config(k_u32 ch, k_u32 width, k_u32 height, k_vicap_sen
     ret = kd_mpi_vicap_set_dev_attr(vicap_dev, dev_attr);
     CHECK_RET(ret, __func__, __LINE__);
 
-    chn_attr.out_win = dev_attr.acq_win;
+    chn_attr.out_win.width = width;
+    chn_attr.out_win.height = height;
+
     chn_attr.crop_win = chn_attr.out_win;
     chn_attr.scale_win = chn_attr.out_win;
     chn_attr.crop_enable = K_FALSE;
@@ -894,9 +896,10 @@ void sample_venc_usage(char *sPrgNm)
     printf("\t  3) OSD + Border + H.265e.\n");
     printf("\n");
     printf("sensor_index:\n");
-    printf("\t  0: OV_OV9732_MIPI_1920X1080_30FPS_10BIT_LINEAR\n");
-    printf("\t  2: OV_OV9732_MIPI_1280X720_30FPS_10BIT_LINEAR\n");
-    printf("\t  3: OV_OV9286_MIPI_1920X1080_30FPS_10BIT_LINEAR\n");
+    printf("\t  0: OV_OV9732_MIPI_1280X720_30FPS_10BIT_LINEAR\n");
+    printf("\t  1: OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_IR\n");
+    printf("\t  2: OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_SPECKLE\n");
+    printf("\t  3: OV_OV9286_MIPI_1280X720_60FPS_10BIT_LINEAR_IR\n");
     printf("\t  7: IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_LINEAR\n");
     printf("\t  8: IMX335_MIPI_2LANE_RAW12_2592X1944_30FPS_LINEAR\n");
     printf("\t  9: IMX335_MIPI_4LANE_RAW12_2592X1944_30FPS_LINEAR\n");

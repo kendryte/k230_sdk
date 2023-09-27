@@ -134,8 +134,8 @@ void FacePose::draw_result(cv::Mat& src_img,Bbox& bbox,FacePoseInfo& result, boo
 		}
 		else
 		{
-			x = src_width - (sum_x + center_x)/isp_shape_.width*src_width;
-            y = src_height - (sum_y + center_y)/isp_shape_.height*src_height;
+			x = (sum_x + center_x)/isp_shape_.width*src_width;
+            y = (sum_y + center_y)/isp_shape_.height*src_height;
 		}
 		//check
 		point.x = std::max(0, std::min(x, src_width));
@@ -168,11 +168,6 @@ void FacePose::draw_result(cv::Mat& src_img,Bbox& bbox,FacePoseInfo& result, boo
 		{
 			cv::line(src_img, first_points[ll], second_points[ll], cv::Scalar(255, 0, 0, 255), 5, 8, 0);
 		}
-		// char text[50];
-    	// sprintf(text, "roll:%.2f,yaw:%.2f,pitch:%.2f",result.roll,result.yaw,result.pitch);
-		// int x = src_width - (bbox.y + bbox.h)/ isp_shape_.height * src_width;
-        // int y = bbox.x / isp_shape_.width  * src_height;
-		// cv::putText(src_img, text, {std::max(int(x-10),0), std::max(int(y-10),0)}, cv::FONT_HERSHEY_COMPLEX, 1.2, cv::Scalar(255, 0, 0, 255), 2, 4, 0);
 	}   
 }
 

@@ -44,13 +44,15 @@
 #define B2b(len) (8 * (len))
 
 
+static void *puf_dma_base;
+static void *puf_crypto_base;
+static void *puf_kwp_base;
+static void *puf_ka_base;
+
 void *dma_virt_in;
 void *dma_virt_out;
 dma_addr_t dma_phys_in;
 dma_addr_t dma_phys_out;
-static uint8_t tag[AES_BLOCK_SIZE];
-static uint8_t newtag[AES_BLOCK_SIZE];
-static uint8_t out[100];
 uint8_t kwp_buffer[BUFFER_SIZE];
 struct kendryte_crypto_info crypto_info;
 
@@ -113,6 +115,12 @@ static kendryte_status_t get_config(uint32_t *cfg, struct kendryte_aes_ctx *ctx,
 		case AES:
 			switch((ctx->keylen) << 3)
 			{
+				case 128:
+					val32 = 0x0;
+					break;
+				case 192:
+					val32 = 0x1;
+					break;
 				case 256:
 					val32 = 0x2;
 					break;
@@ -198,11 +206,11 @@ blsegs segment(uint8_t *buf, uint32_t buflen, const uint8_t *in, uint32_t inlen,
 }
 
 //----------------------KWP FUNCTION----------------------------------------//
-static kendryte_status_t kwp_start(struct kendryte_aes_ctx *ctx)
+static kendryte_status_t kwp_start(void)
 {
 	uint32_t val32;
-	writel(0x1, ctx->dev->base + KWP_START_OFFSET);
-	while(((val32 = readl(ctx->dev->base + KWP_STATUS_OFFSET)) & KWP_STATUS_BUSY_MASK) != 0);
+	writel(0x1, puf_kwp_base + KWP_START_OFFSET);
+	while(((val32 = readl(puf_kwp_base + KWP_STATUS_OFFSET)) & KWP_STATUS_BUSY_MASK) != 0);
 
     if (val32 & (0x1 << 2))
         return E_DENY;
@@ -221,7 +229,7 @@ static kendryte_status_t kwp_start(struct kendryte_aes_ctx *ctx)
 	return SUCCESS;
 }
 
-static kendryte_status_t ka_skslot_check(struct kendryte_aes_ctx *ctx, bool valid, kendryte_ka_slot_t slot, uint32_t keybits)
+static kendryte_status_t ka_skslot_check(bool valid, kendryte_ka_slot_t slot, uint32_t keybits)
 {
 	// check keybits
     switch (slot)
@@ -277,7 +285,7 @@ static kendryte_status_t ka_skslot_check(struct kendryte_aes_ctx *ctx, bool vali
 			case SK128_7:
 				idx = slot - SK128_0;
 				tagbase = 0x30;
-				key_info = readl(ctx->dev->base + KA_SK_0_OFFSET + idx * 4);
+				key_info = readl(puf_ka_base + KA_SK_0_OFFSET + idx * 4);
 				if (((key_info & SK_KEY_VAILD_MASK) == 0) ||
 					(((key_info & SK_KEY_SIZE_MASK) >> 4) != keybits) ||
 					(((key_info & SK_KEY_TAG_MASK) >> 16) != (tagbase + idx)))
@@ -289,24 +297,24 @@ static kendryte_status_t ka_skslot_check(struct kendryte_aes_ctx *ctx, bool vali
 			case SK256_3:
 				idx = slot - SK256_0;
 				tagbase = 0x50;
-				key_info = readl(ctx->dev->base + KA_SK_0_OFFSET + idx * 2 * 4);
+				key_info = readl(puf_ka_base + KA_SK_0_OFFSET + idx * 2 * 4);
 				if (((key_info & SK_KEY_VAILD_MASK) == 0) ||
 					(((key_info & SK_KEY_SIZE_MASK) >> 4) != keybits) ||
 					(((key_info & SK_KEY_TAG_MASK) >> 16) != (tagbase + idx)) ||
-					(readl(ctx->dev->base + KA_SK_0_OFFSET + idx * 2 * 4 + 4) != ((tagbase + idx) << 16)))
+					(readl(puf_ka_base + KA_SK_0_OFFSET + idx * 2 * 4 + 4) != ((tagbase + idx) << 16)))
 					return E_INVALID;
 				break;
 			case SK512_0:
 			case SK512_1:
 				idx = slot - SK512_0;
 				tagbase = 0x60;
-				key_info = readl(ctx->dev->base + KA_SK_0_OFFSET + idx * 4 * 4);
+				key_info = readl(puf_ka_base + KA_SK_0_OFFSET + idx * 4 * 4);
 				if (((key_info & SK_KEY_VAILD_MASK) == 0) ||
 					(((key_info & SK_KEY_SIZE_MASK) >> 4) != keybits) ||
 					(((key_info & SK_KEY_TAG_MASK) >> 16) != (tagbase + idx)) ||
-					(readl(ctx->dev->base + KA_SK_0_OFFSET + idx * 4 * 4 + 4) != ((tagbase + idx) << 16)) ||
-					(readl(ctx->dev->base + KA_SK_0_OFFSET + idx * 4 * 4 + 8) != ((tagbase + idx) << 16)) ||
-					(readl(ctx->dev->base + KA_SK_0_OFFSET + idx * 4 * 4 + 12) != ((tagbase + idx) << 16)))
+					(readl(puf_ka_base + KA_SK_0_OFFSET + idx * 4 * 4 + 4) != ((tagbase + idx) << 16)) ||
+					(readl(puf_ka_base + KA_SK_0_OFFSET + idx * 4 * 4 + 8) != ((tagbase + idx) << 16)) ||
+					(readl(puf_ka_base + KA_SK_0_OFFSET + idx * 4 * 4 + 12) != ((tagbase + idx) << 16)))
 					return E_INVALID;
 				break;
 			default:
@@ -318,12 +326,12 @@ static kendryte_status_t ka_skslot_check(struct kendryte_aes_ctx *ctx, bool vali
 	return SUCCESS;
 }
 
-static kendryte_status_t keyslot_check(struct kendryte_aes_ctx *ctx, bool valid, kendryte_key_type_t keytype, uint32_t slot, uint32_t keybits)
+static kendryte_status_t keyslot_check(bool valid, kendryte_key_type_t keytype, uint32_t slot, uint32_t keybits)
 {
 	switch (keytype)
     {
 		case SSKEY:
-			return ka_skslot_check(ctx, valid, (kendryte_ka_slot_t)slot, keybits);
+			return ka_skslot_check(valid, (kendryte_ka_slot_t)slot, keybits);
 		default:
 			return E_INVALID;
     }
@@ -364,41 +372,41 @@ int get_key_slot_idx(kendryte_key_type_t keytype, kendryte_ka_slot_t keyslot)
 }
 
 //---------------------------------CRYTPO FUNCTION----------------------------------------//
-kendryte_status_t crypto_write_iv(struct kendryte_aes_ctx *ctx, uint8_t *iv, size_t length)
+kendryte_status_t crypto_write_iv(uint8_t *iv, size_t length)
 {
 	if(length > IV_MAXLEN)
 		return E_INVALID;
 	
-	write_data((uint32_t *)(ctx->dev->base + CRYPTO_IV_OFFSET), iv, length, true);
+	write_data((uint32_t *)(puf_crypto_base + CRYPTO_IV_OFFSET), iv, length, true);
 
     return SUCCESS;
 }
 
-kendryte_status_t crypto_write_dgst(struct kendryte_aes_ctx *ctx, uint8_t *dgst, size_t length)
+kendryte_status_t crypto_write_dgst(uint8_t *dgst, size_t length)
 {
 	if(length > DGST_INT_STATE_LEN)
 		return E_INVALID;
 
-	write_data((uint32_t *)(ctx->dev->base + CRYPTO_DGST_IN_OFFSET), dgst, length, true);
+	write_data((uint32_t *)(puf_crypto_base + CRYPTO_DGST_IN_OFFSET), dgst, length, true);
 
 	return SUCCESS;
 }
 
-void crypto_read_dgest(struct kendryte_aes_ctx *ctx, uint8_t *out, size_t length)
+void crypto_read_dgest(uint8_t *out, size_t length)
 {
 	length = length < DGST_INT_STATE_LEN ? length : DGST_INT_STATE_LEN;
-    read_data(out, (void *)(ctx->dev->base + CRYPTO_DGST_OUT_OFFSET), length, true);
+    read_data(out, (void *)(puf_crypto_base + CRYPTO_DGST_OUT_OFFSET), length, true);
 }
 
 //----------------------------------------DMA FUNCTION----------------------------------------//
-void dma_write_start(struct kendryte_aes_ctx *ctx)
+void dma_write_start(void)
 {
-	writel(0x1, ctx->dev->base + DMA_START_OFFSET);
+	writel(0x1, puf_dma_base + DMA_START_OFFSET);
 }
 
-bool dma_check_busy_status(struct kendryte_aes_ctx *ctx, uint32_t *status)
+bool dma_check_busy_status(uint32_t *status)
 {
-	uint32_t stat = readl(ctx->dev->base + DMA_STAT_0_OFFSET);
+	uint32_t stat = readl(puf_dma_base + DMA_STAT_0_OFFSET);
 	bool busy = (stat & DMA_STATUS_0_BUSY_MASK) != 0;
 
 	if(status != NULL)
@@ -407,7 +415,7 @@ bool dma_check_busy_status(struct kendryte_aes_ctx *ctx, uint32_t *status)
 	return busy;
 }
 
-void dma_write_config_0(struct kendryte_aes_ctx *ctx, bool rng_enable, bool sgdma_enable, bool no_cypt)
+void dma_write_config_0(bool rng_enable, bool sgdma_enable, bool no_cypt)
 {
     uint32_t value = 0;
 
@@ -418,10 +426,10 @@ void dma_write_config_0(struct kendryte_aes_ctx *ctx, bool rng_enable, bool sgdm
     if (no_cypt)
         value |= 0x1 << 2;
 
-	writel(value, ctx->dev->base + DMA_CFG_0_OFFSET);
+	writel(value, puf_dma_base + DMA_CFG_0_OFFSET);
 }
 
-void dma_write_data_block_config(struct kendryte_aes_ctx *ctx, bool head, bool tail, bool dn_intrpt, bool dn_pause, uint32_t offset)
+void dma_write_data_block_config(bool head, bool tail, bool dn_intrpt, bool dn_pause, uint32_t offset)
 {
     uint32_t value = 0;
 
@@ -435,36 +443,34 @@ void dma_write_data_block_config(struct kendryte_aes_ctx *ctx, bool head, bool t
         value |= 0x1 << DMA_DSC_CFG_4_DN_PAUSE_BITS;
     value |= offset << DMA_DSC_CFG_4_OFFSET_BITS;
 
-	writel(value, ctx->dev->base + DMA_DSC_CFG_4_OFFSET);
+	writel(value, puf_dma_base + DMA_DSC_CFG_4_OFFSET);
 }
 
-void dma_write_rwcfg(struct kendryte_aes_ctx *ctx, const uint8_t *out, const uint8_t *in, uint32_t len)
+void dma_write_rwcfg(const uint8_t *out, const uint8_t *in, uint32_t len)
 {
-	writel(len, ctx->dev->base + DMA_DSC_CFG_2_OFFSET);
+	writel(len, puf_dma_base + DMA_DSC_CFG_2_OFFSET);
 
 	if(NULL == out)
 	{
-		writel((uintptr_t)out, ctx->dev->base + DMA_DSC_CFG_1_OFFSET);
+		writel((uintptr_t)out, puf_dma_base + DMA_DSC_CFG_1_OFFSET);
 	}
 	else
 	{
-		// writel((uintptr_t)virt_to_phys((void*)out), ctx->dev->base + DMA_DSC_CFG_1_OFFSET);
-		writel(dma_phys_out, ctx->dev->base + DMA_DSC_CFG_1_OFFSET);
+		writel(dma_phys_out, puf_dma_base + DMA_DSC_CFG_1_OFFSET);
 	}
 
 	if(NULL == in)
 	{
-		writel((uintptr_t)in, ctx->dev->base + DMA_DSC_CFG_0_OFFSET);
+		writel((uintptr_t)in, puf_dma_base + DMA_DSC_CFG_0_OFFSET);
 	}
 	else
 	{
-		memset(dma_virt_in, 0, 1024);
 		memcpy(dma_virt_in, in, len);
-		writel(dma_phys_in, ctx->dev->base + DMA_DSC_CFG_0_OFFSET);
+		writel(dma_phys_in, puf_dma_base + DMA_DSC_CFG_0_OFFSET);
 	}
 }
 
-void dma_write_key_config_0(struct kendryte_aes_ctx *ctx, kendryte_key_type_t keytype, kendryte_algo_type_t algo, uint32_t size, uint32_t slot_index)
+void dma_write_key_config_0(kendryte_key_type_t keytype, kendryte_algo_type_t algo, uint32_t size, uint32_t slot_index)
 {
 	uint32_t value = 0;
 
@@ -473,7 +479,7 @@ void dma_write_key_config_0(struct kendryte_aes_ctx *ctx, kendryte_key_type_t ke
     value |= algo << DMA_KEY_CFG_0_KEY_DST_BITS;
     value |= keytype;
 
-	writel(value, ctx->dev->base + DMA_KEY_CFG_0_OFFSET);
+	writel(value, puf_dma_base + DMA_KEY_CFG_0_OFFSET);
 }
 
 
@@ -483,7 +489,7 @@ static kendryte_status_t gcm_prepare(struct kendryte_aes_ctx *ctx, const uint8_t
 	kendryte_status_t check;
 	uint32_t val32;
 
-	dma_write_key_config_0(ctx, ctx->keytype, ALGO_TYPE_GCM, (ctx->keylen << 3), get_key_slot_idx(ctx->keytype, ctx->keyslot));
+	dma_write_key_config_0(ctx->keytype, ALGO_TYPE_GCM, (ctx->keylen << 3), get_key_slot_idx(ctx->keytype, ctx->keyslot));
 
 	if ((check = get_config(&val32, ctx, out != NULL, false, false)) != SUCCESS)
         return check;
@@ -498,20 +504,20 @@ static kendryte_status_t gcm_prepare(struct kendryte_aes_ctx *ctx, const uint8_t
     // J_0
     if (out != NULL)
     {
-        crypto_write_iv(ctx, ctx->j0, AES_BLOCK_SIZE);
+        crypto_write_iv(ctx->j0, AES_BLOCK_SIZE);
 		if ((ctx->inlen) != ULLONG_MAX && inlen > 0)
             ctx->incj0 += ((inlen - 1 + AES_BLOCK_SIZE) / AES_BLOCK_SIZE);
     }
 
     // Restore GHASH
-    crypto_write_dgst(ctx, ctx->ghash, AES_BLOCK_SIZE);
+    crypto_write_dgst(ctx->ghash, AES_BLOCK_SIZE);
 
 	return SUCCESS;
 }
 
 static kendryte_status_t gcm_postproc(struct kendryte_aes_ctx *ctx)
 {
-	crypto_read_dgest(ctx, ctx->ghash, AES_BLOCK_SIZE);
+	crypto_read_dgest(ctx->ghash, AES_BLOCK_SIZE);
 	return SUCCESS;
 }
 
@@ -529,19 +535,19 @@ static kendryte_status_t _ctx_update(struct kendryte_aes_ctx *ctx,
 	uint32_t val32;
 	kendryte_status_t check;
 
-	if (dma_check_busy_status(ctx, NULL))
+	if (dma_check_busy_status(NULL))
         return E_BUSY;
 
-	dma_write_config_0(ctx, false, false, false);
-    dma_write_data_block_config(ctx, ctx->start ? false : true, last, true, true, 0);
-    dma_write_rwcfg(ctx, out, in, inlen);   // config physical address of DMA read and write
+	dma_write_config_0(false, false, false);
+    dma_write_data_block_config(ctx->start ? false : true, last, true, true, 0);
+    dma_write_rwcfg(out, in, inlen);   // config physical address of DMA read and write
 
     if ((check = gcm_prepare(ctx, out, inlen)) != SUCCESS)
         return check;
 
 	flush_cache_all();
-    dma_write_start(ctx);
-    while (dma_check_busy_status(ctx, &val32));
+    dma_write_start();
+    while (dma_check_busy_status(&val32));
 
     if (val32 != 0)
     {
@@ -691,7 +697,7 @@ static kendryte_status_t gcm_tag(struct kendryte_aes_ctx *ctx, uint8_t *tag, uin
         return SUCCESS;
 	}
 
-	crypto_write_iv(ctx, ctx->j0, AES_BLOCK_SIZE);
+	crypto_write_iv(ctx->j0, AES_BLOCK_SIZE);
 
     if ((check = get_config(&val32, ctx, true, true, true)) != SUCCESS)
         return check;
@@ -699,15 +705,15 @@ static kendryte_status_t gcm_tag(struct kendryte_aes_ctx *ctx, uint8_t *tag, uin
 	writel(val32, ctx->dev->base + GCM_CFG_1_OFFSET);
 	writel(0, ctx->dev->base + GCM_CFG_2_OFFSET);
 
-    dma_write_data_block_config(ctx, true, true, true, true, 0);
-    dma_write_rwcfg(ctx, NULL, NULL, 0);
-    dma_write_config_0(ctx, false, false, false);
-    dma_write_key_config_0(ctx, ctx->keytype, ALGO_TYPE_GCM, (ctx->keylen << 3), get_key_slot_idx(ctx->keytype, ctx->keyslot));
+    dma_write_data_block_config(true, true, true, true, 0);
+    dma_write_rwcfg(NULL, NULL, 0);
+    dma_write_config_0(false, false, false);
+    dma_write_key_config_0(ctx->keytype, ALGO_TYPE_GCM, (ctx->keylen << 3), get_key_slot_idx(ctx->keytype, ctx->keyslot));
     
 	flush_cache_all();
-    dma_write_start(ctx);
+    dma_write_start();
 
-    while (dma_check_busy_status(ctx, &val32));
+    while (dma_check_busy_status(&val32));
  
     if (val32 != 0)
     {
@@ -721,7 +727,7 @@ static kendryte_status_t gcm_tag(struct kendryte_aes_ctx *ctx, uint8_t *tag, uin
         pr_err("GCM status: 0x%08x\n", val32);
         return E_ERROR;
     }
-    crypto_read_dgest(ctx, tag, taglen);
+    crypto_read_dgest(tag, taglen);
 
     return SUCCESS;
 }
@@ -791,7 +797,7 @@ static kendryte_status_t ctx_init(gcm_op op,
     }
 
 	// check key settings for block cipher
-    if ((keytype != SWKEY) && ((check = keyslot_check(ctx, true, keytype, (uint32_t)keyaddr, keybits)) != SUCCESS))
+    if ((keytype != SWKEY) && ((check = keyslot_check(true, keytype, (uint32_t)keyaddr, keybits)) != SUCCESS))
 		return check;
 
 	// check and set J_0 if needed
@@ -959,10 +965,10 @@ static kendryte_status_t import_plaintext_key_to_slot(struct kendryte_aes_ctx *c
         return E_INVALID;
 
 	// check KA key slot by key length
-    if ((check = keyslot_check(ctx, false, keytype, slot, keybits)) != SUCCESS)
+    if ((check = keyslot_check(false, keytype, slot, keybits)) != SUCCESS)
         return check;
 
-	if(readl(ctx->dev->base + KWP_STATUS_OFFSET) & KWP_STATUS_BUSY_MASK)
+	if(readl(puf_kwp_base + KWP_STATUS_OFFSET) & KWP_STATUS_BUSY_MASK)
 		return E_BUSY;
 
     val32 = 0x0<<0 | keybits<<8;
@@ -977,7 +983,7 @@ static kendryte_status_t import_plaintext_key_to_slot(struct kendryte_aes_ctx *c
     }
 
 	val32 |= get_key_slot_idx(keytype, slot)<<20;
-	writel(val32, ctx->dev->base + KWP_CONFIG_OFFSET);
+	writel(val32, puf_kwp_base + KWP_CONFIG_OFFSET);
 
     memset(kwp_buffer, 0, KWP_KEY_MAXLEN);
     memcpy(kwp_buffer, key, b2B(keybits));
@@ -985,9 +991,9 @@ static kendryte_status_t import_plaintext_key_to_slot(struct kendryte_aes_ctx *c
 
     uint32_t *buf = (uint32_t *)kwp_buffer;
     for (i = 0; i < KWP_KEY_MAXLEN / 4; ++i)
-		writel(be2le(buf[i]), ctx->dev->base + KWP_KEY_IN_OUT_OFFSET + 4*i);// store key into KWP
+		writel(be2le(buf[i]), puf_kwp_base + KWP_KEY_IN_OUT_OFFSET + 4*i);	// store key into KWP
 
-    return kwp_start(ctx);
+    return kwp_start();
 }
 
 static kendryte_status_t clear_ka_slot(struct kendryte_aes_ctx *ctx, kendryte_ka_slot_t slot)
@@ -1004,19 +1010,19 @@ static kendryte_status_t clear_ka_slot(struct kendryte_aes_ctx *ctx, kendryte_ka
 		case SK128_6:
 		case SK128_7:
 			val32 = 0x1<<(slot-SK128_0);
-			writel(val32, ctx->dev->base + KA_SK_FREE_OFFSET);
+			writel(val32, puf_ka_base + KA_SK_FREE_OFFSET);
 			return SUCCESS;
 		case SK256_0:
 		case SK256_1:
 		case SK256_2:
 		case SK256_3:
 			val32 = 0x3<<(2*(slot-SK256_0));
-			writel(val32, ctx->dev->base + KA_SK_FREE_OFFSET);
+			writel(val32, puf_ka_base + KA_SK_FREE_OFFSET);
 			return SUCCESS;
 		case SK512_0:
 		case SK512_1:
 			val32 = 0xf<<(4*(slot-SK512_0));
-			writel(val32, ctx->dev->base + KA_SK_FREE_OFFSET);
+			writel(val32, puf_ka_base + KA_SK_FREE_OFFSET);
 			return SUCCESS;
 
 		default:
@@ -1028,7 +1034,7 @@ static kendryte_status_t clear_key(struct kendryte_aes_ctx *ctx, kendryte_key_ty
 {
 	kendryte_status_t check;
 
-	if((check = keyslot_check(ctx, true, keytype, slot, keybits)) != SUCCESS)
+	if((check = keyslot_check(true, keytype, slot, keybits)) != SUCCESS)
 		return check;
 
 	return clear_ka_slot(ctx, slot);
@@ -1086,6 +1092,9 @@ static int kendryte_gcm_aes_crypt(struct aead_request *req, bool encrypt)
     void *buf_src;
     void *buf_dst;
     const uint8_t *in;
+	const uint8_t *tag;
+	const uint8_t *tmptag;
+	const uint8_t *out;
     uint32_t inlen;
 	uint32_t outlen;
     uint32_t toutlen;
@@ -1103,6 +1112,11 @@ static int kendryte_gcm_aes_crypt(struct aead_request *req, bool encrypt)
 	uint32_t pclen;
 	int ret = 0;
 
+	puf_dma_base = ioremap(0x91210000, 0x100);
+	puf_kwp_base = ioremap(0x91210300, 0x100);
+	puf_crypto_base = ioremap(0x91210100, 0x100);
+	puf_ka_base = ioremap(0x91210C00, 0x100);
+
 	cipher = AES;
 	keytype = SSKEY;
 	iv = req->iv;
@@ -1115,30 +1129,59 @@ static int kendryte_gcm_aes_crypt(struct aead_request *req, bool encrypt)
 	pclen = req->cryptlen;
 	total = aadlen + pclen;
 
-	dma_virt_in = dma_alloc_coherent(ctx->dev->dev, 1024, &dma_phys_in, GFP_KERNEL);
-	dma_virt_out = dma_alloc_coherent(ctx->dev->dev, 1024, &dma_phys_out, GFP_KERNEL);
+	buf_src = kzalloc(total, GFP_KERNEL);
+	if(encrypt)
+		buf_dst = kzalloc((total + taglen), GFP_KERNEL);
+	else
+		buf_dst = kzalloc((total - taglen), GFP_KERNEL);
 
-	buf_src = kzalloc(GCM_BUFFER_SIZE, GFP_KERNEL);
-	buf_dst = kzalloc(GCM_BUFFER_SIZE, GFP_KERNEL);
 	if((NULL == buf_src) || (NULL == buf_dst))
 	{
 		pr_err("Could not kzalloc buffer.\n");
-        return -1;
+        goto done;
 	}
 	scatterwalk_map_and_copy(buf_src, req->src, 0, total, 0);
 
-    if(aadlen > 0)
-		memcpy(ctx->aad, buf_src, aadlen);
-	aad = ctx->aad;
+	if(aadlen > 0)
+	{
+		aad = kzalloc(aadlen, GFP_KERNEL);
+		if(NULL == aad)
+		{
+			pr_err("Could not kzalloc buffer.\n");
+			goto done;
+		}
+		memcpy(aad, buf_src, aadlen);
+	}
 
-    // input data, plaintext or ciphertext
+	tag = kzalloc(AES_BLOCK_SIZE, GFP_KERNEL);
+	tmptag = kzalloc(AES_BLOCK_SIZE, GFP_KERNEL);
+	if((NULL == tag) || (NULL == tmptag))
+	{
+		pr_err("Could not kzalloc buffer.\n");
+        goto done;
+	}
+
+	// input data, plaintext or ciphertext
     in = buf_src + aadlen;
     inlen = pclen;
     if(!encrypt)
 	{
 		inlen -= taglen;
+		memcpy(tmptag, in+inlen, taglen);
 	}
-	memcpy(newtag, in+inlen, taglen);
+
+	if(inlen > 0)
+		out = kzalloc(inlen, GFP_KERNEL);
+	else
+		out = kzalloc((inlen + 1), GFP_KERNEL);
+	if(NULL == out)
+	{
+		pr_err("Could not kzalloc buffer.\n");
+        goto done;
+	}
+
+	dma_virt_in = dma_alloc_coherent(ctx->dev->dev, (total + ivlen), &dma_phys_in, GFP_KERNEL);
+	dma_virt_out = dma_alloc_coherent(ctx->dev->dev, (total + ivlen), &dma_phys_out, GFP_KERNEL);
 
 #ifdef _debug_print
 	pr_info("[%s:%d]taglen:%d aadlen:%d ivlen:%d keylen:%d pclen:%d total:%d\n", __FUNCTION__, __LINE__, taglen, aadlen, ivlen, keybits, pclen, total);
@@ -1169,7 +1212,7 @@ static int kendryte_gcm_aes_crypt(struct aead_request *req, bool encrypt)
 
 	if(!encrypt)
 	{
-		if(memcmp(tag, newtag, taglen) != 0)
+		if(memcmp(tag, tmptag, taglen) != 0)
 		{
 			check = E_VERFAIL;
 			goto done;
@@ -1181,24 +1224,40 @@ static int kendryte_gcm_aes_crypt(struct aead_request *req, bool encrypt)
     // clear key from internal slot
     if((check = clear_key(ctx, keytype, keyslot, keybits)) != SUCCESS )
 		return check;
-	
-    // output data, include <aad || ciphertext || tag> or <aad || plaintext>
-	if(encrypt)
+
+	if(aadlen > 0)
 	{
 		memcpy(buf_dst, aad, aadlen);
-    	memcpy(buf_dst + aadlen, out, outlen);
-		memcpy(buf_dst + aadlen + outlen, tag, taglen);
-		scatterwalk_map_and_copy(buf_dst, req->dst, 0, total + taglen, 1);
+		memcpy(buf_dst + aadlen, out, outlen);
+		// output data, include <aad || ciphertext || tag> or <aad || plaintext>
+		if(encrypt)
+		{
+			memcpy(buf_dst + aadlen + outlen, tag, taglen);
+			scatterwalk_map_and_copy(buf_dst, req->dst, 0, total + taglen, 1);
+		}
+		else
+		{
+			scatterwalk_map_and_copy(buf_dst, req->dst, 0, total - taglen, 1);
+		}
 	}
 	else
 	{
-		memcpy(buf_dst, aad, aadlen);
-    	memcpy(buf_dst + aadlen, out, outlen);
-		scatterwalk_map_and_copy(buf_dst, req->dst, 0, total - taglen, 1);
+		memcpy(buf_dst, out, outlen);
+		// output data, include <aad || ciphertext || tag> or <aad || plaintext>
+		if(encrypt)
+		{
+			memcpy(buf_dst + outlen, tag, taglen);
+			scatterwalk_map_and_copy(buf_dst, req->dst, 0, total + taglen, 1);
+		}
+		else
+		{
+			scatterwalk_map_and_copy(buf_dst, req->dst, 0, total - taglen, 1);
+		}
 	}
 
 #ifdef _debug_print
 	pr_info("[K230-GCM]: \n\r");
+	int i;
 	for(i=0; i<(total + taglen); i++)
 	{
 		pr_info("[%s:%d] aad+ciphertext+tag:0x%x", __func__, __LINE__, *(uint8_t *)(buf_dst + i));
@@ -1212,10 +1271,19 @@ done:
         ret = -1;
     }   
     
+	iounmap(puf_dma_base);
+	iounmap(puf_kwp_base);
+	iounmap(puf_crypto_base);
+	iounmap(puf_ka_base);
 	kfree(buf_src);
 	kfree(buf_dst);
-	dma_free_coherent(ctx->dev->dev, 1024, dma_virt_in, dma_phys_in);
-	dma_free_coherent(ctx->dev->dev, 1024, dma_virt_out, dma_phys_out);
+	if(aadlen > 0)
+		kfree(aad);
+	kfree(tag);
+	kfree(tmptag);
+	kfree(out);
+	dma_free_coherent(ctx->dev->dev, (total + ivlen), dma_virt_in, dma_phys_in);
+	dma_free_coherent(ctx->dev->dev, (total + ivlen), dma_virt_out, dma_phys_out);
 
 	return ret;
 }
@@ -1250,7 +1318,7 @@ struct aead_alg kendryte_gcm_aes_alg = {
 	.encrypt		=	kendryte_gcm_aes_encrypt,
 	.decrypt		=	kendryte_gcm_aes_decrypt,
 	.init			= 	kendryte_gcm_aes_init,
-	.ivsize			= 	12,
+	.ivsize			= 	GCM_AES_IV_SIZE,
 	.maxauthsize	= 	AES_BLOCK_SIZE,
 
 	.base = {

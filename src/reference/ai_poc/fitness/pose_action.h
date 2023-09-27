@@ -27,7 +27,24 @@
 #define _POSE_ACTION_
 
 #include <vector>
-#include "utils.h"
+
+#include <vector>
+#include <iostream>
+#include <fstream>
+#include <opencv2/highgui.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/imgproc.hpp>
+using namespace cv;
+
+/**
+ * @brief 关键点信息
+ */
+struct KKeyPoint
+{
+    cv::Point2f p;  // 关键点
+    float prob;     // 关键点概率值
+};
+
 
 /** 
  * @brief action帮助信息
@@ -48,84 +65,23 @@ class PoseAction
     public:
 
         /** 
-        * @brief 清除动作计数
-        * @param None
-        * @return None
-        */
-        static void clear_action_count();
-
-        /** 
-        * @brief 获取动作计数
-        * @param recid  某种动作记录编号
-        * @return 某动作次数
-        */        
-        static int get_action_count(int recid);
-
-        /** 
-        * @brief 获取xy比例函数
-        * @param kpts_sframe  每帧关键点
-        * @param index_x  前一个关键点序号
-        * @param index_y  后一个关键点序号
-        * @return xy比例值
-        */  
-        static float get_xyratio(std::vector<KKeyPoint> &kpts_sframe, int index_x, int index_y);
-
-        /** 
-        * @brief 获取y方向diff
-        * @param kpts_sframe  每帧关键点
-        * @param index_x  前一个关键点序号
-        * @param index_y  后一个关键点序号
-        * @return y方向是否diff
-        */  
-        static bool get_xyhigher(std::vector<KKeyPoint> &kpts_sframe, int index_x, int index_y);
-
-        /** 
-        * @brief 获取侧平举次数
-        * @param kpts_sframe  每帧关键点
-        * @param recid  某种动作记录编号
-        * @param thres_conf  关键点阈值
-        * @return 侧平举次数
-        */  
-        static int check_lateral_raise(std::vector<KKeyPoint> &kpts_sframe, int recid,float thres_conf);
-
-        /** 
-        * @brief 获取“站立推举”次数
-        * @param kpts_sframe  每帧关键点
-        * @param recid  某种动作记录编号
-        * @param thres_conf  关键点阈值
-        * @return 站立推举次数
-        */  
-        static int check_stand_press(std::vector<KKeyPoint> &kpts_sframe, int recid,float thres_conf);
-
-        /** 
         * @brief 获取“深蹲”次数
         * @param kpts_sframe  每帧关键点
         * @param recid  某种动作记录编号
         * @param thres_conf  关键点阈值
         * @return 深蹲次数
-        */        
+        */
         static int check_deep_down(std::vector<KKeyPoint> &kpts_sframe, int recid,float thres_conf);
-
-        /** 
-        * @brief 获取“深蹲”次数（对xyratio进行了修正）
-        * @param kpts_sframe  每帧关键点
-        * @param h    修正系数
-        * @param recid  某种动作记录编号
-        * @param thres_conf  关键点阈值
-        * @return 深蹲次数
-        */ 
-        static int check_deep_down2(std::vector<KKeyPoint> &kpts_sframe, float h, int recid,float thres_conf);
 
         /** 
         * @brief 单一动作检查
         * @param results_kpts  关键点结果
-        * @param h    修正系数
-        * @param actionid  动作编号
         * @param thres_conf  关键点阈值
+        * @param actionid  动作编号
         * @param recid  某种动作记录编号
         * @return 动作次数
         */ 
-        static int single_action_check(std::vector<KKeyPoint> &results_kpts, float h, int actionid,float thres_conf, int recid=0);
+        static int single_action_check(std::vector<KKeyPoint> &results_kpts, float thres_conf, int actionid, int recid);
 
 };
 

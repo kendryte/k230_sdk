@@ -2,13 +2,17 @@
 # https://github.com/marketplace/actions/build-and-push-docker-images
 
 
-on:
-  push:
-    branches: ['main']
-    paths: ['tools/docker/**']
-  pull_request:
-    branches: ['main']
-    paths: ['tools/docker/**']
+#on:
+#  push:
+#    branches: ['main']
+#    paths: ['tools/docker/**']
+#  pull_request:
+#    branches: ['main']
+#    paths: ['tools/docker/**']
+
+on: 
+  release:
+    types: [released]
 
 env:
   REGISTRY: ghcr.io
@@ -43,13 +47,17 @@ jobs:
           # Strip git ref prefix from version
           VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
           # Strip "v" prefix from tag name
-          [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
+          #[[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
           # Use Docker `latest` tag convention
-          [ "$VERSION" == "main" ] && VERSION=latest
+          # [ "$VERSION" == "main" ] && VERSION=latest
           echo IMAGE_ID=$IMAGE_ID
           echo VERSION=$VERSION
-          echo "start to tag docker image"
+          echo "start to tag docker image with ver $VERSION"
           docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
-          echo "start to push docker image"
+          echo "start to tag docker image with latest tag"
+          docker tag $IMAGE_NAME $IMAGE_ID:latest
+          echo "start to push docker image with ver $VERSION"
           docker push $IMAGE_ID:$VERSION
+          echo "start to push docker image with latest tag"
+          docker push $IMAGE_ID:latest
           echo "finished to push docker image"

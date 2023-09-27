@@ -9,6 +9,7 @@ LIBS=-lipcmsg
 LIBS+=-lpthread
 LIBS+=-lmapi
 LIBS+=-ldatafifo
+
 LIBPATH=-L$(IPCMSG_ROOT)/host/lib
 LIBPATH+=-L$(MAPI_ROOT)/mediaclient/lib
 LIBPATH+=-L$(DATAFIFO_ROOT)/slave/lib

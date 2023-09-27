@@ -121,14 +121,10 @@ void video_proc(char *argv[])
         pd.post_process({SENSOR_WIDTH, SENSOR_HEIGHT}, results);
 
         cv::Mat osd_frame(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-        cv::Mat osd_frame_put(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
         std::string text;
         cv::Point origin;
         Bbox crop_box;
         std::string attr_results;
-
-        cv::Mat osd_frame_vertical;
-        cv::Mat osd_frame_horizontal;
 
         for (auto r : results)
         {
@@ -162,25 +158,13 @@ void video_proc(char *argv[])
             string direction = pul.GetDirection();
             origin.y += with;
             cv::putText(osd_frame, direction, origin, cv::FONT_HERSHEY_COMPLEX, fontScale, cv::Scalar(255, 0, 0, 255), 1, 8, 0);
-            // string glasses = pul.GetGlasses();
-            // origin.y += with;
-            // cv::putText(osd_frame, glasses, origin, cv::FONT_HERSHEY_COMPLEX, fontScale, cv::Scalar(255, 0, 0, 255), 1, 8, 0);
-            
-            // string bag = pul.GetBag();
-            // origin.y += with;
-            // cv::putText(osd_frame, bag, origin, cv::FONT_HERSHEY_COMPLEX, fontScale, cv::Scalar(255, 0, 0, 255), 1, 8, 0);
-            
-            
-
+           
         }
 
-        cv::flip(osd_frame, osd_frame_vertical, 0);
-        cv::flip(osd_frame_vertical, osd_frame_horizontal, 1);
-        osd_frame_put = osd_frame_horizontal;
 
         {
             ScopedTiming st("osd copy", atoi(argv[5]));
-            memcpy(pic_vaddr, osd_frame_put.data, osd_width * osd_height * 4);
+            memcpy(pic_vaddr, osd_frame.data, osd_width * osd_height * 4);
             //显示通道插入帧
             kd_mpi_vo_chn_insert_frame(osd_id+3, &vf_info);  //K_VO_OSD0
             // printf("kd_mpi_vo_chn_insert_frame success \n");

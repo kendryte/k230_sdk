@@ -80,9 +80,9 @@ void OBDet::pre_process(cv::Mat ori_img)
     Utils::bgr2rgb_and_hwc2chw(ori_img, chw_vec);
     Utils::resize({ori_img.channels(), ori_img.rows, ori_img.cols}, chw_vec, ai2d_out_tensor_);
 
-    auto vaddr_out_buf = ai2d_out_tensor_.impl()->to_host().unwrap()->buffer().as_host().unwrap().map(map_access_::map_read).unwrap().buffer();
-    unsigned char *output = reinterpret_cast<unsigned char *>(vaddr_out_buf.data());
-    Utils::dump_color_image("input_color.png", {input_shapes_[0][3],input_shapes_[0][2]},output);
+    // auto vaddr_out_buf = ai2d_out_tensor_.impl()->to_host().unwrap()->buffer().as_host().unwrap().map(map_access_::map_read).unwrap().buffer();
+    // unsigned char *output = reinterpret_cast<unsigned char *>(vaddr_out_buf.data());
+    // Utils::dump_color_image("input_color.png", {input_shapes_[0][3],input_shapes_[0][2]},output);
 }
 
 void OBDet::pre_process()

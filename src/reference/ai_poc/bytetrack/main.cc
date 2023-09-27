@@ -215,12 +215,8 @@ void video_proc(char *argv[])
         pd.post_process({SENSOR_WIDTH, SENSOR_HEIGHT}, results);
 
         cv::Mat osd_frame(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-        cv::Mat osd_frame_put(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
         std::string text;
         cv::Point origin;
-
-        cv::Mat osd_frame_vertical;
-        cv::Mat osd_frame_horizontal;
 
         for (auto res : results)
         {
@@ -246,11 +242,6 @@ void video_proc(char *argv[])
             {
                 Scalar s = tracker.get_color(output_stracks[i].track_id);
 
-                // int x1 =  osd_width - (tlwh[1]+tlwh[3]) / SENSOR_HEIGHT * osd_width;
-                // int y1 = tlwh[0] / SENSOR_WIDTH  * osd_height;
-                // int w = tlwh[3] / SENSOR_HEIGHT * osd_width;
-                // int h = tlwh[2] / SENSOR_WIDTH  * osd_height;
-
                 int x1 =  tlwh[0] / SENSOR_WIDTH * osd_width;
                 int y1 =  tlwh[1] / SENSOR_HEIGHT  * osd_height;
 
@@ -264,19 +255,10 @@ void video_proc(char *argv[])
             }
         }
 
-        {
-            ScopedTiming st("flip operations ", atoi(argv[5]));
-            cv::flip(osd_frame, osd_frame_vertical, 0);
-            cv::flip(osd_frame_vertical, osd_frame_horizontal, 1);
-            osd_frame_put = osd_frame_horizontal;
-
-        }
-        
 
         {
             ScopedTiming st("osd copy", atoi(argv[5]));
-            // memcpy(pic_vaddr, osd_frame.data, osd_width * osd_height * 4);
-            memcpy(pic_vaddr, osd_frame_put.data, osd_width * osd_height * 4);
+            memcpy(pic_vaddr, osd_frame.data, osd_width * osd_height * 4);
             //显示通道插入帧
             kd_mpi_vo_chn_insert_frame(osd_id+3, &vf_info);  //K_VO_OSD0
             // printf("kd_mpi_vo_chn_insert_frame success \n");
@@ -337,8 +319,6 @@ int main(int argc, char *argv[])
         int num_frames = 0;
         int total_ms = 0;
 
-        // std::string dirPath = "images";
-        // int fileNum = Utils::getDirFileNum(dirPath);
         int fileNum = atoi(argv[4]);
 
         while(true)

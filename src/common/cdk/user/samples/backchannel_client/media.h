@@ -5,6 +5,7 @@
 #include <iostream>
 #include <memory>
 #include <mutex>
+#include <atomic>
 #include "mapi_sys_api.h"
 #include "mapi_ai_api.h"
 #include "mapi_aenc_api.h"
@@ -91,6 +92,7 @@ class KdMedia {
     bool vdec_vo_created_{false};
     bool vdec_vo_started_{false};
     bool vdec_data_feed_{false};
+    std::atomic<bool> vo_cfg_done_{false};
 };
 
 #endif // _KD_MEDIA_H

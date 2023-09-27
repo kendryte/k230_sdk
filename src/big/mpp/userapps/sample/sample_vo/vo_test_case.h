@@ -99,6 +99,7 @@ typedef enum
     DISPALY_VO_1LAN_CASE_TEST,
     DISPALY_VO_DSI_READ_ID,
     DISPALY_VO_LAYER0_ROTATION,
+    DISPALY_VO_CONNECTOR_TEST,
     // DISPALY_VO_LAYER_FUNCTION_TEST,
 } display_test_case;
 
@@ -180,6 +181,7 @@ void dwc_dsi_read_hx8399_id(void);
 
 void dwc_dsi_layer0_init(void);
 k_s32 vo_layer0_scaler_test(void);
+k_s32 sample_connector_osd_install_frame(void);
 
 /** @} */ /** <!-- ==== VVO End ==== */
 #ifdef __cplusplus

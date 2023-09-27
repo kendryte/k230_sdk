@@ -63,7 +63,6 @@ void Utils::dump_color_image(const char *file_name, const FrameSize &frame_size,
 
 cv::Mat Utils::padding_resize(const cv::Mat img, const FrameSize &frame_size, const cv::Scalar &padding)
 {
-    // width:dst_width
     int ori_w = img.cols;
     int ori_h = img.rows;
     float ratiow = (float)frame_size.width / ori_w;
@@ -78,16 +77,10 @@ cv::Mat Utils::padding_resize(const cv::Mat img, const FrameSize &frame_size, co
     int left = (int)(roundf(0 - 0.1));
     int right = (int)(roundf(dw * 2 - 0.1));
     cv::Mat cropped_img;
-    {
-        if ((new_w != frame_size.width) || (new_h != frame_size.height))
-        {
-            cv::resize(img, cropped_img, cv::Size(new_w, new_h), cv::INTER_AREA);
-        }
-    }
-    {
-        // 104, 117, 123,BGR
-        cv::copyMakeBorder(cropped_img, cropped_img, top, bottom, left, right, cv::BORDER_CONSTANT, padding);
-    }
+
+    cv::resize(img, cropped_img, cv::Size(new_w, new_h), cv::INTER_AREA);
+    cv::copyMakeBorder(cropped_img, cropped_img, top, bottom, left, right, cv::BORDER_CONSTANT, padding);
+
     return cropped_img;
 }
 
@@ -101,7 +94,7 @@ cv::Mat Utils::resize(const cv::Mat img, const FrameSize &frame_size)
 cv::Mat Utils::crop(const cv::Mat ori_img, Bbox &crop_info)
 {
     cv::Mat cropped_img;
-    cropped_img = ori_img(cv::Range(static_cast<int>(crop_info.y), static_cast<int>(crop_info.y+crop_info.h+1)), cv::Range(static_cast<int>(crop_info.x), static_cast<int>(crop_info.x+crop_info.w+1)));
+    cropped_img = ori_img(cv::Range(static_cast<int>(crop_info.y), static_cast<int>(crop_info.y+crop_info.h)), cv::Range(static_cast<int>(crop_info.x), static_cast<int>(crop_info.x+crop_info.w)));
     return cropped_img;
 }
 
