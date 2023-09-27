@@ -1,0 +1,7 @@
+menu "canaan-i2s-ws2812"
+
+config CANAAN_I2S_WS2812
+	bool "canaan k230 i2s surport ws2812 leds."
+	default n
+
+endmenu

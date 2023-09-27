@@ -40,8 +40,8 @@ void print_usage(const char *name)
 {
     cout << "Usage: " << name << "<kmodel> <obj_thresh> <nms_thresh> <input_mode> <debug_mode> " << endl
          << "For example: " << endl
-         << " [for img] ./pose_detect.elf yolov8n-pose.kmodel 0.2 0.45 bus.jpg 0" << endl
-         << " [for isp] ./pose_detect.elf yolov8n-pose.kmodel 0.2 0.45 None 0" << endl
+         << " [for img] ./pose_detect.elf yolov8n-pose.kmodel 0.5 0.45 bus.jpg 0" << endl
+         << " [for isp] ./pose_detect.elf yolov8n-pose.kmodel 0.5 0.45 None 0" << endl
          << "Options:" << endl
          << " 1> kmodel    pose检测kmodel文件路径 \n"
          << " 2> obj_thresh  pose检测阈值\n"

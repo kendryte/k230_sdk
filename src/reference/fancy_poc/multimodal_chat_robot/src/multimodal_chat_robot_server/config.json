@@ -1,5 +1,5 @@
 {
-  "open_ai_api_key": "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",
+  "open_ai_api_key": "xxxxxxxxxxxxxxxxxxx",
   "model": "gpt-3.5-turbo-16k-0613",
   "conversation_max_tokens": 16000,
   "expires_in_seconds": 3600,

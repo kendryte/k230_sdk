@@ -1,4 +1,6 @@
 #!/bin/bash
+#  												 is		 ie      ds		 de        2dde
+#($(srctree)/arch/riscv/cpu/k230/ddr_2d.sh $< $@ 0x50000 0x53fff 0x54000 0x5433d  0x542bd || exit 1)
 cat > ddr.awk  <<'EOF'
 BEGIN { print "wwwwwwwwwinstr---instruction--" > "files.c";}
 

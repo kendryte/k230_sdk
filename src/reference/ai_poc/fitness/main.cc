@@ -38,9 +38,9 @@ std::atomic<bool> isp_stop(false);
 
 void print_usage(const char *name)
 {
-    cout << "Usage: " << name << "<kmodel> <obj_thresh> <nms_thresh> <input_mode> <debug_mode>" << endl
+    cout << "Usage: " << name << "<kmodel> <obj_thresh> <nms_thresh> <input_mode> <debug_mode> " << endl
          << "For example: " << endl
-         << " [for isp] ./fitness.elf yolov8n-pose.kmodel 0.2 0.45 None 0" << endl
+         << " [for isp] ./fitness.elf yolov8n-pose.kmodel 0.1 0.45 None 0" << endl
          << "Options:" << endl
          << " 1> kmodel    pose检测kmodel文件路径 \n"
          << " 2> obj_thresh  pose检测阈值\n"
@@ -81,7 +81,7 @@ void video_proc(char *argv[])
     poseDetect pd(argv[1], atof(argv[2]),atof(argv[3]), {SENSOR_CHANNEL, SENSOR_HEIGHT, SENSOR_WIDTH}, reinterpret_cast<uintptr_t>(vaddr), reinterpret_cast<uintptr_t>(paddr), atoi(argv[5]));
 
     cv::Vec4d params = pd.params;
-
+    
     std::vector<OutputPose> result;
 
     while (!isp_stop)
@@ -109,6 +109,7 @@ void video_proc(char *argv[])
             kd_mpi_sys_munmap(vbvaddr, size);
         }
 
+        // results.clear();
         result.clear();
 
         pd.pre_process();
@@ -116,21 +117,19 @@ void video_proc(char *argv[])
         bool find_ = pd.post_process(result,params);
 
         cv::Mat osd_frame(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-        cv::Mat osd_frame_put(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
         float thres_conf = atof(argv[2]);
         if(find_)
         {
-            Utils::DrawPred_video(osd_frame,{SENSOR_WIDTH,SENSOR_HEIGHT}, result, SKELETON, KPS_COLORS, LIMB_COLORS,thres_conf,osd_frame_put);
+            Utils::DrawPred_video(osd_frame,{SENSOR_WIDTH,SENSOR_HEIGHT}, result, SKELETON, KPS_COLORS, LIMB_COLORS,thres_conf);
         }
         else 
         {
             cout << "not find!\n";
         }
 
-
         {
             ScopedTiming st("osd copy", atoi(argv[5]));
-            memcpy(pic_vaddr, osd_frame_put.data, osd_width * osd_height * 4);
+            memcpy(pic_vaddr, osd_frame.data, osd_width * osd_height * 4);
             //显示通道插入帧
             kd_mpi_vo_chn_insert_frame(osd_id+3, &vf_info);  //K_VO_OSD0
             // printf("kd_mpi_vo_chn_insert_frame success \n");
@@ -177,35 +176,6 @@ int main(int argc, char *argv[])
         isp_stop = true;
         thread_isp.join();
     }
-    else
-    {
-        cv::Mat ori_img = cv::imread(argv[4]);
-        int ori_w = ori_img.cols;
-        int ori_h = ori_img.rows;
-
-        poseDetect pd(argv[1], atof(argv[2]),atof(argv[3]), atoi(argv[5]));
-
-        pd.pre_process(ori_img);
-        pd.inference();
-
-        std::vector<OutputPose> result;
-        cv::Vec4d params = pd.params;
-        bool find_ = pd.post_process(result,params);
-
-        if(find_)
-        {
-            Utils::DrawPred(ori_img, result, SKELETON, KPS_COLORS, LIMB_COLORS);
-        }
-        else 
-        {
-            cout << "not find!\n";
-        }
-
-        string label = " ";
-        putText(ori_img, label, cv::Point(30,30), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0,0,255), 2, 8);
     
-        cv::imwrite("fitness_result.jpg", ori_img);
-
-    }
     return 0;
 }

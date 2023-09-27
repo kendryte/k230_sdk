@@ -90,6 +90,7 @@ SampleCtx sample_context = {
 extern k_s32 start_get_yuv(k_u32 dev_num, k_u32 chn_num);
 extern k_s32 stop_get_yuv(void);
 static frame_node_t *fnode = NULL;
+static int count = 0;
 k_s32 get_venc_stream(k_u32 chn_num, kd_venc_data_s* p_vstream_data, k_u8 *p_private_data)
 {
     uvc_cache_t *uvc_cache = uvc_cache_get();
@@ -100,7 +101,6 @@ k_s32 get_venc_stream(k_u32 chn_num, kd_venc_data_s* p_vstream_data, k_u8 *p_pri
     int cut = p_vstream_data->status.cur_packs;
     int i = 0;
     k_char * pdata  = NULL;
-    static int count = 0;
 
     if (uvc_cache)
     {
@@ -250,28 +250,41 @@ static k_s32 sample_vicap_vb_init(k_bool dw_en, k_u32 dev_num, k_u32 chn_num, bu
     return 0;
 }
 
-static k_s32 venc_sys_init()
+static k_s32 sample_venc_init(void)
 {
+    printf("%s\n", __func__);
     k_s32 ret = 0;
-    k_s32 i;
 
     ret = kd_mapi_sys_init();
-    if(ret != K_SUCCESS) {
-        printf("kd_mapi_sys_init error: %x\n", ret);
-        goto exit;
+    if (ret != K_SUCCESS) {
+        printf("kd_mapi_sys_init failed, %x.\n", ret);
+        return -1;
     }
 
-exit:
-    if(ret)
-        printf("sample code run error\n");
-    printf("Exit!!!!\n");
-    return ret;
+    return 0;
 }
 
-static k_s32 venc_normalp_classic(void)
+static k_s32 sample_venc_deinit(void)
 {
-    k_s32 ret;
+    printf("%s\n", __func__);
+    k_s32 ret = 0;
+
+    ret = kd_mapi_sys_deinit();
+    if (ret != K_SUCCESS) {
+        printf("kd_mapi_sys_init failed, %x.\n", ret);
+        return -1;
+    }
+
+    return 0;
+}
+
+static k_s32 sample_venc_startup(void)
+{
+    printf("%s\n", __func__);
+    k_s32 ret = 0;
     k_s32 i = 0;
+    __started = 1;
+
     sample_context.sensor_type = get_sensor_type(g_sensor);
     sample_context.chn_num = 1;
     switch (__encoder_property.format)
@@ -293,27 +306,25 @@ static k_s32 venc_normalp_classic(void)
         return -1;
     }
     // vicap init
-    k_vicap_dev_set_info dev_attr_info;
-    memset(&dev_attr_info, 0, sizeof(dev_attr_info));
-
-    dev_attr_info.dw_en = K_FALSE;
-
-    dev_attr_info.pipe_ctrl.data = 0xFFFFFFFF;
-    dev_attr_info.sensor_type = sample_context.sensor_type;
-    dev_attr_info.vicap_dev = VICAP_DEV_ID_0;
-    ret = kd_mapi_vicap_set_dev_attr(dev_attr_info);
-    if (ret != K_SUCCESS) {
-        printf("kd_mapi_vicap_set_dev_attr failed, %x.\n", ret);
-        goto venc_deinit;
-    }
-
     k_vicap_sensor_info sensor_info;
     memset(&sensor_info, 0, sizeof(sensor_info));
     sensor_info.sensor_type = sample_context.sensor_type;
     ret = kd_mapi_vicap_get_sensor_info(&sensor_info);
     if (ret != K_SUCCESS) {
         printf("kd_mapi_vicap_get_sensor_info failed, %x.\n", ret);
-        goto venc_deinit;
+        goto sys_deinit;
+    }
+
+    k_vicap_dev_set_info dev_attr_info;
+    memset(&dev_attr_info, 0, sizeof(dev_attr_info));
+    dev_attr_info.dw_en = K_FALSE;
+    dev_attr_info.pipe_ctrl.data = 0xFFFFFFFF;
+    dev_attr_info.sensor_type = sample_context.sensor_type;
+    dev_attr_info.vicap_dev = VICAP_DEV_ID_0;
+    ret = kd_mapi_vicap_set_dev_attr(dev_attr_info);
+    if (ret != K_SUCCESS) {
+        printf("kd_mapi_vicap_set_dev_attr failed, %x.\n", ret);
+        goto sys_deinit;
     }
 
     if (__encoder_property.format != V4L2_PIX_FMT_YUYV && __encoder_property.format != V4L2_PIX_FMT_NV12)
@@ -357,7 +368,7 @@ static k_s32 venc_normalp_classic(void)
         ret = kd_mapi_media_init(&media_attr);
         if (ret != K_SUCCESS) {
             printf("kd_mapi_media_init failed, %x.\n", ret);
-            return -1;
+            goto sys_deinit;
         }
 
         k_venc_chn_attr venc_chn_attr;
@@ -391,10 +402,9 @@ static k_s32 venc_normalp_classic(void)
                     ret = kd_mapi_venc_deinit(create_idx);
                     if (ret != K_SUCCESS) {
                         printf("deinit venc %d failed, %x.\n", create_idx, ret);
-                        return -1;
                     }
                 }
-                return -1;
+                goto sys_deinit;
             }
         }
 
@@ -420,6 +430,7 @@ static k_s32 venc_normalp_classic(void)
             vi_chn_attr_info.pixel_format = PIXEL_FORMAT_YUV_SEMIPLANAR_420;
             vi_chn_attr_info.vicap_dev = VICAP_DEV_ID_0;
             vi_chn_attr_info.vicap_chn = (k_vicap_chn)vichn_idx;
+            vi_chn_attr_info.alignment = 12;
             if (!dev_attr_info.dw_en)
                 vi_chn_attr_info.buf_size = VI_ALIGN_UP(pic_width[vichn_idx] * pic_height[vichn_idx] * 3 / 2, 0x400);
             else
@@ -444,7 +455,6 @@ static k_s32 venc_normalp_classic(void)
                     ret = kd_mapi_venc_stop(create_idx);
                     if (ret != K_SUCCESS) {
                         printf("venc chn %d stop failed, %x.\n", create_idx, ret);
-                        return -1;
                     }
                 }
                 goto venc_deinit;
@@ -461,7 +471,6 @@ static k_s32 venc_normalp_classic(void)
                     ret = kd_mapi_venc_unbind_vi(src_dev, idx, idx);
                     if (ret != K_SUCCESS) {
                         printf("venc idx %d unbind vi failed, %x.\n", idx, ret);
-                        return -1;
                     }
                 }
                 goto venc_stop;
@@ -553,7 +562,7 @@ static k_s32 venc_normalp_classic(void)
         if (K_SUCCESS != ret)
         {
             printf("Start get YUV failed!\n");
-            goto vicap_stop;
+            goto sys_deinit;
         }
     }
 
@@ -590,35 +599,13 @@ media_deinit:
         printf("kd_mapi_media_deinit failed, %x.\n", ret);
         return -1;
     }
-
-    printf("__SAMPLE_VENC_NORMALP_CLASSIC error Exit!!!!\n");
-    return ret;
-}
-
-static k_s32 sample_venc_init(void)
-{
-    printf("%s\n", __func__);
-    k_s32 ret = 0;
-
-    ret = venc_sys_init();
-    if (ret != K_SUCCESS)
-    {
-        printf("Init SYS err for %d!\n", ret);
-        return ret;
+sys_deinit:
+    ret = kd_mapi_sys_deinit();
+    if (ret != K_SUCCESS) {
+        printf("kd_mapi_sys_deinit failed, %x.\n", ret);
+        return -1;
     }
-
-    return 0;
-}
-
-static k_s32 sample_venc_startup(void)
-{
-    printf("%s\n", __func__);
-    k_s32 ret = 0;
-
-    __started = 1;
-
-    ret = venc_normalp_classic();
-
+    printf("__SAMPLE_VENC_NORMALP_CLASSIC error Exit!!!!\n");
     return ret;
 }
 
@@ -631,18 +618,23 @@ static k_s32 sample_venc_shutdown(void)
     }
     if (__encoder_property.format != V4L2_PIX_FMT_YUYV && __encoder_property.format != V4L2_PIX_FMT_NV12)
     {
-        kd_mapi_venc_unbind_vi(0, 0, 0);
+        usleep(50000);
+
+        kd_mapi_venc_unbind_vi(VICAP_DEV_ID_0, 0, 0);
+        kd_mapi_vicap_stop(VICAP_DEV_ID_0);
         kd_mapi_venc_stop(0);
         kd_mapi_venc_deinit(0);
     }
     else
     {
         stop_get_yuv();
-        kd_mapi_vicap_stop(0);
-        
+        kd_mapi_vicap_stop(VICAP_DEV_ID_0);
+
     }
     kd_mapi_media_deinit();
-    kd_mapi_sys_deinit();
+
+    fnode = NULL;
+    count = 0;
 
     __started = 0;
 
@@ -660,6 +652,7 @@ static struct stream_control_ops venc_sc_ops = {
     .startup = sample_venc_startup,
     .shutdown = sample_venc_shutdown,
     .set_property = sample_venc_set_property,
+    .deinit = sample_venc_deinit,
 };
 
 void sample_venc_config(void)

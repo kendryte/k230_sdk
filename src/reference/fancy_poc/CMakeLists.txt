@@ -20,11 +20,11 @@ include_directories(${nncase_sdk_root}/riscv64)
 include_directories(${nncase_sdk_root}/riscv64/nncase/include)
 include_directories(${nncase_sdk_root}/riscv64/nncase/include/nncase/runtime)
 link_directories(${nncase_sdk_root}/riscv64/nncase/lib/)
-
+add_definitions(-DCONFIG_BOARD_K230_CANMV)
 
 add_subdirectory(./multimodal_chat_robot/src/multimodal_chat_robot_client/aiot_gpt)
 add_subdirectory(./meta_human/src/meta_human)
-
-
+add_subdirectory(./finger_reader/src/finger_reader_client/finger_reader_ai)
+add_subdirectory(./meta_hand/src/meta_hand)
 
 

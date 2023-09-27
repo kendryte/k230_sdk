@@ -34,6 +34,8 @@ struct page
 static struct page* page_start;
 static void*  page_addr;
 static size_t page_nr;
+static size_t used_page_nr;
+static size_t used_page_nr_peak;
 
 static struct page *page_list[ARCH_PAGE_LIST_SIZE];
 
@@ -222,6 +224,7 @@ static int _pages_free(struct page *p, uint32_t size_bits)
         }
     }
     page_insert(p, level);
+    used_page_nr -= (1 << size_bits);
     return 1;
 }
 
@@ -261,6 +264,9 @@ static struct page *_pages_alloc(uint32_t size_bits)
     }
     p->size_bits = ARCH_ADDRESS_WIDTH_BITS;
     p->ref_cnt = 1;
+    used_page_nr += (1 << size_bits);
+    if (used_page_nr > used_page_nr_peak)
+        used_page_nr_peak = used_page_nr;
     return p;
 }
 
@@ -339,6 +345,9 @@ void list_page(void)
     }
     rt_hw_interrupt_enable(level);
     rt_kprintf("free pages is %08x\n", total);
+    rt_kprintf("used pages is %08x\n", used_page_nr);
+    rt_kprintf("max used pages is %08x\n", used_page_nr_peak);
+    rt_kprintf("max used pages memory is %ld bytes\n", used_page_nr_peak * PAGE_SIZE);
     rt_kprintf("-------------------------------\n");
 }
 MSH_CMD_EXPORT(list_page, show page info);
@@ -420,5 +429,7 @@ void rt_page_init(rt_region_t reg)
         _pages_free(p, size_bits - ARCH_PAGE_SHIFT);
         reg.start += (1UL << size_bits);
     }
+    used_page_nr = 0;
+    used_page_nr_peak = 0;
 }
 #endif

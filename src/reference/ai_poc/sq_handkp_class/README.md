@@ -1,7 +1,7 @@
 # 1.简介
 
 手掌检测采用了yolov5网络结构，backbone选取了1.0-mobilenetV2，手掌关键点检测采用了resnet50网络结构。使用该应用，可得到图像或视频中的每个手掌的21个骨骼关键点位置,并根据关键点的位置二维约束获得静态手势。其中静态手势包含以下类别：
-![img.png](img.png)
+![Alt text](https://kendryte-download.canaan-creative.com/k230/downloads/doc_images/ai_demo/sq_handkp_class/img.png "demo示例")
 
 # 2.应用使用说明
 
@@ -25,5 +25,5 @@ debug_mode      是否需要调试，0、1、2分别表示不调试、简单调�
 ./sq_handkp_class.elf hand_det.kmodel None 0.15 0.4 handkp_det.kmodel 0
 ```
 
-
+**注意：** 本应用仅提供一个示例实现，如需更高精度或更优体验，可通过调整阈值或自行替换相应的模型文件。
 

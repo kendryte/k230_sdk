@@ -108,9 +108,6 @@ void video_proc(char *argv[])
         hd.post_process(results);
 
         cv::Mat osd_frame(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-        cv::Mat osd_frame_out(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-        cv::Mat osd_frame_vertical;
-        cv::Mat osd_frame_horizontal;
         for (auto r: results)
         {
             std::string text = hd.labels_[r.label] + ":" + std::to_string(round(r.score * 100) / 100.0);
@@ -156,16 +153,10 @@ void video_proc(char *argv[])
             cv::putText(osd_frame, text1, cv::Point(rect_x,rect_y),cv::FONT_HERSHEY_COMPLEX, 1, cv::Scalar(255, 255, 195, 0), 2);
             cv::putText(osd_frame, text1, cv::Point(rect_x,rect_y),cv::FONT_HERSHEY_COMPLEX, 1, cv::Scalar(255, 0, 150, 255), 2);
         }
-        {
-            ScopedTiming st("osd draw", atoi(argv[6]));
-            cv::flip(osd_frame, osd_frame_vertical, 0);
-            cv::flip(osd_frame_vertical, osd_frame_horizontal, 1);
-            osd_frame_out = osd_frame_horizontal;
-        }
 
         {
             ScopedTiming st("osd copy", atoi(argv[6]));
-            memcpy(pic_vaddr, osd_frame_out.data, osd_width * osd_height * 4);
+            memcpy(pic_vaddr, osd_frame.data, osd_width * osd_height * 4);
             // 显示通道插入帧
             kd_mpi_vo_chn_insert_frame(osd_id + 3, &vf_info); // K_VO_OSD0
 

@@ -1264,17 +1264,17 @@ static int canon_copy_from_read_buf(struct tty_struct *tty, char *b, size_t nr)
         c = min(nr, c);
         n = c;
     }
-
     size_t buf_size = RT_TTY_BUF - tail;
     const void *from = read_buf_addr(ldata, tail);
+    size_t temp_n = n;
     if (n > buf_size)
     {
         rt_memcpy(b, from, buf_size);
         b += buf_size;
-        n -= buf_size;
+        temp_n -= buf_size;
         from = ldata->read_buf;
     }
-    rt_memcpy(b, from, n);
+    rt_memcpy(b, from, temp_n);
 
     if (found)
     {

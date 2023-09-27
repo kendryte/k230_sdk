@@ -46,7 +46,7 @@ extern "C" {
 /**
  * @brief Initialize the DPU
  * @param [in] init
- * @return k_s32 
+ * @return k_s32
  * @retval 0 success
  * @retval "not 0" see err code
  * @see K_ERR_CODE_E
@@ -55,7 +55,7 @@ k_s32 kd_mpi_dpu_init(k_dpu_init_t *init);
 
 /**
  * @brief Delete the DPU
- * @return k_s32 
+ * @return k_s32
  * @retval 0 success
  * @retval "not 0" see err code
  * @see K_ERR_CODE_E
@@ -67,7 +67,7 @@ k_s32 kd_mpi_dpu_delete();
  * @param [in] file_path File path
  * @param [out] param Parameters of DPU device
  * @param [out] image_check_templ_data Image check template
- * @return k_s32 
+ * @return k_s32
  * @retval 0 success
  * @retval "not 0" see err code
  * @see K_ERR_CODE_E
@@ -80,18 +80,18 @@ k_s32 kd_mpi_dpu_delete();
  * @param [out] lcn_param Parameters of LCN channel
  * @param [out] ir_param Parameters of IR channel
  * @param [out] g_temp_space Address of the parsed template image
- * @return k_s32 
+ * @return k_s32
  * @retval 0 success
  * @retval "not 0" see err code
  * @see K_ERR_CODE_E
  */
-k_s32 kd_mpi_dpu_parse_file(const k_char *param_path, k_dpu_dev_param_t *param, 
+k_s32 kd_mpi_dpu_parse_file(const k_char *param_path, k_dpu_dev_param_t *param,
     k_dpu_lcn_param_t *lcn_param, k_dpu_ir_param_t *ir_param, k_dpu_user_space_t *g_temp_space);
 
 /**
  * @brief Set the device attributes of the DPU
  * @param [in] attr Pointer to the DPU device attributes
- * @return k_s32 
+ * @return k_s32
  * @retval 0 success
  * @retval "not 0" see err code
  * @see K_ERR_CODE_E
@@ -100,8 +100,8 @@ k_s32 kd_mpi_dpu_set_dev_attr(k_dpu_dev_attr_t *attr);
 
 /**
  * @brief Get the device attributes of the DPU
- * @param [in] attr Pointer to the DPU device attributes 
- * @return k_s32 
+ * @param [in] attr Pointer to the DPU device attributes
+ * @return k_s32
  * @retval 0 success
  * @retval "not 0" see err code
  * @see K_ERR_CODE_E
@@ -112,7 +112,7 @@ k_s32 kd_mpi_dpu_get_dev_attr(k_dpu_dev_attr_t *attr);
  * @brief Set the channel attributes of the DPU
  * @param [in] lcn_attr Pointer of the speckle channel attribute
  * @param [in] ir_attr Pointer of the ir channel attribute
- * @return k_s32 
+ * @return k_s32
  * @retval 0 success
  * @retval "not 0" see err code
  * @see K_ERR_CODE_E
@@ -123,7 +123,7 @@ k_s32 kd_mpi_dpu_set_chn_attr(k_dpu_chn_lcn_attr_t *lcn_attr, k_dpu_chn_ir_attr_
  * @brief Get the channel attributes of the DPU
  * @param [out] lcn_attr Pointer of the speckle channel attribute
  * @param [out] ir_attr Pointer of the ir channel attribute
- * @return k_s32 
+ * @return k_s32
  * @retval 0 success
  * @retval "not 0" see err code
  * @see K_ERR_CODE_E
@@ -132,8 +132,8 @@ k_s32 kd_mpi_dpu_get_chn_attr(k_dpu_chn_lcn_attr_t *lcn_attr, k_dpu_chn_ir_attr_
 
 /**
  * @brief Set the reference image address
- * @param [in] ref_path Path of the reference image 
- * @return k_s32 
+ * @param [in] ref_path Path of the reference image
+ * @return k_s32
  * @retval 0 success
  * @retval "not 0" see err code
  * @see K_ERR_CODE_E
@@ -141,9 +141,19 @@ k_s32 kd_mpi_dpu_get_chn_attr(k_dpu_chn_lcn_attr_t *lcn_attr, k_dpu_chn_ir_attr_
 k_s32 kd_mpi_dpu_set_ref_image(const k_char *ref_path);
 
 /**
+ * @brief Set 64bit aligned reference image address
+ * @param [in] ref_path Path of the reference image
+ * @return k_s32
+ * @retval 0 success
+ * @retval "not 0" see err code
+ * @see K_ERR_CODE_E
+ */
+k_s32 kd_mpi_dpu_set_aligned_ref_image(const k_char *ref_path);
+
+/**
  * @brief Set the processed reference image address
  * @param [in] ref_path Path of the processed reference image
- * @return k_s32 
+ * @return k_s32
  * @retval 0 success
  * @retval "not 0" see err code
  * @see K_ERR_CODE_E
@@ -153,7 +163,7 @@ k_s32 kd_mpi_dpu_set_processed_ref_image(const k_char *ref_path);
 /**
  * @brief Set the template iamge address
  * @param [in] temp_space Address of the parsed template image
- * @return k_s32 
+ * @return k_s32
  * @retval 0 success
  * @retval "not 0" see err code
  * @see K_ERR_CODE_E
@@ -162,7 +172,7 @@ k_s32 kd_mpi_dpu_set_template_image(k_dpu_user_space_t *temp_space);
 
 /**
  * @brief Start the device of the DPU
- * @return k_s32 
+ * @return k_s32
  * @retval 0 success
  * @retval "not 0" see err code
  * @see K_ERR_CODE_E
@@ -171,7 +181,7 @@ k_s32 kd_mpi_dpu_start_dev();
 
 /**
  * @brief Stop the device of the DPU
- * @return k_s32 
+ * @return k_s32
  * @retval 0 success
  * @retval "not 0" see err code
  * @see K_ERR_CODE_E
@@ -180,18 +190,18 @@ k_s32 kd_mpi_dpu_stop_dev();
 
 /**
  * @brief Start the channel of the DPU
- * @param [in] chn_num 
+ * @param [in] chn_num
  * @return k_s32
  * @retval 0 success
  * @retval "not 0" see err code
- * @see K_ERR_CODE_E 
+ * @see K_ERR_CODE_E
  */
 k_s32 kd_mpi_dpu_start_chn(k_u32 chn_num);
 
 /**
  * @brief Stop the channel of the DPU
- * @param [in] chn_num 
- * @return k_s32 
+ * @param [in] chn_num
+ * @return k_s32
  * @retval 0 success
  * @retval "not 0" see err code
  * @see K_ERR_CODE_E
@@ -203,7 +213,7 @@ k_s32 kd_mpi_dpu_stop_chn(k_u32 chn_num);
  * @param [in] chn_num channel number
  * @param [in] addr Physical address of the image to be sent
  * @param [in] s32_millisec Blocking time in milliseconds
- * @return k_s32 
+ * @return k_s32
  * @retval k_s32
  * @retval 0 success
  * @retval "not 0" see err code
@@ -216,7 +226,7 @@ k_s32 kd_mpi_dpu_send_frame(k_u32 chn_num, k_u64 addr, k_s32 s32_millisec);
  * @param [in] chn_num channel number
  * @param [out] result Store the results for this channel
  * @param [in] s32_millisec Blocking time in milliseconds
- * @return k_s32 
+ * @return k_s32
  * @retval 0 success
  * @retval "not 0" see err code
  * @see K_ERR_CODE_E
@@ -225,7 +235,7 @@ k_s32 kd_mpi_dpu_get_frame(k_u32 chn_num, k_dpu_chn_result_u *result, k_s32 s32_
 
 /**
  * @brief Release the frame
- * @return k_s32 
+ * @return k_s32
  * @retval 0 success
  * @retval "not 0" see err code
  * @see K_ERR_CODE_E

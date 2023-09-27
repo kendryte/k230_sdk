@@ -13,7 +13,7 @@
 #include "mapi_sys_api.h"
 #include "mapi_ao_api.h"
 #include "mapi_adec_api.h"
-#include "vo_cfg.h"
+#include "display_cfg.h"
 
 #define INVALID_AO_HANDEL 0xffff
 static k_handle g_ao_hdl = INVALID_AO_HANDEL;
@@ -51,7 +51,6 @@ typedef struct
     k_bool done;
     k_payload_type type;
     k_vb_blk_handle vb_handle[INPUT_BUF_CNT];
-    k_pixel_format pic_format;
     k_u32 act_width;
     k_u32 act_height;
     k_u32 input_pool_id;
@@ -90,16 +89,14 @@ static k_s32 vb_destory_pool(int ch)
     return 0;
 }
 
-k_s32 sys_init()
+k_s32 sys_init(k_bool init_vo)
 {
     k_s32 ret;
     k_mapi_media_attr_t media_attr;
 
-    ret = kd_mapi_sys_init();
-    if (ret != K_SUCCESS)
+    if (init_vo)
     {
-        printf("kd_mapi_sys_init error: %d\n", ret);
-        return K_FAILED;
+        vo_init();
     }
 
     memset(&media_attr, 0, sizeof(k_mapi_media_attr_t));
@@ -123,10 +120,12 @@ k_s32 sys_init()
         return K_FAILED;
     }
 
+
+
     return K_SUCCESS;
 }
 
-k_s32 sys_deinit()
+k_s32 sys_deinit(k_bool deinit_vo)
 {
     k_s32 ret;
 
@@ -137,11 +136,18 @@ k_s32 sys_deinit()
         return K_FAILED;
     }
 
+#if 0
     ret = kd_mapi_sys_deinit();
     if (ret != K_SUCCESS)
     {
         printf("kd_mapi_sys_deinit error: %x\n", ret);
         return K_FAILED;
+    }
+#endif
+
+    if (deinit_vo)
+    {
+        vo_deinit();
     }
 
     return K_SUCCESS;
@@ -150,7 +156,7 @@ k_s32 sys_deinit()
 static k_s32 _initvo(k_u32 width,k_u32 height,k_u32 vdec_chn)
 {
     //init vo
-    vo_layer_init(width,height);
+    display_layer_init(width,height);
 
     if (K_SUCCESS != kd_mapi_vdec_bind_vo(vdec_chn, 0, BIND_VO_LAYER))
     {
@@ -177,10 +183,8 @@ k_s32 disp_open(k_payload_type video_dec_type,k_u32 width,k_u32 height)
     attr.frame_buf_cnt = OUTPUT_BUF_CNT;
     attr.frame_buf_size = FRAME_BUF_SIZE;
     attr.stream_buf_size = STREAM_BUF_SIZE;
-    attr.pic_format = PIXEL_FORMAT_YUV_SEMIPLANAR_420;
     attr.type = video_dec_type;
     attr.frame_buf_pool_id = g_vdec_conf[ch].output_pool_id;
-    g_vdec_conf[ch].pic_format = attr.pic_format;
 
     if (K_SUCCESS != kd_mapi_vdec_init(ch, &attr))
     {
@@ -257,7 +261,7 @@ k_s32 disp_play(k_u8*pdata,k_u32 len,k_u64 timestamp,k_bool end_stream)
     k_u8 *virt_addr;
     k_u32 blk_size;
 
-    blk_size = len;
+    blk_size = STREAM_BUF_SIZE;
 
     while(1)
     {
@@ -286,7 +290,6 @@ k_s32 disp_play(k_u8*pdata,k_u32 len,k_u64 timestamp,k_bool end_stream)
         return K_FAILED;
     }
     _sys_munmap(phys_addr, virt_addr, blk_size);
-
     ret = kd_mapi_sys_release_vb_block(phys_addr, blk_size);
     if (K_SUCCESS != ret)
     {
@@ -340,7 +343,7 @@ k_s32 disp_close()
         return K_FAILED;
     }
 
-    vo_layer_deinit();
+    display_layer_deinit();
 
     if (vb_destory_pool(0) != K_SUCCESS)
     {
@@ -351,7 +354,7 @@ k_s32 disp_close()
     return K_SUCCESS;
 }
 
-k_s32 ao_open(k_s32 s32SampleRate, k_s32 s32ChanNum,k_payload_type audio_dec_type)
+k_s32 ao_open(k_s32 s32SampleRate, k_s32 s32ChanNum,k_payload_type audio_dec_type, k_bool avsync)
 {
     if (g_ao_hdl != INVALID_AO_HANDEL)
     {
@@ -360,11 +363,12 @@ k_s32 ao_open(k_s32 s32SampleRate, k_s32 s32ChanNum,k_payload_type audio_dec_typ
     }
     k_aio_dev_attr aio_dev_attr;
     aio_dev_attr.audio_type = KD_AUDIO_OUTPUT_TYPE_I2S;
+    aio_dev_attr.avsync = avsync;
     aio_dev_attr.kd_audio_attr.i2s_attr.sample_rate = s32SampleRate;
     aio_dev_attr.kd_audio_attr.i2s_attr.bit_width = KD_AUDIO_BIT_WIDTH_16;
     aio_dev_attr.kd_audio_attr.i2s_attr.chn_cnt = 2;
     aio_dev_attr.kd_audio_attr.i2s_attr.snd_mode = (1==s32ChanNum)?KD_AUDIO_SOUND_MODE_MONO:KD_AUDIO_SOUND_MODE_STEREO;
-    aio_dev_attr.kd_audio_attr.i2s_attr.i2s_mode = K_STANDARD_MODE;
+    aio_dev_attr.kd_audio_attr.i2s_attr.i2s_mode = K_RIGHT_JUSTIFYING_MODE;
     aio_dev_attr.kd_audio_attr.i2s_attr.frame_num = 5;//AUDIO_PERSEC_DIV_NUM;
     aio_dev_attr.kd_audio_attr.i2s_attr.point_num_per_frame = s32SampleRate / AUDIO_PERSEC_DIV_NUM;
     aio_dev_attr.kd_audio_attr.i2s_attr.i2s_type =  K_AIO_I2STYPE_INNERCODEC;

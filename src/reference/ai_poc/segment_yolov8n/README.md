@@ -5,7 +5,7 @@
 # 2.应用使用说明
 
 ## 2.1 使用帮助
-开发板需求：需要用lp4(2G)的开发板
+开发板需求：需要用lp4(2G)、lp3(512M)的开发板
 
 ```
 "Usage: " << seg.elf << "<kmodel_seg> <conf_thres> <nms_thres> <mask_thres> <input_mode> <debug_mode>"
@@ -25,7 +25,13 @@ debug_mode   是否需要调试，0、1、2分别表示不调试、简单调试�
  #视频流推理：（segment_isp_320.sh）（segment_isp_640.sh）
 ./seg.elf yolov8n_seg_320.kmodel 0.1 0.5 0.5 None 0
 ./seg.elf yolov8n_seg_640.kmodel 0.1 0.5 0.5 None 0
+
+
+操作说明：
+将摄像头置于需分割目标前即可在显示屏中观察到该目标的分割效果。
 ```
+## 2.2 效果展示
+<img src="https://kendryte-download.canaan-creative.com/k230/downloads/doc_images/ai_demo/segment_yolov8n/person.jpg" alt="image.jpg" width="50%" height="50%" />
 
 
 

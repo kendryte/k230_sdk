@@ -1,0 +1,7 @@
+config BR2_PACKAGE_K230_TIMER
+	bool "k230 timer test"
+	help
+	  k230 timer demo for test
+
+
+

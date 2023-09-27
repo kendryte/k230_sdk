@@ -38,6 +38,7 @@
 #include "k_video_comm.h"
 #include "k_vo_comm.h"
 #include "k_type.h"
+#include "k_connector_comm.h"
 #ifdef __cplusplus
 extern "C" {
 #endif /* End of #ifdef __cplusplus */
@@ -99,6 +100,8 @@ typedef enum
     DISPALY_VO_1LAN_CASE_TEST,
     DISPALY_VO_DSI_READ_ID,
     DISPALY_VO_LAYER0_ROTATION,
+    DISPALY_VO_CONNECTOR_TEST,
+    DISPALY_VO_LT9611_TEST,
     // DISPALY_VO_LAYER_FUNCTION_TEST,
 } display_test_case;
 
@@ -180,6 +183,7 @@ void dwc_dsi_read_hx8399_id(void);
 
 void dwc_dsi_layer0_init(void);
 k_s32 vo_layer0_scaler_test(void);
+k_s32 sample_connector_osd_install_frame(k_connector_type type);
 
 /** @} */ /** <!-- ==== VVO End ==== */
 #ifdef __cplusplus

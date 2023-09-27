@@ -43,8 +43,17 @@ static int canaan_plane_atomic_check(struct drm_plane *plane,
     struct canaan_plane *canaan_plane = to_canaan_plane(plane);
     struct canaan_vo *vo = canaan_plane->vo;
 
-    if (!plane_state->crtc || !plane_state->fb)
+    if (!plane_state->crtc || !plane_state->fb) {
+        DRM_DEBUG_DRIVER("crtc or fb NULL \n");
         return 0;
+    }
+
+    DRM_DEBUG_DRIVER("Check plane:%d\n", plane->base.id);
+    DRM_DEBUG_DRIVER("(%d,%d)@(%d,%d) -> (%d,%d)@(%d,%d)\n",
+                plane_state->src_w >> 16, plane_state->src_h >> 16,
+                plane_state->src_x >> 16, plane_state->src_y >> 16,
+                plane_state->crtc_w, plane_state->crtc_h,
+                plane_state->crtc_x, plane_state->crtc_y);
 
     return canaan_vo_check_plane(vo, canaan_plane, plane_state);
 }
@@ -56,9 +65,12 @@ static void canaan_plane_atomic_update(struct drm_plane *plane,
     struct canaan_plane *canaan_plane = to_canaan_plane(plane);
     struct canaan_vo *vo = canaan_plane->vo;
 
-    if (!plane_state->crtc || !plane_state->fb)
+    if (!plane_state->crtc || !plane_state->fb) {
+        DRM_DEBUG_DRIVER("crtc or fb NULL \n");
         return;
+    }
 
+    DRM_DEBUG_DRIVER("Update plane:%d\n", plane->base.id);
     canaan_vo_update_plane(vo, canaan_plane, plane_state);
 }
 
@@ -68,6 +80,7 @@ static void canaan_plane_atomic_disable(struct drm_plane *plane,
     struct canaan_plane *canaan_plane = to_canaan_plane(plane);
     struct canaan_vo *vo = canaan_plane->vo;
 
+    DRM_DEBUG_DRIVER("Disable plane:%d\n", plane->base.id);
     canaan_vo_disable_plane(vo, canaan_plane);
 }
 
@@ -112,6 +125,7 @@ struct canaan_plane *canaan_plane_create(struct drm_device *drm_dev,
     canaan_plane->id        = config->id;
     canaan_plane->config    = config;
     canaan_plane->vo        = vo;
+    DRM_DEBUG_DRIVER("Create plane:%d\n", plane->base.id);
 
     return canaan_plane;
 }

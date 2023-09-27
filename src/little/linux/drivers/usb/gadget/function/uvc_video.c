@@ -138,6 +138,10 @@ static int uvcg_video_ep_queue(struct uvc_video *video, struct usb_request *req)
 
 	ret = usb_ep_queue(video->ep, req, GFP_ATOMIC);
 	if (ret < 0) {
+		if (video->max_payload_size) // bulk
+		{
+			return 0;
+		}
 		uvcg_err(&video->uvc->func, "Failed to queue request (%d).\n",
 			 ret);
 

@@ -1,0 +1,14 @@
+from building import *
+
+cwd = GetCurrentDir()
+src = Glob('*.c') + Glob('*.cpp')
+CPPPATH = [cwd]
+
+CPPDEFINES = [
+        'RT_USING_NEWLIB',
+        'HAVE_CCONFIG_H',
+]
+group = DefineGroup('pkg', src, depend = [''], CPPPATH = CPPPATH, CPPDEFINES = CPPDEFINES)
+group = group + LinkBridge()
+
+Return('group')

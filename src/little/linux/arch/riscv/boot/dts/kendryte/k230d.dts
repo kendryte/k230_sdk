@@ -4,7 +4,7 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
 */
-#include "k230_evb.dtsi"
+#include "k230.dtsi"
 #include "clock_provider.dtsi"          /* k230 soc clock tree */
 #include "clock_consumer.dtsi"          /* k230 soc clock consumer */
 #include "reset_provider.dtsi"          /* k230 soc reset provider */
@@ -16,19 +16,33 @@
 
 
 / {
+	aliases {
+		serial0 = &uart0;
+	};
+
 	chosen {
-		bootargs = "console=ttyS0,115200  crashkernel=256M-:128M earlycon=sbi";
+		bootargs = "";
 		linux,initrd-start = <0x0 0xa100000>;
 		linux,initrd-end = <0x0 0x0>;
-		stdout-path = "/soc/serial@91400000:115200";
+		stdout-path = "serial0:115200";
 	};
 };
+
 &ddr {
-	reg = <0x0 0x2400000 0x0 0x37ff000>;  /*linux memory config*/
+	reg = <0x0 0x1800000 0x0 0x45ff000>;  /*linux memory config*/
+};
+
+&gpio22 {
+	status = "okay";
+};
+
+&gpio23 {
+	status = "okay";
 };
 
 &i2c4 {
-	gt911: touchscreen@5d {
+	status = "okay";
+	gt911: touchscreen@14 {
 		compatible = "goodix,gt911";
 		reg = <0x14>;
 
@@ -63,6 +77,7 @@
 };
 
 &spi0 {
+	status = "okay";
 	spi-flash@0 {
 		compatible = "jedec,spi-nor";
 		//compatible = "spi-nand";
@@ -132,4 +147,28 @@
 		};
 	};
 
+};
+
+&mmc_sd0{
+    status = "okay";
+    is_emmc;
+    io_fixed_1v8;
+    mmc-hs200-1_8v;
+    rx_delay_line = <0x00>;
+    tx_delay_line = <0xc0>;
+};
+
+&mmc_sd1{
+    status = "okay";
+    no-1-8-v;
+    cap-sd-highspeed;
+    mshc_ctrl_r = <0x00>;
+};
+
+&uart0 {
+	status = "okay";
+};
+
+&usbotg0 {
+	status = "okay";
 };

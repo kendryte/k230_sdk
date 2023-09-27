@@ -140,6 +140,47 @@ k_s32 kd_mapi_ai_set_pitch_shift_attr(k_handle ai_hdl, const k_ai_chn_pitch_shif
  */
 k_s32 kd_mapi_ai_get_pitch_shift_attr(k_handle ai_hdl, k_ai_chn_pitch_shift_param *param);
 
+/**
+ * @brief ai bind ao
+ *
+ * @param [in] ai_hdl ai handle
+ * @param [in] ao_hdl ao handle
+ * @return k_s32
+ * @retval 0 success
+ * @retval "not 0" see error code
+ */
+k_s32 kd_mapi_ai_bind_ao(k_handle ai_hdl,k_handle ao_hdl);
+
+/**
+ * @brief ai unbind ao
+ *
+ * @param [in] ai_hdl ai handle
+ * @param [in] ao_hdl ao handle
+ * @return k_s32
+ * @retval 0 success
+ * @retval "not 0" see error code
+ */
+k_s32 kd_mapi_ai_unbind_ao(k_handle ai_hdl,k_handle ao_hdl);
+
+/**
+ * @brief ai set volume
+ *
+ * @param [in] ai_hdl ai handle
+ * @param [in] volume ai set volume value: [-18,28.5],step 1.5
+ * @return k_s32
+ * @retval 0 success
+ * @retval "not 0" see error code
+ */
+k_s32 kd_mapi_ai_set_volume(k_handle ai_hdl,float volume);
+
+/**
+ * @brief acodec reset
+ *
+ * @return k_s32
+ * @retval 0 success
+ * @retval "not 0" see error code
+ */
+k_s32 kd_mapi_acodec_reset();
 
 /** @} */ /** <!-- ==== MAPI_AI End ==== */
 

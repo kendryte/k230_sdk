@@ -4,7 +4,7 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
 */
-#include "k230_evb.dtsi"
+#include "k230.dtsi"
 #include "clock_provider.dtsi"          /* k230 soc clock tree */
 #include "clock_consumer.dtsi"          /* k230 soc clock consumer */
 #include "reset_provider.dtsi"          /* k230 soc reset provider */
@@ -16,17 +16,39 @@
 
 
 / {
+	aliases {
+		serial0 = &uart0;
+	};
+
 	chosen {
-		bootargs = "console=ttyS0,115200  crashkernel=256M-:128M earlycon=sbi";
+		bootargs = "";
 		linux,initrd-start = <0x0 0xa100000>;
 		linux,initrd-end = <0x0 0x0>;
-		stdout-path = "/soc/serial@91400000:115200";
+		stdout-path = "serial0:115200";
 	};
 };
 &ddr {
 	reg = <0x0 0x8200000 0x0 0x7dff000>;  /*linux memory config*/
 };
+
+&i2c0 {
+    status = "okay";
+    tmp103: tmp103@70{
+        compatible = "tmp103";
+        reg = <0x70>;
+    };
+};
+
+&gpio29 {
+	status = "okay";
+};
+
+&gpio30 {
+	status = "okay";
+};
+
 &i2c4 {
+	status = "okay";
 	gt911: touchscreen@5d {
 		compatible = "goodix,gt911";
 		reg = <0x14>;
@@ -62,6 +84,7 @@
 };
 
 &spi0 {
+	status = "okay";
 	spi-flash@0 {
 		compatible = "jedec,spi-nor";
 		//compatible = "spi-nand";
@@ -89,7 +112,6 @@
                 reg = <0x00080000 0x00180000>;
                 label = "uboot";
             };
-
             partition@200000 {
                 reg = <0x200000 0x80000>;
                 label = "quick_boot_cfg ";
@@ -106,23 +128,24 @@
                 reg = <0x640000 0x200000>;
                 label = "speckle";
             };
-            partition@840000 {
-                reg = <0x840000 0x1c0000>;
-                label = "rttk";
-            };
             partition@a00000 {
                 reg = <0xa00000 0x5c0000>;
                 label = "rttapp";
             };
+            partition@840000 {
+                reg = <0x840000 0x1c0000>;
+                label = "rttk";
+            };
+           
             partition@fc0000 {
                 reg = <0xfc0000 0x700000>;
                 label = "linux";
             };
+
             partition@16c0000 {
                 reg = <0x16c0000 0x900000>;
                 label = "rootfs";
             };
-
             partition@2000000 {
                 /* 32MB for  update image*/
                 reg = <0 0x2000000>;
@@ -131,4 +154,67 @@
 		};
 	};
 
+};
+
+&gpio18 {
+	status = "okay";
+};
+
+&gpio22 {
+	status = "okay";
+};
+
+&gpio20 {
+	status = "okay";
+};
+
+&spi1 {
+	status = "okay";
+	spi-lcd@0 {
+		compatible = "sitronix,st7735s";
+		status = "disabled";
+		reg = <0>;
+		fps = <30>;
+		spi-max-frequency = <25000000>;
+		rotate  = <270>;
+		buswidth = <8>;
+		spi-tx-bus-width = <1>;
+		spi-rx-bus-width = <1>;
+		cs-gpios = <&port18 0 GPIO_ACTIVE_HIGH>;
+		dc-gpios = <&port22 0 GPIO_ACTIVE_HIGH>;
+		reset-gpios = <&port20 0 GPIO_ACTIVE_LOW>;
+	};
+};
+
+&mmc_sd0{
+    status = "okay";
+    is_emmc;
+    io_fixed_1v8;
+    mmc-hs200-1_8v;
+    rx_delay_line = <0x00>;
+    tx_delay_line = <0xc0>;
+};
+
+&gpio53 {
+	status = "okay";
+};
+
+&mmc_sd1{
+    status = "okay";
+    cd-gpios = <&port53 0 GPIO_ACTIVE_LOW>;
+    no-1-8-v;
+    cap-sd-highspeed;
+    mshc_ctrl_r = <0x00>;
+};
+
+&uart0 {
+	status = "okay";
+};
+
+&usbotg0 {
+	status = "okay";
+};
+
+&usbotg1 {
+	status = "okay";
 };

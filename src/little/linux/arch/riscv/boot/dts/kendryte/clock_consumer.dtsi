@@ -46,6 +46,18 @@
     clocks = <&i2c0_clk>;
 };
 
+&i2c1 {
+    clocks = <&i2c1_clk>;
+};
+
+&i2c2 {
+    clocks = <&i2c2_clk>;
+};
+
+&i2c3 {
+    clocks = <&i2c3_clk>;
+};
+
 &i2c4 {
     clocks = <&i2c4_clk>;
 };
@@ -60,4 +72,9 @@
 
 &pwm {
     clocks = <&pwm_pclk_gate>;
+};
+
+&ws2812 {
+    clocks = <&audio_dev_clk>;
+    clock-names = "i2sclk";
 };

@@ -203,11 +203,22 @@ pufs_status_t pufs_hash(pufs_dgst_st* md,
     return cb_pufs_hash_final(md);
 }
 
+pufs_status_t pufs_hash_lock(pufs_dgst_st* md,
+                        const uint8_t* msg,
+                        uint32_t msglen,
+                        pufs_hash_t hash)
+{
+    pufs_status_t ret =0;
+    hardlock_config(lock);
+    ret = pufs_hash(md, msg, msglen, hash);
+    hardlock_config(unlock);
+    return ret;
+}
 
 func___hmac_ctx_final cb___hmac_ctx_final = __hmac_ctx_final;
 func___hmac_ctx_update cb___hmac_ctx_update = __hmac_ctx_update;
 func_pufs_hash_init cb_pufs_hash_init = pufs_hash_init;
 func_pufs_hash_update cb_pufs_hash_update = pufs_hash_update;
 func_pufs_hash_final cb_pufs_hash_final = pufs_hash_final;
-func_pufs_hash cb_pufs_hash = pufs_hash;
+func_pufs_hash cb_pufs_hash = pufs_hash_lock;
 #pragma GCC pop_options

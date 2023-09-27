@@ -6,6 +6,7 @@
 #include "k_isp_comm.h"
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 
 int kd_mpi_dewarp_reset(void);
 int kd_mpi_dewarp_dwe_enable_bus(void);
@@ -41,5 +42,6 @@ static inline int kd_mpi_dewarp_enable_bus(void) {
 void kd_mpi_vicap_dw_exit(k_isp_dev dev_num);
 int kd_mpi_vicap_dw_init(k_isp_dev dev_num);
 int kd_mpi_vicap_dw_load(struct k_dw_load_request *lr);
+int kd_mpi_vicap_dw_dump_register(k_isp_dev dev_num, FILE* f);
 
 #endif

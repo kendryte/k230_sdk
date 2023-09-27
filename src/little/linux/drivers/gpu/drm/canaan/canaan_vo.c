@@ -58,16 +58,16 @@ static void canaan_vo_update_video(struct canaan_vo *vo, struct canaan_plane *ca
 
     switch (fb->format->format) {
     case DRM_FORMAT_NV12:
-        reg_val = 1 + (1 << 8) + (1 << 12) + (2 << 16) + (0 << 28);
-        break;
-    case DRM_FORMAT_NV21:
         reg_val = 1 + (1 << 8) + (1 << 12) + (3 << 16) + (0 << 28);
         break;
+    case DRM_FORMAT_NV21:
+        reg_val = 1 + (1 << 8) + (1 << 12) + (2 << 16) + (0 << 28);
+        break;
     case DRM_FORMAT_NV16:
-        reg_val = 1 + (1 << 4) + (1 << 12) + (2 << 16) + (0 << 28);
+        reg_val = 1 + (1 << 4) + (1 << 12) + (3 << 16) + (0 << 28);
         break;
     case DRM_FORMAT_NV61:
-        reg_val = 1 + (1 << 4) + (1 << 12) + (3 << 16) + (0 << 28);
+        reg_val = 1 + (1 << 4) + (1 << 12) + (2 << 16) + (0 << 28);
         break;
     default:
         DRM_DEV_ERROR(vo->dev, "Invalid pixel format %d\n", fb->format->format);
@@ -108,6 +108,12 @@ static void canaan_vo_update_video(struct canaan_vo *vo, struct canaan_plane *ca
     disp_en = readl(vo->reg_base + VO_DISP_ENABLE);
     disp_en |= 1 << plane_enable_bit;
     writel(disp_en, vo->reg_base + VO_DISP_ENABLE);
+
+    DRM_DEBUG_DRIVER("VIDEO_CTL_REG: 0x%02x\n", readl(vo->reg_base + plane_offset + VO_LAYER2_3_CTL_REG_OFFSET));
+    DRM_DEBUG_DRIVER("VIDEO_ACT_SIZE_REG: 0x%02x\n", readl(vo->reg_base + plane_offset + VO_LAYER2_3_ACT_SIZE_REG_OFFSET));
+    DRM_DEBUG_DRIVER("VIDEO_Y_ADDR0_REG: 0x%02x\n", readl(vo->reg_base + plane_offset + VO_LAYER2_3_Y_ADDR0_REG_OFFSET));
+    DRM_DEBUG_DRIVER("VIDEO_UV_ADDR0_REG: 0x%02x\n", readl(vo->reg_base + plane_offset + VO_LAYER2_3_UV_ADDR0_REG_OFFSET));
+    DRM_DEBUG_DRIVER("VIDEO_STRIDE_REG: 0x%02x\n", readl(vo->reg_base + plane_offset + VO_LAYER2_3_STRIDE_REG_OFFSET));
 }
 
 static void canaan_vo_update_osd(struct canaan_vo *vo, struct canaan_plane *canaan_plane,
@@ -174,12 +180,18 @@ static void canaan_vo_update_osd(struct canaan_vo *vo, struct canaan_plane *cana
     stride = fb->pitches[0]/8;
     writel(stride, vo->reg_base + plane_offset + VO_OSD0_7_STRIDE_REG_OFFSET);
 
-    writel(0x0F, vo->reg_base + plane_offset + VO_OSD0_7_DMA_CTRL_REG_OFFSET);
+    writel(0x4F, vo->reg_base + plane_offset + VO_OSD0_7_DMA_CTRL_REG_OFFSET);
     writel(0x100, vo->reg_base + plane_offset + VO_OSD0_7_ADDR_SEL_MODE_REG_OFFSET);
 
     disp_en = readl(vo->reg_base + VO_DISP_ENABLE);
     disp_en |= 1 << plane_enable_bit;
     writel(disp_en, vo->reg_base + VO_DISP_ENABLE);
+
+    DRM_DEBUG_DRIVER("OSD_INFO_REG: 0x%02x\n", readl(vo->reg_base + plane_offset + VO_OSD0_7_INFO_REG_OFFSET));
+    DRM_DEBUG_DRIVER("OSD_SIZE_REG: 0x%02x\n", readl(vo->reg_base + plane_offset + VO_OSD0_7_SIZE_REG_OFFSET));
+    DRM_DEBUG_DRIVER("OSD_VLU_ADDR0_REG: 0x%02x\n", readl(vo->reg_base + plane_offset + VO_OSD0_7_VLU_ADDR0_REG_OFFSET));
+    DRM_DEBUG_DRIVER("OSD_ALP_ADDR0_REG: 0x%02x\n", readl(vo->reg_base + plane_offset + VO_OSD0_7_ALP_ADDR0_REG_OFFSET));
+    DRM_DEBUG_DRIVER("OSD_STRIDE_REG: 0x%02x\n", readl(vo->reg_base + plane_offset + VO_OSD0_7_STRIDE_REG_OFFSET));
 }
 
 int canaan_vo_check_plane(struct canaan_vo *vo, struct canaan_plane *canaan_plane,
@@ -251,7 +263,7 @@ int canaan_vo_enable_vblank(struct canaan_vo *vo)
 
 void canaan_vo_disable_vblank(struct canaan_vo *vo)
 {
-
+    atomic_set(&vo->vsync_enabled, 0);
 }
 
 void canaan_vo_enable_crtc(struct canaan_vo *vo, struct canaan_crtc *canaan_crtc)

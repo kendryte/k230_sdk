@@ -400,4 +400,4 @@ int rt_hw_timer_init(void)
 #endif
 #endif
 }
-INIT_DEVICE_EXPORT(rt_hw_timer_init);
+INIT_BOARD_EXPORT(rt_hw_timer_init);

@@ -36,7 +36,6 @@ extern "C" {
 
 void vo_layer_init(k_u32 width,k_u32 height);
 void vo_layer_deinit();
-
 #ifdef __cplusplus
 #if __cplusplus
 }

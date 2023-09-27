@@ -210,3 +210,21 @@ k_s32 kd_mapi_vicap_set_vi_drop_frame(k_vicap_csi_num csi, k_vicap_drop_frame *f
     }
     return ret;
 }
+
+k_s32 kd_mapi_vicap_set_mclk(k_vicap_mclk_id id, k_vicap_mclk_sel sel, k_u8 mclk_div, k_u8 mclk_en)
+{
+    k_s32 ret = 0;
+    msg_vicap_mclk_set_t mclk_set_info;
+    mclk_set_info.id = id;
+    mclk_set_info.sel = sel;
+    mclk_set_info.mclk_div = mclk_div;
+    mclk_set_info.mclk_en = mclk_en;
+
+    ret = mapi_send_sync(MODFD(K_MAPI_MOD_VICAP, 0, 0), MSG_CMD_MEDIA_VICAP_SET_MCLK,
+            &mclk_set_info, sizeof(mclk_set_info), NULL);
+
+    if(ret != K_SUCCESS) {
+        mapi_vicap_error_trace("mapi_send_sync failed\n");
+    }
+    return ret;
+}

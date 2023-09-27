@@ -1,0 +1,16 @@
+# RT-Thread building script for component
+
+from building import *
+
+cwd = GetCurrentDir()
+src = Glob('*.c')
+src += Glob('zlib/src/*.c')
+src += Glob('tinycrypt/src/*.c')
+CPPPATH = [cwd, f"{cwd}/zlib/src", f"{cwd}/tinycrypt/include"]
+
+CPPDEFINES = [
+    'HAVE_CCONFIG_H',
+]
+group = DefineGroup('stress_mem', src, depend=[''], CPPPATH=CPPPATH, CPPDEFINES=CPPDEFINES)
+
+Return('group')

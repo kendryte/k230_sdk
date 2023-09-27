@@ -315,8 +315,8 @@ static void dwc_otg_core_host_init(struct udevice *dev,
 				DWC2_HCCHAR_CHEN | DWC2_HCCHAR_CHDIS);
 		ret = wait_for_bit_le32(&regs->hc_regs[i].hcchar,
 					DWC2_HCCHAR_CHEN, false, 1000, false);
-		if (ret)
-			dev_info(dev, "%s: Timeout!\n", __func__);
+		// if (ret)
+		// 	dev_info(dev, "%s: Timeout!\n", __func__);
 	}
 
 	/* Turn on the vbus power. */
@@ -328,6 +328,15 @@ static void dwc_otg_core_host_init(struct udevice *dev,
 			hprt0 |= DWC2_HPRT0_PRTPWR;
 			writel(hprt0, &regs->hprt0);
 		}
+
+        // kendryte
+        #define USB0_TEST_CTL3 (0x9158507cU)
+        #define USB1_TEST_CTL3 (0x9158509cU)
+        #define USB_DMPULLDOWN0 	(1<<8)
+        #define USB_DPPULLDOWN0 	(1<<9)
+        u32 usb_test_ctl3 = readl((regs == 0x91500000)?USB0_TEST_CTL3:USB1_TEST_CTL3);
+        usb_test_ctl3 |= (USB_DMPULLDOWN0 | USB_DPPULLDOWN0);
+        writel(usb_test_ctl3, (regs == 0x91500000)?USB0_TEST_CTL3:USB1_TEST_CTL3);
 	}
 
 	if (dev)
@@ -1160,7 +1169,7 @@ static int dwc2_reset(struct udevice *dev)
 
 	ret = reset_get_bulk(dev, &priv->resets);
 	if (ret) {
-		dev_warn(dev, "Can't get reset: %d\n", ret);
+		// dev_warn(dev, "Can't get reset: %d\n", ret);
 		/* Return 0 if error due to !CONFIG_DM_RESET and reset
 		 * DT property is not present.
 		 */

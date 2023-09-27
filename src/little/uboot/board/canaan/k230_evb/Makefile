@@ -23,15 +23,26 @@
 #  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #  */
 
-obj-y += sys_clk.o
-
-
-ifdef CONFIG_SPL_BUILD
-obj-y += board_spl.o
-endif 
 obj-y += board.o
-obj-y +=  img.o
-obj-y +=  board_perf.o
+
+
+obj-$(CONFIG_LPDDR3_800) +=  gen_lpddr3_800.o    #800
+obj-$(CONFIG_LPDDR3_1600) += gen_lpddr3_1600.o   #1600
+obj-$(CONFIG_LPDDR3_2133) += gen_lpddr3_2133.o   #ddr_init_2133.c
+# obj-$(CONFIG_CANMV_LPDDR3_2133) += gen_pilpddr3_2133.o   #ddr_init_2133.c
+
+
+
+$(obj)/gen_lpddr3_2133.c: $(src)/ddr_init_2133.c   $(srctree)/arch/riscv/cpu/k230/ddr.sh
+	($(srctree)/arch/riscv/cpu/k230/ddr.sh $< $@ 0x50000 0x53fff 0x54000 0x54359  || exit 1)
+
+$(obj)/gen_lpddr3_1600.c: $(src)/lpddr3_swap_1600.c   $(srctree)/arch/riscv/cpu/k230/ddr.sh
+	($(srctree)/arch/riscv/cpu/k230/ddr.sh $< $@ 0x50000 0x53fff 0x54000 0x54359  || exit 1)
+
+$(obj)/gen_lpddr3_800.c: $(src)/lpddr3_swap_800.c   $(srctree)/arch/riscv/cpu/k230/ddr.sh
+	($(srctree)/arch/riscv/cpu/k230/ddr.sh $< $@ 0x50000 0x53fff 0x54000 0x54359  || exit 1)
+
+	
 
 EXTRA_CFLAGS += -I$(srctree)/arch/$(ARCH)/cpu/k230/
 EXTRA_CFLAGS += -I$(srctree)/arch/$(ARCH)/cpu/k230/puf_fw/pufs_common  

@@ -50,7 +50,7 @@ double Sort::GetIOU(cv::Rect_<float> bb_dr, cv::Rect_<float> bb_gt){
 std::vector<Sort::TrackingBox> Sort::Sortx(std::vector<BoxInfo> bbox, int fi){
     int max_age = 30;//max time object disappear
     int min_hits = 3; //min time target appear
-    double iouThreshold = 0.85;//matching IOU
+    double iouThreshold = 0.75;//matching IOU
 
     std::vector<Sort::TrackingBox> detData;
     std::vector<cv::Rect_<float>> predictedBoxes;

@@ -68,8 +68,8 @@
 	memory@0 {
 		device_type = "memory";
 		reg = <
-				0x0 0x2200000 0x0 0x39ff000  /*MEM_LINUX_SYS*/
-				0x0 0x200000 0x0 0x1fff000  /*MEM_RTT_SYS*/
+				0x0 0x2600000 0x0 0x28df000  /*MEM_LINUX_SYS*/
+				0x0 0x200000 0x0 0x23ff000  /*MEM_RTT_SYS*/
 			  >;
 	};
 
@@ -262,7 +262,7 @@
 		// WIFI INTERRUPT HW-V1.1
 		//(IO34) ( 2<<SEL | 0<<SL | BANK_VOLTAGE_IO26_IO37<<MSC | 1<<IE | 0<<OE | 0<<PU | 0<<PD | 7<<DS | 1<<ST )
 		(IO34) ( 0<<SEL | 0<<SL | BANK_VOLTAGE_IO26_IO37<<MSC |	1<<IE | 0<<OE | 0<<PU | 1<<PD | 7<<DS | 0<<ST )
-		(IO35) ( 2<<SEL | 0<<SL | BANK_VOLTAGE_IO26_IO37<<MSC | 1<<IE | 1<<OE | 0<<PU | 0<<PD | 7<<DS | 1<<ST )
+		(IO35) ( 0<<SEL | 0<<SL | BANK_VOLTAGE_IO26_IO37<<MSC | 1<<IE | 1<<OE | 0<<PU | 0<<PD | 7<<DS | 1<<ST )
 		(IO36) ( 2<<SEL | 0<<SL | BANK_VOLTAGE_IO26_IO37<<MSC | 1<<IE | 0<<OE | 0<<PU | 0<<PD | 7<<DS | 1<<ST )
 		// imx335 gpio
 		(IO37) ( 0<<SEL | 0<<SL | BANK_VOLTAGE_IO26_IO37<<MSC | 1<<IE | 1<<OE | 0<<PU | 0<<PD | 7<<DS | 1<<ST )

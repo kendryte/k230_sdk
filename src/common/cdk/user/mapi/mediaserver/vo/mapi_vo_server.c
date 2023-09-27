@@ -31,6 +31,9 @@
 #include "mapi_vo_api.h"
 #include "mapi_vo_comm.h"
 
+#include "k_connector_comm.h"
+#include "mpi_connector_api.h"
+
 #define CHECK_MAPI_VICAP_NULL_PTR(paraname, ptr)                      \
     do {                                                              \
         if ((ptr) == NULL) {                                          \
@@ -441,3 +444,77 @@ k_s32 kd_mapi_vo_chn_dump_release(k_u32 chn_num, const k_video_frame_info *vf_in
 }
 
 
+k_s32 kd_mapi_get_connector_info(k_connector_type connector_type, k_connector_info *connector_info)
+{
+    k_s32 ret = 0;
+
+    CHECK_MAPI_VICAP_NULL_PTR("get_connector_info", connector_info);
+    ret = kd_mpi_get_connector_info(connector_type, connector_info);
+
+    printf("connector_type is %d connector_info.name is %s connector_info.bg_clolor is %x \n", connector_type, connector_info->connector_name, connector_info->bg_color);
+    if(ret != K_SUCCESS)
+    {
+        mapi_vo_error_trace("kd_mapi_get_connector_info failed:0x%x\n", ret);
+        return VO_RET_MPI_TO_MAPI(ret);
+    }
+    return K_SUCCESS;
+}
+
+
+
+k_s32 kd_mapi_connector_open(const char *connector_name)
+{
+    k_s32 ret = 0;
+
+    CHECK_MAPI_VICAP_NULL_PTR("get_connector_info", connector_name);
+
+    ret = kd_mpi_connector_open(connector_name);
+    if(ret < 0)
+    {
+        mapi_vo_error_trace("kd_mpi_connector_open failed:0x%x\n", ret);
+        return VO_RET_MPI_TO_MAPI(ret);
+    }
+    return ret;
+}
+
+
+k_s32 kd_mapi_connector_power_set(k_s32 fd, k_bool on)
+{
+    k_s32 ret = 0;
+
+    ret = kd_mpi_connector_power_set(fd, on);
+    if(ret != K_SUCCESS)
+    {
+        mapi_vo_error_trace("kd_mapi_connector_open failed:0x%x\n", ret);
+        return VO_RET_MPI_TO_MAPI(ret);
+    }
+    
+    return K_SUCCESS;
+}
+
+
+k_s32 kd_mapi_connector_init(k_s32 fd, k_connector_info *info)
+{
+    k_s32 ret = 0;
+    k_connector_info con_info;
+
+    memcpy(&con_info, info, sizeof(k_connector_info));
+
+    // printf("kd_mapi_connector_init fd is %d \n", fd);
+    // printf("kd_mapi_connector_init con_info.bg_color is %x \n", con_info.bg_color);
+    // printf("kd_mapi_connector_init con_info.intr_line is %d \n", con_info.intr_line);
+    // printf("kd_mapi_connector_init con_info.cmd_mode is %d \n", con_info.cmd_mode);
+    // printf("dsi attr lan_num is %d screen_test_mode is %d dsi_test_mode is %d \n", con_info.lan_num, con_info.screen_test_mode, con_info.dsi_test_mode);
+    // printf("phy_attr m is %d con_info.phy_attr.n is %d voc is %x \n", con_info.phy_attr.m, con_info.phy_attr.n, con_info.phy_attr.voc);
+    // printf("vo k_vo_display_resolution pclk is %d vfront_porch is %d hdisplay is %d \n", con_info.resolution.pclk,  con_info.resolution.vfront_porch, con_info.resolution.hdisplay );
+    
+
+    ret = kd_mpi_connector_init(fd, con_info);
+    if(ret != K_SUCCESS)
+    {
+        mapi_vo_error_trace("kd_mapi_connector_open failed:0x%x\n", ret);
+        return VO_RET_MPI_TO_MAPI(ret);
+    }
+
+    return K_SUCCESS;
+}

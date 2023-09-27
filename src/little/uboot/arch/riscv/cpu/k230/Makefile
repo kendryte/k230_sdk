@@ -41,13 +41,9 @@ obj-y += puf_fw/pufs_sp38a/pufs_sp38a.o
 obj-y += puf_fw/pufs_sp38d/pufs_sp38d.o 
 
 
-# obj-$(CONFIG_LPDDR3_800) += ddr3/lpddr3_swap_800.o
-# obj-$(CONFIG_LPDDR3_1600) += ddr3/lpddr3_swap_1600.o
-# obj-$(CONFIG_LPDDR3_2133) += ddr3/ddr_init_2133.o
-# obj-$(CONFIG_LPDDR4_1066) += ddr4/lpddr4_init_32_swap_1066.o
-# obj-$(CONFIG_LPDDR4_3200) += ddr4/lpddr4_init_32_swap_3200.o
 
-obj-y += ddr3/ ddr4/
+
+
 
 
 obj-y += sysctl.o

@@ -70,7 +70,6 @@ typedef struct
     k_bool done;
     k_payload_type type;
     k_vb_blk_handle vb_handle[INPUT_BUF_CNT];
-    k_pixel_format pic_format;
     k_u32 act_width;
     k_u32 act_height;
     k_u32 input_pool_id;
@@ -436,10 +435,8 @@ int main(int argc, char *argv[])
     attr.frame_buf_cnt = OUTPUT_BUF_CNT;
     attr.frame_buf_size = FRAME_BUF_SIZE;
     attr.stream_buf_size = STREAM_BUF_SIZE;
-    attr.pic_format = PIXEL_FORMAT_YUV_SEMIPLANAR_420;
     attr.type = type;
     attr.frame_buf_pool_id = g_vdec_conf[ch].output_pool_id;
-    g_vdec_conf[ch].pic_format = attr.pic_format;
     ret = kd_mapi_vdec_init(ch, &attr);
     CHECK_RET(ret, __func__, __LINE__);
 

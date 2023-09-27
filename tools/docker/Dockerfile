@@ -20,37 +20,44 @@ LABEL auther='wuwentao@canaan-creative.com'
 
 ENV USER=gitlab
 ARG UID=6000
-# local build flag
-RUN echo "False" > /tmp/.flag
 
 # config for default software install
 ARG DEBIAN_FRONTEND=noninteractive
 # install 32 bit lib for toolchain
 RUN dpkg --add-architecture i386
 
-# config ubuntu apt source
-RUN sed -i 's/archive.ubuntu.com/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list \
+# config ubuntu local apt source
+RUN cp /etc/apt/sources.list /etc/apt/sources_bak.list \
+    && sed -i 's/archive.ubuntu.com/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list \
     && sed -i 's/security.ubuntu.com/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list
 
 # install software
 RUN apt-get clean all && \
     apt-get update && \
     apt-get install -y --fix-broken --fix-missing --no-install-recommends \
-sudo vim wget curl git git-lfs openssh-client net-tools sed tzdata expect mtd-utils inetutils-ping locales \
-sed make binutils build-essential diffutils gcc g++ bash patch gzip bzip2 perl tar cpio unzip rsync file bc findutils \
-dosfstools mtools bison flex autoconf automake \
-libc6-dev-i386 libncurses5:i386 libssl-dev \
-python3 python3-pip python-is-python3 \
-lib32z1 scons libncurses5-dev \
-kmod fakeroot pigz tree doxygen gawk pkg-config libyaml-dev
+    sudo vim wget curl git git-lfs openssh-client net-tools sed tzdata expect mtd-utils inetutils-ping locales \
+    sed make binutils build-essential diffutils gcc g++ bash patch gzip bzip2 perl tar cpio unzip rsync file bc findutils \
+    dosfstools mtools bison flex autoconf automake \
+    libc6-dev-i386 libncurses5:i386 libssl-dev \
+    python3 python3-pip python-is-python3 \
+    lib32z1 scons libncurses5-dev \
+    kmod fakeroot pigz tree doxygen gawk pkg-config libyaml-dev libconfuse2 libconfuse-dev
 
-# config pip source
-RUN python3 -m pip config set global.index-url "https://pypi.tuna.tsinghua.edu.cn/simple" \
-    && python3 -m pip config set global.extra-index-url "https://mirrors.aliyun.com/pypi/simple/ https://pypi.mirrors.ustc.edu.cn/simple/ https://pypi.douban.com/simple/" \
-    && python3 -m pip install -U pip \
-    && python3 -m pip install -U pyyaml pycryptodome gmssl \
-    && python3 -m pip install -U numpy==1.19.5  protobuf==3.17.3 Pillow \
-    onnx==1.9.0 onnx-simplifier==0.3.6 onnxoptimizer==0.2.6 onnxruntime==1.8.0  cmake
+# local build flag
+RUN echo "False" > /tmp/.flag
+RUN wget -P /tmp/ "https://ai.b-bug.org/k230/downloads/aitest/aitest-0.0.2.dev20230625-py3-none-any.whl" || echo "True" > /tmp/.flag
+
+# config pip local source
+RUN FLAG=$(cat /tmp/.flag) && if [ "$FLAG" = "False" ]; then echo \
+    '[global]\n\
+    timeout = 60\n\
+    index-url = https://pypi.tuna.tsinghua.edu.cn/simple\n\
+    extra-index-url = https://mirrors.aliyun.com/pypi/simple/ https://mirrors.cloud.tencent.com/pypi/simple\n\
+    '  > /etc/pip.conf; cat /etc/pip.conf; else echo "Skip config pip source"; fi 
+
+# install pip software
+RUN python3 -m pip install -U pyyaml pycryptodome gmssl \
+    numpy==1.19.5  protobuf==3.17.3 Pillow onnx==1.9.0 onnx-simplifier==0.3.6 onnxoptimizer==0.2.6 onnxruntime==1.8.0  cmake
 
 # dotnet runtime for nncase v2
 RUN wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb \
@@ -58,13 +65,17 @@ RUN wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-p
     && apt-get update \
     && apt-get install -y dotnet-runtime-7.0 libicu-dev
 
-# install local env
-RUN wget -P /tmp/ "https://ai.b-bug.org/k230/downloads/aitest/aitest-0.0.2.dev20230625-py3-none-any.whl" || echo "True" > /tmp/.flag \
-    && FLAG=$(cat /tmp/.flag) && if [ "$FLAG" = "False" ]; then python3 -m pip install -U /tmp/aitest*.whl; else echo "Skip install"; fi \
-    && FLAG=$(cat /tmp/.flag) && if [ "$FLAG" = "False" ]; then python3 -m pip install -U robotframework requests; else echo "Skip install"; fi
+# k230 canmv, required libconfuse-dev
+RUN wget https://github.com/pengutronix/genimage/releases/download/v16/genimage-16.tar.xz -O /tmp/genimage-16.tar.xz \
+    && cd /tmp/; tar -xf genimage-16.tar.xz; cd genimage-16 \
+    && ./configure \
+    && make -j \
+    && make install \
+    && cd .. ; rm -rf genimage*
 
-# remove software cache
-RUN apt-get autoremove && apt-get autoclean && apt-get clean
+# install local test env
+RUN FLAG=$(cat /tmp/.flag) && if [ "$FLAG" = "False" ]; then python3 -m pip install -U /tmp/aitest*.whl; else echo "Skip install"; fi \
+    && FLAG=$(cat /tmp/.flag) && if [ "$FLAG" = "False" ]; then python3 -m pip install -U robotframework requests; else echo "Skip install"; fi
 
 # default encode
 RUN rm -rf /var/lib/apt/lists/* \

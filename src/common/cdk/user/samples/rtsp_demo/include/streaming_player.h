@@ -81,7 +81,7 @@ public:
         env_->reclaim();
         delete scheduler_;
     }
-    
+
     int CreateSession(const SessionAttr &session_attr);
     int DestroySession(int session_idx);
 
@@ -100,7 +100,7 @@ private:
     int video_width_;
     int video_height_;
     int session_num_{1};
-    k_u32 audio_sample_rate_{44100};
+    k_u32 audio_sample_rate_{8000};
     k_mapi_media_attr_t media_attr_;
     k_vicap_dev_set_info dev_attr_info_;
     k_vicap_sensor_type sensor_type_;

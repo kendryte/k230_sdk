@@ -52,7 +52,7 @@ class LiveFrameSource : public FramedSource {
     virtual void doStopGettingFrames();
     
     virtual unsigned maxFrameSize() const { 
-      return 128 * 1024; // set a reasonable value ..TODO
+      return 512 * 1024; // set a reasonable value ..TODO
     }
     static void deliverFrame0(void *clientData);
     void deliverFrame();

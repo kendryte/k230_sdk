@@ -48,6 +48,8 @@ using std::endl;
 using std::ifstream;
 using std::vector;
 
+#include "pose_action.h"
+
 /** 
  * @brief 行人检测框信息
  */
@@ -64,14 +66,6 @@ typedef struct BoxInfo
 
 } BoxInfo;
 
-/**
- * @brief 关键点信息
- */
-struct KKeyPoint
-{
-    cv::Point2f p;  // 关键点
-    float prob;     // 关键点概率值
-};
 
 
 /**
@@ -381,21 +375,21 @@ public:
 
     /**
      * @brief 非极大值抑制
-     * @input_boxes 所有候选框
-     * @NMS_THRESH NMS阈值 
+     * @param input_boxes 所有候选框
+     * @param NMS_THRESH NMS阈值 
      * @return None
     **/
     static void nms(std::vector<BoxInfo> &input_boxes, float NMS_THRESH);
 
     /**
      * @brief 解码
-     * @data kmodel 推理结果
-     * @net_size kmodel 输入尺寸大小
-     * @stride 步长
-     * @num_classes 类别数
-     * @frame_size 分辨率
-     * @anchors 锚框
-     * @threshold 检测框阈值
+     * @param data kmodel 推理结果
+     * @param net_size kmodel 输入尺寸大小
+     * @param stride 步长
+     * @param num_classes 类别数
+     * @param frame_size 分辨率
+     * @param anchors 锚框
+     * @param threshold 检测框阈值
     **/
     static std::vector<BoxInfo> decode_infer(float *data, int net_size, int stride, int num_classes, FrameSize frame_size, float anchors[][2], float threshold);
 
@@ -425,19 +419,20 @@ public:
         /** 
         * @brief 绘制关键点
         * @param img           原图
+        * @param frame_size  分辨率  
         * @param results       关键点结果
-        * @param frame_size    分辨率
         * @param SKELETON      骨骼信息，常量
         * @param KPS_COLORS    关键点颜色信息，常量
         * @param LIMB_COLORS   肢体颜色信息，常量
-        * @param thres_conf    关键点阈值
-        * @param osd_frame_put osd_frame的替代Mat
         * @return None
         */
+
         static void DrawPred_video(cv::Mat& img,FrameSize frame_size, std::vector<OutputPose>& results,
                     const std::vector<std::vector<unsigned int>> &SKELLTON,
                     const std::vector<std::vector<unsigned int>> &KPS_COLORS,
-                    const std::vector<std::vector<unsigned int>> &LIMB_COLORS,float thres_conf,cv::Mat& osd_frame_put);
+                    const std::vector<std::vector<unsigned int>> &LIMB_COLORS,float thres_conf );
+
+        static void action_count( cv::Mat& image, std::vector<KKeyPoint> keypoints, float thresh);
 
 
 };

@@ -161,6 +161,12 @@ config FB_TFT_ST7735R
 	help
 	  Generic Framebuffer support for ST7735R
 
+config FB_TFT_ST7735S
+	tristate "FB driver for the ST7735S LCD Controller"
+	depends on FB_TFT
+	help
+	  Generic Framebuffer support for ST7735S
+
 config FB_TFT_ST7789V
 	tristate "FB driver for the ST7789V LCD Controller"
 	depends on FB_TFT

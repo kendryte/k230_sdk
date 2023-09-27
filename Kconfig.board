@@ -19,6 +19,10 @@ config BOARD_K230D
         help 
            "siplp4 128MB ddr";
 
+config BOARD_K230_CANMV
+	bool "K230 CANMV(K230PI)"
+        help 
+           "CANMV(K230PI)";
 endchoice
 
 config BOARD_NAME
@@ -44,6 +48,12 @@ config UBOOT_DEFCONFIG
               uboot defconfig ;
        default "k230_evb"
 
+config LINUX_DEFCONFIG
+        string "linux defconfig  "
+        help  
+              linux defconfig ;
+       default "k230_evb"
+
 config LINUX_DTB
         string "linux dtb name"
         help  
@@ -55,6 +65,21 @@ config REMOTE_TEST_PLATFORM
         help  
               xxxe ;
         default n
+config GEN_IMG_SCRIPT
+        string "generate image scripte"
+        help  
+              generate image scripte;
+       default "board/common/gen_image_script/gen_image.sh"
+config RTT_CONSOLE_ID
+	int "RTT console id"
+	default 3
+
+config SPI_NOR_SUPPORT_CFG_PARAM
+        bool "spi nor support cfg param"
+        depends on  SPI_NOR
+        help  
+              spi nor support cfg param ;
+        default y
 endmenu
 
 

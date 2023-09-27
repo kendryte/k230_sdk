@@ -42,8 +42,8 @@ static k_s32 dma_chn_attr_init(k_dma_chn_attr_u attr[8])
 {
     k_gdma_chn_attr_t *gdma_attr;
 
-    gdma_attr = &attr[0].gdma_attr;
-    gdma_attr->buffer_num = 3;
+    gdma_attr = &attr[DMA_CHN0].gdma_attr;
+    gdma_attr->buffer_num = 1;
     gdma_attr->rotation = DEGREE_90;
     gdma_attr->x_mirror = K_FALSE;
     gdma_attr->y_mirror = K_FALSE;
@@ -53,6 +53,22 @@ static k_s32 dma_chn_attr_init(k_dma_chn_attr_u attr[8])
     gdma_attr->dst_stride[0] = DMA_CHN0_DST_STRIDE;
     gdma_attr->work_mode = DMA_UNBIND;
     gdma_attr->pixel_format = DMA_PIXEL_FORMAT_YUV_400_8BIT;
+
+    gdma_attr = &attr[DMA_CHN1].gdma_attr;
+    gdma_attr->buffer_num = 1;
+    gdma_attr->rotation = DEGREE_90;
+    gdma_attr->x_mirror = K_FALSE;
+    gdma_attr->y_mirror = K_FALSE;
+    gdma_attr->width = DMA_CHN0_WIDTH;
+    gdma_attr->height = DMA_CHN0_HEIGHT;
+    gdma_attr->src_stride[0] = DMA_CHN0_SRC_STRIDE;
+    gdma_attr->dst_stride[0] = DMA_CHN0_DST_STRIDE;
+    gdma_attr->src_stride[1] = DMA_CHN0_SRC_STRIDE;
+    gdma_attr->dst_stride[1] = DMA_CHN0_DST_STRIDE;
+    gdma_attr->src_stride[2] = DMA_CHN0_SRC_STRIDE;
+    gdma_attr->dst_stride[2] = DMA_CHN0_DST_STRIDE;
+    gdma_attr->work_mode = DMA_UNBIND;
+    gdma_attr->pixel_format = DMA_PIXEL_FORMAT_BGR_888_PLANAR;
 
     return K_SUCCESS;
 }
@@ -69,7 +85,7 @@ int sample_dv_dma_init()
     dma_chn_attr_init(chn_attr);
 
     /************************************************************
-     * This part is the demo that actually starts to use DMA 
+     * This part is the demo that actually starts to use DMA
      ***********************************************************/
     ret = kd_mpi_dma_set_dev_attr(&dma_dev_attr);
     if (ret != K_SUCCESS) {
@@ -94,12 +110,28 @@ int sample_dv_dma_init()
         goto err_dma_dev;
     }
 
+    ret = kd_mpi_dma_set_chn_attr(DMA_CHN1, &chn_attr[DMA_CHN1]);
+    if (ret != K_SUCCESS) {
+        printf("set chn attr error\r\n");
+        goto err_dma_dev;
+    }
+    ret = kd_mpi_dma_start_chn(DMA_CHN1);
+    if (ret != K_SUCCESS) {
+        printf("start chn error\r\n");
+        goto err_dma_dev;
+    }
+
     return K_SUCCESS;
 
     /************************************************************
-     * This part is used to stop the DMA 
+     * This part is used to stop the DMA
      ***********************************************************/
     ret = kd_mpi_dma_stop_chn(DMA_CHN0);
+    if (ret != K_SUCCESS) {
+        printf("stop chn error\r\n");
+    }
+
+    ret = kd_mpi_dma_stop_chn(DMA_CHN1);
     if (ret != K_SUCCESS) {
         printf("stop chn error\r\n");
     }
@@ -119,9 +151,14 @@ int sample_dv_dma_delete()
     k_s32 ret;
 
     /************************************************************
-     * This part is used to stop the DMA 
+     * This part is used to stop the DMA
      ***********************************************************/
     ret = kd_mpi_dma_stop_chn(DMA_CHN0);
+    if (ret != K_SUCCESS) {
+        printf("stop chn error\r\n");
+    }
+
+    ret = kd_mpi_dma_stop_chn(DMA_CHN1);
     if (ret != K_SUCCESS) {
         printf("stop chn error\r\n");
     }

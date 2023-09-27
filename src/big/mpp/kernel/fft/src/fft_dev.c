@@ -50,7 +50,7 @@
 
 typedef struct 
 {
-   volatile fft_cfg_reg_st cfg;
+   volatile k_fft_cfg_reg_st cfg;
    volatile k_u64 rsv0;
    volatile k_u64  enable; // 0x10 write 1 enable fft module  //bit 1-bit63 reserver
    volatile k_u64 rsv2;
@@ -103,7 +103,7 @@ typedef struct
     volatile unsigned short int_num;
 }fft_dev_st;
 
-extern  k_u32 sdma_memcpy_only_for_fft(char *des,  char *src, int len, int sdma_channel);
+extern  k_u32 sdma_memcpy_only_for_fft(char *des,  char *src, int len);
 static void dump_buff(char *buff, int len)
 {
     int i=0;
@@ -131,13 +131,11 @@ static int fft_device_close(struct dfs_fd *file)
 {
     return RT_EOK;
 }
-static int fft_input_data_from_buff(fft_dev_st *pfft_dev, fft_args_st *pcfg)
+static int fft_input_data_from_buff(fft_dev_st *pfft_dev, k_fft_args_st *pcfg)
 {
     int i = 0;
     int ret = 0;
     int fft_data_len = 64 << pcfg->reg.point <<2;
-    
-    
 
     if(pcfg->reg.im == RRRR)
         fft_data_len = fft_data_len/2;
@@ -146,7 +144,10 @@ static int fft_input_data_from_buff(fft_dev_st *pfft_dev, fft_args_st *pcfg)
     writeq(pcfg->reg.cfg_value,&pfft_dev->reg->cfg);
     writeq(1, &pfft_dev->reg->enable);
 
-    if(pcfg->dma_channel == 0xff ) {
+    rt_hw_cpu_dcache_ops(RT_HW_CACHE_FLUSH, pcfg->data, sizeof(pcfg->data));
+    ret = sdma_memcpy_only_for_fft((char*)FFT_FIFI_REG_ADD ,(char*)(k_u64)pcfg->data+PV_OFFSET, fft_data_len);
+    if(ret) { //dama failed use cpu copy
+        rt_kprintf("fft dma failed ret %lx \n", ret);
         for(i=0; i < fft_data_len / 8; i++){
             if(pfft_dev->int_num != 0){
                 ret = pfft_dev->int_num;
@@ -154,24 +155,25 @@ static int fft_input_data_from_buff(fft_dev_st *pfft_dev, fft_args_st *pcfg)
             }
             writeq(pcfg->data[i], &pfft_dev->reg->fft_inter_fifo);
         }
-    }else {
-        rt_hw_cpu_dcache_ops(RT_HW_CACHE_FLUSH, pcfg->data, sizeof(pcfg->data));
-        ret = sdma_memcpy_only_for_fft((char*)FFT_FIFI_REG_ADD ,(char*)(k_u64)pcfg->data+PV_OFFSET, fft_data_len, pcfg->dma_channel);
-    } 
-    
+    }
+
     if(ret)
         fft_reset(pfft_dev);
 
     return ret;  
 }
 
-static int fft_copy_data_to_user(fft_dev_st *pfft_dev, fft_args_st *pcfg,void *args)
+static int fft_copy_data_to_user(fft_dev_st *pfft_dev, k_fft_args_st *pcfg,void *args)
 {
     int i = 0;
     int ret = 0;
     int fft_data_len = 64 << pcfg->reg.point <<2;
-    
-    if(pcfg->dma_channel == 0xff ){ // not use sdma
+
+    ret = sdma_memcpy_only_for_fft((char*)(k_u64)pcfg->data + PV_OFFSET, (char*)FFT_FIFI_REG_ADD, fft_data_len);
+    if(ret == 0){
+        rt_hw_cpu_dcache_ops(RT_HW_CACHE_INVALIDATE, pcfg->data, sizeof(pcfg->data));
+    }else { //dma failed 
+        rt_kprintf("fft dma failed ret %lx \n", ret);
         for(i=0; i < fft_data_len / 8; i++){
             if(pfft_dev->int_num != 0){
                 ret = pfft_dev->int_num;
@@ -179,15 +181,14 @@ static int fft_copy_data_to_user(fft_dev_st *pfft_dev, fft_args_st *pcfg,void *a
             }
             pcfg->data[i] = readq(&pfft_dev->reg->fft_inter_fifo);    
         }
-    }else { //4条 sdma;
-        ret = sdma_memcpy_only_for_fft((char*)(k_u64)pcfg->data + PV_OFFSET, (char*)FFT_FIFI_REG_ADD, fft_data_len, pcfg->dma_channel);
-        rt_hw_cpu_dcache_ops(RT_HW_CACHE_INVALIDATE, pcfg->data, sizeof(pcfg->data));
     }
     fft_reset(pfft_dev);
     
-    if(ret == 0)
-        if(sizeof(fft_args_st) !=  lwp_put_to_user(args, pcfg, sizeof(fft_args_st)))
+    if(ret == 0){
+        if(sizeof(k_fft_args_st) !=  lwp_put_to_user(args, pcfg, sizeof(k_fft_args_st)))
             ret =  -2;
+    }
+        
     return ret;
 }
 static int fft_device_ioctl(struct dfs_fd *file, int cmd, void *args)
@@ -198,11 +199,11 @@ static int fft_device_ioctl(struct dfs_fd *file, int cmd, void *args)
 
     switch (cmd) {
         case KD_IOC_CMD_FFT_IFFT:{
-            fft_args_st *pfft_args = (fft_args_st *) rt_pages_alloc(rt_page_bits(sizeof(fft_args_st)));
+            k_fft_args_st *pfft_args = (k_fft_args_st *) rt_pages_alloc(rt_page_bits(sizeof(k_fft_args_st)));
             if(pfft_args == NULL ) {
                 return -1;              
             }
-            if( sizeof(fft_args_st) == lwp_get_from_user(pfft_args, args, sizeof(fft_args_st))){
+            if( sizeof(k_fft_args_st) == lwp_get_from_user(pfft_args, args, sizeof(k_fft_args_st))){
                 //dump_buff(pfft_args, 64*4+16);
                 ret = fft_input_data_from_buff(pfft_dev, pfft_args); //input data 
                 if(0 == ret ){
@@ -210,7 +211,7 @@ static int fft_device_ioctl(struct dfs_fd *file, int cmd, void *args)
                     ret = fft_copy_data_to_user(pfft_dev, pfft_args , args); //output data
                 }
             }
-            rt_pages_free(pfft_args, rt_page_bits(sizeof(fft_args_st)));
+            rt_pages_free(pfft_args, rt_page_bits(sizeof(k_fft_args_st)));
         }        
         break;
         default:break;

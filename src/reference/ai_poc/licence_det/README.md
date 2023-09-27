@@ -21,7 +21,12 @@ debug_mode      是否需要调试，0、1、2分别表示不调试、简单调�
 
  #视频流推理：licence_detect_isp.sh
 ./licence_det.elf LPD_640.kmodel 0.1 0.2 None 0
+
+操作说明：
+将摄像头置于车牌前即可在显示屏中观察到车牌检测效果。
 ```
+## 2.2 效果展示
+<img src="https://kendryte-download.canaan-creative.com/k230/downloads/doc_images/ai_demo/licence_det/licence.jpg" alt="image.jpg" width="50%" height="50%" />
 
 
 

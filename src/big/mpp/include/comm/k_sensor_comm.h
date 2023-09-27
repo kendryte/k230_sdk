@@ -41,7 +41,7 @@
 extern "C" {
 #endif /* End of #ifdef __cplusplus */
 
-#define SENSOR_NUM_MAX 4
+#define SENSOR_NUM_MAX 6
 
 #define REG_NULL  0xFFFF
 
@@ -59,19 +59,25 @@ extern "C" {
  * @note The type list is maintained by the driver developer,it corresponds to the sensor configuration.
  */
 typedef enum {
-    OV_OV9732_MIPI_1920X1080_30FPS_10BIT_LINEAR,
-    OV_OV9732_MIPI_1920X1080_30FPS_10BIT_HDR,
-    OV_OV9732_MIPI_1280X720_30FPS_10BIT_LINEAR,
-    OV_OV9286_MIPI_1920X1080_30FPS_10BIT_LINEAR,
-    OV_OV9286_MIPI_1920X1080_30FPS_10BIT_HDR,
-    OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_IR,
-    OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_SPECKLE,
-    IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_LINEAR,
-    IMX335_MIPI_2LANE_RAW12_2592X1944_30FPS_LINEAR,
-    IMX335_MIPI_4LANE_RAW12_2592X1944_30FPS_LINEAR,
-    IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_MCLK_7425_LINEAR,
-    IMX335_MIPI_2LANE_RAW12_2592X1944_30FPS_MCLK_7425_LINEAR,
-    IMX335_MIPI_4LANE_RAW12_2592X1944_30FPS_MCLK_7425_LINEAR,
+    OV_OV9732_MIPI_1280X720_30FPS_10BIT_LINEAR = 0,
+    OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_IR = 1,
+    OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_SPECKLE = 2,
+
+    OV_OV9286_MIPI_1280X720_60FPS_10BIT_LINEAR_IR = 3,
+    OV_OV9286_MIPI_1280X720_60FPS_10BIT_LINEAR_SPECKLE = 4,
+
+    OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_IR_SPECKLE = 5,
+    OV_OV9286_MIPI_1280X720_60FPS_10BIT_LINEAR_IR_SPECKLE  = 6,
+
+    IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_LINEAR = 7,
+    IMX335_MIPI_2LANE_RAW12_2592X1944_30FPS_LINEAR = 8,
+    IMX335_MIPI_4LANE_RAW12_2592X1944_30FPS_LINEAR = 9,
+    IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_MCLK_7425_LINEAR = 10,
+    IMX335_MIPI_2LANE_RAW12_2592X1944_30FPS_MCLK_7425_LINEAR = 11,
+    IMX335_MIPI_4LANE_RAW12_2592X1944_30FPS_MCLK_7425_LINEAR = 12,
+
+    IMX335_MIPI_4LANE_RAW10_2XDOL,
+    IMX335_MIPI_4LANE_RAW10_3XDOL,
 
     SC_SC035HGS_MIPI_1LANE_RAW10_640X480_120FPS_LINEAR,
     SC_SC035HGS_MIPI_1LANE_RAW10_640X480_60FPS_LINEAR,
@@ -81,8 +87,13 @@ typedef enum {
     OV_OV9286_MIPI_1280X720_30FPS_10BIT_MCLK_25M_LINEAR_IR,
     OV_OV9732_MIPI_1280X720_30FPS_10BIT_MCLK_16M_LINEAR,
 
-    OV_OV9286_MIPI_1280X720_60FPS_10BIT_LINEAR_IR,//19
-    OV_OV9286_MIPI_1280X720_60FPS_10BIT_LINEAR_SPECKLE,//20
+    OV_OV5647_MIPI_1920X1080_30FPS_10BIT_LINEAR,
+    OV_OV5647_MIPI_2592x1944_10FPS_10BIT_LINEAR,
+    OV_OV5647_MIPI_640x480_60FPS_10BIT_LINEAR,
+    OV_OV5647_MIPI_CSI0_1920X1080_30FPS_10BIT_LINEAR,
+
+    SC_SC201CS_MIPI_1LANE_RAW10_1600X1200_30FPS_LINEAR,
+    SC_SC201CS_SLAVE_MODE_MIPI_1LANE_RAW10_1600X1200_30FPS_LINEAR,
 
     SENSOR_TYPE_MAX,
 } k_vicap_sensor_type;
@@ -101,18 +112,42 @@ typedef enum {
     SENSOR_AF_MODE_NOTSUPP,
     SENSOR_AF_MODE_CDAF,
     SENSOR_AF_MODE_PDAF,
-} k_sensor_af_mode_e;
+} k_sensor_af_mode;
+
+typedef enum {
+	SENSOR_COLOR = 0,
+	SENSOR_MONO = 1,
+	SENSOR_COLOR_GRAY = 2,
+} k_sensor_color_type;
 
 /**
  * @brief Defines the bayer pattern of sensor
  *
  */
 typedef enum  {
-    BAYER_RGGB = 0,
-    BAYER_GRBG = 1,
-    BAYER_GBRG = 2,
-    BAYER_BGGR = 3,
-    BAYER_BUTT
+    BAYER_PAT_RGGB      = 0x00,
+    BAYER_PAT_GRBG      = 0x01,
+    BAYER_PAT_GBRG      = 0x02,
+    BAYER_PAT_BGGR      = 0x03,
+    BAYER_PAT_BGGIR     = 0x10,
+    BAYER_PAT_GRIRG     = 0x11,
+    BAYER_PAT_RGGIR     = 0x12,
+    BAYER_PAT_GBIRG     = 0x13,
+    BAYER_PAT_GIRRG     = 0x14,
+    BAYER_PAT_IRGGB     = 0x15,
+    BAYER_PAT_GIRBG     = 0x16,
+    BAYER_PAT_IRGGR     = 0x17,
+    BAYER_PAT_RGIRB     = 0x18,
+    BAYER_PAT_GRBIR     = 0x19,
+    BAYER_PAT_IRBRG     = 0x20,
+    BAYER_PAT_BIRGR     = 0x21,
+    BAYER_PAT_BGIRR     = 0x22,
+    BAYER_PAT_GBRIR     = 0x23,
+    BAYER_PAT_IRRBG     = 0x24,
+    BAYER_PAT_RIRGB     = 0x25,
+    BAYER_PAT_RCCC      = 0x30,
+    BAYER_PAT_RCCB      = 0x40,
+    BAYER_PAT_RYYCY     = 0x50,
 } k_sensor_bayer_pattern;
 
 /**
@@ -130,6 +165,50 @@ typedef enum  {
     SENSOR_STITCHING_4DOL               = 7,    /**< dol4 frame 3x12-bit */
     SENSOR_STITCHING_MAX
 } k_sensor_stitching_mode;
+
+/**
+ * @brief Defines the hdr native mode of sensor
+ *
+ */
+typedef enum {
+    SENSOR_NATIVE_DCG               = 0,    /**< hcg and lcg combine in sensor*/
+    SENSOR_NATIVE_L_AND_S           = 1,    /**< L+S combine in sensor*/
+    SENSOR_NATIVE_3DOL              = 2,    /**< 3dol combine in sensor*/
+    SENSOR_NATIVE_4DOL              = 3,    /**< 4dol combine in sensor*/
+    SENSOR_NATIVE_DCG_SPD_VS        = 4,    /**< 4dol combine in sensor*/
+    SENSOR_NATIVE_MAX
+} k_sensor_native_mode;
+
+/**
+ * @brief Defines the pll info of sensor
+ *
+ */
+typedef enum {
+    SENSOR_PLL0_CLK_DIV4 = 5,
+    SENSOR_PLL1_CLK_DIV3 = 8,
+    SENSOR_PLL1_CLK_DIV4 = 9,
+} k_sensor_mclk_sel;
+
+/**
+ * @brief Defines the mclk id of sensor
+ *
+ */
+typedef enum {
+    SENSOR_MCLK0 = 1,
+    SENSOR_MCLK1 = 2,
+    SENSOR_MCLK2 = 3,
+    SENSOR_MCLK_MAX,
+} k_sensor_mclk_id;
+
+/**
+ * @brief Defines the mclk info of sensor
+ *
+ */
+typedef struct {
+    k_sensor_mclk_id id;
+    k_sensor_mclk_sel mclk_sel;
+    k_u8 mclk_div;
+} k_sensor_mclk;
 
 /**
  * @brief Defines the lens info of sensor
@@ -195,11 +274,11 @@ typedef struct {
  *
  */
 typedef enum {
-    SENSOR_EXPO_FRAME_TYPE_1FRAME  = 0,
-    SENSOR_EXPO_FRAME_TYPE_2FRAMES = 1,
-    SENSOR_EXPO_FRAME_TYPE_3FRAMES = 2,
-    SENSOR_EXPO_FRAME_TYPE_4FRAMES = 3,
-    SENSOR_EXPO_FRAME_TYPE_MAX
+    //SENSOR_EXPO_FRAME_TYPE_1FRAME  = 0,
+    //SENSOR_EXPO_FRAME_TYPE_2FRAMES = 1,
+    //SENSOR_EXPO_FRAME_TYPE_3FRAMES = 2,
+    //SENSOR_EXPO_FRAME_TYPE_4FRAMES = 3,
+    SENSOR_EXPO_FRAME_TYPE_MAX = 4
 } k_sensor_exp_frame_type;
 
 /**
@@ -207,7 +286,6 @@ typedef enum {
  *
  */
 typedef struct {
-    //k_sensor_exp_frame_type frame_type;
     k_u16 frame_length;
     k_u16 cur_frame_length;
 
@@ -230,9 +308,6 @@ typedef struct {
     k_u16 max_vs_integraion_line;
     k_u16 min_vs_integraion_line;
 
-    //u16  max_vvs_integraion_line;
-    //u16  min_vvs_integraion_line;
-
     float max_long_integraion_time;
     float min_long_integraion_time;
 
@@ -242,13 +317,10 @@ typedef struct {
     float max_vs_integraion_time;
     float min_vs_integraion_time;
 
-    //foat max_vvs_integraion_time;
-    //foat min_vvs_integraion_time;
 
     float cur_long_integration_time;
     float cur_integration_time;
     float cur_vs_integration_time;
-    //float cur_vvs_integration_time;
 
     float cur_long_gain;
     float cur_long_again;
@@ -262,24 +334,18 @@ typedef struct {
     float cur_vs_again;
     float cur_vs_dgain;
 
-    //oat cur_vvs_gain;
-    //oat cur_vvs_again;
-    //oat cur_vvs_dgain;
 
     k_sensor_gain_info long_gain;
     k_sensor_gain_info gain;
     k_sensor_gain_info vs_gain;
-    //sensor_gain_info vvs_gain;
 
     k_sensor_gain_info a_long_gain;
     k_sensor_gain_info a_gain;
     k_sensor_gain_info   a_vs_gain;
-    //sensor_gain_info a_vvs_gain;
 
     k_sensor_gain_info d_long_gain;
     k_sensor_gain_info d_gain;
     k_sensor_gain_info d_vs_gain;
-    //sensor_gain_info   d_vvs_gain;
 
     k_u32 max_fps;
     k_u32 min_fps;
@@ -290,7 +356,7 @@ typedef struct {
     k_u32 int_time_delay_frame;
     k_u32 gain_delay_frame;
 
-    float ae_min_interval_frame;
+    //float ae_min_interval_frame;
     k_u8 color_type;		//0, color image; 1, mono sensor image; 2, color sensor gray image.
 } k_sensor_ae_info;
 
@@ -347,6 +413,11 @@ typedef struct {
     k_u32 pclk;
 } k_sensor_clk_info;
 
+typedef struct {
+    k_bool mclk_setting_en;
+    k_sensor_mclk setting;
+} k_sensor_mclk_setting;
+
 /**
  * @brief Defines the mode of sensor
  *
@@ -355,20 +426,21 @@ typedef struct {
     k_u32 index;
     k_vicap_sensor_type sensor_type;
     k_sensor_size size;
-    k_u32 fps;
-    k_u32 hdr_mode;
-    k_u32 stitching_mode;
-    k_u32 bit_width;
+    k_sensor_hdr_mode hdr_mode;
+    k_sensor_stitching_mode stitching_mode;
+    k_sensor_native_mode native_mode;
     k_sensor_data_compress compress;
-    k_u32 bayer_pattern;
+    k_sensor_bayer_pattern bayer_pattern;
     k_sensor_mipi_info mipi_info;
     k_sensor_ae_info ae_info;
+    k_u32 bit_width;
     const k_sensor_reg *reg_list;
-    k_u32 max_fps;
     k_sensor_clk_info *clk_info;
-    k_u32 af_mode;
+    k_sensor_af_mode af_mode;
     k_u32 sensor_again;
     k_u32 et_line;
+    k_u32 fps;
+    k_sensor_mclk_setting mclk_setting[SENSOR_MCLK_MAX - 1];
 } k_sensor_mode;
 
 /**
@@ -440,10 +512,10 @@ typedef struct {
  *
  */
 typedef struct {
-    k_u32 r_gain;
-    k_u32 gr_gain;
-    k_u32 gb_gain;
-    k_u32 b_gain;
+    float r_gain;
+    float gr_gain;
+    float gb_gain;
+    float b_gain;
 } k_sensor_white_balance;
 
 /**
@@ -461,8 +533,8 @@ typedef struct {
  *
  */
 typedef struct {
-    k_u8    exp_frame_type;
-    float   gain[SENSOR_EXPO_FRAME_TYPE_MAX];
+    //k_u8    exp_frame_type;
+    float   gain[4];
 } k_sensor_gain;
 
 /**
@@ -470,8 +542,8 @@ typedef struct {
  *
  */
 typedef struct {
-    k_u8    exp_frame_type;
-    float   intg_time[SENSOR_EXPO_FRAME_TYPE_MAX];
+    //k_u8    exp_frame_type;
+    float   intg_time[4];
 } k_sensor_intg_time;
 
 /**
@@ -479,9 +551,9 @@ typedef struct {
  *
  */
 typedef struct {
-    k_u8    exp_frame_type;
-    float   gain[SENSOR_EXPO_FRAME_TYPE_MAX];
-    float   exp_time[SENSOR_EXPO_FRAME_TYPE_MAX];
+    //k_u8    exp_frame_type;
+    float   gain[4];
+    float   exp_time[4];
 } k_sensor_exposure_param;
 
 #ifdef __cplusplus
@@ -489,4 +561,3 @@ typedef struct {
 #endif /* __cplusplus */
 
 #endif
-

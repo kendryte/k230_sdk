@@ -377,10 +377,12 @@ bind0_exit:
     ret |= kd_mapi_vvi_unbind_vvo(g_pipe_conf[0].dev_num, g_pipe_conf[0].chn_num,
                         SAMPLE_VVO_DISPLAY_DEV_ID, SAMPLE_VVO_DISPLAY_CHN_ID);
 media_exit:
-    printf("Press Enter to exit!!!!\n");
+    printf("Press Enter to deinit media!!!!\n");
     getchar();
     ret |= kd_mapi_media_deinit();
 sys_exit:
+    printf("Press Enter to exit!!!!\n");
+    getchar();
     ret |= kd_mapi_sys_deinit();
 exit:
     if(ret)

@@ -665,6 +665,7 @@ try_again:
 	 * Inform the card of the voltage
 	 */
 	err = mmc_send_io_op_cond(host, ocr, &rocr);
+    printk("%s: err:%d rocr=0x%x \n", mmc_hostname(host), err, rocr);
 	if (err)
 		return err;
 
@@ -1174,6 +1175,7 @@ int mmc_attach_sdio(struct mmc_host *host)
 	WARN_ON(!host->claimed);
 
 	err = mmc_send_io_op_cond(host, 0, &ocr);
+    printk("%s: err:%d ocr=0x%x \n", mmc_hostname(host), err, ocr);
 	if (err)
 		return err;
 

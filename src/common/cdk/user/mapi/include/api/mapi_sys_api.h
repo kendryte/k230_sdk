@@ -223,6 +223,32 @@ k_s32 kd_mapi_sys_get_vb_block_from_pool_id(k_u32 pool_id, k_u64 *phys_addr, k_u
  */
 k_s32 kd_mapi_sys_release_vb_block(k_u64 phys_addr,  k_u64 blk_size);
 
+/**
+ * @brief device bind
+ *
+ * @param [in] src_chn source of bind channel
+ * @param [in] dest_chn target of bind device
+ * @return k_s32
+ * @retval 0 success
+ * @retval "not 0" see error code
+ * @note If this MAPI should be called after media init
+ */
+
+k_s32 kd_mapi_sys_bind(k_mpp_chn *src_chn, k_mpp_chn *dest_chn);
+
+/**
+ * @brief device release bind
+ *
+ * @param [in] src_chn source of bind channel
+ * @param [in] dest_chn target of bind device
+ * @return k_s32
+ * @retval 0 success
+ * @retval "not 0" see error code
+ * @note If this MAPI should be called after media init
+ */
+
+k_s32 kd_mapi_sys_unbind(k_mpp_chn *src_chn, k_mpp_chn *dest_chn);
+
 /** @} */ /** <!-- ==== MAPI_SYSTEM_CTRL End ==== */
 #ifdef __cplusplus
 #if __cplusplus
@@ -231,4 +257,3 @@ k_s32 kd_mapi_sys_release_vb_block(k_u64 phys_addr,  k_u64 blk_size);
 #endif /* __cplusplus */
 
 #endif /* __K_MAPI_SYS_API_H__ */
-

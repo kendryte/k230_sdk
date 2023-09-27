@@ -59,6 +59,12 @@
 #define DMA_CHN0_SRC_STRIDE     1280
 #define DMA_CHN0_DST_STRIDE     720
 
+#define DMA_CHN1                1
+#define DMA_CHN1_WIDTH          1280
+#define DMA_CHN1_HEIGHT         720
+#define DMA_CHN1_SRC_STRIDE     1280
+#define DMA_CHN1_DST_STRIDE     720
+
 typedef struct
 {
     k_u32 img_width;

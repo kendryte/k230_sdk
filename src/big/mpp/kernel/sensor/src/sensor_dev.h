@@ -103,6 +103,7 @@ extern struct sensor_driver_dev *sensor_drv_list[SENSOR_NUM_MAX];
 void sensor_drv_list_init(struct sensor_driver_dev *drv_list[]);
 k_s32 sensor_reg_read(k_sensor_i2c_info *i2c_info, k_u16 reg_addr, k_u16 *buf);
 k_s32 sensor_reg_write(k_sensor_i2c_info *i2c_info, k_u16 reg_addr, k_u16 reg_val);
+k_s32 sensor_reg_list_read(k_sensor_i2c_info *i2c_info, const k_sensor_reg *reg_list);
 k_s32 sensor_reg_list_write(k_sensor_i2c_info *i2c_info, const k_sensor_reg *reg_list);
 k_s32 sensor_priv_ioctl(struct sensor_driver_dev *dev, k_u32 cmd, void *args);
 

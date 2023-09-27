@@ -1,0 +1,7 @@
+config BR2_PACKAGE_WS2812
+	bool "ws2812 rgb leds demo"
+	help
+	  ws2812 i2s demo for test
+
+
+

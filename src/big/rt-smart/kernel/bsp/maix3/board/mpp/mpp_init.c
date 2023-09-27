@@ -216,6 +216,14 @@ int __attribute__((weak)) kd_vo_init(void)
 }
 extern int kd_vo_init(void);
 
+/************* video output device*************/
+int __attribute__((weak)) connector_device_init(void)
+{
+    rt_kprintf("no kd_vo_init library!\n");
+    return -1;
+}
+extern int connector_device_init(void);
+
 /*********************dpu device*********************/
 int __attribute__((weak)) dpu_init(void)
 {
@@ -283,6 +291,7 @@ static int mpp_device_init(void)
     adec_init();
     acodec_init();
     kd_vo_init();
+    connector_device_init();
     vdss_init();
     dpu_init();
     dewarp_init();

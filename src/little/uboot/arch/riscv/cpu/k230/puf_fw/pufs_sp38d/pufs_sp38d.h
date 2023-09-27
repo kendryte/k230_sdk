@@ -96,6 +96,21 @@ pufs_status_t pufs_dec_gcm(uint8_t* out,
                             const uint8_t* tag,
                             int taglen);
 
+pufs_status_t pufs_dec_gcm_poc(uint8_t* out,
+                            uint32_t* outlen,
+                            const uint8_t* in,
+                            uint32_t inlen,
+                            pufs_cipher_t cipher,
+                            pufs_key_type_t keytype,
+                            const uint8_t* keyaddr,
+                            uint32_t keybits,
+                            const uint8_t* iv,
+                            int ivlen,
+                            const uint8_t* aad,
+                            int aadlen,
+                            const uint8_t* tag,
+                            int taglen);
+
 #ifdef __cplusplus
 } // closing brace for extern "C"
 #endif

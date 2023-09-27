@@ -252,6 +252,10 @@ config SPI_DW_MMIO
 	tristate "Memory-mapped io interface driver for DW SPI core"
 	depends on HAS_IOMEM
 
+config SPI_DW_MMIO_K230
+	tristate "Memory-mapped io interface driver for K230 DW SPI core"
+	depends on HAS_IOMEM
+
 config SPI_DW_BT1
 	tristate "Baikal-T1 SPI driver for DW SPI core"
 	depends on MIPS_BAIKAL_T1 || COMPILE_TEST

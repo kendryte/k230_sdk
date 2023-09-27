@@ -43,12 +43,14 @@ H265LiveFrameSource::parseFrame(std::shared_ptr<uint8_t> data, size_t data_size,
         int nal_type = H265_NAL(buffer[0]);
         switch (nal_type) {
             case 32: // VPS
-                fVps = make_shared_array<uint8_t>(size);;
+                fAuxLine.clear();
+                fVps.reset(), fSps.reset(), fPps.reset();
+                fVps = make_shared_array<uint8_t>(size);
                 memcpy(fVps.get(), buffer, size);
                 vps_size = size;
                 break;
             case 33: // SPS
-                fSps = make_shared_array<uint8_t>(size);;
+                fSps = make_shared_array<uint8_t>(size);
                 memcpy(fSps.get(), buffer, size);
                 sps_size = size;
                 break;
@@ -64,7 +66,7 @@ H265LiveFrameSource::parseFrame(std::shared_ptr<uint8_t> data, size_t data_size,
                     packetList.push_back(vps);
                     FramePacket sps(fSps, 0, sps_size, ref);
                     packetList.push_back(sps);
-                    FramePacket pps(fPps, 0, size, ref);
+                    FramePacket pps(fPps, 0, pps_size, ref);
                     packetList.push_back(pps);
                 }
                 break;
@@ -72,7 +74,7 @@ H265LiveFrameSource::parseFrame(std::shared_ptr<uint8_t> data, size_t data_size,
                 break;
         }
 
-        if (/*fAuxLine.empty() &&*/ fVps && fSps && fPps) {
+        if (fAuxLine.empty() && fVps && fSps && fPps) {
             u_int32_t profile_level_id = 0;
             if (sps_size >= 4)
                 profile_level_id = (u_int32_t) ((fSps.get()[1] << 16) | (fSps.get()[2] << 8) | fSps.get()[3]);
@@ -88,9 +90,6 @@ H265LiveFrameSource::parseFrame(std::shared_ptr<uint8_t> data, size_t data_size,
             free(sps_base64);
             free(pps_base64);
             // std::cout << "H265 SDP-aux-line: " << fAuxLine.c_str() << std::endl;
-            fVps.reset();
-            fSps.reset();
-            fPps.reset();
         }
         FramePacket packet(data, buffer - data.get(), size, ref);
         packetList.push_back(packet);

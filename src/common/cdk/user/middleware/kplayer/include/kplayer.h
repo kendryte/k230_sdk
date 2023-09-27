@@ -39,8 +39,15 @@ extern "C" {
 typedef enum KLAYER_EVENT_E
 {
     K_PLAYER_EVENT_EOF,          /**< the player is playing the end*/
+    K_PLAYER_EVENT_PROGRESS,
     K_LITEPLAYER_EVENT_BUTT
 } K_PLAYER_EVENT_E;
+
+typedef struct kPLAYER_PROGRESS_INFO_E
+{
+    k_u64  total_time;
+    k_u64  cur_time;
+}K_PLAYER_PROGRESS_INFO;
 
 typedef k_s32 (*K_PLAYER_EVENT_FN)(K_PLAYER_EVENT_E enEvent, void* pData);
 
@@ -49,14 +56,14 @@ typedef k_s32 (*K_PLAYER_EVENT_FN)(K_PLAYER_EVENT_E enEvent, void* pData);
 *   @param[in] N/A
 *   @retval  0 success,others failed
 */
-k_s32 kd_player_init();
+k_s32 kd_player_init(k_bool init_vo);
 
 /**
 *   @brief deinit of the player
 *   @param[in] : N/A
 *   @retval  0 success,others failed
 */
-k_s32 kd_player_deinit();
+k_s32 kd_player_deinit(k_bool deinit_vo);
 
 /**
 *   @brief register call back fun
@@ -81,10 +88,43 @@ k_s32 kd_player_setdatasource(const k_char* filePath);
 k_s32 kd_player_start();
 
 /**
+*   @brief  pause the stream
+*   @param[in] : N/A
+*   @retval  0 success,others failed
+*/
+k_s32 kd_player_pause();
+
+/**
+*   @brief  resume the stream
+*   @param[in] : N/A
+*   @retval  0 success,others failed
+*/
+k_s32 kd_player_resume();
+
+/**
 *   @brief stop the stream playing, and release the resource
 *   @retval  0 success,others failed
 */
 k_s32 kd_player_stop();
+
+/**
+*   @brief   init picture
+*   @retval  0 success,others failed
+*/
+k_s32 kd_picture_init();
+
+/**
+*   @brief decode picture and show picture
+*   @param[in] filePath : k_char: media file path
+*   @retval  0 success,others failed
+*/
+k_s32 kd_picture_show(const k_char* filePath);
+
+/**
+*   @brief   deinit picture
+*   @retval  0 success,others failed
+*/
+k_s32 kd_picture_deinit();
 
 #ifdef __cplusplus
 #if __cplusplus

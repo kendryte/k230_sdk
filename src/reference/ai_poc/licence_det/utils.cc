@@ -436,8 +436,8 @@ void Utils::draw_detections(cv::Mat& frame, vector<BoxPoint>& detections, FrameS
         for(int j = 0; j < 4; j++)
         {
             cv::Point tmp = detections[i].vertices[j];
-            tmp.x = osd_frame_size.width - (float(tmp.x)/sensor_frame_size.width)*osd_frame_size.width;
-            tmp.y = osd_frame_size.height - (float(tmp.y)/sensor_frame_size.height)*osd_frame_size.height;
+            tmp.x = (float(tmp.x)/sensor_frame_size.width)*osd_frame_size.width;
+            tmp.y = (float(tmp.y)/sensor_frame_size.height)*osd_frame_size.height;
             vec.push_back(tmp);
         }
         cv::RotatedRect rect = minAreaRect(vec);

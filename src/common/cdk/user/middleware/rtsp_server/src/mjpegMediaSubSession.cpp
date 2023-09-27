@@ -26,5 +26,6 @@ FramedSource* MjpegMediaSubsession::createNewStreamSource(unsigned clientSession
 
 RTPSink* MjpegMediaSubsession::createNewRTPSink(Groupsock* rtpGroupsock, unsigned char rtpPayloadTypeIfDynamic, FramedSource* inputSource){
     // std::cout << "MjpegMediaSubsession::createNewRTPSink called"<< std::endl;
+    OutPacketBuffer::maxSize = 2 * 1024 * 1024;
     return JPEGVideoRTPSink::createNew(envir(), rtpGroupsock);
 }

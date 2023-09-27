@@ -142,7 +142,15 @@ int main(int argc, char *argv[])
         dwc_dsi_layer0_init();
         vo_layer0_scaler_test();
         break;
-        
+    
+    case DISPALY_VO_CONNECTOR_TEST :
+        // sample_connector_init();
+        sample_connector_osd_install_frame(HX8377_V2_MIPI_4LAN_1080X1920_30FPS);
+        break;
+    case DISPALY_VO_LT9611_TEST :
+        // sample_connector_init();
+        sample_connector_osd_install_frame(LT9611_MIPI_4LAN_1920X1080_30FPS);
+        break;
     default :
         break;
     }

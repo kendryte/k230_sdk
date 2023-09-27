@@ -724,7 +724,7 @@ pufs_status_t pufs_dec_gcm(uint8_t* out,
     pufs_status_t check;
     uint32_t toutlen;
     *outlen = 0;
-
+        
     // Call I-U-F model
     if ((check = cb_pufs_dec_gcm_init(cipher, keytype, keyaddr,
                                     keybits, iv, ivlen)) != SUCCESS)
@@ -743,6 +743,34 @@ pufs_status_t pufs_dec_gcm(uint8_t* out,
     *outlen += toutlen;
     return check;
 }
+
+pufs_status_t pufs_dec_gcm_poc(uint8_t* out,
+                            uint32_t* outlen,
+                            const uint8_t* in,
+                            uint32_t inlen,
+                            pufs_cipher_t cipher,
+                            pufs_key_type_t keytype,
+                            const uint8_t* keyaddr,
+                            uint32_t keybits,
+                            const uint8_t* iv,
+                            int ivlen,
+                            const uint8_t* aad,
+                            int aadlen,
+                            const uint8_t* tag,
+                            int taglen)
+{
+    pufs_status_t check;
+
+    pufs_ka_slot_t keyslot = (keybits > 128) ? SK256_0 : SK128_0;
+    if((check = pufs_import_plaintext_key(keytype, keyslot, keyaddr, keybits)) != SUCCESS)
+        return check;
+
+    if((check = pufs_dec_gcm(out, outlen, in, inlen, cipher, keytype, keyslot, keybits, iv, ivlen, aad, aadlen, tag, taglen)) != SUCCESS)
+        return check;
+
+    return check;
+}
+
 
 func_sp38d_get_config cb_sp38d_get_config = sp38d_get_config;
 func_sp38d_ctx_init cb_sp38d_ctx_init = sp38d_ctx_init;

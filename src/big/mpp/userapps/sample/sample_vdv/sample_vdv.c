@@ -43,36 +43,49 @@
 
 #include "vo_test_case.h"
 #include "sample_vdv.h"
+#include "k_connector_comm.h"
+#include "mpi_connector_api.h"
 
 #define USE_GDMA    1
 
-extern k_s32 kd_display_set_backlight(void);
-extern k_s32 kd_display_reset(void);
-extern k_vo_display_resolution hx8399[20];
+static k_u32 sample_vicap_vo_init(void)
+{
+    k_u32 ret = 0;
+    k_s32 connector_fd;
+    k_connector_type connector_type = HX8377_V2_MIPI_4LAN_1080X1920_30FPS;
+    k_connector_info connector_info;
+
+    memset(&connector_info, 0, sizeof(k_connector_info));
+
+    //connector get sensor info
+    ret = kd_mpi_get_connector_info(connector_type, &connector_info);
+    if (ret) {
+        printf("sample_vicap, the sensor type not supported!\n");
+        return ret;
+    }
+
+    connector_fd = kd_mpi_connector_open(connector_info.connector_name);
+    if (connector_fd < 0) {
+        printf("%s, connector open failed.\n", __func__);
+        return K_ERR_VO_NOTREADY;
+    }
+
+    // set connect power
+    kd_mpi_connector_power_set(connector_fd, K_TRUE);
+    // connector init
+    kd_mpi_connector_init(connector_fd, connector_info);
+
+    return 0;
+}
 
 static k_s32 vo_layer_vdss_bind_vo_config(void)
 {
-    k_vo_display_resolution *resolution = NULL;
-    k_s32 resolution_index = 0;
-    resolution = &hx8399[resolution_index];
-
-    k_vo_pub_attr attr;
     layer_info info;
-
     k_vo_layer chn_id = K_VO_LAYER1;
 
-    memset(&attr, 0, sizeof(attr));
     memset(&info, 0, sizeof(info));
 
-    attr.bg_color = 0x808000;
-    attr.intf_sync = K_VO_OUT_1080P30;
-    attr.intf_type = K_VO_INTF_MIPI;
-    attr.sync_info = resolution;
-
-    // vo init
-    kd_mpi_vo_init();
-    // set vo timing
-    kd_mpi_vo_set_dev_param(&attr);
+    sample_vicap_vo_init();
     // printf("%s>w %d, h %d\n", __func__, w, h);
     // config lyaer
     info.act_size.width = 720;//1080;//640;//1080;
@@ -85,9 +98,6 @@ static k_s32 vo_layer_vdss_bind_vo_config(void)
     // info.attr.out_size.width = 1080;//640;
     // info.attr.out_size.height = 1920;//480;
     vo_creat_layer_test(chn_id, &info);
-
-    // enable vo
-    kd_mpi_vo_enable();
 
     //exit ;
     return 0;
@@ -110,13 +120,6 @@ int main(int argc, char *argv[])
 
     sensor_type = OV_OV9732_MIPI_1280X720_30FPS_10BIT_LINEAR;
     vicap_dev = VICAP_DEV_ID_0;
-
-    //vo init
-    // rst display subsystem
-    kd_display_reset();
-    // set hardware reset;
-    kd_display_set_backlight();
-	
 
     memset(&config, 0, sizeof(config));
     config.max_pool_cnt = 64;
@@ -164,8 +167,8 @@ int main(int argc, char *argv[])
     memset(&dev_attr, 0, sizeof(k_vicap_dev_attr));
     dev_attr.acq_win.h_start = 0;
     dev_attr.acq_win.v_start = 0;
-    dev_attr.acq_win.width = 1280;
-    dev_attr.acq_win.height = 720;
+    dev_attr.acq_win.width = sensor_info.width;
+    dev_attr.acq_win.height = sensor_info.height;
     dev_attr.mode = VICAP_WORK_ONLINE_MODE;
 
     dev_attr.pipe_ctrl.data = 0xFFFFFFFF;
@@ -185,7 +188,9 @@ int main(int argc, char *argv[])
 
     memset(&chn_attr, 0, sizeof(k_vicap_chn_attr));
 
-    chn_attr.out_win = dev_attr.acq_win;
+    chn_attr.out_win.width = 1280;
+    chn_attr.out_win.width = 720;
+
     chn_attr.crop_win = chn_attr.out_win;
     chn_attr.scale_win = chn_attr.out_win;
     chn_attr.crop_enable = K_FALSE;
@@ -224,8 +229,6 @@ int main(int argc, char *argv[])
     ret = kd_mpi_sys_bind(&dma_mpp_chn, &vo_mpp_chn);
     VDD_CHECK_RET(ret, __func__, __LINE__);
 
-
-    dwc_dsi_init();
     vo_layer_vdss_bind_vo_config();
 
     /* dma_init */

@@ -1,0 +1,14 @@
+
+
+menu "wifi configurations"
+config AP6212A
+        bool "enable ap6212a"
+        default n
+
+config AP6256
+        bool "enable ap6256"
+        default n
+
+endmenu
+
+

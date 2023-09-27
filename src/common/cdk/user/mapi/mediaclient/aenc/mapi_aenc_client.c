@@ -314,7 +314,7 @@ static void *aenc_chn_get_stream_threads(void *arg)
             break;
         }
 
-        if (readLen > 0)
+        while (readLen >= K_AENC_DATAFIFO_ITEM_SIZE)
         {
             s32Ret = kd_datafifo_read(g_aenc_chn_datafifo[aenc_hdl].data_hdl, &pdata);
             //printf("========kd_datafifo_read end:%d,ret:%d\n", readLen, s32Ret);
@@ -324,7 +324,7 @@ static void *aenc_chn_get_stream_threads(void *arg)
                 break;
             }
 
-            _do_datafifo_stream(g_aenc_chn_datafifo[aenc_hdl].data_hdl, pdata, readLen);
+            _do_datafifo_stream(g_aenc_chn_datafifo[aenc_hdl].data_hdl, pdata, K_AENC_DATAFIFO_ITEM_SIZE);
 
             s32Ret = kd_datafifo_cmd(g_aenc_chn_datafifo[aenc_hdl].data_hdl, DATAFIFO_CMD_READ_DONE, pdata);
             if (K_SUCCESS != s32Ret)
@@ -332,14 +332,10 @@ static void *aenc_chn_get_stream_threads(void *arg)
                 printf("%s read done error:%x\n", __FUNCTION__, s32Ret);
                 break;
             }
-
-            continue;
+            readLen -= K_AENC_DATAFIFO_ITEM_SIZE;
         }
-        else
-        {
-            // printf("%s get available read len error:%x(%d)\n", __FUNCTION__, s32Ret, readLen);
-            usleep(10000);
-        }
+        // printf("%s get available read len error:%x(%d)\n", __FUNCTION__, s32Ret, readLen);
+        usleep(10000);
     }
     return NULL;
 }
@@ -347,6 +343,11 @@ static void *aenc_chn_get_stream_threads(void *arg)
 k_s32 kd_mapi_aenc_start(k_handle aenc_hdl)
 {
     CHECK_MAPI_AENC_HANDLE_PTR(aenc_hdl);
+
+    _clean_all_datafifo_data();
+    g_aenc_chn_ctl[aenc_hdl].aenc_hdl = aenc_hdl;
+    g_aenc_chn_ctl[aenc_hdl].start = K_TRUE;
+    pthread_create(&g_aenc_chn_ctl[aenc_hdl].get_stream_tid, NULL, aenc_chn_get_stream_threads, &g_aenc_chn_ctl[aenc_hdl].aenc_hdl);
 
     k_s32 ret;
 
@@ -358,9 +359,6 @@ k_s32 kd_mapi_aenc_start(k_handle aenc_hdl)
         mapi_aenc_error_trace("mapi_send_sync failed\n");
     }
 
-    g_aenc_chn_ctl[aenc_hdl].aenc_hdl = aenc_hdl;
-    g_aenc_chn_ctl[aenc_hdl].start = K_TRUE;
-    pthread_create(&g_aenc_chn_ctl[aenc_hdl].get_stream_tid, NULL, aenc_chn_get_stream_threads, &g_aenc_chn_ctl[aenc_hdl].aenc_hdl);
     return ret;
 }
 
@@ -378,8 +376,11 @@ k_s32 _clean_all_datafifo_data(k_handle aenc_hdl)
             printf("%s get available read len error:%x\n", __FUNCTION__, s32Ret);
             break;
         }
+        if (readLen <= 0) {
+            break;
+        }
 
-        if (readLen > 0)
+        while (readLen >= K_AENC_DATAFIFO_ITEM_SIZE)
         {
             s32Ret = kd_datafifo_read(g_aenc_chn_datafifo[aenc_hdl].data_hdl, &pdata);
             if (K_SUCCESS != s32Ret)
@@ -394,12 +395,7 @@ k_s32 _clean_all_datafifo_data(k_handle aenc_hdl)
                 printf("%s read done error:%x\n", __FUNCTION__, s32Ret);
                 break;
             }
-        }
-        else
-        {
-            usleep(500*1000);//wait all datafifo release
-            //printf("=======_clean_all_datafifo_data end\n");
-            break;
+            readLen -= K_AENC_DATAFIFO_ITEM_SIZE;
         }
     }
     return K_SUCCESS;

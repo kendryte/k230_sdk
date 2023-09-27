@@ -47,6 +47,9 @@
 #include "k_vvo_comm.h"
 #include "vo_test_case.h"
 
+#include "k_connector_comm.h"
+#include "mpi_connector_api.h"
+
 #define ENABLE_VDEC_DEBUG    1
 #define BIND_VO_LAYER   1
 
@@ -85,6 +88,7 @@ typedef struct
 } sample_vdec_conf_t;
 
 static sample_vdec_conf_t g_vdec_conf[VDEC_MAX_CHN_NUMS];
+static k_connector_type g_connector_type = HX8377_V2_MIPI_4LAN_1080X1920_30FPS;
 
 static inline void CHECK_RET(k_s32 ret, const char *func, const int line)
 {
@@ -253,6 +257,55 @@ static void *input_thread(void *arg)
     return arg;
 }
 
+k_s32 sample_vdec_vo_init(layer_bind_config *config)
+{
+    k_vo_pub_attr attr;
+    layer_info info;
+    k_vo_layer chn_id = config->ch;
+    k_u32 ret = 0;
+    k_s32 connector_fd;
+    k_connector_type connector_type = g_connector_type;
+    k_connector_info connector_info;
+
+    memset(&attr, 0, sizeof(attr));
+    memset(&info, 0, sizeof(info));
+    memset(&connector_info, 0, sizeof(k_connector_info));
+
+    //connector get sensor info
+    ret = kd_mpi_get_connector_info(connector_type, &connector_info);
+    if (ret) {
+        printf("sample_vicap, the sensor type not supported!\n");
+        return ret;
+    }
+
+    connector_fd = kd_mpi_connector_open(connector_info.connector_name);
+    if (connector_fd < 0) {
+        printf("%s, connector open failed.\n", __func__);
+        return K_ERR_VO_NOTREADY;
+    }
+
+    // set connect power
+    kd_mpi_connector_power_set(connector_fd, K_TRUE);
+    // connector init
+    kd_mpi_connector_init(connector_fd, connector_info);
+
+    printf("%s>w %d, h %d\n", __func__, config->w, config->h);
+    // config lyaer
+    info.act_size.width = config->w;//1080;//640;//1080;
+    info.act_size.height = config->h;//1920;//480;//1920;
+    info.format = PIXEL_FORMAT_YVU_PLANAR_420;
+    info.func = config->ro;
+    info.global_alptha = 0xff;
+    info.offset.x = 0;//(1080-w)/2,
+    info.offset.y = 0;//(1920-h)/2;
+    // info.attr.out_size.width = 1080;//640;
+    // info.attr.out_size.height = 1920;//480;
+    vo_creat_layer_test(chn_id, &info);
+
+    //exit ;
+    return 0;
+}
+
 static void *output_thread(void *arg)
 {
     sample_vdec_conf_t *vdec_conf;
@@ -283,7 +336,7 @@ static void *output_thread(void *arg)
 
             config.ch = BIND_VO_LAYER;
 
-            if(status.width > 1080)
+            if(status.width > 1080 && g_connector_type == HX8377_V2_MIPI_4LAN_1080X1920_30FPS)
             {
                 config.w = status.height;//1080;
                 config.h = status.width;//1920;
@@ -296,7 +349,7 @@ static void *output_thread(void *arg)
                 config.ro = 0;
             }
 
-            vo_layer_bind_config(&config);
+            sample_vdec_vo_init(&config);
 
             first = 1;
         }
@@ -363,9 +416,9 @@ int main(int argc, char *argv[])
     {
         if (strcmp(argv[i], "-help") == 0)
         {
-            printf("Please input:\n");
+            printf("Usage: ./sample_vdec.elf -i test.265 -type 0\n");
             printf("-i: input file name\n");
-            printf("./sample_vdec.elf -i file.265 \n");
+            printf("-type: vo type, default 0, see vo doc \n");
             return -1;
         }
         else if (strcmp(argv[i], "-i") == 0)
@@ -378,7 +431,6 @@ int main(int argc, char *argv[])
                 vdec_debug("Cannot open input file!!!\n");
                 return -1;
             }
-
             if (strcmp(ptr, ".h264") == 0 || strcmp(ptr, ".264") == 0)
             {
                 type = K_PT_H264;
@@ -399,6 +451,10 @@ int main(int argc, char *argv[])
                 vdec_debug("Error input type\n");
                 return -1;
             }
+        }
+        else if (strcmp(argv[i], "-type") == 0) {
+            g_connector_type = (k_connector_type)atoi(argv[i + 1]);
+            printf("g_connector_type = %d...\n", g_connector_type);
         }
         else
         {
@@ -438,10 +494,8 @@ int main(int argc, char *argv[])
     attr.frame_buf_cnt = OUTPUT_BUF_CNT;
     attr.frame_buf_size = FRAME_BUF_SIZE;
     attr.stream_buf_size = STREAM_BUF_SIZE;
-    attr.pic_format = PIXEL_FORMAT_YUV_SEMIPLANAR_420;
     attr.type = type;
 	attr.frame_buf_pool_id = g_vdec_conf[ch].output_pool_id;
-    g_vdec_conf[ch].pic_format = attr.pic_format;
     ret = kd_mpi_vdec_create_chn(ch, &attr);
     CHECK_RET(ret, __func__, __LINE__);
 

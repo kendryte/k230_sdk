@@ -37,6 +37,8 @@
 #include "mpi_vo_api.h"
 #include "k_vo_comm.h"
 
+#include "k_connector_comm.h"
+#include "mpi_connector_api.h"
 
 // rst display 
 k_s32 kd_mapi_set_backlight(void)
@@ -488,6 +490,8 @@ k_s32 kd_mapi_vo_chn_dump_frame(k_u32 chn_num, k_video_frame_info *vf_info, k_u3
         mapi_vo_error_trace("mapi_send_sync failed\n");
     }
 
+    memcpy(vf_info, &frame.vf_info, sizeof(k_video_frame_info));
+
     return ret;
 }
 
@@ -508,4 +512,94 @@ k_s32 kd_mapi_vo_chn_dump_release(k_u32 chn_num, const k_video_frame_info *vf_in
     }
 
     return ret;
+}
+
+
+
+k_s32 kd_mapi_get_connector_info(k_connector_type connector_type, k_connector_info *connector_info)
+{
+    k_s32 ret = 0;
+    msg_connector_info_t info;
+
+    memset(&info, 0, sizeof(msg_connector_info_t));
+
+    info.connector_type = connector_type;
+   
+    ret = mapi_send_sync(MODFD(K_MAPI_MOD_VO, 0, 0), MSG_CMD_MEDIA_GET_CONNECTOR_INFO,
+            &info, sizeof(info), NULL);
+
+    if(ret != K_SUCCESS) {
+        mapi_vo_error_trace("mapi_send_sync failed\n");
+    }
+
+    memcpy(connector_info->connector_name, info.connector_info.connector_name, sizeof(info.connector_info.connector_name));
+    connector_info->screen_test_mode = info.connector_info.screen_test_mode;
+    connector_info->dsi_test_mode = info.connector_info.dsi_test_mode;
+    connector_info->bg_color = info.connector_info.bg_color;
+    connector_info->intr_line = info.connector_info.intr_line;
+    connector_info->lan_num = info.connector_info.lan_num;
+    connector_info->work_mode = info.connector_info.work_mode;
+    connector_info->cmd_mode = info.connector_info.cmd_mode;
+
+    memcpy(&connector_info->phy_attr, &info.connector_info.phy_attr, sizeof(k_connectori_phy_attr));
+    memcpy(&connector_info->resolution, &info.connector_info.resolution, sizeof(k_vo_display_resolution));
+    return ret;
+}
+
+
+k_s32 kd_mapi_connector_open(const char *connector_name)
+{
+    char name[100] = {0};
+    k_s32 ret = 0;
+
+    memcpy(&name, connector_name, sizeof(connector_name));
+
+    ret = mapi_send_sync(MODFD(K_MAPI_MOD_VO, 0, 0), MSG_CMD_MEDIA_OPEN_CONNECTOR,
+            &name, sizeof(name), NULL);
+    
+    if(ret < 0 ) {
+        mapi_vo_error_trace("mapi_send_sync failed\n");
+    }
+
+    return ret;
+}
+
+
+k_s32 kd_mapi_connector_power_set(k_s32 fd, k_bool on)
+{
+    k_s32 ret = 0;
+    msg_connector_power_t power;
+
+    memset(&power, 0, sizeof(msg_connector_power_t));
+
+    power.fd = fd;
+    power.on = on;
+
+    ret = mapi_send_sync(MODFD(K_MAPI_MOD_VO, 0, 0), MSG_CMD_MEDIA_SET_CONNECTOR_POWER,
+            &power, sizeof(power), NULL);
+
+    if(ret != K_SUCCESS) {
+        mapi_vo_error_trace("mapi_send_sync failed\n");
+    }
+
+    return ret;
+}
+
+
+k_s32 kd_mapi_connector_init(k_s32 fd, k_connector_info *info)
+{
+    k_s32 ret = 0;
+    msg_connector_init_t init;
+
+    memset(&init, 0, sizeof(msg_connector_init_t));
+
+    init.fd = fd;
+    memcpy(&init.info, info, sizeof(k_connector_info));
+
+    ret = mapi_send_sync(MODFD(K_MAPI_MOD_VO, 0, 0), MSG_CMD_MEDIA_CONNECTOR_INIT,
+            &init, sizeof(init), NULL);
+
+    if(ret != K_SUCCESS) {
+        mapi_vo_error_trace("mapi_send_sync failed\n");
+    }
 }

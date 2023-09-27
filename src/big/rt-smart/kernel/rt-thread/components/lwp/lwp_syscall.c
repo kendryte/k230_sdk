@@ -442,12 +442,14 @@ void sys_exit_group(int status)
     return;
 }
 
+#define MAX_SIZE_BLOCK (1024 * 1024)
 /* syscall: "read" ret: "ssize_t" args: "int" "void *" "size_t" */
 ssize_t sys_read(int fd, void *buf, size_t nbyte)
 {
 #ifdef RT_USING_USERSPACE
     void *kmem = RT_NULL;
     ssize_t ret = -1;
+    ssize_t read_size = 0;
 
     if (!nbyte)
     {
@@ -459,7 +461,33 @@ ssize_t sys_read(int fd, void *buf, size_t nbyte)
         return -EFAULT;
     }
 
-    kmem = kmem_get(nbyte);
+    while(nbyte > MAX_SIZE_BLOCK)
+    {
+        if(!kmem)
+        {
+            kmem = kmem_get(MAX_SIZE_BLOCK);
+        }
+
+        if (!kmem)
+        {
+            return -ENOMEM;
+        }
+
+        ret = read(fd, kmem, MAX_SIZE_BLOCK);
+        if (ret > 0)
+        {
+            lwp_put_to_user(buf, kmem, ret);
+            buf += ret;
+            read_size += ret;
+        }
+        nbyte -= MAX_SIZE_BLOCK;
+    }
+
+    if(!kmem)
+    {
+        kmem = kmem_get(nbyte);
+    }
+
     if (!kmem)
     {
         return -ENOMEM;
@@ -469,10 +497,11 @@ ssize_t sys_read(int fd, void *buf, size_t nbyte)
     if (ret > 0)
     {
         lwp_put_to_user(buf, kmem, ret);
+        read_size += ret;
     }
 
     kmem_put(kmem);
-    return (ret < 0 ? GET_ERRNO() : ret);
+    return (ret < 0 ? GET_ERRNO() : read_size);
 #else
     if (!lwp_user_accessable((void *)buf, nbyte))
     {
@@ -489,6 +518,7 @@ ssize_t sys_write(int fd, const void *buf, size_t nbyte)
 #ifdef RT_USING_USERSPACE
     void *kmem = RT_NULL;
     ssize_t ret = -1;
+    ssize_t write_size = 0;
 
     if (!nbyte)
     {
@@ -500,7 +530,37 @@ ssize_t sys_write(int fd, const void *buf, size_t nbyte)
         return -EFAULT;
     }
 
-    kmem = kmem_get(nbyte);
+    while(nbyte > MAX_SIZE_BLOCK)
+    {
+        if(!kmem)
+        {
+            kmem = kmem_get(MAX_SIZE_BLOCK);
+        }
+
+        if (!kmem)
+        {
+            return -ENOMEM;
+        }
+
+        lwp_get_from_user(kmem, (void *)buf, MAX_SIZE_BLOCK);
+
+        ret = write(fd, kmem, MAX_SIZE_BLOCK);
+
+        if(ret <0 ) {
+            kmem_put(kmem);
+            return GET_ERRNO();
+        }
+
+        write_size += ret;
+        buf += ret;
+        nbyte -= MAX_SIZE_BLOCK;
+    }
+
+    if(!kmem)
+    {
+        kmem = kmem_get(nbyte);
+    }
+
     if (!kmem)
     {
         return -ENOMEM;
@@ -510,7 +570,7 @@ ssize_t sys_write(int fd, const void *buf, size_t nbyte)
     ret = write(fd, kmem, nbyte);
 
     kmem_put(kmem);
-    return (ret < 0 ? GET_ERRNO() : ret);
+    return (ret < 0 ? GET_ERRNO() : write_size + ret);
 #else
     if (!lwp_user_accessable((void *)buf, nbyte))
     {

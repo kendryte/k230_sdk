@@ -190,3 +190,5 @@ obj-$(CONFIG_INTERCONNECT)	+= interconnect/
 obj-$(CONFIG_COUNTER)		+= counter/
 obj-$(CONFIG_MOST)		+= most/
 obj-$(CONFIG_CANAAN_HARDLOCK)		+= canaan-hardlock/
+obj-$(CONFIG_CANAAN_HWTIMER)		+= canaan-hwtimer/
+obj-$(CONFIG_CANAAN_I2S_WS2812)		+= canaan-ws2812/

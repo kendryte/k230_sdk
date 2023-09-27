@@ -1,0 +1,9 @@
+mainmenu "RT-Thread User App Configuration"
+
+config PKGS_DIR
+    string
+    option env="PKGS_ROOT"
+    default "~/.env/packages/packages"
+
+source "$PKGS_DIR/Kconfig"
+

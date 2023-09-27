@@ -1,6 +1,8 @@
 # 1.简介
 
-人脸检测采用了retina-face网络结构，人脸口罩分类backbone选取mobilenet-v2。使用该应用，可得到图像或视频中的每个人是否佩戴口罩。
+口罩分类应用使用两个模型实现判断图像/视频每个人是否佩戴口罩。在需要佩戴口罩的应用场景中，若发现有人没有佩戴口罩，可进行相关提醒。
+
+口罩分类应用的两个模型分别是人脸检测检测模型和人脸口罩分类模型，人脸检测检测模型使用retina-face网络结构，用于检测人脸框；人脸口罩分类模型使用mobilenet-v2为backbone，用于对每个人脸框判断口罩佩戴情况。
 
 # 2.应用使用说明
 
@@ -24,5 +26,6 @@ Options:
 ./face_mask.elf face_detection_320.kmodel 0.6 0.2 face_mask.kmodel 0.5 None 0
 ```
 
+## 2.2 效果展示
 
-
+<img src="https://kendryte-download.canaan-creative.com/k230/downloads/doc_images/ai_demo/face_mask/face_mask_result.png" alt="口罩分类效果图" width="50%" height="50%"/>

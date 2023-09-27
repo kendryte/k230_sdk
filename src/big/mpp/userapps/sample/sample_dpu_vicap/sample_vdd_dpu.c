@@ -42,7 +42,7 @@ int sample_dv_dpu_init()
     k_s32 ret;
 
     /************************************************************
-     * This part is the demo that actually starts to use DPU 
+     * This part is the demo that actually starts to use DPU
      ***********************************************************/
     /* dpu init */
     dpu_init.start_num = 0;
@@ -54,12 +54,12 @@ int sample_dv_dpu_init()
     }
 
     /* parse file */
-    ret = kd_mpi_dpu_parse_file(PARAM_PATH, 
-                                &dpu_dev_attr.dev_param, 
+    ret = kd_mpi_dpu_parse_file(PARAM_PATH,
+                                &dpu_dev_attr.dev_param,
                                 &lcn_attr.lcn_param,
                                 &ir_attr.ir_param,
                                 &g_temp_space);
-    // printf("g_temp_space.virt_addr:%p, g_temp_space.phys_addr:%lx\n", 
+    // printf("g_temp_space.virt_addr:%p, g_temp_space.phys_addr:%lx\n",
     //     g_temp_space.virt_addr, g_temp_space.phys_addr);
     if (g_temp_space.virt_addr == NULL) {
         printf("g_temp_space.virt_addr is NULL\n");
@@ -75,7 +75,7 @@ int sample_dv_dpu_init()
     dpu_dev_attr.tytz_temp_recfg = K_TRUE;
     dpu_dev_attr.align_depth_recfg = K_TRUE;
     dpu_dev_attr.param_valid = 123;
-    dpu_dev_attr.dev_param.spp.flag_align = K_FALSE;
+    // dpu_dev_attr.dev_param.spp.flag_align = K_FALSE;
 
     ret = kd_mpi_dpu_set_dev_attr(&dpu_dev_attr);
     if (ret) {
@@ -131,7 +131,7 @@ int sample_dv_dpu_init()
     return K_SUCCESS;
 
     /************************************************************
-     * This part is used to stop the DPU 
+     * This part is used to stop the DPU
      ***********************************************************/
     ret = kd_mpi_dpu_stop_chn(0);
     if (ret) {

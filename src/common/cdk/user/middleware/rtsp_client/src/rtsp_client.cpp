@@ -840,6 +840,7 @@ void KdRtspClient::Impl::DeInit() {
 int KdRtspClient::Impl::Open(const char *url) {
   std::unique_lock<std::mutex> lck(mutex_);
   if (started_) return 0;
+  watchVariable_ = 0;
   thread_ = std::thread([this, url]() {
         s_bRequireBackChannel = enableBackchanel_;
         if (s_bRequireBackChannel) {

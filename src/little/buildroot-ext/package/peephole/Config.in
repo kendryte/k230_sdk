@@ -1,4 +1,0 @@
-config BR2_PACKAGE_PEEPHOLE
-	bool "peephole"
-	help
-	  peephole ui app

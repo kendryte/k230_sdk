@@ -1,0 +1,23 @@
+From dcbd814170aeaa1c5bcb7facffbd91ac02f7bccb Mon Sep 17 00:00:00 2001
+From: aozima <wuyangyong@gmail.com>
+Date: Sat, 10 Jun 2023 15:59:29 +0800
+Subject: [PATCH 7/7] =?UTF-8?q?=F0=9F=93=83=20docs(verify):=20update=20ver?=
+ =?UTF-8?q?ify?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ verify | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/verify b/verify
+index 08cf3ccd1..bd0c3a018 100644
+--- a/verify
++++ b/verify
+@@ -1 +1 @@
+-[commit]: 58240bf9a7efef9976e0711c5b0d8422f0021bee
++[commit]: c7dfd317d75438a8230654bd9d795159a1dbd90c
+-- 
+2.33.1.windows.1
+

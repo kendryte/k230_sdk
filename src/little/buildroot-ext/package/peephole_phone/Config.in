@@ -1,0 +1,6 @@
+config BR2_PACKAGE_PEEPHOLE_PHONE
+	bool "Simulate phone app for peephole"
+	default n
+	select BR2_PACKAGE_LIBDISP
+	help
+	  Simulate phone app for peephole

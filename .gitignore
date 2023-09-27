@@ -14,3 +14,8 @@ prepare_memory
 tools/post_copy_rootfs/etc/version/
 **/__pycache__
 **/.sconsign.dblite
+board/common/gen_image_cfg/data/
+board/common/post_copy_rootfs/app/
+board/common/post_copy_rootfs/etc/version/
+board/common/post_copy_rootfs/lib/
+tools/tuning-tool-client/

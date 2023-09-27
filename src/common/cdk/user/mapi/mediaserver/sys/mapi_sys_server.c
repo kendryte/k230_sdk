@@ -332,3 +332,25 @@ k_s32 kd_mapi_sys_release_vb_block(k_u64 phys_addr, k_u64 blk_size)
 
     return K_SUCCESS;
 }
+
+k_s32 kd_mapi_sys_bind(k_mpp_chn *src_chn, k_mpp_chn *dest_chn)
+{
+    k_s32 ret = kd_mpi_sys_bind(src_chn, dest_chn);
+
+    if(ret != K_SUCCESS) {
+        mapi_sys_error_trace("kd_mapi_sys_bind failed:0x%x\n", ret);
+        return ret;
+    }
+    return ret;
+}
+
+k_s32 kd_mapi_sys_unbind(k_mpp_chn *src_chn, k_mpp_chn *dest_chn)
+{
+    k_s32 ret = kd_mpi_sys_unbind(src_chn, dest_chn);
+
+    if(ret != K_SUCCESS) {
+        mapi_sys_error_trace("kd_mapi_sys_bind failed:0x%x\n", ret);
+        return ret;
+    }
+    return ret;
+}

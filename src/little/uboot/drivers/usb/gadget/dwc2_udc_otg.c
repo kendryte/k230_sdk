@@ -1112,6 +1112,15 @@ static int dwc2_udc_otg_probe(struct udevice *dev)
 	if (ret)
 		return ret;
 
+    // kendryte
+    #define USB0_TEST_CTL3 (0x9158507cU)
+    #define USB1_TEST_CTL3 (0x9158509cU)
+    #define USB_DMPULLDOWN0 	(1<<8)
+    #define USB_DPPULLDOWN0 	(1<<9)
+    u32 usb_test_ctl3 = readl((usbotg_reg == 0x91500000)?USB0_TEST_CTL3:USB1_TEST_CTL3);
+    usb_test_ctl3 &= ~(USB_DMPULLDOWN0 | USB_DPPULLDOWN0);
+    writel(usb_test_ctl3, (usbotg_reg == 0x91500000)?USB0_TEST_CTL3:USB1_TEST_CTL3);
+
 	if (plat->activate_stm_id_vb_detection) {
 		if (CONFIG_IS_ENABLED(DM_REGULATOR) &&
 		    (!plat->force_b_session_valid ||

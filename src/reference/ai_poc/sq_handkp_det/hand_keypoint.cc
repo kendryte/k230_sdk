@@ -137,8 +137,8 @@ void HandKeypoint::draw_keypoints(cv::Mat &img, std::string text, Bbox &bbox, bo
             x_kp = pred[i * 2] * bbox.w + bbox.x;
             y_kp = pred[i * 2 + 1] * bbox.h + bbox.y;
 
-            results[i * 2] = osd_width - x_kp / SENSOR_WIDTH * osd_width;
-            results[i * 2 + 1] = osd_height - y_kp / SENSOR_HEIGHT * osd_height;
+            results[i * 2] = x_kp / SENSOR_WIDTH * osd_width;
+            results[i * 2 + 1] = y_kp / SENSOR_HEIGHT * osd_height;
             cv::circle(img, cv::Point(results[i * 2], results[i * 2 + 1]), 2, cv::Scalar(255, 255, 155, 0), 3);
 
         }

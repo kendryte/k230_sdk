@@ -1,0 +1,174 @@
+/* Copyright (c) 2023, Canaan Bright Sight Co., Ltd
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+*/
+#include "k230.dtsi"
+#include "clock_provider.dtsi"          /* k230 soc clock tree */
+#include "clock_consumer.dtsi"          /* k230 soc clock consumer */
+#include "reset_provider.dtsi"          /* k230 soc reset provider */
+#include "reset_consumer.dtsi"          /* k230 soc reset consumer */
+#include "power_provider.dtsi"          /* k230 soc power provider */
+#include "power_consumer.dtsi"          /* k230 soc power consumer */
+#include "gpio_provider.dtsi"           /* k230 soc gpio provider */
+#include "gpio_consumer.dtsi"           /* k230 soc gpio consumer */
+
+
+/ {
+	aliases {
+		serial0 = &uart0;
+	};
+
+	chosen {
+		bootargs = "";
+		linux,initrd-start = <0x0 0xa100000>;
+		linux,initrd-end = <0x0 0x0>;
+		stdout-path = "serial0:115200";
+	};
+};
+
+&ddr {
+	reg = <0x0 0x2800000 0x0 0x26df000>;  /*linux memory config*/
+};
+
+&gpio22 {
+	status = "okay";
+};
+
+&gpio23 {
+	status = "okay";
+};
+
+&i2c4 {
+	status = "okay";
+	gt911: touchscreen@5d {
+		compatible = "goodix,gt911";
+		reg = <0x14>;
+
+		interrupt-parent = <&port22>;
+		interrupts = <0 IRQ_TYPE_EDGE_RISING>; /*IRQ_TYPE_LEVEL_HIGH*/
+		irq-gpios = <&port22 0 GPIO_ACTIVE_HIGH>;
+		reset-gpios = <&port23 0 GPIO_ACTIVE_HIGH>;
+
+		goodix,cfg-group0 = [
+			44 38 04 80 07 05 35 00 01 08
+			28 08 50 32 03 05 00 00 00 00
+			11 11 05 18 1A 1E 14 89 29 0C
+			3D 3F 0C 08 00 00 00 2A 02 2C
+			32 00 00 00 00 03 64 32 00 00
+			00 2D 5A 94 D5 02 00 00 00 04
+			8E 30 00 80 37 00 74 3F 00 69
+			49 00 60 54 00 60 00 00 00 00
+			00 00 00 00 00 00 00 00 00 00
+			00 00 00 00 00 00 00 00 00 00
+			00 00 00 00 00 00 00 00 00 00
+			00 00 18 16 14 12 10 0E 0C 0A
+			08 06 04 02 FF FF 00 00 00 00
+			00 00 00 00 00 00 00 00 00 00
+			00 00 00 02 04 06 08 0A 0F 10
+			12 22 21 20 1F 1E 1D 1C 18 16
+			FF FF FF FF FF FF FF FF 00 00
+			00 00 00 00 00 00 00 00 00 00
+			00 00 00 00 34 01
+		];
+		status = "okay";
+	};
+};
+
+&spi0 {
+	status = "okay";
+	spi-flash@0 {
+		compatible = "jedec,spi-nor";
+		//compatible = "spi-nand";
+		//compatible = "rohm,dh2228fv";
+		#address-cells = <1>;
+		#size-cells = <1>;
+		reg = <0>;
+		spi-max-frequency = <100000000>;
+		spi-tx-bus-width = <8>;
+		spi-rx-bus-width = <8>;
+		status = "okay";
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+            partition@0 {
+                /* spl boot */
+                reg = <0x0 0x00080000>;
+                label = "spl_boot";
+            };
+
+            partition@80000 {
+                /* normal boot */
+                reg = <0x00080000 0x00180000>;
+                label = "uboot";
+            };
+            partition@200000 {
+                reg = <0x200000 0x80000>;
+                label = "quick_boot_cfg ";
+            };
+            partition@280000 {
+                reg = <0x280000 0x80000>;
+                label = "face_db";
+            };
+            partition@300000 {
+                reg = <0x300000 0x40000>;
+                label = "sensor_cfg";
+            };
+            partition@a80000 {
+                reg = <0xa80000 0x010000>;
+                label = "speckle";
+            };
+            partition@cf0000 {
+                reg = <0xcf0000 0x3c0000>;
+                label = "rttapp";
+            };
+            partition@a90000 {
+                reg = <0xa90000 0x260000>;
+                label = "rttk";
+            };
+           
+            partition@10B0000 {
+                reg = <0x10B0000 0x410000>;
+                label = "linux";
+            };
+
+            partition@14c0000 {
+                reg = <0x14c0000 0xb00000>;
+                label = "rootfs";
+            };
+            partition@2000000 {
+                /* 32MB for  update image*/
+                reg = <0 0x2000000>;
+                label = "all_flash";
+            };
+		};
+	};
+
+};
+
+&mmc_sd0{
+    status = "okay";
+    is_emmc;
+    io_fixed_1v8;
+    mmc-hs200-1_8v;
+    rx_delay_line = <0x00>;
+    tx_delay_line = <0xc0>;
+};
+
+&mmc_sd1{
+    status = "okay";
+    no-1-8-v;
+    cap-sd-highspeed;
+    mshc_ctrl_r = <0x00>;
+};
+
+&uart0 {
+	status = "okay";
+};
+
+&usbotg0 {
+	status = "okay";
+};

@@ -7,9 +7,11 @@
 Model::Model(const char *model_name, const char *kmodel_file): model_name_(model_name)
 {
     // load kmodel
-    kmodel_ = read_binary_file<unsigned char>(kmodel_file);
-    interp_.load_model({ (const gsl::byte *)kmodel_.data(), kmodel_.size() }).expect("cannot load kmodel.");
-
+    // kmodel_ = read_binary_file<unsigned char>(kmodel_file);
+    // interpreter interp;
+    std::ifstream ifs(kmodel_file,std::ios::binary);
+    // interp_.load_model({ (const gsl::byte *)kmodel_.data(), kmodel_.size() }).expect("cannot load kmodel.");
+    interp_.load_model(ifs).expect("cannot load kmodel.");
     // create kpu input tensors
     for (size_t i = 0; i < interp_.inputs_size(); i++)
     {

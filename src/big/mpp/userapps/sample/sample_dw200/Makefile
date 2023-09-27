@@ -18,7 +18,7 @@ CPP_SRCS = $(wildcard $(LOCAL_SRC_DIR)/*.cpp)
 CPP_OBJS = $(patsubst %.cpp,%.o,$(CPP_SRCS))
 
 all: $(BIN)
-	@-rm -f $(OBJS)
+	@-rm -f *.o
 	@echo "${PWD}/Makefile all"
 
 $(OBJS): %.o : %.c

@@ -1,6 +1,8 @@
 # 1.简介
 
-人脸检测采用了retina-face网络结构，人脸密集关键点检测backbone选取0.5-mobilenet。使用该应用，可得到图像或视频中的每个人根据106关键点绘制的五官轮廓。
+人脸密集关键点检测应用使用两个模型实现检测图像/视频中每张人脸的106关键点，并根据106关键点绘制人脸、五官等轮廓，不同轮廓使用不用的颜色表示。人脸密集关键点检测可以应用到人脸美颜、人脸贴纸、人脸驱动等领域中。
+
+人脸密集关键点检测应用的两个模型分别是人脸检测检测模型和人脸密集关键点检测模型，前者使用retina-face网络结构，用于检测人脸框；后者选用0.5-mobilenet为backbone，用于对每张人脸检测106个关键点，106关键点包括人脸的脸颊、嘴巴、眼睛、鼻子和眉毛区域。
 
 # 2.应用使用说明
 
@@ -22,6 +24,8 @@ Options:
  #视频流推理：（face_landmark_isp.sh）
 ./face_landmark.elf face_detection_320.kmodel 0.6 0.2 face_landmark.kmodel None 0
 ```
+## 2.2 效果展示
 
+<img src="https://kendryte-download.canaan-creative.com/k230/downloads/doc_images/ai_demo/face_landmark/face_landmark_result.png" alt="密集关键点效果图" width="50%" height="50%"/>
 
 

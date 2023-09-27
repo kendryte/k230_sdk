@@ -27,6 +27,7 @@ debug_mode      是否需要调试，0、1、2分别表示不调试、简单调�
  #视频流推理：（handkpocr_cpp_isp.sh）
 ./sq_handkp_ocr.elf hand_det.kmodel None 0.15 0.4 handkp_det.kmodel ocr_det.kmodel 0.15 0.4 ocr_rec.kmodel 0
 ```
+## 2.2 效果展示
+![Alt text](https://kendryte-download.canaan-creative.com/k230/downloads/doc_images/ai_demo/sq_handkp_ocr/handkp_ocr.jpg "demo示例"){:height="50%" width="50%"}
 
-
-
+**注意：** 请确保屏幕中只有一只手，当手稳定出现在摄像头下才会做关键点检测以及ocr检测和识别，正确使用方式请参考上图。本应用仅提供一个示例实现，如需更高精度或更优体验，可通过调整阈值或自行替换相应的模型文件。

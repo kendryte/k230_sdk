@@ -13,6 +13,7 @@ CONFIG_QUICK_BOOT=n
 # CONFIG_GEN_SECURITY_IMG is not set
 CONFIG_UBOOT_DEFCONFIG="k230_evb_nand"
 CONFIG_LINUX_DTB="k230_evb_nand"
+CONFIG_GEN_IMG_SCRIPT="board/common/gen_image_script/gen_image.sh"
 
 #
 # toolchain configurations
@@ -50,3 +51,5 @@ CONFIG_SPI_NAND_CFG=""
 CONFIG_SDCAED=y
 CONFIG_EMMC=y
 CONFIG_SPI_EMMC_CFG=""
+CONFIG_SUPPORT_LINUX=y
+CONFIG_SUPPORT_RTSMART=y

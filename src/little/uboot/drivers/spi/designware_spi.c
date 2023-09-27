@@ -1128,7 +1128,8 @@ bool dw_spi_supports_op(struct spi_slave *slave, const struct spi_mem_op *op)
 static int dw_spi_adjust_op_size(struct spi_slave *slave, struct spi_mem_op *op)
 {
 	op->data.nbytes = min(op->data.nbytes, (unsigned int)SZ_64K);
-
+	if((op->addr.val  <  SZ_16M)  && ((op->addr.val + op->data.nbytes) > SZ_16M) )
+		op->data.nbytes = SZ_16M - op->addr.val;
 	return 0;
 }
 

@@ -38,7 +38,7 @@
 static msg_server_context_t g_server_context;
 static k_s32 g_media_msg_id = -1;
 static k_bool g_msg_start_flag = K_FALSE;
-static pthread_t g_server_receive_thread;
+static pthread_t g_server_receive_thread = -1;
 
 cmd_proc_fn msg_server_get_func(k_u32 mod_id, k_u32 cmd_id)
 {
@@ -133,11 +133,7 @@ void* media_msg_server_receive_thread(void *arg)
 k_s32 media_msg_server_init(void)
 {
     k_s32 ret = K_SUCCESS;
-    pthread_attr_t attr;
     k_ipcmsg_connect_t conn_attr ={ 0, IPCMSG_PORT_MPP, 1 };
-
-    pthread_attr_init(&attr);
-    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 
     ret = kd_ipcmsg_add_service(IPCMSG_MEDIA_SERVER_NAME, &conn_attr);
     if(ret != K_SUCCESS) {
@@ -145,14 +141,6 @@ k_s32 media_msg_server_init(void)
         return K_MAPI_ERR_SYS_NOTREADY;
     }
 
-    g_msg_start_flag = K_TRUE;
-    ret = pthread_create(&g_server_receive_thread, &attr, media_msg_server_receive_thread, NULL);
-    if(K_SUCCESS != ret) {
-        mapi_sys_error_trace("kd_ipcmsg_add_service failed:0x%08x\n", ret);
-    }
-
-    pthread_attr_destroy(&attr);
-    mapi_sys_info_trace("msg init success!\n");
     g_server_context.server_modules[K_MAPI_MOD_SYS] = mapi_msg_get_sys_mod();
 #if 0
     g_server_context.server_modules[K_MAPI_MOD_VI] = mapi_msg_get_vi_mod();
@@ -185,6 +173,13 @@ k_s32 media_msg_server_init(void)
     g_server_context.server_modules[K_MAPI_MOD_AENC] = mapi_msg_get_aenc_mod();
     g_server_context.server_modules[K_MAPI_MOD_ADEC] = mapi_msg_get_adec_mod();
 
+    g_msg_start_flag = K_TRUE;
+    ret = pthread_create(&g_server_receive_thread, NULL, media_msg_server_receive_thread, NULL);
+    if(K_SUCCESS != ret) {
+        mapi_sys_error_trace("kd_ipcmsg_add_service failed:0x%08x\n", ret);
+    }
+
+    mapi_sys_info_trace("msg init success!\n");
     return ret;
 }
 
@@ -204,8 +199,11 @@ k_s32 media_msg_server_deinit(void)
      pthread_detach() or pthread_join() function is an error.
      https://pubs.opengroup.org/onlinepubs/007908799/xsh/pthread_attr_getdetachstate.html
     */
-#if 0
-    pthread_join(g_server_receive_thread, NULL);
+#if 1
+    if(g_server_receive_thread != -1) {
+        pthread_join(g_server_receive_thread, NULL);
+        g_server_receive_thread = -1;
+    }
 #endif
     g_msg_start_flag = K_FALSE;
     kd_ipcmsg_del_service(IPCMSG_MEDIA_SERVER_NAME);

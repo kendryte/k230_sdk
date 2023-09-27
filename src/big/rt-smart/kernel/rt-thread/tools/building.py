@@ -442,8 +442,8 @@ def PrepareBuilding(env, root_directory, has_libcpu=False, remove_components = [
     # we need to seperate the variant_dir for BSPs and the kernels. BSPs could
     # have their own components etc. If they point to the same folder, SCons
     # would find the wrong source code to compile.
-    bsp_vdir = 'build'
-    kernel_vdir = 'build/kernel'
+    bsp_vdir = os.getenv('RTT_SDK_BUILD_DIR')
+    kernel_vdir = bsp_vdir + '/kernel'
     # board build script
     objs = SConscript('SConscript', variant_dir=bsp_vdir, duplicate=0)
     # include kernel
@@ -905,8 +905,13 @@ def EndBuilding(target, program = None):
 
     # Add addition clean files
     Clean(target, 'cconfig.h')
+    Clean(target, 'rtthread.bin')
+    Clean(target, 'rtthread.elf')
+    Clean(target, 'rtthread.map')
     Clean(target, 'rtua.py')
     Clean(target, 'rtua.pyc')
+    Clean(target, '.sconsign.dblite')
+    Clean(target, '__pycache__')
 
     if GetOption('target'):
         GenTargetProject(program)

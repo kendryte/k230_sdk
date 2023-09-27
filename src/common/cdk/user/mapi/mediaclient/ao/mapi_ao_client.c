@@ -118,3 +118,20 @@ k_s32 kd_mapi_ao_send_frame(k_handle ao_hdl, const k_audio_frame *frame)
     }
     return ret;
 }
+
+k_s32 kd_mapi_ao_set_volume(k_handle ao_hdl,float volume)
+{
+    k_s32 ret;
+    k_msg_ao_gain_info  gain_info;
+    gain_info.ao_hdl = ao_hdl;
+    gain_info.gain = volume;
+
+    ret = mapi_send_sync(MODFD(K_MAPI_MOD_AO, 0, 0), MSG_CMD_MEDIA_AO_SETVOLUME,
+        &gain_info, sizeof(gain_info), NULL);
+
+    if(ret != K_SUCCESS) {
+        mapi_ao_error_trace("mapi_send_sync failed\n");
+    }
+
+    return ret;
+}

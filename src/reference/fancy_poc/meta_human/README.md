@@ -2,6 +2,8 @@
 
 <div align=left><img src="./resource/pics/canaan-v.png" style="zoom: 30%;" /></div>
 
+Document version ： V1.0  Release date ：2023-09-01
+
 ## 介绍
 
 该项目为K230虚拟数字人（MetaHuman）POC开源工程，本工程基于K230融合了**人体动作捕捉**（motion capture，简称mocap）、**人体3D mesh模型**（SMPL模型）等技术。本应用可以实现人像联动，即K230摄取真人动作，通过模型inference（在K230）和post-process，再将结果传输给blender，驱动动漫character与真人联动。
@@ -42,7 +44,7 @@ do
 wget https://ai.b-bug.org/k230/downloads/fancy_poc/meta_human/$file || wget https://kendryte-download.canaan-creative.com/k230/downloads/fancy_poc/meta_human/$file;  
 done  
 
-for file in onboard_v2.2.zip
+for file in onboard_v2.3.zip
 do
 wget https://ai.b-bug.org/k230/downloads/fancy_poc/meta_human/k230_board/$file || wget https://kendryte-download.canaan-creative.com/k230/downloads/fancy_poc/meta_human/k230_board/$file;  
 done

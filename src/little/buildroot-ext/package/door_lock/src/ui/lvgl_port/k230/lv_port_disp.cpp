@@ -85,7 +85,7 @@ static uint32_t screen_width, screen_height;
 #define DRM_UI_BUF_END_IDX (DRM_UI_BUF_SRART_IDX + DRM_UI_BUF_COUNT)
 
 static struct drm_buffer drm_bufs[DRM_BUF_COUNT];
-static lv_color_t lvgl_buf[DISP_HOR_RES * DISP_VER_RES];
+static uint16_t lvgl_buf[DISP_HOR_RES * DISP_VER_RES];
 static buf_mgt_t ui_buf_mgt;
 
 /**********************
@@ -307,8 +307,8 @@ static int disp_init(void)
         drm_bufs[i].height = ALIGNED_DOWN_POWER_OF_TWO(display_height, 0);
         drm_bufs[i].offset_x = (screen_width - display_width) / 2;
         drm_bufs[i].offset_y = (screen_height - display_height);
-        drm_bufs[i].fourcc = DRM_FORMAT_ARGB8888;
-        drm_bufs[i].bpp = 32;
+        drm_bufs[i].fourcc = DRM_FORMAT_ARGB4444;
+        drm_bufs[i].bpp = 16;
         buf_mgt_reader_put(&ui_buf_mgt, (void *)i);
     }
 
@@ -335,6 +335,14 @@ static int disp_init(void)
     return 0;
 }
 
+
+static uint16_t argb8888_to_argb4444(uint32_t data)
+{
+    return (uint16_t)(((data >> 16) & 0xf000) | ((data >> 12) & 0xf00) |
+        ((data >> 8) & 0xf0) | ((data >> 4) & 0xf));
+}
+
+
 static void disp_deinit(void)
 {
     free_drm_buff();
@@ -344,11 +352,12 @@ static void disp_deinit(void)
 static void disp_flush(lv_disp_drv_t *disp_drv, const lv_area_t *area,
                        lv_color_t *color_p)
 {
-    lv_color_t *dst, *src = color_p;
+    uint32_t  *src = (u_int32_t*)color_p;
+    uint16_t *dst;
     for (int y = area->y1; y <= area->y2; y++) {
         dst = lvgl_buf + display_width * y + area->x1;
         for (int x = area->x1; x <= area->x2; x++)
-            *dst++ = *src++;
+            *dst++ = argb8888_to_argb4444(*src++);
     }
     lv_disp_flush_ready(disp_drv);
     if (disp_drv->draw_buf->last_area != 1 ||
@@ -362,7 +371,7 @@ static void disp_flush(lv_disp_drv_t *disp_drv, const lv_area_t *area,
             continue;
         }
         memcpy(drm_bufs[index].map, lvgl_buf,
-               display_width * display_height * sizeof(lv_color_t));
+               display_width * display_height * sizeof(lv_color_t) / 2);
         buf_mgt_writer_put(&ui_buf_mgt, (void *)index);
         static bool isfirst = true;
         if (isfirst) {

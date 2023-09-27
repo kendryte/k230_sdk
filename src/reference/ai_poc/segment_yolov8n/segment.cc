@@ -172,36 +172,37 @@ void Seg::post_process(FrameSize frame_size, vector<OutputSeg> &results)
 	}
 
 	// 处理mask
-	Mat maskProposals;
-	for (int i = 0; i < temp_mask_proposals.size(); ++i)
-	{
-		maskProposals.push_back(temp_mask_proposals[i]);
+	if(temp_mask_proposals.size() > 0)
+	{	Mat maskProposals;
+		for (int i = 0; i < temp_mask_proposals.size(); ++i)
+		{
+			maskProposals.push_back(temp_mask_proposals[i]);
+		}
+
+		Mat protos = Mat(segChannels, segWidth * segHeight, CV_32FC1, output_1);
+		sync();
+		Mat matmulRes = (maskProposals * protos).t();//n*32 32*25600 A*B是以数学运算中矩阵相乘的方式实现的，要求A的列数等于B的行数时
+		Mat masks = matmulRes.reshape(output.size(), { segWidth,segHeight });//n*160*160
+
+		std::vector<Mat> maskChannels;
+		cv::split(masks, maskChannels);
+		Rect roi(int((float)padw / input_shapes_[0][3] * segWidth), int((float)padh / input_shapes_[0][2] * segHeight), int(segWidth - padw / 2), int(segHeight - padh / 2));
+
+
+		for (int i = 0; i < output.size(); ++i) {
+			Mat dest, mask;
+			cv::exp(-maskChannels[i], dest);//sigmoid
+			dest = 1.0 / (1.0 + dest);//160*160
+			dest = dest(roi);
+			resize(dest, mask, cv::Size(frame_size.width, frame_size.height), INTER_NEAREST);
+			//crop----截取box中的mask作为该box对应的mask
+			Rect temp_rect = output[i].box;
+			mask = mask(temp_rect) > mask_thres;
+			output[i].boxMask = mask;
+			output[i].label =classes[output[i].id];
+		}
+		results=output;
 	}
-	
-
-	Mat protos = Mat(segChannels, segWidth * segHeight, CV_32FC1, output_1);
-	Mat matmulRes = (maskProposals * protos).t();//n*32 32*25600 A*B是以数学运算中矩阵相乘的方式实现的，要求A的列数等于B的行数时
-	Mat masks = matmulRes.reshape(output.size(), { segWidth,segHeight });//n*160*160
-
-	std::vector<Mat> maskChannels;
-	cv::split(masks, maskChannels);
-	Rect roi(int((float)padw / input_shapes_[0][3] * segWidth), int((float)padh / input_shapes_[0][2] * segHeight), int(segWidth - padw / 2), int(segHeight - padh / 2));
-
-
-	for (int i = 0; i < output.size(); ++i) {
-		Mat dest, mask;
-		cv::exp(-maskChannels[i], dest);//sigmoid
-		dest = 1.0 / (1.0 + dest);//160*160
-		dest = dest(roi);
-		resize(dest, mask, cv::Size(frame_size.width, frame_size.height), INTER_NEAREST);
-		//crop----截取box中的mask作为该box对应的mask
-		Rect temp_rect = output[i].box;
-		mask = mask(temp_rect) > mask_thres;
-		output[i].boxMask = mask;
-		output[i].label =classes[output[i].id];
-	}
-
-	results=output;
 }
 
 

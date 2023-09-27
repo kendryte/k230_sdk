@@ -3,11 +3,16 @@
 from building import *
 import os
 cwd     = GetCurrentDir()
+libdir  = os.getenv('CDK_SRC_DIR')
 src     = Glob('*.c')
 CPPPATH = ['inc']
-LIBPATH = [cwd + '/lib/']
+if os.path.exists(str(libdir) + '/kernel/ipcm/out/node_1'):
+    libdir = libdir + '/kernel/ipcm/out/node_1'
+else:
+    libdir = cwd + '/lib'
+LIBPATH = [libdir]
 libname = ''
-liblist = os.listdir(str(cwd + '/lib'))
+liblist = os.listdir(str(libdir))
 for item in liblist:
     if item[-2:] == ".a":
         libname = libname + '-l' + item[3:-2] + ' '

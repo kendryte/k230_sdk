@@ -114,8 +114,8 @@ void video_proc(char *argv[])
             int w = r.x2 - r.x1 + 1;
             int h = r.y2 - r.y1 + 1;
             
-            int rect_x = osd_width - r.x2/ SENSOR_WIDTH * osd_width;
-            int rect_y = osd_height - r.y2/ SENSOR_HEIGHT * osd_height;
+            int rect_x = r.x1/ SENSOR_WIDTH * osd_width;
+            int rect_y = r.y1/ SENSOR_HEIGHT * osd_height;
             int rect_w = (float)w / SENSOR_WIDTH * osd_width;
             int rect_h = (float)h / SENSOR_HEIGHT  * osd_height;
             cv::rectangle(osd_frame, cv::Rect(rect_x, rect_y , rect_w, rect_h), cv::Scalar( 255,255, 255, 255), 2, 2, 0);

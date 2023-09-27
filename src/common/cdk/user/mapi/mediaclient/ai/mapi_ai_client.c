@@ -172,3 +172,62 @@ k_s32 kd_mapi_ai_get_ptich_shift_attr(k_handle ai_hdl, k_ai_chn_pitch_shift_para
     return ret;
 }
 
+k_s32 kd_mapi_ai_bind_ao(k_handle ai_hdl,k_handle ao_hdl)
+{
+    k_msg_ai_bind_ao_t ai_ao_info;
+    ai_ao_info.ai_hdl = ai_hdl;
+    ai_ao_info.ao_hdl = ao_hdl;
+
+    k_s32 ret;
+    ret = mapi_send_sync(MODFD(K_MAPI_MOD_AI, 0, 0), MSG_CMD_MEDIA_AI_BIND_AO,
+        &ai_ao_info, sizeof(ai_ao_info), NULL);
+
+    if(ret != K_SUCCESS) {
+        mapi_ai_error_trace("mapi_send_sync failed\n");
+    }
+    return ret;
+}
+
+k_s32 kd_mapi_ai_unbind_ao(k_handle ai_hdl,k_handle ao_hdl)
+{
+    k_msg_ai_bind_ao_t ai_ao_info;
+    ai_ao_info.ai_hdl = ai_hdl;
+    ai_ao_info.ao_hdl = ao_hdl;
+
+    k_s32 ret;
+    ret = mapi_send_sync(MODFD(K_MAPI_MOD_AI, 0, 0), MSG_CMD_MEDIA_AI_UNBIND_AO,
+        &ai_ao_info, sizeof(ai_ao_info), NULL);
+
+    if(ret != K_SUCCESS) {
+        mapi_ai_error_trace("mapi_send_sync failed\n");
+    }
+    return ret;
+}
+
+k_s32 kd_mapi_ai_set_volume(k_handle ai_hdl,float volume)
+{
+    k_msg_ai_gain_info gain_info;
+    gain_info.gain = volume;
+    gain_info.ai_hdl = ai_hdl;
+
+    k_s32 ret;
+    ret = mapi_send_sync(MODFD(K_MAPI_MOD_AI, 0, 0), MSG_CMD_MEDIA_AI_SETVOLUME,
+        &gain_info, sizeof(gain_info), NULL);
+
+    if(ret != K_SUCCESS) {
+        mapi_ai_error_trace("mapi_send_sync failed\n");
+    }
+    return ret;
+}
+
+k_s32 kd_mapi_acodec_reset()
+{
+    k_s32 ret;
+    ret = mapi_send_sync(MODFD(K_MAPI_MOD_AI, 0, 0), MSG_CMD_MEDIA_ACODEC_RESET,
+        NULL, 0, NULL);
+
+    if(ret != K_SUCCESS) {
+        mapi_ai_error_trace("mapi_send_sync failed\n");
+    }
+    return ret;
+}

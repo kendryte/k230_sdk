@@ -106,7 +106,7 @@ k_s32 kd_mapi_vicap_set_dev_attr(k_vicap_dev_set_info dev_info)
         return K_FAILED;
     }
 
-    if(dev_info.sensor_type > SENSOR_TYPE_MAX || dev_info.sensor_type < OV_OV9732_MIPI_1920X1080_30FPS_10BIT_LINEAR)
+    if(dev_info.sensor_type > SENSOR_TYPE_MAX || dev_info.sensor_type < OV_OV9732_MIPI_1280X720_30FPS_10BIT_LINEAR)
     {
         mapi_vicap_error_trace("kd_mapi_vicap_set_dev_attr failed, sensor_type %d out of range\n", dev_info.sensor_type);
         return K_FAILED;
@@ -130,10 +130,18 @@ k_s32 kd_mapi_vicap_set_dev_attr(k_vicap_dev_set_info dev_info)
     dev_attr.acq_win.v_start = 0;
     dev_attr.acq_win.width = sensor_info[dev_info.vicap_dev].width;
     dev_attr.acq_win.height = sensor_info[dev_info.vicap_dev].height;
-    dev_attr.mode = VICAP_WORK_ONLINE_MODE;
+    // vicap work mode process
+    if((dev_info.mode == VICAP_WORK_OFFLINE_MODE) || (dev_info.mode == VICAP_WORK_LOAD_IMAGE_MODE))
+    {
+        dev_attr.mode = dev_info.mode;
+        dev_attr.buffer_num = dev_info.buffer_num;
+        dev_attr.buffer_size = dev_info.buffer_size;
+    }
+
     dev_attr.pipe_ctrl.data = dev_info.pipe_ctrl.data;
     // af need disable
     dev_attr.pipe_ctrl.bits.af_enable = 0;
+    dev_attr.pipe_ctrl.bits.ahdr_enable = 0;
     dev_attr.cpature_frame = 0;
     memcpy(&dev_attr.sensor_info, &sensor_info[dev_info.vicap_dev], sizeof(k_vicap_sensor_info));
     ret = kd_mpi_vicap_set_dev_attr(dev_info.vicap_dev, dev_attr);
@@ -216,6 +224,7 @@ k_s32 kd_mapi_vicap_set_chn_attr(k_vicap_chn_set_info chn_info)
     chn_attr.buffer_num = 6;
     chn_attr.buffer_size = chn_info.buf_size;
     chn_attr.alignment = chn_info.alignment;
+    chn_attr.fps = chn_info.fps;
     ret = kd_mpi_vicap_set_chn_attr(chn_info.vicap_dev, chn_info.vicap_chn, chn_attr);
     if(ret)
     {
@@ -290,4 +299,15 @@ k_s32 kd_mapi_vicap_set_vi_drop_frame(k_vicap_csi_num csi, k_vicap_drop_frame *f
     return K_SUCCESS;
 }
 
-/* vicap set attr */
+k_s32 kd_mapi_vicap_set_mclk(k_vicap_mclk_id id, k_vicap_mclk_sel sel, k_u8 mclk_div, k_u8 mclk_en)
+{
+    k_s32 ret = 0;
+
+    ret = kd_mpi_vicap_set_mclk(id, sel, mclk_div, mclk_en);
+    if(ret)
+    {
+        mapi_vicap_error_trace("kd_mapi_vicap_set_vi_drop_frame failed\n");
+    }
+
+    return K_SUCCESS;
+}

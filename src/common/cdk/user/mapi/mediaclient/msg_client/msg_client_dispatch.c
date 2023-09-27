@@ -167,28 +167,29 @@ k_s32 media_msg_client_init(void)
         return ret;
     }
 
-    pthread_attr_t attr;
-    pthread_attr_init(&attr);
-    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-    ret = pthread_create(&g_client_receive_thread, &attr, media_msg_client_receive_thread, &g_media_msg_id);
+    ret = pthread_create(&g_client_receive_thread, NULL, media_msg_client_receive_thread, &g_media_msg_id);
     if(K_SUCCESS != ret) {
-        pthread_attr_destroy(&attr);
         mapi_sys_error_trace("pthread_create failed\n");
         return ret;
     }
 
-    pthread_attr_destroy(&attr);
     mapi_sys_info_trace("msg init success!\n");
     return ret;
 }
 
 k_s32 media_msg_client_deinit(void)
 {
-    k_s32 ret;
+    k_s32 ret = K_SUCCESS;
 
-    ret = kd_ipcmsg_disconnect(g_media_msg_id);
+    if (g_media_msg_id != -1) {
+        ret = kd_ipcmsg_disconnect(g_media_msg_id);
+        g_media_msg_id = -1;
+    }
 
-    pthread_join(g_client_receive_thread, NULL);
+    if (g_client_receive_thread != -1) {
+        pthread_join(g_client_receive_thread, NULL);
+        g_client_receive_thread = -1;
+    }
 
     kd_ipcmsg_del_service(IPCMSG_MEDIA_CLIENT_NAME);
     return ret;

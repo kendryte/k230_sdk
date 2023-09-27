@@ -57,6 +57,7 @@ LIBS+=-lao
 LIBS+=-laenc
 LIBS+=-ladec
 LIBS+=-lvdec
+LIBS+=-lconnector
 
 
 

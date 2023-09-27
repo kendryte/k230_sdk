@@ -100,28 +100,6 @@ class Meta_Human: public AIBase
 
     private:
         
-        // FrameSize frame_size;  // 帧
-        // int net_len;           // kmodel输入尺寸大小
-        // float thresh_argb;     // 阈值
-        // uint32_t input_size;   // 输入长度
-        // uint32_t output_all_size;   // 输出长度
-        // interpreter interp_Meta_Human;     // Meta_Human编译器名称
-        // vector<unsigned char> Meta_Human_model;  // Meta_Human模型名称
-        // float *output_0;     // 第一个输出
-        // float *output_1;     // 第二个输出
-        // float *output_2;     // 第二个输出
-
-        // float *output;
-        // float obj_thresh_;  // 检测框阈值
-        // float nms_thresh_;  // NMS阈值
-        
-        // int anchors_num_ = 3;  // 锚框个数
-        // int classes_num_ = 1;   // 类别数
-        // int channels_ = anchors_num_ * (5 + classes_num_);  // 通道数
-        // float anchors_0_[3][2] = { { 10, 13 }, { 16, 30 }, { 33, 23 } };  // 第一组锚框
-        // float anchors_1_[3][2] = { { 30, 61 }, { 62, 45 }, { 59, 119 } };  // 第二组锚框
-        // float anchors_2_[3][2] = { { 116, 90 }, { 156, 198 }, { 373, 326 } }; // 第三组锚框
-
         std::unique_ptr<ai2d_builder> ai2d_builder_; // ai2d构建器
         runtime_tensor ai2d_in_tensor_;              // ai2d输入tensor
         runtime_tensor ai2d_out_tensor_;             // ai2d输出tensor

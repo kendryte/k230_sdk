@@ -1,0 +1,142 @@
+/* Copyright (c) 2023, Canaan Bright Sight Co., Ltd
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+*/
+#include "k230.dtsi"
+#include "clock_provider.dtsi"          /* k230 soc clock tree */
+#include "clock_consumer.dtsi"          /* k230 soc clock consumer */
+#include "reset_provider.dtsi"          /* k230 soc reset provider */
+#include "reset_consumer.dtsi"          /* k230 soc reset consumer */
+#include "power_provider.dtsi"          /* k230 soc power provider */
+#include "power_consumer.dtsi"          /* k230 soc power consumer */
+#include "gpio_provider.dtsi"           /* k230 soc gpio provider */
+#include "gpio_consumer.dtsi"           /* k230 soc gpio consumer */
+
+
+/ {
+	aliases {
+		serial0 = &uart0;
+	};
+
+	chosen {
+		bootargs = "";
+		linux,initrd-start = <0x0 0xa100000>;
+		linux,initrd-end = <0x0 0x0>;
+		stdout-path = "serial0:115200";
+	};
+};
+&ddr {
+	reg = <0x0 0x8200000 0x0 0x7dff000>;  /*linux memory config*/
+};
+
+&spi0 {
+	status = "okay";
+	spi-flash@0 {
+		compatible = "jedec,spi-nor";
+		//compatible = "spi-nand";
+		//compatible = "rohm,dh2228fv";
+		#address-cells = <1>;
+		#size-cells = <1>;
+		reg = <0>;
+		spi-max-frequency = <100000000>;
+		spi-tx-bus-width = <8>;
+		spi-rx-bus-width = <8>;
+		status = "okay";
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			partition@0 {
+			/* spl boot */
+			reg = <0x0 0x00080000>;
+			label = "spl_boot";
+			};
+			partition@2000000 {
+			/* 32MB for  update image*/
+			reg = <0 0x2000000>;
+			label = "all_flash";
+			};
+		};
+	};
+
+};
+
+&usbotg0 {
+	status = "okay";
+};
+
+&usbotg1 {
+	dr_mode = "host";
+	status = "okay";
+};
+
+&gpio52 {
+	status = "okay";
+};
+
+&gpio53 {
+	status = "okay";
+};
+
+&gpio_key {
+	S2 {
+		label = "gpio-key-52";
+		linux,code = <106>;
+		gpios = <&port52 0 GPIO_ACTIVE_LOW>;
+		debounce-interval = <3>;
+	};
+
+	S1 {
+		label = "gpio-key-53";
+		linux,code = <105>;
+		gpios = <&port53 0 GPIO_ACTIVE_HIGH>;
+		debounce-interval = <3>;
+	};
+};
+
+&mmc_sd0{
+    status = "okay";
+    io_fixed_1v8;
+    rx_delay_line = <0x00>;
+    tx_delay_line = <0x00>;
+    bcmdhd_wlan {
+        compatible = "android,bcmdhd_wlan";
+    };
+};
+
+&mmc_sd1{
+    status = "okay";
+    no-1-8-v;
+    cap-sd-highspeed;
+    mshc_ctrl_r = <0x00>;
+};
+
+&dsi {
+    status = "okay";
+
+    panel@0 {
+        compatible = "canaan,hx8399";
+        reg = <0>;
+
+        display-timings {
+            timing-0 {
+                clock-frequency = <74250000>;
+                hactive = <1920>;
+                vactive = <1080>;
+                hfront-porch = <88>;
+                hback-porch = <148>;
+                hsync-len = <44>;
+                vfront-porch = <36>;
+                vback-porch = <4>;
+                vsync-len = <5>;
+            };
+        };
+    };
+};
+
+&uart0 {
+	status = "okay";
+};

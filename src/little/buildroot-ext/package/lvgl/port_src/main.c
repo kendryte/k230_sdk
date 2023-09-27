@@ -59,8 +59,6 @@ int main(void)
     disp_drv.hor_res    = lcd_w;
     disp_drv.ver_res    = lcd_h;
     disp_drv.screen_transp = 1;
-    disp_drv.sw_rotate = 1;
-    disp_drv.rotated = LV_DISP_ROT_180;
     lv_disp_drv_register(&disp_drv);
 
     evdev_init();

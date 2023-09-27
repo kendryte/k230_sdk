@@ -1,0 +1,23 @@
+From 90dec4aece9463d1abcd6490626e0fa39178e1a0 Mon Sep 17 00:00:00 2001
+From: zhouquan <zhouquan@rt-thread.com>
+Date: Mon, 6 Mar 2023 17:16:52 +0800
+Subject: [PATCH 5/5] =?UTF-8?q?=F0=9F=93=83=20docs(verify):=20update=20ver?=
+ =?UTF-8?q?ify?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ verify | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/verify b/verify
+index 770a8a9d..08cf3ccd 100644
+--- a/verify
++++ b/verify
+@@ -1 +1 @@
+-[commit]: fe3644cd5e587b27c8cabc102a8edd4890e2b99d
++[commit]: 58240bf9a7efef9976e0711c5b0d8422f0021bee
+-- 
+2.34.1
+

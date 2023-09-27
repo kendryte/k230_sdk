@@ -497,24 +497,3 @@ std::vector<BoxInfo> Utils::decode_infer(float *data, int net_size, int stride, 
     return result;
 }
 
-// int Utils::getDirFileNum(const std::string dirPath)
-// {
-//     struct _finddata_t fileinfo;
-//     std::string current = dirPath + "\\*.*";
-//     int handle = _findfirst(current.c_str(), &fileinfo);
-//     int fileNum = 0;
-//     if (handle == -1)
-//         return 0;
- 
-//     while (!_findnext(handle, &fileinfo))
-//     {
-//         if (0 == strcmp(fileinfo.name, "..") || (_A_SUBDIR == fileinfo.attrib)) {
-//             continue;
-//         }
-//         else
-//             fileNum++;
-//     }
-        
-//     _findclose(handle);
-//     return fileNum;
-// }

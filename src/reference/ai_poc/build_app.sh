@@ -25,7 +25,6 @@ cp -a ../../big/kmodel/ai_poc/images/* ${k230_bin}
 mkdir ${k230_bin}/bytetrack_data/output
 cp -a ../../big/kmodel/ai_poc/utils/* ${k230_bin}
 cp -a shell/* ${k230_bin}
-cp -a sq_handkp_ocr/dict_6625.txt ${k230_bin}
 
 /opt/toolchain/Xuantie-900-gcc-linux-5.10.4-glibc-x86_64-V2.6.0/bin/riscv64-unknown-linux-gnu-g++ -O3 llamac/llama_run.cc -o out/llama_run -lm
 
@@ -61,6 +60,10 @@ if [ -f out/bin/face_parse.elf ]; then
       cp out/bin/face_parse.elf ${k230_bin}
 fi
 
+if [ -f out/bin/head_detection.elf ]; then
+      cp out/bin/head_detection.elf ${k230_bin}
+fi
+
 if [ -f out/bin/sq_hand_det.elf ]; then
       cp out/bin/sq_hand_det.elf ${k230_bin}
 fi
@@ -93,14 +96,6 @@ if [ -f out/bin/ob_det.elf ]; then
       cp out/bin/ob_det.elf ${k230_bin}
 fi
 
-if [ -f out/bin/seg.elf ]; then
-      cp out/bin/seg.elf ${k230_bin}
-fi
-
-if [ -f out/llama_run ]; then
-      cp out/llama_run ${k230_bin}
-fi
-
 if [ -f out/bin/person_detect.elf ]; then
       cp out/bin/person_detect.elf ${k230_bin}
 fi
@@ -121,6 +116,10 @@ if [ -f out/bin/vehicle_attr.elf ]; then
       cp out/bin/vehicle_attr.elf ${k230_bin}
 fi
 
+if [ -f out/bin/pphumanseg.elf ]; then
+      cp out/bin/pphumanseg.elf ${k230_bin}
+fi
+
 if [ -f out/bin/fitness.elf ]; then
       cp out/bin/fitness.elf ${k230_bin}
 fi
@@ -129,8 +128,32 @@ if [ -f out/bin/bytetrack.elf ]; then
       cp out/bin/bytetrack.elf ${k230_bin}
 fi
 
-if [ -f out/bin/pphumanseg.elf ]; then
-      cp out/bin/pphumanseg.elf ${k230_bin}
+if [ -f out/bin/seg.elf ]; then
+      cp out/bin/seg.elf ${k230_bin}
+fi
+
+if [ -f out/llama_run ]; then
+      cp out/llama_run ${k230_bin}
+fi
+
+if [ -f out/bin/finger_guessing.elf ]; then
+      cp out/bin/finger_guessing.elf ${k230_bin}
+fi
+
+if [ -f out/bin/smoke_detect.elf ]; then
+      cp out/bin/smoke_detect.elf ${k230_bin}
+fi
+
+if [ -f out/bin/nanotracker.elf ]; then
+      cp out/bin/nanotracker.elf ${k230_bin}
+fi
+
+if [ -f out/bin/traffic_light_detect.elf ]; then
+      cp out/bin/traffic_light_detect.elf ${k230_bin}
+fi
+
+if [ -f out/bin/space_resize.elf ]; then
+      cp out/bin/space_resize.elf ${k230_bin}
 fi
 
 rm -rf out

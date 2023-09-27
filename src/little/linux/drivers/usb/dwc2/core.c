@@ -1203,7 +1203,10 @@ int dwc2_phy_init(struct dwc2_hsotg *hsotg, bool select_phy)
 {
 	u32 usbcfg;
 	int retval = 0;
-
+    if(hsotg->kendryte_phy_init)
+    {
+        hsotg->kendryte_phy_init(hsotg);
+    }
 	if ((hsotg->params.speed == DWC2_SPEED_PARAM_FULL ||
 	     hsotg->params.speed == DWC2_SPEED_PARAM_LOW) &&
 	    hsotg->params.phy_type == DWC2_PHY_TYPE_PARAM_FS) {

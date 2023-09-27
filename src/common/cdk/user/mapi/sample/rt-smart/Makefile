@@ -46,6 +46,7 @@ LIBS+=-lt_database_c
 LIBS+=-lt_json_c
 LIBS+=-lt_mxml_c
 LIBS+=-lswitch
+
 LIBS+=-lvideo_in
 LIBS+=-lvirtual_hal
 LIBS+=-lstart_engine
@@ -55,6 +56,7 @@ LIBS+=-lvdec
 LIBS+=-lvicap
 LIBS+=-lsensor
 LIBS+=-lvo
+LIBS+=-lconnector
 #LIBS+=-lvin_drv
 
 

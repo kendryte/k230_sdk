@@ -40,28 +40,16 @@
 #define STR_GCM_AES "gcm(aes)"
 
 #define AES_BLOCK_SIZE                  16
-#define GCM_BUFFER_SIZE                 256
 #define ULLONG_MAX                      (~0ULL)
 #define SW_KEY_MAXLEN                   64
 #define DGST_INT_STATE_LEN              64
 #define IV_MAXLEN                       16
-#define DEFAULT_DESC_MEM_SIZE           0x800
-#define SGDMA_DESCRIPTOR_SIZE           0x20
-#define DMA_BUFFER_SIZE                 0x40000
-#define DMA_DESC_SIZE                   0x10000
-#define CRYPTO_IO_CTX_SIZE              0x90
-#define CRYPTO_IO_CTX_NUM               0x8
-#define DMA_DESC_OFFSET                 0x0
-#define DMA_WRITE_OFFSET                0x20000
-#define DMA_READ_OFFSET                 0x80000
-
-
 
 //----------------------CRYPTO REGISTER OFFSET---------------------------------------//
-#define CRYPTO_IV_OFFSET                0x130
-#define CRYPTO_SW_KEY_OFFSET            0x140
-#define CRYPTO_DGST_IN_OFFSET           0x180
-#define CRYPTO_DGST_OUT_OFFSET          0x1c0
+#define CRYPTO_IV_OFFSET                0x30
+#define CRYPTO_SW_KEY_OFFSET            0x40
+#define CRYPTO_DGST_IN_OFFSET           0x80
+#define CRYPTO_DGST_OUT_OFFSET          0xc0
 
 
 //----------------------GCM REGISTER BITS---------------------------------------//
@@ -72,9 +60,9 @@
 #define GCM_CFG_REG_IN_BITS           5
 #define GCM_CFG_REG_OUT_BITS          6
 //----------------------GCM REGISTER OFFSET----------------------------------------//
-#define GCM_STAT_OFFSET                   0x270
-#define GCM_CFG_1_OFFSET                  0x278
-#define GCM_CFG_2_OFFSET                  0x27c
+#define GCM_STAT_OFFSET                   0x70
+#define GCM_CFG_1_OFFSET                  0x78
+#define GCM_CFG_2_OFFSET                  0x7c
 //----------------------REGISTER BIT MASKS----------------------------------//
 #define GCM_STATUS_RESP_MASK          0xfffffffe
 
@@ -109,10 +97,10 @@
 #define DMA_STATUS_0_BUSY_MASK            0x00000001
 
 //----------------------KWP REGISTER OFFSET----------------------------------//
-#define KWP_STATUS_OFFSET               0x310
-#define KWP_START_OFFSET                0x314
-#define KWP_CONFIG_OFFSET               0x318
-#define KWP_KEY_IN_OUT_OFFSET           0x340
+#define KWP_STATUS_OFFSET               0x10
+#define KWP_START_OFFSET                0x14
+#define KWP_CONFIG_OFFSET               0x18
+#define KWP_KEY_IN_OUT_OFFSET           0x40
 #define KWP_KEY_MAXLEN                  80
 #define BUFFER_SIZE                     512
 //----------------------KWP REGISTER BIT MASKS----------------------------------//
@@ -120,8 +108,8 @@
 
 
 //----------------------KA REGISTER OFFSET----------------------------------//
-#define KA_SK_FREE_OFFSET               0xc10
-#define KA_SK_0_OFFSET                  0xc20
+#define KA_SK_FREE_OFFSET               0x10
+#define KA_SK_0_OFFSET                  0x20
 //----------------------KA REGISTER BIT MASKS----------------------------------//
 #define SK_KEY_VAILD_MASK               0x00000001
 #define SK_KEY_ORIGIN_MASK              0x0000000e
@@ -274,11 +262,9 @@ struct kendryte_aes_ctx {
     struct kendryte_crypto_info  *dev;
     uint32_t mode;
 
-    uint8_t key[64];
+    uint8_t key[32];
     uint64_t keylen;
-    uint8_t *iv;
     uint64_t ivlen;
-    uint8_t aad[32];
     uint64_t aadlen;
     uint8_t tag[AES_BLOCK_SIZE];
     uint64_t taglen;

@@ -37,6 +37,15 @@ config TARGET_K230_FPGA
 config TARGET_K230_EVB
 	bool "Support k230_evb"
 
+config TARGET_K230_CANMV
+	bool "Support k230_CANMV(K230PI)"
+
+config TARGET_K230_UNSIPLP4
+	bool "Support usiplp4"
+
+config TARGET_K230_SIPLP4
+	bool "Support sip lp4"
+
 endchoice
 
 config SYS_ICACHE_OFF
@@ -73,6 +82,9 @@ source "board/openpiton/riscv64/Kconfig"
 source "board/sipeed/maix/Kconfig"
 source "board/canaan/k230_fpga/Kconfig"
 source "board/canaan/k230_evb/Kconfig"
+source "board/canaan/k230_canmv/Kconfig"
+source "board/canaan/k230_unsiplp4/Kconfig"
+source "board/canaan/k230_siplp4/Kconfig"
 
 
 # platform-specific options below

@@ -6,27 +6,448 @@
 */
 #include <dt-bindings/interrupt-controller/irq.h>
 / {
-		gpio27: gpio27@9140b000 {
-			#address-cells = <1>;
+		gpio0: gpio0@9140b000 {
+			#address-cells = <0>;
 			#size-cells = <0>;
 			compatible = "canaan,k230-apb-gpio";
 			reg = <0x0 0x9140b000 0x0 0x1000>;
 			interrupt-controller;
 			interrupt-parent = <&intc>;
 			#interrupt-cells = <2>;
-			interrupts = <59 IRQ_TYPE_EDGE_BOTH>;
+			interrupts = <32 IRQ_TYPE_EDGE_RISING>;
 			hardlock = <0>;
+			status = "disabled";
 
-			port27: gpio-controller@0 {
+			port0: gpio-controller@0 {
 				gpio-controller;
 				#gpio-cells = <2>;
 				ngpios = <1>;
 				reg-bank = <0>;
-				id =<27>;
+				id =<0>;
+			};
+		};
+		gpio1: gpio1@9140b000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140b000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <33 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port1: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<1>;
+			};
+		};
+		gpio2: gpio2@9140b000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140b000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <34 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port2: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<2>;
+			};
+		};
+		gpio3: gpio3@9140b000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140b000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <35 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port3: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<3>;
+			};
+		};
+		gpio4: gpio4@9140b000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140b000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <36 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port4: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<4>;
+			};
+		};
+		gpio5: gpio5@9140b000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140b000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <37 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port5: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<5>;
+			};
+		};
+		gpio6: gpio6@9140b000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140b000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <38 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port6: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<6>;
+			};
+		};
+		gpio7: gpio7@9140b000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140b000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <39 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port7: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<7>;
+			};
+		};
+		gpio8: gpio8@9140b000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140b000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <40 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port8: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<8>;
+			};
+		};
+		gpio9: gpio9@9140b000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140b000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <41 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port9: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<9>;
+			};
+		};
+		gpio10: gpio10@9140b000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140b000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <42 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port10: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<10>;
+			};
+		};
+		gpio11: gpio11@9140b000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140b000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <43 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port11: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<11>;
+			};
+		};
+		gpio12: gpio12@9140b000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140b000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <44 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port12: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<12>;
+			};
+		};
+		gpio13: gpio13@9140b000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140b000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <45 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port13: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<13>;
+			};
+		};
+		gpio14: gpio14@9140b000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140b000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <46 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port14: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<14>;
+			};
+		};
+		gpio15: gpio15@9140b000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140b000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <47 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port15: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<15>;
+			};
+		};
+		gpio16: gpio16@9140b000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140b000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <48 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port16: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<16>;
+			};
+		};
+		gpio17: gpio17@9140b000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140b000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <49 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port17: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<17>;
+			};
+		};
+		gpio18: gpio18@9140b000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140b000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <50 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port18: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<18>;
+			};
+		};
+		gpio19: gpio19@9140b000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140b000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <51 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port19: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<19>;
+			};
+		};
+		gpio20: gpio20@9140b000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140b000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <52 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port20: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<20>;
+			};
+		};
+		gpio21: gpio21@9140b000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140b000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <53 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port21: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<21>;
 			};
 		};
 		gpio22: gpio22@9140b000 {
-			#address-cells = <1>;
+			#address-cells = <0>;
 			#size-cells = <0>;
 			compatible = "canaan,k230-apb-gpio";
 			reg = <0x0 0x9140b000 0x0 0x1000>;
@@ -35,6 +456,7 @@
 			#interrupt-cells = <2>;
 			interrupts = <54 IRQ_TYPE_EDGE_RISING>;
 			hardlock = <0>;
+			status = "disabled";
 
 			port22: gpio-controller@0 {
 				gpio-controller;
@@ -45,15 +467,16 @@
 			};
 		};
 		gpio23: gpio23@9140b000 {
-			#address-cells = <1>;
+			#address-cells = <0>;
 			#size-cells = <0>;
 			compatible = "canaan,k230-apb-gpio";
 			reg = <0x0 0x9140b000 0x0 0x1000>;
 			interrupt-controller;
 			interrupt-parent = <&intc>;
 			#interrupt-cells = <2>;
-			interrupts = <55 IRQ_TYPE_NONE>;
+			interrupts = <55 IRQ_TYPE_EDGE_RISING>;
 			hardlock = <0>;
+			status = "disabled";
 
 			port23: gpio-controller@0 {
 				gpio-controller;
@@ -63,8 +486,108 @@
 				id =<23>;
 			};
 		};
+		gpio24: gpio24@9140b000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140b000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <56 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port24: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<24>;
+			};
+		};
+		gpio25: gpio25@9140b000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140b000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <57 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port25: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<25>;
+			};
+		};
+		gpio26: gpio26@9140b000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140b000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <58 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port26: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<26>;
+			};
+		};
+		gpio27: gpio27@9140b000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140b000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <59 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port27: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<27>;
+			};
+		};
+		gpio28: gpio28@9140b000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140b000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <60 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port28: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<28>;
+			};
+		};
 		gpio29: gpio29@9140b000 {
-			#address-cells = <1>;
+			#address-cells = <0>;
 			#size-cells = <0>;
 			compatible = "canaan,k230-apb-gpio";
 			reg = <0x0 0x9140b000 0x0 0x1000>;
@@ -73,6 +596,7 @@
 			#interrupt-cells = <2>;
 			interrupts = <61 IRQ_TYPE_EDGE_RISING>;
 			hardlock = <0>;
+			status = "disabled";
 
 			port29: gpio-controller@0 {
 				gpio-controller;
@@ -82,17 +606,17 @@
 				id =<29>;
 			};
 		};
-
 		gpio30: gpio30@9140b000 {
-			#address-cells = <1>;
+			#address-cells = <0>;
 			#size-cells = <0>;
 			compatible = "canaan,k230-apb-gpio";
 			reg = <0x0 0x9140b000 0x0 0x1000>;
 			interrupt-controller;
 			interrupt-parent = <&intc>;
 			#interrupt-cells = <2>;
-			interrupts = <62 IRQ_TYPE_NONE>;
+			interrupts = <62 IRQ_TYPE_EDGE_RISING>;
 			hardlock = <0>;
+			status = "disabled";
 
 			port30: gpio-controller@0 {
 				gpio-controller;
@@ -102,17 +626,57 @@
 				id =<30>;
 			};
 		};
+		gpio31: gpio31@9140b000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140b000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <63 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
 
-		gpio33: gpio33@9140c000 {
-			#address-cells = <1>;
+			port31: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<31>;
+			};
+		};
+		gpio32: gpio32@9140c000 {
+			#address-cells = <0>;
 			#size-cells = <0>;
 			compatible = "canaan,k230-apb-gpio";
 			reg = <0x0 0x9140c000 0x0 0x1000>;
 			interrupt-controller;
 			interrupt-parent = <&intc>;
 			#interrupt-cells = <2>;
-			interrupts = <65 IRQ_TYPE_EDGE_BOTH>;
+			interrupts = <64 IRQ_TYPE_EDGE_RISING>;
 			hardlock = <0>;
+			status = "disabled";
+
+			port32: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<32>;
+			};
+		};
+		gpio33: gpio33@9140c000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <65 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
 
 			port33: gpio-controller@0 {
 				gpio-controller;
@@ -122,28 +686,604 @@
 				id =<33>;
 			};
 		};
-
 		gpio34: gpio34@9140c000 {
-			#address-cells = <1>;
+			#address-cells = <0>;
 			#size-cells = <0>;
 			compatible = "canaan,k230-apb-gpio";
 			reg = <0x0 0x9140c000 0x0 0x1000>;
-
-			interrupt-parent = <&intc>;
-			interrupts = <66>;
-
-			gpio-controller;
-			#gpio-cells = <2>;
-
 			interrupt-controller;
+			interrupt-parent = <&intc>;
 			#interrupt-cells = <2>;
-
+			interrupts = <66 IRQ_TYPE_EDGE_RISING>;
 			hardlock = <0>;
+			status = "disabled";
 
 			port34: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
 				ngpios = <1>;
 				reg-bank = <0>;
-				id = <34>;
+				id =<34>;
+			};
+		};
+		gpio35: gpio35@9140c000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <67 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port35: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<35>;
+			};
+		};
+		gpio36: gpio36@9140c000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <68 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port36: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<36>;
+			};
+		};
+		gpio37: gpio37@9140c000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <69 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port37: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<37>;
+			};
+		};
+		gpio38: gpio38@9140c000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <70 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port38: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<38>;
+			};
+		};
+		gpio39: gpio39@9140c000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <71 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port39: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<39>;
+			};
+		};
+		gpio40: gpio40@9140c000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <72 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port40: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<40>;
+			};
+		};
+		gpio41: gpio41@9140c000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <73 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port41: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<41>;
+			};
+		};
+		gpio42: gpio42@9140c000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <74 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port42: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<42>;
+			};
+		};
+		gpio43: gpio43@9140c000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <75 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port43: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<43>;
+			};
+		};
+		gpio44: gpio44@9140c000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <76 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port44: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<44>;
+			};
+		};
+		gpio45: gpio45@9140c000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <77 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port45: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<45>;
+			};
+		};
+		gpio46: gpio46@9140c000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <78 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port46: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<46>;
+			};
+		};
+		gpio47: gpio47@9140c000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <79 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port47: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<47>;
+			};
+		};
+		gpio48: gpio48@9140c000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <80 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port48: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<48>;
+			};
+		};
+		gpio49: gpio49@9140c000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <81 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port49: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<49>;
+			};
+		};
+		gpio50: gpio50@9140c000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <82 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port50: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<50>;
+			};
+		};
+		gpio51: gpio51@9140c000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <83 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port51: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<51>;
+			};
+		};
+		gpio52: gpio52@9140c000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <84 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port52: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<52>;
+			};
+		};
+		gpio53: gpio53@9140c000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <85 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port53: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<53>;
+			};
+		};
+		gpio54: gpio54@9140c000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <86 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port54: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<54>;
+			};
+		};
+		gpio55: gpio55@9140c000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <87 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port55: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<55>;
+			};
+		};
+		gpio56: gpio56@9140c000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <88 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port56: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<56>;
+			};
+		};
+		gpio57: gpio57@9140c000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <89 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port57: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<57>;
+			};
+		};
+		gpio58: gpio58@9140c000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <90 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port58: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<58>;
+			};
+		};
+		gpio59: gpio59@9140c000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <91 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port59: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<59>;
+			};
+		};
+		gpio60: gpio60@9140c000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <92 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port60: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<60>;
+			};
+		};
+		gpio61: gpio61@9140c000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <93 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port61: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<61>;
+			};
+		};
+		gpio62: gpio62@9140c000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <94 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port62: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<62>;
+			};
+		};
+		gpio63: gpio63@9140c000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&intc>;
+			#interrupt-cells = <2>;
+			interrupts = <95 IRQ_TYPE_EDGE_RISING>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port63: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <0>;
+				id =<63>;
 			};
 		};
 };

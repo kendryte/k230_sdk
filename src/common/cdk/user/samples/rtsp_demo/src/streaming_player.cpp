@@ -51,11 +51,10 @@ int StreamingPlayer::StreamingPlayerInit() {
     }
 
     memset(&dev_attr_info_, 0, sizeof(dev_attr_info_));
-    // if (sensor_type_ <= OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_SPECKLE)
-    //     dev_attr_info_.dw_en = K_FALSE;
-    // else
-    //     dev_attr_info_.dw_en = K_TRUE;
-    dev_attr_info_.dw_en = K_FALSE;
+    if (sensor_type_ <= OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_SPECKLE)
+        dev_attr_info_.dw_en = K_FALSE;
+    else
+        dev_attr_info_.dw_en = K_TRUE;
 
     memset(&media_attr_, 0, sizeof(media_attr_));
     k_u64 pic_size = video_width_ * video_height_ * 2;
@@ -63,7 +62,7 @@ int StreamingPlayer::StreamingPlayerInit() {
     media_attr_.media_config.vb_config.max_pool_cnt = session_num_ * 2 + 2 + 1;
     for (int i = 0; i < session_num_ * 2; i++) {
         if (i % 2 == 0) {
-            media_attr_.media_config.vb_config.comm_pool[i].blk_cnt = 6;
+            media_attr_.media_config.vb_config.comm_pool[i].blk_cnt = 10;
             media_attr_.media_config.vb_config.comm_pool[i].blk_size = ((pic_size + 0xfff) & ~0xfff);
             media_attr_.media_config.vb_config.comm_pool[i].mode = VB_REMAP_MODE_NOCACHE;
         } else {
@@ -90,6 +89,8 @@ int StreamingPlayer::StreamingPlayerInit() {
             printf("kd_mapi_vicap_get_sensor_info failed, %x.\n", ret);
             return -1;
         }
+        printf("sensor type: %u, name: %p, width: %u, height: %u\n",
+            sensor_type_, sensor_info.sensor_name, sensor_info.width, sensor_info.height);
         media_attr_.media_config.vb_config.comm_pool[session_num_ * 2 + 2].blk_cnt = 6;
         media_attr_.media_config.vb_config.comm_pool[session_num_ * 2 + 2].blk_size = VI_ALIGN_UP(sensor_info.width * sensor_info.height * 3 / 2, 0x1000);
         media_attr_.media_config.vb_config.comm_pool[session_num_ * 2 + 2].mode = VB_REMAP_MODE_NOCACHE;
@@ -303,6 +304,7 @@ int StreamingPlayer::CreateAudioEncode() {
     aio_dev_attr.kd_audio_attr.i2s_attr.bit_width = KD_AUDIO_BIT_WIDTH_16;
     aio_dev_attr.kd_audio_attr.i2s_attr.chn_cnt = 2;
     aio_dev_attr.kd_audio_attr.i2s_attr.i2s_mode = K_STANDARD_MODE;
+    aio_dev_attr.kd_audio_attr.i2s_attr.snd_mode = KD_AUDIO_SOUND_MODE_MONO;
     aio_dev_attr.kd_audio_attr.i2s_attr.frame_num = AUDIO_PERSEC_DIV_NUM;
     aio_dev_attr.kd_audio_attr.i2s_attr.point_num_per_frame = audio_sample_rate_ / aio_dev_attr.kd_audio_attr.i2s_attr.frame_num;
     aio_dev_attr.kd_audio_attr.i2s_attr.i2s_type = K_AIO_I2STYPE_INNERCODEC;

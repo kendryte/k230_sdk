@@ -107,6 +107,17 @@ k_s32 kd_mapi_ao_stop(k_handle ao_hdl);
  */
 k_s32 kd_mapi_ao_send_frame(k_handle ao_hdl, const k_audio_frame *frame);
 
+/**
+ * @brief ao set volume
+ *
+ * @param [in] ao_hdl ao handle
+ * @param [in] volume ao set volume value,[-39,6],step 1.5
+ * @return k_s32
+ * @retval 0 success
+ * @retval "not 0" see error code
+ */
+k_s32 kd_mapi_ao_set_volume(k_handle ao_hdl,float volume);
+
 /** @} */ /** <!-- ==== MAPI_AI End ==== */
 
 #ifdef __cplusplus

@@ -55,6 +55,8 @@ typedef enum {
     MSG_CMD_MEDIA_SYS_GET_VB_FROM_POOL_ID,
     MSG_CMD_MEDIA_SYS_CREATE_POOL,
     MSG_CMD_MEDIA_SYS_DESTORY_POOL,
+    MSG_CMD_MEDIA_SYS_BIND,
+    MSG_CMD_MEDIA_SYS_UNBIND,
 } msg_media_sys_cmd_t;
 
 typedef struct
@@ -81,6 +83,11 @@ typedef struct {
     k_u32 pool_id;
     k_vb_pool_config vb_pool_config;
 } msg_vb_config;
+
+typedef struct {
+    k_mpp_chn src_chn;
+    k_mpp_chn dest_chn;
+} msg_mpp_chn;
 
 /** @}*/  /** <!-- ==== COMM End ====*/
 #ifdef __cplusplus

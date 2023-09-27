@@ -1,0 +1,1 @@
+./traffic_light_detect.elf traffic.kmodel 0.5 0.45 None 0

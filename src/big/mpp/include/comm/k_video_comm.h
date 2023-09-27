@@ -66,6 +66,8 @@ typedef enum
     PIXEL_FORMAT_ABGR_8565,
     PIXEL_FORMAT_ABGR_8888,
 
+    PIXEL_FORMAT_BGRA_8888,
+
     PIXEL_FORMAT_RGB_MONOCHROME_8BPP,
 
     PIXEL_FORMAT_RGB_BAYER_8BPP,
@@ -289,7 +291,7 @@ typedef struct
     k_u32               time_ref;
     k_u64               pts;
 
-    k_u64               priv_data;
+    k_u64               priv_data;     /* bit 0:7 to fill light ctrl state */
     k_video_supplement  supplement; /**< Supplementary information about images */
 } k_video_frame;
 
@@ -312,4 +314,3 @@ typedef struct
 #endif /*  __cplusplus */
 
 #endif /*  __K_VIDEO_COMM_H__ */
-

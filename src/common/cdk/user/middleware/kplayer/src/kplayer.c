@@ -42,7 +42,9 @@ static PLAYER_AUDIO_INFO g_player_audio_info;
 static k_s32 g_video_track = INVALID_STREAM_TRACK;
 static k_s32 g_audio_track = INVALID_STREAM_TRACK;
 static k_bool g_play_start = K_FALSE;
+static k_bool g_play_pause = K_FALSE;
 static pthread_t g_play_tid = 0;
+static K_PLAYER_PROGRESS_INFO g_progress_info;
 
 static k_payload_type _get_payload_type(k_mp4_codec_id_e codec_id)
 {
@@ -95,6 +97,8 @@ static k_s32 _init_mp4_demuxer(const k_char *filePath)
         kd_mp4_destroy(g_mp4_demuxer_handle);
         return -1;
     }
+    //printf("k_mp4_get_file_info duration:%d,track count:%d\n",file_info.duration ,file_info.track_num);
+    g_progress_info.total_time = file_info.duration;
 
     for (int i = 0; i < file_info.track_num; i++)
     {
@@ -141,15 +145,15 @@ static k_s32 _init_mp4_demuxer(const k_char *filePath)
 
     return 0;
 }
-k_s32 kd_player_init()
+k_s32 kd_player_init(k_bool init_vo)
 {
-    sys_init();
+    sys_init(init_vo);
     return K_SUCCESS;
 }
 
-k_s32 kd_player_deinit()
+k_s32 kd_player_deinit(k_bool deinit_vo)
 {
-    sys_deinit();
+    sys_deinit(deinit_vo);
 
     return K_SUCCESS;
 }
@@ -157,6 +161,8 @@ k_s32 kd_player_deinit()
 k_s32 kd_player_setdatasource(const k_char *filePath)
 {
     k_s32 ret;
+    k_bool avsync = K_FALSE;
+
     memset(g_mp4_filename, 0, sizeof(g_mp4_filename));
     memcpy(g_mp4_filename, filePath, strlen(filePath) + 1);
 
@@ -175,11 +181,12 @@ k_s32 kd_player_setdatasource(const k_char *filePath)
             printf("disp_open failed\n");
             return K_FAILED;
         }
+        //avsync = K_TRUE;
     }
 
     if (g_audio_track != INVALID_STREAM_TRACK)
     {
-        ret = ao_open(g_player_audio_info.samplerate, g_player_audio_info.channel_num, g_player_audio_info.type);
+        ret = ao_open(g_player_audio_info.samplerate, g_player_audio_info.channel_num, g_player_audio_info.type, avsync);
         if (ret != K_SUCCESS)
         {
             printf("ao_open failed\n");
@@ -196,6 +203,11 @@ static void *play_thread(void *arg)
     k_mp4_frame_data_s frame_data;
     while (g_play_start)
     {
+        if (g_play_pause)
+        {
+            usleep(100*1000);
+            continue;
+        }
         memset(&frame_data, 0, sizeof(frame_data));
         ret = kd_mp4_get_frame(g_mp4_demuxer_handle, &frame_data);
 
@@ -223,7 +235,12 @@ static void *play_thread(void *arg)
                 if (frame_data.data_length != 0)
                 {
                     disp_play(frame_data.data, frame_data.data_length, frame_data.time_stamp, K_FALSE);
+                    g_progress_info.cur_time = frame_data.time_stamp;
                     //printf("video data size:%d,timestamp:%d\n", frame_data.data_length,frame_data.time_stamp);
+                    if (g_pfnCallback != NULL)
+                    {
+                        g_pfnCallback(K_PLAYER_EVENT_PROGRESS, &g_progress_info);
+                    }
                 }
             }
         }
@@ -277,6 +294,18 @@ k_s32 kd_player_start()
     return K_SUCCESS;
 }
 
+k_s32 kd_player_pause()
+{
+    g_play_pause = K_TRUE;
+    return K_SUCCESS;
+}
+
+k_s32 kd_player_resume()
+{
+    g_play_pause = K_FALSE;
+    return K_SUCCESS;
+}
+
 k_s32 kd_player_regcallback(K_PLAYER_EVENT_FN pfnCallback, void *pData)
 {
     g_pfnCallback = pfnCallback;
@@ -293,6 +322,8 @@ k_s32 kd_player_stop()
 
     g_play_start = K_FALSE;
     pthread_join(g_play_tid, NULL);
+    //wait ao send all data
+    sleep(1);
 
     if (g_audio_track != INVALID_STREAM_TRACK)
     {
@@ -303,5 +334,52 @@ k_s32 kd_player_stop()
         disp_close();
     }
 
+    return K_SUCCESS;
+}
+
+
+static int g_pic_width = 1088;
+static int g_pic_height = 1920;
+static k_u8 g_pic_data[1920*1088*3/2];
+static int g_pic_size = 0;
+
+
+k_s32 kd_picture_init()
+{
+    k_s32 ret;
+    ret = disp_open(K_PT_JPEG,g_pic_width,g_pic_height);
+    if (ret != K_SUCCESS)
+    {
+        printf("disp_open failed\n");
+        return K_FAILED;
+    }
+
+    return K_SUCCESS;
+}
+
+k_s32 kd_picture_show(const k_char* filePath)
+{
+    //read jpeg file
+    FILE *fp = fopen(filePath, "rb");
+    if (NULL == fp)
+    {
+        printf("open file:%s failed\n", filePath);
+        return -1;
+    }
+
+    fseek(fp, 0, SEEK_END);
+    g_pic_size = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+    fread(g_pic_data, g_pic_size, 1, fp);
+    fclose(fp);
+
+    disp_play(g_pic_data, g_pic_size, 0, K_FALSE);
+
+    return K_SUCCESS;
+}
+
+k_s32 kd_picture_deinit()
+{
+    disp_close();
     return K_SUCCESS;
 }

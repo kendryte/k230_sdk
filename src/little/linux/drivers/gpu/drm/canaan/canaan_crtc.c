@@ -42,6 +42,7 @@ static int canaan_crtc_enable_vblank(struct drm_crtc *crtc)
     struct canaan_crtc *canaan_crtc = to_canaan_crtc(crtc);
     struct canaan_vo *vo = canaan_crtc->vo;
 
+    DRM_DEBUG_DRIVER("Enable vblank on CRTC:%d\n", crtc->base.id);
     return canaan_vo_enable_vblank(vo);
 }
 
@@ -50,6 +51,7 @@ static void canaan_crtc_disable_vblank(struct drm_crtc *crtc)
     struct canaan_crtc *canaan_crtc = to_canaan_crtc(crtc);
     struct canaan_vo *vo = canaan_crtc->vo;
 
+    DRM_DEBUG_DRIVER("Disable vblank on CRTC:%d\n", crtc->base.id);
     canaan_vo_disable_vblank(vo);
 }
 
@@ -59,6 +61,7 @@ static void canaan_crtc_atomic_enable(struct drm_crtc *crtc,
     struct canaan_crtc *canaan_crtc = to_canaan_crtc(crtc);
     struct canaan_vo *vo = canaan_crtc->vo;
 
+    DRM_DEBUG_DRIVER("Enable the CRTC:%d\n", crtc->base.id);
     canaan_vo_enable_crtc(vo, canaan_crtc);
     drm_crtc_vblank_on(crtc);
 }
@@ -69,6 +72,7 @@ static void canaan_crtc_atomic_disable(struct drm_crtc *crtc,
     struct canaan_crtc *canaan_crtc = to_canaan_crtc(crtc);
     struct canaan_vo *vo = canaan_crtc->vo;
 
+    DRM_DEBUG_DRIVER("Disable the CRTC:%d\n", crtc->base.id);
     drm_crtc_vblank_off(crtc);
     canaan_vo_disable_crtc(vo, canaan_crtc);
 
@@ -88,6 +92,7 @@ static void canaan_crtc_atomic_flush(struct drm_crtc *crtc,
     struct canaan_vo *vo = canaan_crtc->vo;
 	struct drm_pending_vblank_event *event = crtc->state->event;
 
+    DRM_DEBUG_DRIVER("Flush the configuration \n");
     canaan_vo_flush_config(vo);
 
 	if (event) {
@@ -145,6 +150,7 @@ struct canaan_crtc *canaan_crtc_create(struct drm_device *drm_dev,
 
     drm_mode_crtc_set_gamma_size(crtc, 256);
     drm_crtc_enable_color_mgmt(crtc, 0, false, 256);
+    DRM_DEBUG_DRIVER("Create the CRTC:%d\n", crtc->base.id);
 
     return canaan_crtc;
 }

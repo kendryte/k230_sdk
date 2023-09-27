@@ -183,6 +183,22 @@ k_s32 kd_mapi_vicap_stop(k_vicap_dev vicap_dev);
  */
 k_s32 kd_mapi_vicap_set_vi_drop_frame(k_vicap_csi_num csi, k_vicap_drop_frame *frame, k_bool enable);
 
+/**
+ * @brief vicap set mclk
+ *
+ * @param [in] id mclk id
+ * @param [in] sel pll clk div select
+ * @param [in] mclk_div mclk div
+ * @param [in] mclk_div mclk enable
+ * @return k_s32
+ * @retval 0 success
+ * @retval "not 0" see err code
+ * @see K_ERR_CODE_E
+ * @note
+ */
+
+k_s32 kd_mapi_vicap_set_mclk(k_vicap_mclk_id id, k_vicap_mclk_sel sel, k_u8 mclk_div, k_u8 mclk_en);
+
 /** @} */ /** <!-- ==== MAPI_VICAP End ==== */
 
 #ifdef __cplusplus

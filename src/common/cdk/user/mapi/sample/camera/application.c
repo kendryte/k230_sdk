@@ -30,12 +30,17 @@
 #include "camera.h"
 #include "frame_cache.h"
 
+unsigned int g_exit = 0;
 unsigned int g_bulk = 1;
 unsigned int g_standalone = 0;
 unsigned int g_imagesize = 409600;
 unsigned int g_bulk_size = 409600;
 unsigned int g_cache_count = 20;
 unsigned int g_sensor = 3;
+
+static void sig_handler(int sig) {
+    get_kcamera()->close();
+}
 
 void usage(const char *argv0)
 {
@@ -63,7 +68,7 @@ int main(int argc, char *argv[])
 {
     int i = argc;
     int opt;
-
+    signal(SIGINT, sig_handler);
     while ((opt = getopt(argc, argv, "ishc:m:u:t:")) != -1) {
         switch (opt) {
         case 'i':
@@ -98,7 +103,7 @@ int main(int argc, char *argv[])
         case 't':
             g_sensor = atoi(optarg);
             break;
-            
+
         default:
             printf("Invalid option '-%c'\n", opt);
             usage(argv[0]);
@@ -115,12 +120,12 @@ int main(int argc, char *argv[])
         get_kcamera()->open() != 0 ||
         get_kcamera()->run() != 0)
     {
+        get_kcamera()->close();
         goto err_exit;
     }
 
+    printf("UVC sample exit!\n");
 err_exit:
-    get_kcamera()->close();
-
     destroy_uvc_cache();
 
     printf("camera exit\n");

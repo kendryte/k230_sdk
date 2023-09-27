@@ -5,7 +5,27 @@ source Kconfig.board
 source Kconfig.toolchain
 source Kconfig.memory
 source Kconfig.storage
+source Kconfig.wifi
 
+config SUPPORT_RTSMART
+        bool  "support rt smart on core 1"
+        default y
+        help  
+                support rt smart on core 1;
+
+config SUPPORT_LINUX
+        bool  "support linux "
+        default y
+        help  
+           support linux ;
+
+config LINUX_RUN_CORE_ID
+        depends on SUPPORT_LINUX
+        int  "support linux on core id"
+        default 0
+        help  
+           support linux  on core num;
+           
 ####################debug /realse version begain {
 choice 
 	prompt "build debug/release version"

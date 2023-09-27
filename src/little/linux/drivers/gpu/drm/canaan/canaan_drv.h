@@ -4,6 +4,7 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
 */
+
 #ifndef __CANAAN_DRV_H__
 #define __CANAAN_DRV_H__
 

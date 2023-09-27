@@ -1,6 +1,8 @@
 # 1.简介
 
-人脸检测采用了retina-face网络结构，人脸性别分类backbone选取EfficientNetB3。使用该应用，可得到图像或视频中的每个人的性别。
+人脸性别分类应用使用两个模型实现判断图像/视频中每个人的性别的功能，每个人物性别用M或F表示，其中M表示男性（Male），F表示女性（Female）。人脸性别分类可以应用到个性化推荐领域。
+
+人脸性别分类应用的两个模型分别是人脸检测检测模型和人脸性别分类模型，前者使用retina-face网络结构，得到人脸检测框；后者选用EfficientNetB3为backbone进行分类，得到人物性别。
 
 # 2.应用使用说明
 
@@ -22,6 +24,8 @@ Options:
  #视频流推理：（face_gender_isp.sh）
 ./face_gender.elf face_detection_320.kmodel 0.6 0.2 face_gender.kmodel None 0
 ```
+## 2.2 效果展示
 
+<img src="https://kendryte-download.canaan-creative.com/k230/downloads/doc_images/ai_demo/face_gender/face_gender_result.png" alt="性别识别效果图" width="50%" height="50%"/>
 
 

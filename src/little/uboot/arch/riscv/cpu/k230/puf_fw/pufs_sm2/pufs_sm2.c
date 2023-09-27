@@ -145,6 +145,20 @@ static pufs_status_t pufs_sm2_verify(pufs_ecdsa_sig_st sig,
     return status;
 }
 
+static pufs_status_t pufs_sm2_verify_lock(pufs_ecdsa_sig_st sig,
+                              const uint8_t* msg,
+                              uint32_t msglen,
+                              const uint8_t* id,
+                              uint32_t idlen,
+                              pufs_ec_point_st puk)
+{
+    pufs_status_t ret=0;
+    hardlock_config(lock);
+    ret = pufs_sm2_verify(sig, msg, msglen, id, idlen, puk);
+    hardlock_config(unlock);
+    return ret;
+}
+
 func_pufs_sm2_gen_z cb_pufs_sm2_gen_z = pufs_sm2_gen_z;
 func_pufs_sm2_sign_m_hash cb_pufs_sm2_sign_m_hash = pufs_sm2_sign_m_hash;
-func_pufs_sm2_verify cb_pufs_sm2_verify = pufs_sm2_verify;
+func_pufs_sm2_verify cb_pufs_sm2_verify = pufs_sm2_verify_lock;

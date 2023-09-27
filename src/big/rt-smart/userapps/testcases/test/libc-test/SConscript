@@ -1,0 +1,109 @@
+from building import *
+
+cwd     = GetCurrentDir()
+
+common  = Split('''
+src/common/print.c
+src/common/mtest.c
+src/common/fdfill.c
+src/common/path.c
+src/common/rand.c
+src/common/utf8.c
+src/common/vmfill.c
+src/common/memfill.c
+src/common/setrlim.c
+''')
+
+CPPPATH = [cwd, cwd + '/src/common', 'sdk/libc/include']
+
+CPPDEFINES = ['NOT_USING_UTEST']
+CCFLAGS = ' -Wno-unused-function'
+grp_comm = DefineGroup('comm', common, depend = [''], CPPPATH = CPPPATH,
+        LOCAL_CCFLAGS=CCFLAGS, LOCAL_CPPDEFINES=CPPDEFINES)
+
+func_misc = [ 'misc', Split('''
+src/functional/basename.c
+src/functional/getcwd.c
+src/functional/dirname.c
+src/functional/env.c
+src/functional/crypt.c
+src/functional/udiv.c
+src/functional/random.c
+src/functional/setjmp.c
+''')]
+
+func_charset = [ 'charset', Split('''
+src/functional/iconv_open.c
+src/functional/clocale_mbfuncs.c
+src/functional/mbc.c
+''')]
+
+func_string = [ 'string', Split('''
+src/functional/string.c
+src/functional/string_memcpy.c
+src/functional/string_memmem.c
+src/functional/string_memset.c
+src/functional/string_strchr.c
+src/functional/string_strcspn.c
+src/functional/string_strstr.c
+src/functional/strtod.c
+src/functional/strtod_long.c
+src/functional/strtod_simple.c
+src/functional/strtof.c
+src/functional/strtol.c
+src/functional/strtold.c
+src/functional/search_hsearch.c
+src/functional/search_insque.c
+src/functional/search_lsearch.c
+src/functional/search_tsearch.c
+src/functional/wcsstr.c
+src/functional/wcstol.c
+src/functional/qsort.c
+src/functional/memstream.c
+src/functional/snprintf.c
+src/functional/sscanf.c
+src/functional/search_insque.c
+''')]
+
+func_file = [ 'file', Split('''
+src/functional/ungetc.c
+src/functional/fdopen.c
+src/functional/fcntl.c
+src/functional/fscanf.c
+''')]
+
+func_time = [ 'time', Split('''
+src/functional/time.c
+src/functional/clock_gettime.c
+''')]
+
+
+funcs = [ func_misc, func_charset, func_string, func_file, func_time ]
+grp_func = []
+for f in funcs:
+    fgrp = f[0]
+    functional = f[1]
+    for src in functional:
+        tc_name = os.path.basename(src)[0:-2].replace('-', '_')
+        src_list = [src]
+        CPPDEFINES = ['USING_T_STATUS', 'GROUPNAME=\\"'+fgrp+'\\"',
+                'TCNAME=\\"'+tc_name+'\\"', 'TESTCASE='+tc_name+'_tc']
+        CCFLAGS = ' -Wno-unused -Wno-overflow -Wno-missing-braces'
+        grp_func += DefineGroup(tc_name, src_list, depend = [''], CPPPATH = CPPPATH,
+            LOCAL_CCFLAGS=CCFLAGS, LOCAL_CPPDEFINES=CPPDEFINES)
+
+math = Glob(cwd + '/src/math/*.c')
+grp_math = []
+for src in math:
+    src = str(src)
+    tc_name = os.path.basename(src)[0:-2]
+    src_list = [src]
+    CPPPATH = [cwd, cwd + '/src/common', cwd + '/src/math']
+    CPPDEFINES = ['GROUPNAME=\\"math\\"', 'TCNAME=\\"'+tc_name+'\\"', 'TESTCASE='+tc_name+'_tc']
+    CCFLAGS = ' -Wno-unused -Wno-unused-function -Wno-unknown-pragmas -Wno-missing-braces'
+    grp_math += DefineGroup(tc_name, src_list, depend = [''], CPPPATH = CPPPATH,
+        LOCAL_CCFLAGS=CCFLAGS, LOCAL_CPPDEFINES=CPPDEFINES)
+
+group = grp_func + grp_comm + grp_math
+
+Return('group')

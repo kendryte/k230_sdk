@@ -9,3 +9,18 @@ config CRYPTO_DEV_KENDRYTE_CRYP
     help
         This driver interfaces with the hardware crypto accelerator.
         Supporting gcm mode.
+
+config CRYPTO_DEV_KENDRYTE_HASH
+    tristate "Support for K230 sha256 accelerators"
+    select CRYPTO_HASH
+    select CRYPTO_SHA256
+    help
+        This driver interfaces with the hardware hash accelerator.
+        Supporting sha256 hashing algo.
+
+config CRYPTO_DEV_KENDRYTE_RSA
+    tristate "Support for k230 rsa-2048 accelerator"
+    select CRYPTO_SKCIPHER
+    help
+        This driver interfaces with the hardware rsa accelerator.
+        Supporting rsa algo.

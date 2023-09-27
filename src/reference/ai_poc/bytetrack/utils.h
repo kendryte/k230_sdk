@@ -347,15 +347,7 @@ public:
      * @threshold 检测框阈值
     **/
     static std::vector<BoxInfo> decode_infer(float *data, int net_size, int stride, int num_classes, FrameSize frame_size, float anchors[][2], float threshold);
-
-
-    // /**
-    //  * @brief 获取文件个数
-    //  * @dirPath 文件存储位置
-    //  * 
-    //  * @return 某文件夹下文件个数
-    // **/
-    // static int getDirFileNum(const std::string dirPath);
+   
 };
 
 #endif

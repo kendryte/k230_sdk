@@ -34,7 +34,6 @@ typedef struct kcamera
 } kcamera;
 
 kcamera* get_kcamera();
-void release_kcamera(kcamera *camera);
 
 void sample_venc_config(void);
 

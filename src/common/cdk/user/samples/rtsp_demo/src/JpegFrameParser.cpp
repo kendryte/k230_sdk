@@ -58,7 +58,7 @@ JpegFrameParser::JpegFrameParser() :
     _qTables = new unsigned char[128 * 2];
     memset(_qTables, 8, 128 * 2);
 }
- 
+
 JpegFrameParser::~JpegFrameParser()
 {
     if (_qTables != NULL) delete[] _qTables;
@@ -86,7 +86,7 @@ JpegFrameParser& JpegFrameParser::operator = (const JpegFrameParser& other) {
     _qFactor = other._qFactor;
     _qTablesLength = other._qTablesLength;
     _restartInterval = other._restartInterval;
-    _qTables = new unsigned char[128 * 2];
+    //_qTables = new unsigned char[128 * 2];
     memcpy(_qTables, other._qTables, _qTablesLength);
     return *this;
 }
@@ -96,15 +96,15 @@ unsigned int JpegFrameParser::scanJpegMarker(const unsigned char* data,
                                              unsigned int* offset)
 {
     while ((data[(*offset)++] != START_MARKER) && ((*offset) < size));
- 
+
     if ((*offset) >= size) {
         return EOI_MARKER;
     } else {
         unsigned int marker;
- 
+
         marker = data[*offset];
         (*offset)++;
- 
+
         return marker;
     }
 }
@@ -122,43 +122,43 @@ int JpegFrameParser::readSOF(const unsigned char* data, unsigned int size,
     CompInfo info[3] = { {0,}, };
     unsigned int sof_size, off;
     unsigned int width, height, infolen;
- 
+
     off = *offset;
- 
+
     /* we need at least 17 bytes for the SOF */
     if (off + 17 > size) goto wrong_size;
- 
+
     sof_size = _jpegHeaderSize(data, off);
     if (sof_size < 17) goto wrong_length;
- 
+
     *offset += sof_size;
- 
+
     /* skip size */
     off += 2;
- 
+
     /* precision should be 8 */
     if (data[off++] != 8) goto bad_precision;
- 
+
     /* read dimensions */
     height = data[off] << 8 | data[off + 1];
     width = data[off + 2] << 8 | data[off + 3];
     off += 4;
- 
+
     if (height == 0 || height > 2040) goto invalid_dimension;
     if (width == 0 || width > 2040) goto invalid_dimension;
- 
+
     _width = width / 8;
     _height = height / 8;
- 
+
     /* we only support 3 components */
     if (data[off++] != 3) goto bad_components;
- 
+
     infolen = 0;
     for (i = 0; i < 3; i++) {
         elem.id = data[off++];
         elem.samp = data[off++];
         elem.qt = data[off++];
- 
+
         /* insertion sort from the last element to the first */
         for (j = infolen; j > 1; j--) {
             if (info[j - 1].id < elem.id) break;
@@ -167,7 +167,7 @@ int JpegFrameParser::readSOF(const unsigned char* data, unsigned int size,
         info[j] = elem;
         infolen++;
     }
- 
+
     /* see that the components are supported */
     if (info[0].samp == 0x21) {
         _type = 0;
@@ -176,34 +176,34 @@ int JpegFrameParser::readSOF(const unsigned char* data, unsigned int size,
     } else {
         goto invalid_comp;
     }
- 
+
     if (!(info[1].samp == 0x11)) goto invalid_comp;
     if (!(info[2].samp == 0x11)) goto invalid_comp;
     if (info[1].qt != info[2].qt) goto invalid_comp;
- 
+
     return 0;
- 
+
     /* ERRORS */
 wrong_size:
     LOGGY("Wrong SOF size\n");
     return -1;
- 
+
 wrong_length:
     LOGGY("Wrong SOF length\n");
     return -1;
- 
+
 bad_precision:
     LOGGY("Bad precision\n");
     return -1;
- 
+
 invalid_dimension:
     LOGGY("Invalid dimension\n");
     return -1;
- 
+
 bad_components:
     LOGGY("Bad component\n");
     return -1;
- 
+
 invalid_comp:
     LOGGY("Invalid component\n");
     return -1;

@@ -218,6 +218,7 @@ void KdRtspServer::Impl::Start() {
         *env_ << "\n(RTSP-over-HTTP tunneling is not available.)\n";
     }
 
+    watchVariable_ = 0;
     server_loop_ = std::thread([this]() {
         env_->taskScheduler().doEventLoop(&watchVariable_);
     });

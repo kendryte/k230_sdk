@@ -4,6 +4,8 @@
 #include "mobile_retinaface.h"
 #include "util.h"
 
+#include "k_autoconf_comm.h"
+
 using namespace nncase;
 using namespace nncase::runtime;
 using namespace nncase::runtime::k230;
@@ -38,8 +40,12 @@ MobileRetinaface::MobileRetinaface(const char *kmodel_file, size_t channel, size
     ai2d_datatype_t ai2d_dtype { ai2d_format::NCHW_FMT, ai2d_format::NCHW_FMT, typecode_t::dt_uint8, typecode_t::dt_uint8 };
     ai2d_crop_param_t crop_param { false, 0, 0, 0, 0 };
     ai2d_shift_param_t shift_param { false, 0 };
+#if defined(CONFIG_BOARD_K230_CANMV)
+	ai2d_pad_param_t pad_param { true, { { 0, 0 }, { 0, 0 }, { 70, 70 }, { 0, 0 } }, ai2d_pad_mode::constant, { 0, 0, 0 } };
+#else
     ai2d_pad_param_t pad_param { true, { { 0, 0 }, { 0, 0 }, { 0, 0 }, { 70, 70 } }, ai2d_pad_mode::constant, { 0, 0, 0 } };
-    ai2d_resize_param_t resize_param { true, ai2d_interp_method::tf_bilinear, ai2d_interp_mode::half_pixel };
+#endif
+	ai2d_resize_param_t resize_param { true, ai2d_interp_method::tf_bilinear, ai2d_interp_mode::half_pixel };
     ai2d_affine_param_t affine_param { false };
     ai2d_builder_.reset(new ai2d_builder(in_shape, out_shape, ai2d_dtype, crop_param, shift_param, pad_param, resize_param, affine_param));
     ai2d_builder_->build_schedule();
@@ -81,14 +87,28 @@ void MobileRetinaface::postprocess()
     int short_side = ai2d_input_h_ < ai2d_input_w_ ? ai2d_input_h_ : ai2d_input_w_;
     int pad = (long_side - short_side) / 2;
 
+    bool width_pad = long_side == ai2d_input_h_ ? true : false;
+
     face_boxes_.clear();
     face_boxes_.reserve(sizeof(pred_box) / sizeof(pred_box[0]) * 4);
+    // std::cout << "box_num = " << box_num << ", landmark_num = " << landmark_num << std::endl;
+    int x1 = 0, y1 = 0, x2 = 0, y2 = 0;
     for (size_t i = 0; i < box_num; i++)
     {
-        int x1 = (int)(pred_box[i].x * long_side - pred_box[i].w * long_side / 2) - pad;
-        int y1 = (int)(pred_box[i].y * long_side - pred_box[i].h * long_side / 2);
-        int x2 = (int)(pred_box[i].x * long_side + pred_box[i].w * long_side / 2) - pad;
-        int y2 = (int)(pred_box[i].y * long_side + pred_box[i].h * long_side / 2);
+        if(width_pad)
+        {
+            x1 = (int)(pred_box[i].x * long_side - pred_box[i].w * long_side / 2) - pad;
+            y1 = (int)(pred_box[i].y * long_side - pred_box[i].h * long_side / 2);
+            x2 = (int)(pred_box[i].x * long_side + pred_box[i].w * long_side / 2) - pad;
+            y2 = (int)(pred_box[i].y * long_side + pred_box[i].h * long_side / 2);
+        }
+        else
+        {
+            x1 = (int)(pred_box[i].x * long_side - pred_box[i].w * long_side / 2);
+            y1 = (int)(pred_box[i].y * long_side - pred_box[i].h * long_side / 2) - pad;
+            x2 = (int)(pred_box[i].x * long_side + pred_box[i].w * long_side / 2);
+            y2 = (int)(pred_box[i].y * long_side + pred_box[i].h * long_side / 2) - pad;
+        }
         face_boxes_.push_back(x1);
         face_boxes_.push_back(y1);
         face_boxes_.push_back(x2);

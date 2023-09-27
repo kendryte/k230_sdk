@@ -1209,6 +1209,7 @@ k_s32 audio_sample_ai_encode(k_bool use_sysbind, k_u32 samplerate, k_audio_bit_w
     aio_dev_attr.kd_audio_attr.i2s_attr.i2s_type = g_enable_audio_codec ? K_AIO_I2STYPE_INNERCODEC : K_AIO_I2STYPE_EXTERN;
     if (K_SUCCESS != kd_mpi_ai_set_pub_attr(ai_dev, &aio_dev_attr))
     {
+        kd_mpi_aenc_destroy_chn(aenc_chn);
         printf("kd_mpi_ai_set_pub_attr failed\n");
         return K_FAILED;
     }
@@ -1270,6 +1271,7 @@ k_s32 audio_sample_decode_ao(k_bool use_sysbind, k_u32 samplerate, k_audio_bit_w
     if (K_SUCCESS != kd_mpi_ao_set_pub_attr(ao_dev, &aio_dev_attr))
     {
         printf("kd_mpi_ao_set_pub_attr failed\n");
+        kd_mpi_adec_destroy_chn(adec_chn);
         return K_FAILED;
     }
 

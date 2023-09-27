@@ -436,8 +436,8 @@ void Utils::draw_detections(cv::Mat& frame, vector<BoxPoint>& detections, FrameS
         for(int j = 0; j < 4; j++)
         {
             cv::Point tmp = detections[i].vertices[j];
-            tmp.x = osd_frame_size.width - (float(tmp.x)/sensor_frame_size.width)*osd_frame_size.width;
-            tmp.y = osd_frame_size.height - (float(tmp.y)/sensor_frame_size.height)*osd_frame_size.height;
+            tmp.x = (float(tmp.x)/sensor_frame_size.width)*osd_frame_size.width;
+            tmp.y = (float(tmp.y)/sensor_frame_size.height)*osd_frame_size.height;
             vec.push_back(tmp);
         }
         cv::RotatedRect rect = minAreaRect(vec);
@@ -723,6 +723,8 @@ void Utils::paint_chinese_video(cv::Mat& image,int x_offset,int y_offset,unsigne
 	}
 }
 
+
+
 //在图片上添加文本
 void Utils::draw_text(int x_offset,int y_offset,cv::Mat& image,vector<unsigned char> vec16)
 {
@@ -811,10 +813,8 @@ void Utils::draw_text(float x_offset,float y_offset,cv::Mat& image,vector<unsign
 
     cv::resize(txt_src, txt_res, cv::Size(res_w,res_h), 0, 0, INTER_AREA);
 
-    cv::rotate(txt_res,txt_res,cv::ROTATE_180);
-
-    int txt_x = max(int (osd_frame_size.width - (x_offset/sensor_frame_size.width) * osd_frame_size.width),0);
-    int txt_y = max(int (osd_frame_size.height - (y_offset/sensor_frame_size.height) * osd_frame_size.height),0);//x,y:在图片上绘制文字的起始坐标
+    int txt_x = max(int ((x_offset/sensor_frame_size.width) * osd_frame_size.width),0);
+    int txt_y = max(int ((y_offset/sensor_frame_size.height) * osd_frame_size.height),0);//x,y:在图片上绘制文字的起始坐标
 
     if(txt_x+res_w<osd_frame_size.width & txt_y+res_h<osd_frame_size.height)
     {

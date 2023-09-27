@@ -118,7 +118,7 @@
                   D50
                </awb_clip_outdoor>
                <K_Factor index="1" type="double" size="[1 1]">
-                  [ 22.86]
+                  [ 240.0]
                </K_Factor>
                <afFade2 index="1" type="double" size="[1 6]">
                   [0.75 1.28836 1.77672 2.164 2.6 3.0618]

@@ -34,6 +34,5 @@ typedef struct kuvc
 } kuvc;
 
 kuvc* get_kuvc();
-void release_kuvc(kuvc *uvc);
 
 #endif //__KUVC_H__

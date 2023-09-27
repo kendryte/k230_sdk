@@ -23,7 +23,11 @@ debug_mode   是否需要调试，0、1、2分别表示不调试、简单调试�
  #视频流推理：（ob_detect_isp_320.sh）（ob_detect_isp_640.sh）
 ./ob_det.elf yolov8n_320.kmodel 0.15 0.2 None 0
 ./ob_det.elf yolov8n_640.kmodel 0.15 0.2 None 0
-```
 
+操作说明：
+将摄像头置于检测目标前即可在显示屏中观察到该目标的检测效果。
+```
+## 2.2 效果展示
+<img src="https://kendryte-download.canaan-creative.com/k230/downloads/doc_images/ai_demo/object_detect_yolov8n/person.jpg" alt="image.jpg" width="45%" height="45%" /> <img src="https://kendryte-download.canaan-creative.com/k230/downloads/doc_images/ai_demo/object_detect_yolov8n/bird.jpg" alt="image0.jpg" width="45%" height="45%" />
 
 

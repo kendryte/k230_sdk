@@ -33,8 +33,6 @@
 #include <linux/mmc/sdio.h>
 #include <linux/mmc/slot-gpio.h>
 
-#include <linux/string.h>
-
 #include "sdhci.h"
 
 #define DRIVER_NAME "sdhci"
@@ -53,147 +51,6 @@ static unsigned int debug_quirks2;
 static void sdhci_enable_preset_value(struct sdhci_host *host, bool enable);
 
 static bool sdhci_send_command(struct sdhci_host *host, struct mmc_command *cmd);
-
-#define DWC_MSHC_PTR_VENDOR1 0x500
-#define SDHCI_VENDER_AT_CTRL_REG (DWC_MSHC_PTR_VENDOR1 + 0x40)
-#define SDHCI_VENDER_AT_STAT_REG (DWC_MSHC_PTR_VENDOR1 + 0x44)
-#define SDHCI_TUNE_CLK_STOP_EN_MASK BIT(16)
-#define SDHCI_TUNE_SWIN_TH_VAL_LSB (24)
-#define SDHCI_TUNE_SWIN_TH_VAL_MASK (0xFF)
-
-#define DWC_MSHC_PTR_PHY_REGS 0x300
-#define DWC_MSHC_PHY_CNFG (DWC_MSHC_PTR_PHY_REGS + 0x0)
-#define PAD_SN_LSB 20
-#define PAD_SN_MASK 0xF
-#define PAD_SN_DEFAULT ((0x8 & PAD_SN_MASK) << PAD_SN_LSB)
-#define PAD_SP_LSB 16
-#define PAD_SP_MASK 0xF
-#define PAD_SP_DEFAULT ((0x9 & PAD_SP_MASK) << PAD_SP_LSB)
-#define PHY_PWRGOOD BIT(1)
-#define PHY_RSTN BIT(0)
-
-#define DWC_MSHC_CMDPAD_CNFG (DWC_MSHC_PTR_PHY_REGS + 0x4)
-#define DWC_MSHC_DATPAD_CNFG (DWC_MSHC_PTR_PHY_REGS + 0x6)
-#define DWC_MSHC_CLKPAD_CNFG (DWC_MSHC_PTR_PHY_REGS + 0x8)
-#define DWC_MSHC_STBPAD_CNFG (DWC_MSHC_PTR_PHY_REGS + 0xA)
-#define DWC_MSHC_RSTNPAD_CNFG (DWC_MSHC_PTR_PHY_REGS + 0xC)
-#define TXSLEW_N_LSB 9
-#define TXSLEW_N_MASK 0xF
-#define TXSLEW_P_LSB 5
-#define TXSLEW_P_MASK 0xF
-#define WEAKPULL_EN_LSB 3
-#define WEAKPULL_EN_MASK 0x3
-#define RXSEL_LSB 0
-#define RXSEL_MASK 0x3
-
-#define DWC_MSHC_COMMDL_CNFG (DWC_MSHC_PTR_PHY_REGS + 0x1C)
-#define DWC_MSHC_SDCLKDL_CNFG (DWC_MSHC_PTR_PHY_REGS + 0x1D)
-#define DWC_MSHC_SDCLKDL_DC (DWC_MSHC_PTR_PHY_REGS + 0x1E)
-#define DWC_MSHC_SMPLDL_CNFG (DWC_MSHC_PTR_PHY_REGS + 0x20)
-#define DWC_MSHC_ATDL_CNFG (DWC_MSHC_PTR_PHY_REGS + 0x21)
-
-#define DWC_MSHC_PHY_PAD_SD_CLK                                                \
-	((1 << TXSLEW_N_LSB) | (3 << TXSLEW_P_LSB) | (0 << WEAKPULL_EN_LSB) |  \
-	 (2 << RXSEL_LSB))
-#define DWC_MSHC_PHY_PAD_SD_DAT                                                \
-	((1 << TXSLEW_N_LSB) | (3 << TXSLEW_P_LSB) | (1 << WEAKPULL_EN_LSB) |  \
-	 (2 << RXSEL_LSB))
-#define DWC_MSHC_PHY_PAD_SD_STB                                                \
-	((1 << TXSLEW_N_LSB) | (3 << TXSLEW_P_LSB) | (2 << WEAKPULL_EN_LSB) |  \
-	 (2 << RXSEL_LSB))
-
-#define DWC_MSHC_PHY_PAD_EMMC_CLK                                              \
-	((2 << TXSLEW_N_LSB) | (2 << TXSLEW_P_LSB) | (0 << WEAKPULL_EN_LSB) |  \
-	 (1 << RXSEL_LSB))
-	//  (0 << RXSEL_LSB))
-
-#define DWC_MSHC_PHY_PAD_EMMC_DAT                                              \
-	((2 << TXSLEW_N_LSB) | (2 << TXSLEW_P_LSB) | (1 << WEAKPULL_EN_LSB) |  \
-	 (1 << RXSEL_LSB))
-#define DWC_MSHC_PHY_PAD_EMMC_STB                                              \
-	((2 << TXSLEW_N_LSB) | (2 << TXSLEW_P_LSB) | (2 << WEAKPULL_EN_LSB) |  \
-	 (1 << RXSEL_LSB))
-
-
-static void dwcmshc_phy_pad_config(struct sdhci_host *host)
-{
-	u16 clk_ctrl;
-
-	/* Disable the card clock */
-	clk_ctrl = sdhci_readw(host, SDHCI_CLOCK_CONTROL);
-	clk_ctrl &= ~SDHCI_CLOCK_CARD_EN;
-	sdhci_writew(host, clk_ctrl, SDHCI_CLOCK_CONTROL);
-
-	if(memcmp(host->hw_name,"91581000",8) == 0){
-		sdhci_writew(host, DWC_MSHC_PHY_PAD_SD_DAT, DWC_MSHC_CMDPAD_CNFG);
-		sdhci_writew(host, DWC_MSHC_PHY_PAD_SD_DAT, DWC_MSHC_DATPAD_CNFG);
-		sdhci_writew(host, DWC_MSHC_PHY_PAD_SD_CLK, DWC_MSHC_CLKPAD_CNFG);
-		sdhci_writew(host, DWC_MSHC_PHY_PAD_SD_STB, DWC_MSHC_STBPAD_CNFG);
-		sdhci_writew(host, DWC_MSHC_PHY_PAD_SD_DAT, DWC_MSHC_RSTNPAD_CNFG);
-	} else {
-		sdhci_writew(host, DWC_MSHC_PHY_PAD_EMMC_DAT, DWC_MSHC_CMDPAD_CNFG);
-		sdhci_writew(host, DWC_MSHC_PHY_PAD_EMMC_DAT, DWC_MSHC_DATPAD_CNFG);
-		sdhci_writew(host, DWC_MSHC_PHY_PAD_EMMC_CLK, DWC_MSHC_CLKPAD_CNFG);
-		sdhci_writew(host, DWC_MSHC_PHY_PAD_EMMC_STB, DWC_MSHC_STBPAD_CNFG);
-		sdhci_writew(host, DWC_MSHC_PHY_PAD_EMMC_DAT, DWC_MSHC_RSTNPAD_CNFG);
-	}
-
-	return;
-}
-
-static void dwcmshc_phy_delay_config(struct sdhci_host *host)
-{	
-	sdhci_writeb(host, 1, DWC_MSHC_COMMDL_CNFG);
-	sdhci_writeb(host, 0x1, DWC_MSHC_SDCLKDL_CNFG);
-	// sdhci_writeb(host, 0x30, DWC_MSHC_SDCLKDL_DC);
-	sdhci_writeb(host, 0x40, DWC_MSHC_SDCLKDL_DC);
-	// sdhci_writeb(host, 0xd, DWC_MSHC_SMPLDL_CNFG);
-	sdhci_writeb(host, 0x8, DWC_MSHC_SMPLDL_CNFG);
-
-	sdhci_writeb(host, 0xc, DWC_MSHC_ATDL_CNFG);
-	sdhci_writel(host, (sdhci_readl(host, SDHCI_VENDER_AT_CTRL_REG) | \
-	  BIT(16) | BIT(17) | BIT(19) | BIT(20)), SDHCI_VENDER_AT_CTRL_REG);
-	sdhci_writel(host,0x0,SDHCI_VENDER_AT_STAT_REG);
-	return;
-}
-
-static int dwcmshc_phy_init(struct sdhci_host *host)
-{
-	u32 reg;
-	unsigned int timeout = 15000;
-
-	/* reset phy */
-	sdhci_writew(host, 0, DWC_MSHC_PHY_CNFG);
-
-	/* Disable the clock */
-	sdhci_writew(host, 0, SDHCI_CLOCK_CONTROL);
-
-	dwcmshc_phy_pad_config(host);
-	dwcmshc_phy_delay_config(host);
-
-	/* Wait max 150 ms */
-	while (1) {
-		reg = sdhci_readl(host, DWC_MSHC_PHY_CNFG);
-		if (reg & PHY_PWRGOOD)
-			break;
-		if (!timeout) {
-			return -1;
-		}
-		timeout--;
-
-		usleep_range(10, 15);
-	}
-
-	reg = PAD_SN_DEFAULT | PAD_SP_DEFAULT;
-	sdhci_writel(host, reg, DWC_MSHC_PHY_CNFG);
-
-	/* de-assert the phy */
-	reg |= PHY_RSTN;
-	sdhci_writel(host, reg, DWC_MSHC_PHY_CNFG);
-
-	return 0;
-}
-
 
 void sdhci_dumpregs(struct sdhci_host *host)
 {
@@ -464,50 +321,13 @@ static void sdhci_init(struct sdhci_host *host, int soft)
 {
 	struct mmc_host *mmc = host->mmc;
 	unsigned long flags;
-	static char *hi_sys_virt_addr;
-	static char *sysctl_virt_addr;
-	unsigned int data;
-	unsigned int hi_sys_config_addr = 0x91585000;
-	unsigned int sysctl_addr = 0x91101000;
 
-	/*sdio:Hi_sys_config space,sdio write protect open */
-	hi_sys_virt_addr = ioremap(hi_sys_config_addr,0x400);
-	sysctl_virt_addr = ioremap(sysctl_addr,0xb0);
-	if(memcmp(host->hw_name,"91581000",8) == 0){
-		data = readl(hi_sys_virt_addr + 8); 
-		data |= BIT(2) ; 
-		writel(data, hi_sys_virt_addr + 8); 
-		/*sysctl reset sdio1*/
-		writel(BIT(1), sysctl_virt_addr + 0x34);
-		usleep_range(2,3);
-		while(!(readl(sysctl_virt_addr + 0x34) & BIT(29)));
-		writel(BIT(29), sysctl_virt_addr + 0x34);
-		usleep_range(5,7);
-	}else if(memcmp(host->hw_name,"91580000",8) == 0){
-		data = readl(hi_sys_virt_addr); 
-		/*BIT(4) set sd0_host_reg_vol_stable*/
-		data |= BIT(6) | BIT(4); 
-		writel(data, hi_sys_virt_addr); 
-		/*sysctl reset sdio0*/
-		writel(BIT(0), sysctl_virt_addr + 0x34);
-		usleep_range(2,3);
-		while(!(readl(sysctl_virt_addr + 0x34) & BIT(28)));
-		writel(BIT(28), sysctl_virt_addr + 0x34);
-		usleep_range(10,11);
-	}
 
 	if (soft)
 		sdhci_do_reset(host, SDHCI_RESET_CMD | SDHCI_RESET_DATA);
 	else
 		sdhci_do_reset(host, SDHCI_RESET_ALL);
 
-	/*sdio0: config phy after reset*/ 
-	if(memcmp(host->hw_name,"91580000",8) == 0){
-		dwcmshc_phy_init(host);
-	}
-
-	/*sdio:(fpga board) Launches CMD/DATA with respect to positive edge of cclk_tx */ 
-	sdhci_writeb(host, 0x00, 0x508);
 
 	if (host->v4_mode)
 		sdhci_do_enable_v4_mode(host);
@@ -2193,7 +2013,7 @@ static void sdhci_set_power_reg(struct sdhci_host *host, unsigned char mode,
 	mmc_regulator_set_ocr(mmc, mmc->supply.vmmc, vdd);
 
 	if (mode != MMC_POWER_OFF)
-		sdhci_writeb(host, SDHCI_POWER_ON, SDHCI_POWER_CONTROL);
+        sdhci_writeb(host, SDHCI_POWER_ON, SDHCI_POWER_CONTROL);
 	else
 		sdhci_writeb(host, 0, SDHCI_POWER_CONTROL);
 }
@@ -2700,7 +2520,6 @@ int sdhci_start_signal_voltage_switch(struct mmc_host *mmc,
 	struct sdhci_host *host = mmc_priv(mmc);
 	u16 ctrl;
 	int ret;
-
 	/*
 	 * Signal Voltage Switching is only applicable for Host Controllers
 	 * v3.00 and above.

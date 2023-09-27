@@ -85,6 +85,14 @@ k_s32 kd_mapi_sys_deinit(void)
     return ret;
 }
 
+/* workaround at the moment, will be removed in the near future!!!
+*/
+void kd_mapi_media_init_workaround(k_bool media_init_flag) {
+    pthread_mutex_lock(&g_media_init_lock);
+    g_media_init = media_init_flag;
+    pthread_mutex_unlock(&g_media_init_lock);
+}
+
 k_s32 kd_mapi_media_init(const k_mapi_media_attr_t *media_attr)
 {
     k_s32 ret;
@@ -413,5 +421,79 @@ k_s32 kd_mapi_sys_release_vb_block(k_u64 phys_addr,  k_u64 blk_size)
         return ret;
     }
     pthread_mutex_unlock(&g_media_init_lock);
+    return ret;
+}
+
+k_s32 kd_mapi_sys_bind(k_mpp_chn *src_chn, k_mpp_chn *dest_chn)
+{
+    k_s32 ret;
+    CHECK_MAPI_SYS_NULL_PTR("src_chn", src_chn);
+    CHECK_MAPI_SYS_NULL_PTR("dest_chn", dest_chn);
+
+    if(g_sys_msg_init == K_FALSE) {
+        mapi_sys_error_trace("sys not init yet\n");
+        return K_MAPI_ERR_SYS_NOTREADY;
+    }
+
+    pthread_mutex_lock(&g_media_init_lock);
+    if(g_media_init == K_FALSE) {
+        mapi_sys_error_trace("media not init yet\n");
+        pthread_mutex_unlock(&g_media_init_lock);
+        return K_SUCCESS;
+    }
+
+    msg_mpp_chn bind_chn;
+    memset(&bind_chn, 0, sizeof(msg_mpp_chn));
+    memcpy(&bind_chn.src_chn, src_chn, sizeof(k_mpp_chn));
+    memcpy(&bind_chn.dest_chn, dest_chn, sizeof(k_mpp_chn));
+
+    ret = mapi_send_sync(MODFD(K_MAPI_MOD_SYS, 0, 0), MSG_CMD_MEDIA_SYS_BIND,
+                    &bind_chn, sizeof(bind_chn), NULL);
+
+    if(ret != K_SUCCESS) {
+        mapi_sys_error_trace("mapi_send_sync failed\n");
+        pthread_mutex_unlock(&g_media_init_lock);
+        return ret;
+    }
+
+    pthread_mutex_unlock(&g_media_init_lock);
+
+    return ret;
+}
+
+k_s32 kd_mapi_sys_unbind(k_mpp_chn *src_chn, k_mpp_chn *dest_chn)
+{
+    k_s32 ret;
+    CHECK_MAPI_SYS_NULL_PTR("src_chn", src_chn);
+    CHECK_MAPI_SYS_NULL_PTR("dest_chn", dest_chn);
+
+    if(g_sys_msg_init == K_FALSE) {
+        mapi_sys_error_trace("sys not init yet\n");
+        return K_MAPI_ERR_SYS_NOTREADY;
+    }
+
+    pthread_mutex_lock(&g_media_init_lock);
+    if(g_media_init == K_FALSE) {
+        mapi_sys_error_trace("media not init yet\n");
+        pthread_mutex_unlock(&g_media_init_lock);
+        return K_SUCCESS;
+    }
+
+    msg_mpp_chn bind_chn;
+    memset(&bind_chn, 0, sizeof(msg_mpp_chn));
+    memcpy(&bind_chn.src_chn, src_chn, sizeof(k_mpp_chn));
+    memcpy(&bind_chn.dest_chn, dest_chn, sizeof(k_mpp_chn));
+
+    ret = mapi_send_sync(MODFD(K_MAPI_MOD_SYS, 0, 0), MSG_CMD_MEDIA_SYS_UNBIND,
+                    &bind_chn, sizeof(bind_chn), NULL);
+
+    if(ret != K_SUCCESS) {
+        mapi_sys_error_trace("mapi_send_sync failed\n");
+        pthread_mutex_unlock(&g_media_init_lock);
+        return ret;
+    }
+
+    pthread_mutex_unlock(&g_media_init_lock);
+
     return ret;
 }

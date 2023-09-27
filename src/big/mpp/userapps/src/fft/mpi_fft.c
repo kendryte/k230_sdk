@@ -65,45 +65,42 @@ static void dump_buff(char *buff, int len)
     printf("\n");
 }
 
-
-/**
- * @brief 
- * 
- * @param point_num 
- * @param mode 
- * @param im 
- * @param om 
- * @param time_out 
- * @param shift 
- * @param real 
- * @param imag 
- * @return fft_cfg_reg_st* 
- */
-static  fft_args_st * fft_prepare_data(int point_num , fft_mode_e mode, fft_input_mode_e im, \
-                                    fft_out_mode_e om,  k_u32 time_out , k_u16 shift , k_u16 dma_ch, short *real, short *imag)
+int kd_mpi_fft_args_init( int point,           k_fft_mode_e mode,    k_fft_input_mode_e im, 
+                          k_fft_out_mode_e om,    k_u32 timeout ,        k_u16 shift ,
+                          short *real, short *imag, k_fft_args_st *fft_args )
 {
+    int ret = 0;
     k_u16 i;
     unsigned short *rx=(unsigned short *)real;
     unsigned short *iy=(unsigned short *)imag;
     k_u64 temp;
     k_u64 *buff = NULL;
 
-    fft_args_st *fft_args = malloc(sizeof(fft_args_st));
 
-    if(fft_args == NULL){
-        printf("malloc  malloc_fft_info_and_build_data error \n");
-        return NULL;
-    }
+    if((fft_args == NULL ) || (real == NULL) || (imag == NULL) )
+        return -1;
+
+    if( (point != 64 ) && (point != 128 ) && (point != 256 ) && (point != 512 ) && (point != 1024 ) && (point != 2048 ) && (point != 4096 ))
+        return -1;
+    if((mode != FFT_MODE) && (mode != IFFT_MODE))
+        return -1;
+
+    if((im != RIRI) && (im != RRRR) && (im != RR_II) )
+        return -1;
+    
+    if((om != RIRI_OUT) && (om != RR_II_OUT)  )
+        return -1;
+
     
     memset(fft_args, 0, sizeof(*fft_args));
-    fft_args->reg.point=log2(point_num/64);
+    fft_args->reg.point=log2(point/64);
     fft_args->reg.mode=mode;
     fft_args->reg.im=im;
     fft_args->reg.om=om;
-    fft_args->reg.time_out=time_out;
+    fft_args->reg.time_out = timeout;
     fft_args->reg.shift=shift;
     fft_args->reg.fft_intr_mask = 0;
-    fft_args->dma_channel = dma_ch;
+    
     
     buff = &fft_args->data[0];
 
@@ -111,14 +108,14 @@ static  fft_args_st * fft_prepare_data(int point_num , fft_mode_e mode, fft_inpu
     //I1R1I0R0
     if(RIRI == im)
     {
-        for(i=0; i<point_num; i=i+2)
+        for(i=0; i<point; i=i+2)
         {
             temp=((k_u64)iy[i+1] << 48)  | ((k_u64)rx[i+1] << 32) | ((k_u64)iy[i] << 16)  | (k_u64)rx[i];
             buff[i/2]=temp;           
         }
     }else if(RRRR == im)
     {//r3 r2 r1 r0
-        for(i=0; i<point_num; i=i+4)
+        for(i=0; i<point; i=i+4)
         {
             temp=((k_u64)rx[i+3] << 48)  | ((k_u64)rx[i+2] << 32) | ((k_u64)rx[i+1] << 16)  | (k_u64)rx[i];
             buff[i/4]=temp;
@@ -126,27 +123,27 @@ static  fft_args_st * fft_prepare_data(int point_num , fft_mode_e mode, fft_inpu
     }
     else if(RR_II == im)
     {//r3 r2 r1 r0......i3 i2 i1 i0;
-        int iy_start=point_num/4;
-        for(i=0; i<point_num; i=i+4)
+        int iy_start=point/4;
+        for(i=0; i<point; i=i+4)
         {
             temp=((k_u64)rx[i+3] << 48)  | ((k_u64)rx[i+2] << 32) | ((k_u64)rx[i+1] << 16)  | (k_u64)rx[i];
             buff[i/4]=temp;
         }
-        for(i=0; i<point_num; i=i+4)
+        for(i=0; i<point; i=i+4)
         {
             temp=((k_u64)iy[i+3] << 48)  | ((k_u64)iy[i+2] << 32) | ((k_u64)iy[i+1] << 16)  | (k_u64)iy[i];
             buff[i/4 + iy_start ]=temp;
         }
     }
-
-    //dump_buff((char*)fft_args, 64*4+16);
-    return fft_args;
+    return 0;
 }
-static int fft_post_proc(fft_args_st * fft_args, short *rx, short *iy)
+
+
+int kd_mpi_fft_args_2_array(k_fft_args_st * fft_args, short *rx, short *iy)
 {
     int i;
     k_u64 u64Data;
-    fft_out_mode_e om = fft_args->reg.om;
+    k_fft_out_mode_e om = fft_args->reg.om;
     int point_num = 64 << fft_args->reg.point;
     k_u64 *fft_data_buff = fft_args->data;
     
@@ -184,9 +181,8 @@ static int fft_post_proc(fft_args_st * fft_args, short *rx, short *iy)
     return 0;
 }
 //fft 信息，数据输入；数据输出；
-static int hard_fft_or_ifft(fft_args_st * fft_args)
+int kd_mpi_fft_or_ifft(k_fft_args_st * fft_args)
 {
-
     int fd;
     int ret;	
     if(fft_args == NULL)
@@ -198,18 +194,28 @@ static int hard_fft_or_ifft(fft_args_st * fft_args)
 }
 
 
-//64, IFFT_MODE, RIRI, RR_II_OUT, 0, 0x555
-int k230_fft_ifft(int point_num , fft_mode_e mode, fft_input_mode_e im, 
-           fft_out_mode_e om,  k_u32 time_out , k_u16 shift ,  k_u16 dma_ch,
-           short *rx_input, short *iy_input, short *rx_out, short *iy_out)
+int kd_mpi_fft(int point , k_fft_input_mode_e im,  k_fft_out_mode_e om,
+                k_u32 timeout , k_u16 shift ,
+                short *rx_in, short *iy_in, short *rx_out, short *iy_out)
 {
     int ret = 0 ;
-    fft_args_st * fft_args = NULL;   
-    fft_args = fft_prepare_data( point_num, mode , \
-                im, om, time_out, shift,dma_ch,  rx_input, iy_input); ERET((fft_args == NULL ));
-                
-    ret = hard_fft_or_ifft(fft_args); ERET(ret);
-    ret = fft_post_proc(fft_args, rx_out, iy_out);ERET(ret);
-    free(fft_args);
+    k_fft_args_st fft_args;   
+    ret = kd_mpi_fft_args_init(point, FFT_MODE , im, om, \
+                 timeout,  shift,   rx_in, iy_in , &fft_args); ERET(ret);
+    ret = kd_mpi_fft_or_ifft(&fft_args); ERET(ret);
+    ret = kd_mpi_fft_args_2_array(&fft_args, rx_out, iy_out);ERET(ret);
+    return 0;
+}
+
+int kd_mpi_ifft(int point , k_fft_input_mode_e im,  k_fft_out_mode_e om,
+                k_u32 timeout , k_u16 shift ,   
+                short *rx_in, short *iy_in, short *rx_out, short *iy_out)
+{
+    int ret = 0 ;
+    k_fft_args_st fft_args;   
+    ret = kd_mpi_fft_args_init(point, IFFT_MODE , im, om, \
+                 timeout,  shift,   rx_in, iy_in , &fft_args); ERET(ret);
+    ret = kd_mpi_fft_or_ifft(&fft_args); ERET(ret);
+    ret = kd_mpi_fft_args_2_array(&fft_args, rx_out, iy_out);ERET(ret);
     return 0;
 }

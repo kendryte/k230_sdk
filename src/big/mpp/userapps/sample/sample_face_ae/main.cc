@@ -40,7 +40,25 @@ using namespace nncase::runtime::detail;
 #include "mpi_vo_api.h"
 #include "sys/ioctl.h"
 
+#include "k_connector_comm.h"
+#include "mpi_connector_api.h"
+
+#include "k_autoconf_comm.h"
+
 #define CHANNEL 3
+
+#if defined(CONFIG_BOARD_K230_CANMV)
+#define ISP_CHN1_HEIGHT (720)
+#define ISP_CHN1_WIDTH  (1280)
+#define ISP_CHN0_WIDTH  (1920)
+#define ISP_CHN0_HEIGHT (1080)
+
+#define ISP_INPUT_WIDTH (1920)
+#define ISP_INPUT_HEIGHT (1080)
+
+#define LCD_WIDTH       (1080)
+#define LCD_HEIGHT      (1920)
+#else
 #define ISP_CHN1_HEIGHT (1280)
 #define ISP_CHN1_WIDTH  (720)
 #define ISP_CHN0_WIDTH  (1088)
@@ -50,6 +68,7 @@ using namespace nncase::runtime::detail;
 #define ISP_INPUT_HEIGHT (1944)
 #define ISP_CROP_W_OFFSET (768)
 #define ISP_CROP_H_OFFSET (16)
+#endif
 // #define TEST_BOOT_TIME
 
 #ifdef TEST_BOOT_TIME
@@ -182,8 +201,6 @@ static inline void PRINT_TIME_NOW(void)
 #endif
 
 
-extern k_s32 kd_display_set_backlight(void);
-extern k_s32 kd_display_reset(void);
 int sample_sys_bind_init(void);
 
 std::atomic<bool> quit(true);
@@ -217,11 +234,6 @@ k_vo_draw_frame vo_frame = (k_vo_draw_frame) {
     1
 };
 
-k_vo_display_resolution hx8399[20] =
-{
-    //{74250, 445500, 1340, 1080, 20, 20, 220, 1938, 1920, 5, 8, 10},           // display  evblp3
-    {37125, 222750, 1240, 1080, 20, 20, 120, 1988, 1920, 5, 8, 55},
-};
 
 int vo_creat_layer_test(k_vo_layer chn_id, layer_info *info)
 {
@@ -235,7 +247,7 @@ int vo_creat_layer_test(k_vo_layer chn_id, layer_info *info)
         return -1 ;
     }
 
-    // check scaler
+    memset(&attr, 0, sizeof(attr));
 
     // set offset
     attr.display_rect = info->offset;
@@ -266,146 +278,59 @@ int vo_creat_layer_test(k_vo_layer chn_id, layer_info *info)
     return 0;
 }
 
-static void hx8399_v2_init(k_u8 test_mode_en)
-{
-    k_u8 param1[] = {0xB9, 0xFF, 0x83, 0x99};
-    k_u8 param21[] = {0xD2, 0xAA};
-    k_u8 param2[] = {0xB1, 0x02, 0x04, 0x71, 0x91, 0x01, 0x32, 0x33, 0x11, 0x11, 0xab, 0x4d, 0x56, 0x73, 0x02, 0x02};
-    k_u8 param3[] = {0xB2, 0x00, 0x80, 0x80, 0xae, 0x05, 0x07, 0x5a, 0x11, 0x00, 0x00, 0x10, 0x1e, 0x70, 0x03, 0xd4};
-    k_u8 param4[] = {0xB4, 0x00, 0xFF, 0x02, 0xC0, 0x02, 0xc0, 0x00, 0x00, 0x08, 0x00, 0x04, 0x06, 0x00, 0x32, 0x04, 0x0a, 0x08, 0x21, 0x03, 0x01, 0x00, 0x0f, 0xb8, 0x8b, 0x02, 0xc0, 0x02, 0xc0, 0x00, 0x00, 0x08, 0x00, 0x04, 0x06, 0x00, 0x32, 0x04, 0x0a, 0x08, 0x01, 0x00, 0x0f, 0xb8, 0x01};
-    k_u8 param5[] = {0xD3, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x10, 0x04, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x05, 0x05, 0x07, 0x00, 0x00, 0x00, 0x05, 0x40};
-    k_u8 param6[] = {0xD5, 0x18, 0x18, 0x19, 0x19, 0x18, 0x18, 0x21, 0x20, 0x01, 0x00, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x2f, 0x2f, 0x30, 0x30, 0x31, 0x31, 0x18, 0x18, 0x18, 0x18};
-    k_u8 param7[] = {0xD6, 0x18, 0x18, 0x19, 0x19, 0x40, 0x40, 0x20, 0x21, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x00, 0x01, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x2f, 0x2f, 0x30, 0x30, 0x31, 0x31, 0x40, 0x40, 0x40, 0x40};
-    k_u8 param8[] = {0xD8, 0xa2, 0xaa, 0x02, 0xa0, 0xa2, 0xa8, 0x02, 0xa0, 0xb0, 0x00, 0x00, 0x00, 0xb0, 0x00, 0x00, 0x00};
-    k_u8 param9[] = {0xBD, 0x01};
-    k_u8 param10[] = {0xD8, 0xB0, 0x00, 0x00, 0x00, 0xB0, 0x00, 0x00, 0x00, 0xE2, 0xAA, 0x03, 0xF0, 0xE2, 0xAA, 0x03, 0xF0};
-    k_u8 param11[] = {0xBD, 0x02};
-    k_u8 param12[] = {0xD8, 0xE2, 0xAA, 0x03, 0xF0, 0xE2, 0xAA, 0x03, 0xF0};
-    k_u8 param13[] = {0xBD, 0x00};
-    k_u8 param14[] = {0xB6, 0x8D, 0x8D};
-    k_u8 param15[] = {0xCC, 0x09};
-    k_u8 param16[] = {0xC6, 0xFF, 0xF9};
-    k_u8 param22[] = {0xE0, 0x00, 0x12, 0x1f, 0x1a, 0x40, 0x4a, 0x59, 0x55, 0x5e, 0x67, 0x6f, 0x75, 0x7a, 0x82, 0x8b, 0x90, 0x95, 0x9f, 0xa3, 0xad, 0xa2, 0xb2, 0xB6, 0x5e, 0x5a, 0x65, 0x77, 0x00, 0x12, 0x1f, 0x1a, 0x40, 0x4a, 0x59, 0x55, 0x5e, 0x67, 0x6f, 0x75, 0x7a, 0x82, 0x8b, 0x90, 0x95, 0x9f, 0xa3, 0xad, 0xa2, 0xb2, 0xB6, 0x5e, 0x5a, 0x65, 0x77};
-    k_u8 param23[] = {0x11};
-    k_u8 param24[] = {0x29};
-
-    k_u8 pag20[50] = {0xB2, 0x0b, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77};               // ��ɫ
-
-
-    kd_mpi_dsi_send_cmd(param1, sizeof(param1));
-    kd_mpi_dsi_send_cmd(param21, sizeof(param21));
-    kd_mpi_dsi_send_cmd(param2, sizeof(param2));
-    kd_mpi_dsi_send_cmd(param3, sizeof(param3));
-    kd_mpi_dsi_send_cmd(param4, sizeof(param4));
-    kd_mpi_dsi_send_cmd(param5, sizeof(param5));
-    kd_mpi_dsi_send_cmd(param6, sizeof(param6));
-    kd_mpi_dsi_send_cmd(param7, sizeof(param7));
-    kd_mpi_dsi_send_cmd(param8, sizeof(param8));
-    kd_mpi_dsi_send_cmd(param9, sizeof(param9));
-
-    if (test_mode_en == 1)
-    {
-        kd_mpi_dsi_send_cmd(pag20, 10);                   // test  mode
-    }
-
-    kd_mpi_dsi_send_cmd(param10, sizeof(param10));
-    kd_mpi_dsi_send_cmd(param11, sizeof(param11));
-    kd_mpi_dsi_send_cmd(param12, sizeof(param12));
-    kd_mpi_dsi_send_cmd(param13, sizeof(param13));
-    kd_mpi_dsi_send_cmd(param14, sizeof(param14));
-    kd_mpi_dsi_send_cmd(param15, sizeof(param15));
-    kd_mpi_dsi_send_cmd(param16, sizeof(param16));
-    kd_mpi_dsi_send_cmd(param22, sizeof(param22));
-    kd_mpi_dsi_send_cmd(param23, 1);
-    usleep(300);
-    kd_mpi_dsi_send_cmd(param24, 1);
-    usleep(100);
-}
-
-void dwc_dsi_init(void)
-{
-
-    k_vo_display_resolution *resolution = NULL;
-    int resolution_index = 0;
-    resolution = &hx8399[resolution_index];
-    k_vo_dsi_attr attr;
-
-    k_vo_mipi_phy_attr phy_attr;
-    int enable = 1;
-    int screen_test_mode = 0;
-
-    memset(&attr, 0, sizeof(k_vo_dsi_attr));
-
-
-    // config phy
-    phy_attr.phy_lan_num = K_DSI_4LAN;
-    phy_attr.m = 295;
-    phy_attr.n = 15;
-    phy_attr.voc = 0x17;
-    phy_attr.hs_freq = 0x96;
-    kd_mpi_set_mipi_phy_attr(&phy_attr);
-
-
-    attr.lan_num = K_DSI_4LAN;
-    attr.cmd_mode = K_VO_LP_MODE;
-    attr.lp_div = 8;
-    memcpy(&attr.resolution, resolution, sizeof(k_vo_display_resolution));
-    // set dsi timing
-    kd_mpi_dsi_set_attr(&attr);
-
-    // config scann
-    hx8399_v2_init(screen_test_mode);
-
-    // enable dsi
-    kd_mpi_dsi_enable(enable);
-
-}
-
 static k_s32 vo_layer_vdss_bind_vo_config(void)
 {
-    k_vo_display_resolution *resolution = NULL;
-    k_s32 resolution_index = 0;
-    resolution = &hx8399[resolution_index];
-
     k_vo_pub_attr attr;
     layer_info info;
-
+    k_u32 ret = 0;
+    k_s32 connector_fd;
+#if defined(CONFIG_BOARD_K230_CANMV)
+	k_connector_type connector_type = LT9611_MIPI_4LAN_1920X1080_30FPS;// HX8377_V2_MIPI_4LAN_1080X1920_30FPS;
+#else
+    k_connector_type connector_type = HX8377_V2_MIPI_4LAN_1080X1920_30FPS;
+#endif
+    k_connector_info connector_info;
     k_vo_layer chn_id = K_VO_LAYER1;
 
     memset(&attr, 0, sizeof(attr));
     memset(&info, 0, sizeof(info));
+    memset(&connector_info, 0, sizeof(k_connector_info));
 
-    attr.bg_color = 0x808000;
-    attr.intf_sync = K_VO_OUT_1080P30;
-    attr.intf_type = K_VO_INTF_MIPI;
-    attr.sync_info = resolution;
+    //connector get sensor info
+    ret = kd_mpi_get_connector_info(connector_type, &connector_info);
+    if (ret) {
+        printf("sample_vicap, the sensor type not supported!\n");
+        return ret;
+    }
 
-    // vo init
-    kd_mpi_vo_init();
-    // set vo timing
-    kd_mpi_vo_set_dev_param(&attr);
+    connector_fd = kd_mpi_connector_open(connector_info.connector_name);
+    if (connector_fd < 0) {
+        printf("%s, connector open failed.\n", __func__);
+        return K_ERR_VO_NOTREADY;
+    }
+
+    // set connect power
+    kd_mpi_connector_power_set(connector_fd, K_TRUE);
+    // connector init
+    kd_mpi_connector_init(connector_fd, connector_info);
+
     // printf("%s>w %d, h %d\n", __func__, w, h);
     // config lyaer
     info.act_size.width = ISP_CHN0_WIDTH;//1080;//640;//1080;
     info.act_size.height = ISP_CHN0_HEIGHT;//1920;//480;//1920;
     info.format = PIXEL_FORMAT_YVU_PLANAR_420;
-    info.func = K_ROTATION_180;////K_ROTATION_90;
+    info.func = K_ROTATION_0;////K_ROTATION_90;
     info.global_alptha = 0xff;
     info.offset.x = 0;//(1080-w)/2,
     info.offset.y = 0;//(1920-h)/2;
     vo_creat_layer_test(chn_id, &info);
-    kd_mpi_vo_enable();
+
     return 0;
 }
 
 static void sample_vo_fn(void *arg)
 {
     usleep(10000);
-    // set hardware reset;
-    kd_display_set_backlight();
-	// rst display subsystem
-    kd_display_reset();
-    dwc_dsi_init();
     vo_layer_vdss_bind_vo_config();
     sample_sys_bind_init();
 }
@@ -493,6 +418,113 @@ int sample_vb_init(void)
     return ret;
 }
 
+#if defined(CONFIG_BOARD_K230_CANMV)
+int sample_vivcap_init( void )
+{
+    k_s32 ret = 0;
+    // sensor_type =  IMX335_MIPI_2LANE_RAW12_2592X1944_30FPS_LINEAR;
+    sensor_type = OV_OV5647_MIPI_CSI0_1920X1080_30FPS_10BIT_LINEAR;
+    // kd_mpi_vicap_set_mclk(VICAP_MCLK0, VICAP_PLL0_CLK_DIV4, 16, 1);
+    vicap_dev = VICAP_DEV_ID_0;
+
+    memset(&sensor_info, 0, sizeof(k_vicap_sensor_info));
+    ret = kd_mpi_vicap_get_sensor_info(sensor_type, &sensor_info);
+    if (ret) {
+        printf("sample_vicap, the sensor type not supported!\n");
+        return ret;
+    }
+
+    memset(&dev_attr, 0, sizeof(k_vicap_dev_attr));
+    dev_attr.acq_win.h_start = 0;
+    dev_attr.acq_win.v_start = 0;
+    dev_attr.acq_win.width = ISP_INPUT_WIDTH;
+    dev_attr.acq_win.height = ISP_INPUT_HEIGHT;
+    dev_attr.mode = VICAP_WORK_ONLINE_MODE;
+
+    dev_attr.pipe_ctrl.data = 0xFFFFFFFF;
+    dev_attr.pipe_ctrl.bits.af_enable = 0;
+    dev_attr.pipe_ctrl.bits.ahdr_enable = 0;
+
+
+    dev_attr.cpature_frame = 0;
+    memcpy(&dev_attr.sensor_info, &sensor_info, sizeof(k_vicap_sensor_info));
+
+    ret = kd_mpi_vicap_set_dev_attr(vicap_dev, dev_attr);
+    if (ret) {
+        printf("sample_vicap, kd_mpi_vicap_set_dev_attr failed.\n");
+        return ret;
+    }
+
+    memset(&chn_attr, 0, sizeof(k_vicap_chn_attr));
+
+    //set chn0 output yuv420sp
+    // chn_attr.out_win = dev_attr.acq_win;
+    // chn_attr.crop_win = chn_attr.out_win;
+    chn_attr.out_win.h_start = 0;
+    chn_attr.out_win.v_start = 0;
+    chn_attr.out_win.width = ISP_CHN0_WIDTH;
+    chn_attr.out_win.height = ISP_CHN0_HEIGHT;
+    chn_attr.crop_win = dev_attr.acq_win;
+    chn_attr.scale_win = chn_attr.out_win;
+    chn_attr.crop_enable = K_FALSE;
+    chn_attr.scale_enable = K_FALSE;
+    // chn_attr.dw_enable = K_FALSE;
+    chn_attr.chn_enable = K_TRUE;
+    chn_attr.pix_format = PIXEL_FORMAT_YVU_PLANAR_420;
+    chn_attr.buffer_num = VICAP_MAX_FRAME_COUNT;//at least 3 buffers for isp
+    chn_attr.buffer_size = VICAP_ALIGN_UP((ISP_CHN0_WIDTH * ISP_CHN0_HEIGHT * 3 / 2), VICAP_ALIGN_1K);;
+    vicap_chn = VICAP_CHN_ID_0;
+
+    // printf("sample_vicap ...kd_mpi_vicap_set_chn_attr, buffer_size[%d]\n", chn_attr.buffer_size);
+    ret = kd_mpi_vicap_set_chn_attr(vicap_dev, vicap_chn, chn_attr);
+    if (ret) {
+        printf("sample_vicap, kd_mpi_vicap_set_chn_attr failed.\n");
+        return ret;
+    }
+
+    //set chn1 output rgb888p
+    chn_attr.out_win.h_start = 0;
+    chn_attr.out_win.v_start = 0;
+    chn_attr.out_win.width = ISP_CHN1_WIDTH ;
+    chn_attr.out_win.height = ISP_CHN1_HEIGHT;
+
+    chn_attr.crop_win = dev_attr.acq_win;
+    chn_attr.scale_win = chn_attr.out_win;
+    chn_attr.crop_enable = K_FALSE;
+    chn_attr.scale_enable = K_FALSE;
+    // chn_attr.dw_enable = K_FALSE;
+    chn_attr.chn_enable = K_TRUE;
+    chn_attr.pix_format = PIXEL_FORMAT_BGR_888_PLANAR;
+    chn_attr.buffer_num = VICAP_MAX_FRAME_COUNT;//at least 3 buffers for isp
+    chn_attr.buffer_size = VICAP_ALIGN_UP((ISP_CHN1_HEIGHT * ISP_CHN1_WIDTH * 3 ), VICAP_ALIGN_1K);
+
+    // printf("sample_vicap ...kd_mpi_vicap_set_chn_attr, buffer_size[%d]\n", chn_attr.buffer_size);
+    ret = kd_mpi_vicap_set_chn_attr(vicap_dev, VICAP_CHN_ID_1, chn_attr);
+    if (ret) {
+        printf("sample_vicap, kd_mpi_vicap_set_chn_attr failed.\n");
+        return ret;
+    }
+    // set to header file database parse mode
+    ret = kd_mpi_vicap_set_database_parse_mode(vicap_dev, VICAP_DATABASE_PARSE_XML_JSON);
+    if (ret) {
+        printf("sample_vicap, kd_mpi_vicap_set_database_parse_mode failed.\n");
+        return ret;
+    }
+
+    // printf("sample_vicap ...kd_mpi_vicap_init\n");
+    ret = kd_mpi_vicap_init(vicap_dev);
+    if (ret) {
+        printf("sample_vicap, kd_mpi_vicap_init failed.\n");
+        return ret;
+    }
+    ret = kd_mpi_vicap_start_stream(vicap_dev);
+    if (ret) {
+        printf("sample_vicap, kd_mpi_vicap_start_stream failed.\n");
+        return ret;
+    }
+    return ret;
+}
+#else
 int sample_vivcap_init( void )
 {
     k_s32 ret = 0;
@@ -605,7 +637,7 @@ int sample_vivcap_init( void )
     }
     return ret;
 }
-
+#endif
 static void *exit_app(void *arg)
 {
     printf("press 'q' to exit application!!\n");
@@ -617,9 +649,21 @@ static void *exit_app(void *arg)
     return NULL;
 }
 
+k_u32 calc_sum(k_u32 data[], k_u8 size)
+{
+    k_u32 sum = 0;
+    for (int i = 0; i < size; i++) {
+        sum += data[i];
+    }
+    return sum;
+}
+
 void face_location_convert_roi(std::vector<int> boxes, k_isp_ae_roi *ae_roi, k_u32 h_offset, k_u32 v_offset, k_u32 scale_h, k_u32 scale_v, k_u32 width, k_u32 height)
 {
+
+#define CHECK_BOUNDARY(s, o, e) s = (o + s) > e ? (e - o) : (s)
     // static k_u32 boxes_back[ISP_AE_ROI_WINDOWS_MAX * 4];
+    static k_u32 area[ISP_AE_ROI_WINDOWS_MAX] = {0};
     if(ae_roi == nullptr)
     {
         std::cout << "face location is Nullptr" << std::endl;
@@ -649,14 +693,25 @@ void face_location_convert_roi(std::vector<int> boxes, k_isp_ae_roi *ae_roi, k_u
         boxes[i + 0] = boxes[i + 0] < 0 ? 0: boxes[i + 0];
         boxes[i + 1] = boxes[i + 1] < 0 ? 0: boxes[i + 1];
 
-        ae_roi->roiWindow[index].weight = 100.0;
-        ae_roi->roiWindow[index].window.hOffset = (k_u32)(boxes[i + 0] * 1088 / scale_h + h_offset);
-        ae_roi->roiWindow[index].window.vOffset = (k_u32)(boxes[i + 1] * 1920 / scale_v + v_offset);
+        // ae_roi->roiWindow[index].weight = 100.0;
+        ae_roi->roiWindow[index].window.hOffset = (k_u32)(boxes[i + 0] * width / scale_h + h_offset);
+        ae_roi->roiWindow[index].window.vOffset = (k_u32)(boxes[i + 1] * height / scale_v + v_offset);
 
         ae_roi->roiWindow[index].window.width = ((k_u32)(boxes[i + 2] - (k_u32)boxes[i + 0]) * width / scale_h);
         ae_roi->roiWindow[index].window.height = ((k_u32)(boxes[i + 3] - (k_u32)boxes[i + 1]) * height / scale_v);
 
+        CHECK_BOUNDARY(ae_roi->roiWindow[index].window.width, ae_roi->roiWindow[index].window.hOffset, sensor_info.width);
+        CHECK_BOUNDARY(ae_roi->roiWindow[index].window.height, ae_roi->roiWindow[index].window.vOffset, sensor_info.height);
+
+        area[index] = ae_roi->roiWindow[index].window.width * ae_roi->roiWindow[index].window.height;
     }
+
+    k_u32 sum = calc_sum(area, ae_roi->roiNum);
+    for(auto i = 0; i < ae_roi->roiNum; i++)
+    {
+        ae_roi->roiWindow[i].weight = (float) area[i] / sum;
+    }
+
 }
 
 int main(int argc, char *argv[])
@@ -761,17 +816,21 @@ int main(int argc, char *argv[])
         {
             // std::cout << "[" << boxes[i] << ", " << boxes[i + 1] << ", " << boxes[i + 2] <<", " << boxes[i + 3] << "]" << std::endl;
             vo_frame.draw_en = 1;
-            vo_frame.line_x_start = (ISP_CHN1_WIDTH - (uint32_t)boxes[2 + i]) * ISP_CHN0_WIDTH / ISP_CHN1_WIDTH;
-            vo_frame.line_y_start = (ISP_CHN1_HEIGHT - (uint32_t)boxes[3 + i]) * ISP_CHN0_HEIGHT / ISP_CHN1_HEIGHT;
-            vo_frame.line_x_end = (ISP_CHN1_WIDTH - (uint32_t)boxes[0 + i]) * ISP_CHN0_WIDTH / ISP_CHN1_WIDTH;
-            vo_frame.line_y_end = (ISP_CHN1_HEIGHT - (uint32_t)boxes[1 + i]) * ISP_CHN0_HEIGHT / ISP_CHN1_HEIGHT;
+            vo_frame.line_x_start = ((uint32_t)boxes[0 + i]) * ISP_CHN0_WIDTH / ISP_CHN1_WIDTH;
+            vo_frame.line_y_start = ((uint32_t)boxes[1 + i]) * ISP_CHN0_HEIGHT / ISP_CHN1_HEIGHT;
+            vo_frame.line_x_end = ((uint32_t)boxes[2 + i]) * ISP_CHN0_WIDTH / ISP_CHN1_WIDTH;
+            vo_frame.line_y_end = ((uint32_t)boxes[3 + i]) * ISP_CHN0_HEIGHT / ISP_CHN1_HEIGHT;
             vo_frame.frame_num = ++j;
             kd_mpi_vo_draw_frame(&vo_frame);
         }
         face_count = boxes.size() / 4;
 
         k_isp_ae_roi user_roi;
+#if defined(CONFIG_BOARD_K230_CANMV)
+        face_location_convert_roi(boxes, &user_roi, 0, 0, ISP_CHN1_WIDTH, ISP_CHN1_HEIGHT, 1920, 1080);
+#else
         face_location_convert_roi(boxes, &user_roi, 768, 16, ISP_CHN1_WIDTH, ISP_CHN1_HEIGHT, 1088, 1920);
+#endif
         kd_mpi_isp_ae_set_roi((k_isp_dev)vicap_dev, user_roi);
         ret = kd_mpi_vicap_dump_release(vicap_dev, VICAP_CHN_ID_1, &dump_info);
         if (ret) {

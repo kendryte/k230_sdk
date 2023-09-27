@@ -2,6 +2,8 @@
 #include <fcntl.h>
 #include <cstring>
 #include <sys/mman.h>
+#include "mapi_vo_api.h"
+#include "vo_cfg.h"
 
 #define AUDIO_PERSEC_DIV_NUM 25
 #define BIND_VO_LAYER 1
@@ -334,7 +336,6 @@ int KdMedia::CreateVdecVo(const VdecInitParams &params) {
     attr.frame_buf_cnt = params.output_buf_num;
     attr.frame_buf_size = params.max_width * params.max_height * 2;
     attr.stream_buf_size = params.input_buf_size;
-    attr.pic_format = PIXEL_FORMAT_YUV_SEMIPLANAR_420;
     attr.frame_buf_pool_id = output_pool_id_;
     switch(params.type) {
     case KdMediaVideoType::TypeH264: attr.type = K_PT_H264; break;
@@ -347,6 +348,10 @@ int KdMedia::CreateVdecVo(const VdecInitParams &params) {
         printf("KdMedia::CreateVdecVo() : kd_mapi_vdec_init failed, ret = %d\n", ret);
         goto err_exit;
     }
+
+    // FIXME
+    vo_init();
+    vo_enable();
 
     vdec_params_ = params;
     vdec_vo_created_ = true;
@@ -365,7 +370,10 @@ int KdMedia::DestroyVDecVo() {
         return -1;
     }
     kd_mapi_vdec_deinit(vdec_chn_id_);
+    vo_layer_deinit();
+    vo_deinit();
     DestroyVdecVBPool();
+
     vdec_vo_created_ = false;
     vdec_vo_started_ = false;
     return 0;
@@ -459,5 +467,16 @@ int KdMedia::SendVideoData(const uint8_t *data, size_t size, uint64_t timestamp_
         return -1;
     }
     if (data && size) vdec_data_feed_ = true;
+
+    // init vo layer
+    if (!vo_cfg_done_) {
+        k_vdec_chn_status status;
+        k_s32 ret = kd_mapi_vdec_query_status(vdec_chn_id_, &status);
+        if (ret == K_SUCCESS && status.width != 0 && status.height != 0){
+            vo_layer_init(status.width, status.height);
+            vo_cfg_done_.store(true);
+        }
+    }
+
     return 0;
 }

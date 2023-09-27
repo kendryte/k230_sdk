@@ -148,10 +148,20 @@
 			dtr-max-frequency = <100000000>;
 			u-boot,dm-pre-reloc;
 		};
-	
+
 		usbotg0: usb-otg@91500000 {
 			compatible = "snps,dwc2";
 			reg = <0x0 0x91500000 0x0 0x10000>;
+			g-tx-fifo-size = <128 128 128 128 128 128>;
+			dr_mode = "otg";
+			otg-rev = <0x200>;
+			u-boot,dm-pre-reloc;
+			status = "okay";
+		};
+
+        usbotg1: usb-otg@91540000 {
+			compatible = "snps,dwc2";
+			reg = <0x0 0x91540000 0x0 0x10000>;
 			g-tx-fifo-size = <128 128 128 128 128 128>;
 			dr_mode = "otg";
 			otg-rev = <0x200>;
@@ -226,7 +236,7 @@
 		// IIC4
 		(IO7 ) ( 2<<SEL | 0<<SL | BANK_VOLTAGE_IO2_IO13 <<MSC | 1<<IE | 1<<OE | 1<<PU | 0<<PD | 7<<DS | 1<<ST )
 		(IO8 ) ( 2<<SEL | 0<<SL | BANK_VOLTAGE_IO2_IO13 <<MSC | 1<<IE | 1<<OE | 1<<PU | 0<<PD | 7<<DS | 1<<ST )
-		
+
 		(IO9 ) ( 0<<SEL | 0<<SL | BANK_VOLTAGE_IO2_IO13 <<MSC | 1<<IE | 1<<OE | 0<<PU | 0<<PD | 7<<DS | 1<<ST )
 
 		// 3D_CTRL
@@ -236,7 +246,7 @@
 
 		// M_CLK
 		(IO13) ( 1<<SEL | 0<<SL | BANK_VOLTAGE_IO2_IO13 <<MSC | 0<<IE | 1<<OE | 0<<PU | 1<<PD | 4<<DS | 1<<ST )
-		
+
 		// SPI0
 		(IO14) ( 1<<SEL | 0<<SL | BANK_VOLTAGE_IO14_IO25<<MSC | 0<<IE | 1<<OE | 1<<PU | 0<<PD | 15<<DS | 1<<ST )
 		(IO15) ( 1<<SEL | 0<<SL | BANK_VOLTAGE_IO14_IO25<<MSC | 0<<IE | 1<<OE | 0<<PU | 0<<PD | 15<<DS | 1<<ST )
@@ -251,7 +261,7 @@
 		(IO24) ( 1<<SEL | 0<<SL | BANK_VOLTAGE_IO14_IO25<<MSC | 1<<IE | 0<<OE | 0<<PU | 0<<PD | 15<<DS | 1<<ST )
 
 		(IO25) ( 0<<SEL | 0<<SL | BANK_VOLTAGE_IO14_IO25<<MSC | 1<<IE | 1<<OE | 0<<PU | 0<<PD | 7<<DS | 1<<ST )
-		
+
 		// PDMCLK
 		(IO26) ( 3<<SEL | 0<<SL | BANK_VOLTAGE_IO26_IO37<<MSC | 0<<IE | 1<<OE | 0<<PU | 0<<PD | 7<<DS | 1<<ST )
 
@@ -260,7 +270,7 @@
 		(IO29) ( 0<<SEL | 0<<SL | BANK_VOLTAGE_IO26_IO37<<MSC | 1<<IE | 1<<OE | 0<<PU | 0<<PD | 7<<DS | 1<<ST )
 		(IO30) ( 0<<SEL | 0<<SL | BANK_VOLTAGE_IO26_IO37<<MSC | 1<<IE | 1<<OE | 0<<PU | 0<<PD | 7<<DS | 1<<ST )
 		(IO31) ( 0<<SEL | 0<<SL | BANK_VOLTAGE_IO26_IO37<<MSC | 1<<IE | 1<<OE | 0<<PU | 0<<PD | 7<<DS | 1<<ST )
-		
+
 		// IIS
 		(IO32) ( 2<<SEL | 0<<SL | BANK_VOLTAGE_IO26_IO37<<MSC | 0<<IE | 1<<OE | 0<<PU | 0<<PD | 7<<DS | 1<<ST )
 		(IO33) ( 2<<SEL | 0<<SL | BANK_VOLTAGE_IO26_IO37<<MSC | 0<<IE | 1<<OE | 0<<PU | 0<<PD | 7<<DS | 1<<ST )
@@ -281,11 +291,11 @@
 
 		(IO42) ( 0<<SEL | 0<<SL | BANK_VOLTAGE_IO38_IO49<<MSC | 1<<IE | 1<<OE | 0<<PU | 0<<PD | 7<<DS | 1<<ST )
 		(IO43) ( 0<<SEL | 0<<SL | BANK_VOLTAGE_IO38_IO49<<MSC | 1<<IE | 1<<OE | 0<<PU | 0<<PD | 7<<DS | 1<<ST )
-		
+
 		// IIC3
 		(IO44) ( 2<<SEL | 0<<SL | BANK_VOLTAGE_IO38_IO49<<MSC | 1<<IE | 1<<OE | 1<<PU | 0<<PD | 7<<DS | 1<<ST )
 		(IO45) ( 2<<SEL | 0<<SL | BANK_VOLTAGE_IO38_IO49<<MSC | 1<<IE | 1<<OE | 1<<PU | 0<<PD | 7<<DS | 1<<ST )
-		
+
 		(IO46) ( 0<<SEL | 0<<SL | BANK_VOLTAGE_IO38_IO49<<MSC | 1<<IE | 1<<OE | 0<<PU | 0<<PD | 7<<DS | 1<<ST )
 		(IO47) ( 0<<SEL | 0<<SL | BANK_VOLTAGE_IO38_IO49<<MSC | 1<<IE | 1<<OE | 0<<PU | 0<<PD | 7<<DS | 1<<ST )
 		(IO48) ( 0<<SEL | 0<<SL | BANK_VOLTAGE_IO38_IO49<<MSC | 1<<IE | 1<<OE | 0<<PU | 0<<PD | 7<<DS | 1<<ST )

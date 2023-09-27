@@ -115,11 +115,7 @@ void video_proc(char *argv[])
 
         {
             ScopedTiming st("osd draw", atoi(argv[5]));
-            // cv::putText(osd_frame, "This !!!", {50, 600}, 4, 4, cv::Scalar(255, 255, 255, 255), 4, 8, 0);
-            // cv::rectangle(osd_frame, cv::Rect(osd_width-(200 + 200), osd_height-(700 + 700) , 200, 700), cv::Scalar(255,255, 255, 255), 2, 2, 0);
             Utils::draw_detections(osd_frame, results, {osd_width, osd_height}, {SENSOR_WIDTH, SENSOR_HEIGHT});
-            cv::flip(osd_frame, osd_frame_tmp, 0);
-            cv::flip(osd_frame_tmp, osd_frame, 1);
         }
 
         {
@@ -127,7 +123,6 @@ void video_proc(char *argv[])
             memcpy(pic_vaddr, osd_frame.data, osd_width * osd_height * 4);
             //显示通道插入帧
             kd_mpi_vo_chn_insert_frame(osd_id+3, &vf_info);  //K_VO_OSD0
-            printf("kd_mpi_vo_chn_insert_frame success \n");
 
             ret = kd_mpi_vicap_dump_release(vicap_dev, VICAP_CHN_ID_1, &dump_info);
             if (ret) {

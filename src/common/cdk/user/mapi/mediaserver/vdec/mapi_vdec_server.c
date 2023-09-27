@@ -36,7 +36,7 @@
 #include "mpi_sys_api.h"
 #include "k_datafifo.h"
 
-#define MPI_VO_TEST  0
+#define MPI_VO_TEST 0
 #if MPI_VO_TEST
 #include "mpi_vo_api.h"
 #endif
@@ -164,8 +164,48 @@ static k_s32 _vdec_datafifo_deinit(k_datafifo_handle data_hdl, K_DATAFIFO_OPEN_M
             printf("%s write error:%x\n", __FUNCTION__, s32Ret);
         }
     }
-
     return kd_datafifo_close(data_hdl);
+}
+
+static void _clean_datafifo(k_u32 vdec_chn)
+{
+    k_s32 s32Ret = K_FAILED;
+    k_u32 readLen = 0;
+    void *pdata = NULL;
+
+    while (1)
+    {
+        s32Ret = kd_datafifo_cmd(g_vdec_chn_datafifo[vdec_chn].data_hdl, DATAFIFO_CMD_GET_AVAIL_READ_LEN, &readLen);
+        if (K_SUCCESS != s32Ret)
+        {
+            mapi_vdec_error_trace("%s get available read len error:%x\n", __FUNCTION__, s32Ret);
+            break;
+        }
+        if (readLen <= 0)
+        {
+            break;
+        }
+
+        while (readLen >= K_VDEC_DATAFIFO_ITEM_SIZE)
+        {
+            s32Ret = kd_datafifo_read(g_vdec_chn_datafifo[vdec_chn].data_hdl, &pdata);
+            // mapi_adec_error_trace("========kd_datafifo_read end:%d,ret:%d\n", readLen, s32Ret);
+            if (K_SUCCESS != s32Ret)
+            {
+                mapi_vdec_error_trace("%s read error:%x\n", __FUNCTION__, s32Ret);
+                break;
+            }
+
+            s32Ret = kd_datafifo_cmd(g_vdec_chn_datafifo[vdec_chn].data_hdl, DATAFIFO_CMD_READ_DONE, pdata);
+            if (K_SUCCESS != s32Ret)
+            {
+                mapi_vdec_error_trace("%s read done error:%x\n", __FUNCTION__, s32Ret);
+                break;
+            }
+            readLen -= K_VDEC_DATAFIFO_ITEM_SIZE;
+        }
+        usleep(10000);
+    }
 }
 
 k_s32 vdec_datafifo_deinit(k_u32 vdec_chn)
@@ -240,24 +280,27 @@ static void *vdec_chn_get_stream_threads(void *arg)
 
         if (readLen > 0)
         {
-            s32Ret = kd_datafifo_read(g_vdec_chn_datafifo[vdec_chn].data_hdl, &pdata);
-            // mapi_adec_error_trace("========kd_datafifo_read end:%d,ret:%d\n", readLen, s32Ret);
-            if (K_SUCCESS != s32Ret)
+            for (int i = 0; i < readLen / K_VDEC_DATAFIFO_ITEM_SIZE; i++)
             {
-                mapi_vdec_error_trace("%s read error:%x\n", __FUNCTION__, s32Ret);
-                break;
+                s32Ret = kd_datafifo_read(g_vdec_chn_datafifo[vdec_chn].data_hdl, &pdata);
+                // mapi_adec_error_trace("========kd_datafifo_read end:%d,ret:%d\n", readLen, s32Ret);
+                if (K_SUCCESS != s32Ret)
+                {
+                    mapi_vdec_error_trace("%s read error:%x\n", __FUNCTION__, s32Ret);
+                    break;
+                }
+
+                _do_datafifo_stream(g_vdec_chn_datafifo[vdec_chn].data_hdl, pdata, K_VDEC_DATAFIFO_ITEM_SIZE);
+
+                s32Ret = kd_datafifo_cmd(g_vdec_chn_datafifo[vdec_chn].data_hdl, DATAFIFO_CMD_READ_DONE, pdata);
+                if (K_SUCCESS != s32Ret)
+                {
+                    mapi_vdec_error_trace("%s read done error:%x\n", __FUNCTION__, s32Ret);
+                    break;
+                }
+
+                continue;
             }
-
-            _do_datafifo_stream(g_vdec_chn_datafifo[vdec_chn].data_hdl, pdata, readLen);
-
-            s32Ret = kd_datafifo_cmd(g_vdec_chn_datafifo[vdec_chn].data_hdl, DATAFIFO_CMD_READ_DONE, pdata);
-            if (K_SUCCESS != s32Ret)
-            {
-                mapi_vdec_error_trace("%s read done error:%x\n", __FUNCTION__, s32Ret);
-                break;
-            }
-
-            continue;
         }
         else
         {
@@ -289,6 +332,8 @@ k_s32 kd_mapi_vdec_start(k_u32 vdec_chn)
         g_vdec_chn_ctl[vdec_chn].start = K_FALSE;
         return K_FAILED;
     }
+
+    _clean_datafifo(vdec_chn);
 
     g_vdec_chn_ctl[vdec_chn].vdec_chn = vdec_chn;
     g_vdec_chn_ctl[vdec_chn].start = K_TRUE;
@@ -327,6 +372,8 @@ k_s32 kd_mapi_vdec_stop(k_u32 vdec_chn)
         g_vdec_chn_ctl[vdec_chn].get_stream_tid = 0;
     }
 
+    _clean_datafifo(vdec_chn);
+
     return K_SUCCESS;
 }
 
@@ -352,7 +399,7 @@ typedef struct
     k_u32 stride;
     k_u8 global_alptha;
 
-    //only layer0、layer1
+    // only layer0、layer1
     k_u32 func;
     // only layer0
     k_vo_scaler_attr attr;
@@ -360,9 +407,9 @@ typedef struct
 } layer_info;
 
 static k_vo_display_resolution hx8399[20] =
-{
-    // {74250, 445500, 1340, 1080, 20, 20, 220, 1938, 1920, 5, 8, 10},           // display  evblp3
-    {74250, 445500, 1240, 1080, 20, 20, 120, 1988, 1920, 5, 8, 55},
+    {
+        // {74250, 445500, 1340, 1080, 20, 20, 220, 1938, 1920, 5, 8, 10},           // display  evblp3
+        {74250, 445500, 1240, 1080, 20, 20, 120, 1988, 1920, 5, 8, 55},
 };
 
 static void hx8399_v2_init(k_u8 test_mode_en)
@@ -388,8 +435,7 @@ static void hx8399_v2_init(k_u8 test_mode_en)
     k_u8 param23[] = {0x11};
     k_u8 param24[] = {0x29};
 
-    k_u8 pag20[50] = {0xB2, 0x0b, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77};               // 蓝色
-
+    k_u8 pag20[50] = {0xB2, 0x0b, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77}; // 蓝色
 
     kd_mpi_dsi_send_cmd(param1, sizeof(param1));
     kd_mpi_dsi_send_cmd(param21, sizeof(param21));
@@ -404,7 +450,7 @@ static void hx8399_v2_init(k_u8 test_mode_en)
 
     if (test_mode_en == 1)
     {
-        kd_mpi_dsi_send_cmd(pag20, 10);                   // test  mode
+        kd_mpi_dsi_send_cmd(pag20, 10); // test  mode
     }
 
     kd_mpi_dsi_send_cmd(param10, sizeof(param10));
@@ -435,7 +481,6 @@ static void _dwc_dsi_init(void)
 
     memset(&attr, 0, sizeof(k_vo_dsi_attr));
 
-
     // config phy
     phy_attr.phy_lan_num = K_DSI_4LAN;
     phy_attr.m = 295;
@@ -443,7 +488,6 @@ static void _dwc_dsi_init(void)
     phy_attr.voc = 0x17;
     phy_attr.hs_freq = 0x96;
     kd_mpi_set_mipi_phy_attr(&phy_attr);
-
 
     attr.lan_num = K_DSI_4LAN;
     attr.cmd_mode = K_VO_LP_MODE;
@@ -457,7 +501,6 @@ static void _dwc_dsi_init(void)
 
     // enable dsi
     kd_mpi_dsi_enable(enable);
-
 }
 
 static int vo_creat_layer_test(k_vo_layer chn_id, layer_info *info)
@@ -465,11 +508,10 @@ static int vo_creat_layer_test(k_vo_layer chn_id, layer_info *info)
     k_vo_video_layer_attr attr;
 
     // check layer
-    if ((chn_id >= K_MAX_VO_LAYER_NUM) || ((info->func & K_VO_SCALER_ENABLE) && (chn_id != K_VO_LAYER0))
-            || ((info->func != 0) && (chn_id == K_VO_LAYER2)))
+    if ((chn_id >= K_MAX_VO_LAYER_NUM) || ((info->func & K_VO_SCALER_ENABLE) && (chn_id != K_VO_LAYER0)) || ((info->func != 0) && (chn_id == K_VO_LAYER2)))
     {
         printf("input layer num failed \n");
-        return -1 ;
+        return -1;
     }
 
     // check scaler
@@ -480,7 +522,7 @@ static int vo_creat_layer_test(k_vo_layer chn_id, layer_info *info)
     attr.img_size = info->act_size;
     // sget size
     info->size = info->act_size.height * info->act_size.width * 3 / 2;
-    //set pixel format
+    // set pixel format
     attr.pixel_format = info->format;
     if (info->format != PIXEL_FORMAT_YVU_PLANAR_420)
     {
@@ -553,10 +595,10 @@ static k_s32 _vo_layer_bind_config(layer_bind_config *config)
     return 0;
 }
 
-#define ENABLE_VO_LAYER   1
-static k_u32 g_vo_width  = 0;
-static k_u32 g_vo_height  = 0;
-static k_s32 _test_init_vo(k_vo_layer layer,k_u32 w,k_u32 h)
+#define ENABLE_VO_LAYER 1
+static k_u32 g_vo_width = 0;
+static k_u32 g_vo_height = 0;
+static k_s32 _test_init_vo(k_vo_layer layer, k_u32 w, k_u32 h)
 {
     if (0 == w || 0 == h)
     {
@@ -569,14 +611,14 @@ static k_s32 _test_init_vo(k_vo_layer layer,k_u32 w,k_u32 h)
     if (w > 1080)
     {
         config.w = h; // 1080;
-        config.h = w;  // 1920;
+        config.h = w; // 1920;
         config.ro = K_ROTATION_90;
     }
     else
     {
-        config.w = w; // 1080;
+        config.w = w;  // 1080;
         config.h = h;  // 1920;
-        config.ro = 0;//K_ROTATION_0;
+        config.ro = 0; // K_ROTATION_0;
     }
     return _vo_layer_bind_config(&config);
 }
@@ -591,7 +633,7 @@ static void *vo_init_thread(void *arg)
 {
     k_s32 chn_num = *((k_handle *)arg);
     k_vdec_chn_status status;
-    while(1)
+    while (1)
     {
         k_s32 ret;
         ret = kd_mpi_vdec_query_status(chn_num, &status);
@@ -605,12 +647,12 @@ static void *vo_init_thread(void *arg)
             }
         }
 
-        usleep(500*1000);
+        usleep(500 * 1000);
         continue;
     }
 
-    mapi_vdec_error_trace("config vo width:%d,height:%d\n", g_vo_width,g_vo_height);
-    _test_init_vo(ENABLE_VO_LAYER,g_vo_width,g_vo_height);
+    mapi_vdec_error_trace("config vo width:%d,height:%d\n", g_vo_width, g_vo_height);
+    _test_init_vo(ENABLE_VO_LAYER, g_vo_width, g_vo_height);
 
     return NULL;
 }
@@ -655,7 +697,6 @@ k_s32 kd_mapi_vdec_bind_vo(k_u32 chn_num, k_u32 vo_dev, k_u32 vo_chn)
     }
     return ret;
 #endif
-
 }
 
 k_s32 kd_mapi_vdec_unbind_vo(k_u32 chn_num, k_u32 vo_dev, k_u32 vo_chn)

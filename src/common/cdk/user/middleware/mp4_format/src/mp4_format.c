@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <pthread.h>
+#include <string.h>
 #include "mp4_format.h"
 #include "mov-writer.h"
 #include "mov-reader.h"
@@ -15,7 +16,7 @@ static pthread_mutex_t s_mutex = PTHREAD_MUTEX_INITIALIZER;
 struct mov_file_cache_t
 {
 	FILE* fp;
-	uint8_t ptr[800];
+	uint8_t ptr[64 * 1024];
 	unsigned int len;
 	unsigned int off;
 	uint64_t tell;
@@ -75,6 +76,10 @@ typedef struct kmp4_instance {
         k_muxer_instance muxer_instance;
         k_demuxer_instance demuxer_instance;
     };
+    uint8_t buffer[2 * 1024 * 1024];
+    size_t buffer_size;
+    uint8_t buffer2[2 * 1024 * 1024];
+    size_t buffer2_size;
 } k_mp4_instance;
 
 static int mov_file_read(void* fp, void* data, uint64_t bytes)
@@ -293,6 +298,8 @@ int kd_mp4_create(KD_HANDLE *mp4_handle, k_mp4_config_s *mp4_cfg) {
         printf("kd_mp4_create: create mp4 instance failed.\n");
         return -1;
     }
+    mp4_instance->buffer_size = 2 * 1024 * 1024;
+    mp4_instance->buffer2_size = 2 * 1024 * 1024;
 
     mp4_instance->instance_type = mp4_cfg->config_type;
 
@@ -304,7 +311,8 @@ int kd_mp4_create(KD_HANDLE *mp4_handle, k_mp4_config_s *mp4_cfg) {
                 return -1;
             }
 
-            mp4_instance->muxer_instance.mov = mp4_writer_create(mp4_cfg->muxer_config.fmp4_flag, mov_file_buffer(), fp, MOV_FLAG_FASTSTART | MOV_FLAG_SEGMENT);
+            // remove "MOV_FLAG_SEGMENT", in order to obtain fmp4-duration.. TODO
+            mp4_instance->muxer_instance.mov = mp4_writer_create(mp4_cfg->muxer_config.fmp4_flag, mov_file_buffer(), fp, MOV_FLAG_FASTSTART /*| MOV_FLAG_SEGMENT*/);
             if (!mp4_instance->muxer_instance.mov) {
                 printf("kd_mp4_create: create mp4 writer failed.\n");
                 return -1;
@@ -327,14 +335,14 @@ int kd_mp4_create(KD_HANDLE *mp4_handle, k_mp4_config_s *mp4_cfg) {
 
             k_demuxer_instance *demuxer = &mp4_instance->demuxer_instance;
             uint8_t extra_data[1024];
-            uint8_t extra_data_size = 0;
+            int32_t extra_data_size = 0;
             uint8_t obj_id;
-            mov_reader_video_entry_info(demuxer->mov, &obj_id, &extra_data, &extra_data_size);
-            if (extra_data) {
+            mov_reader_video_entry_info(demuxer->mov, &obj_id, extra_data, &extra_data_size);
+            if (extra_data_size) {
                 if (obj_id == MOV_OBJECT_H264)
-                    mpeg4_avc_decoder_configuration_record_load((const uint8_t*)&extra_data, extra_data_size, &demuxer->track_ctx.s_avc);
+                    mpeg4_avc_decoder_configuration_record_load((const uint8_t*)extra_data, extra_data_size, &demuxer->track_ctx.s_avc);
                 else if (obj_id == MOV_OBJECT_HEVC) {
-                    mpeg4_hevc_decoder_configuration_record_load((const uint8_t*)&extra_data, extra_data_size, &demuxer->track_ctx.s_hevc);
+                    mpeg4_hevc_decoder_configuration_record_load((const uint8_t*)extra_data, extra_data_size, &demuxer->track_ctx.s_hevc);
                 }
             }
 
@@ -487,6 +495,25 @@ int kd_mp4_destroy_tracks(KD_HANDLE mp4_handle) {
     return 0;
 }
 
+static k_track_ctx * get_audio_track(KD_HANDLE mp4_handle) {
+    if (mp4_handle == NULL) {
+        return -1;
+    }
+
+    k_mp4_instance *mp4_instance = (k_mp4_instance *)mp4_handle;
+    if (mp4_instance->instance_type == K_MP4_CONFIG_DEMUXER) {
+        return -1;
+    }
+
+    for (int i = 0; i < MAX_TRACK_NUM; i++) {
+        k_track_ctx *track = mp4_instance->muxer_instance.track[i];
+        if (track && track->track_type == K_MP4_STREAM_AUDIO) {
+            return track;
+        }
+    }
+    return NULL;
+}
+
 int kd_mp4_write_frame(KD_HANDLE mp4_handle, KD_HANDLE track_handle, k_mp4_frame_data_s *frame_data) {
     if (mp4_handle == NULL || track_handle == NULL) {
         printf("k_mp4_write_frame: mp4 handle or track handle is null.\n");
@@ -562,9 +589,10 @@ int kd_mp4_write_frame(KD_HANDLE mp4_handle, KD_HANDLE track_handle, k_mp4_frame
 
         int vcl = 0;
         int update = 0;
-        uint8_t s_buffer[4 * 1024 * 1024];
+        uint8_t *s_buffer = mp4_instance->buffer;
+        size_t s_buffer_size = mp4_instance->buffer_size;
         if (frame_data->codec_id == K_MP4_CODEC_ID_H264) {
-            int n = h264_annexbtomp4(&track->avc, ptr, ptr_len, s_buffer, sizeof(s_buffer), &vcl, &update);
+            int n = h264_annexbtomp4(&track->avc, ptr, ptr_len, s_buffer, s_buffer_size, &vcl, &update);
             if (track->add_to_mp4 < 0) {
                 if (track->avc.nb_sps < 1 || track->avc.nb_pps < 1) {
                     return -2;
@@ -579,13 +607,18 @@ int kd_mp4_write_frame(KD_HANDLE mp4_handle, KD_HANDLE track_handle, k_mp4_frame
                 if (track->add_to_mp4 < 0)
                     return -1;
 
+                // FIXME, code-refactor expected
+                k_track_ctx *track_audio = get_audio_track(mp4_handle);
+                if (track_audio->add_to_mp4 < 0) {
+                    track_audio->add_to_mp4 = mp4_writer_add_audio(mp4_instance->muxer_instance.mov, MOV_OBJECT_G711u, 1, 16, 8000, NULL, 0);
+                }
                 mp4_writer_init_segment(mp4_instance->muxer_instance.mov);
             }
 
             track->pts = frame_data->time_stamp / 1000;
             mp4_writer_write(mp4_instance->muxer_instance.mov, track->add_to_mp4, s_buffer, n, track->pts, track->pts, vcl == 1 ? MOV_AV_FLAG_KEYFREAME : 0);
         } else if (frame_data->codec_id == K_MP4_CODEC_ID_H265) {
-            int n = h265_annexbtomp4(&track->hevc, ptr, ptr_len, s_buffer, sizeof(s_buffer), &vcl, &update);
+            int n = h265_annexbtomp4(&track->hevc, ptr, ptr_len, s_buffer, s_buffer_size, &vcl, &update);
             if (track->add_to_mp4 < 0) {
                 if (track->hevc.numOfArrays < 1) {
                     return -2;
@@ -599,6 +632,12 @@ int kd_mp4_write_frame(KD_HANDLE mp4_handle, KD_HANDLE track_handle, k_mp4_frame
                 track->add_to_mp4 = mp4_writer_add_video(mp4_instance->muxer_instance.mov, MOV_OBJECT_HEVC, track->width, track->height, track->s_extra_data, extra_data_size);
                 if (track->add_to_mp4 < 0) {
                     return -1;
+                }
+
+                // FIXME, code-refactor expected
+                k_track_ctx *track_audio = get_audio_track(mp4_handle);
+                if (track_audio->add_to_mp4 < 0) {
+                    track_audio->add_to_mp4 = mp4_writer_add_audio(mp4_instance->muxer_instance.mov, MOV_OBJECT_G711u, 1, 16, 8000, NULL, 0);
                 }
                 mp4_writer_init_segment(mp4_instance->muxer_instance.mov);
             }
@@ -633,6 +672,11 @@ int kd_mp4_write_frame(KD_HANDLE mp4_handle, KD_HANDLE track_handle, k_mp4_frame
 }
 
 int kd_mp4_get_file_info(KD_HANDLE mp4_handle, k_mp4_file_info_s *file_info) {
+    if (file_info) {
+        file_info->duration = 0;
+        file_info->track_num = 0;
+    }
+
     if (mp4_handle == NULL || file_info == NULL) {
         printf("kd_mp4_get_file_info: mp4 handle or file_info is null.\n");
         return -1;
@@ -686,11 +730,12 @@ int kd_mp4_get_frame(KD_HANDLE mp4_handle, k_mp4_frame_data_s *frame_data) {
         return -1;
     }
 
-    uint8_t s_buffer[4 * 1024 * 1024];
+    uint8_t *s_buffer = mp4_instance->buffer;
+    size_t s_buffer_size = mp4_instance->buffer_size;
     k_mp4_packet_t pkt;
     memset(&pkt, 0, sizeof(pkt));
     pkt.ptr = s_buffer;
-    pkt.bytes = sizeof(s_buffer);
+    pkt.bytes = s_buffer_size;
     int ret = mov_reader_read2(mp4_instance->demuxer_instance.mov, onalloc, &pkt);
     if (ret < 0) {
         printf("kd_mp4_get_frame: get packet failed.\n");
@@ -702,19 +747,19 @@ int kd_mp4_get_frame(KD_HANDLE mp4_handle, k_mp4_frame_data_s *frame_data) {
         return ret;
     }
 
+    uint8_t *s_packet = mp4_instance->buffer2;
+    size_t s_packet_size = mp4_instance->buffer2_size;
     uint32_t object_id = mov_reader_objectid(mp4_instance->demuxer_instance.mov, pkt.track_id);
     if (object_id == MOV_OBJECT_H264) {
-        uint8_t s_packet[2 * 1024 * 1024];
         assert(h264_is_new_access_unit((const uint8_t*)pkt.ptr + 4, pkt.bytes - 4));
-        uint32_t n = h264_mp4toannexb(&mp4_instance->demuxer_instance.track_ctx.s_avc, pkt.ptr, pkt.bytes, s_packet, sizeof(s_packet));
+        uint32_t n = h264_mp4toannexb(&mp4_instance->demuxer_instance.track_ctx.s_avc, pkt.ptr, pkt.bytes, s_packet, s_packet_size);
         frame_data->data = s_packet;
         frame_data->data_length = n;
         frame_data->time_stamp = pkt.pts;
         frame_data->codec_id = K_MP4_CODEC_ID_H264;
     } else if (object_id == MOV_OBJECT_H265) {
-        uint8_t s_packet[2 * 1024 * 1024];
         assert(h265_is_new_access_unit((const uint8_t*)pkt.ptr + 4, pkt.bytes - 4));
-        uint32_t n = h265_mp4toannexb(&mp4_instance->demuxer_instance.track_ctx.s_hevc, pkt.ptr, pkt.bytes, s_packet, sizeof(s_packet));
+        uint32_t n = h265_mp4toannexb(&mp4_instance->demuxer_instance.track_ctx.s_hevc, pkt.ptr, pkt.bytes, s_packet, s_packet_size);
         frame_data->data = s_packet;
         frame_data->data_length = n;
         frame_data->time_stamp = pkt.pts;
@@ -722,20 +767,20 @@ int kd_mp4_get_frame(KD_HANDLE mp4_handle, k_mp4_frame_data_s *frame_data) {
     } else if (object_id == MOV_OBJECT_G711a) {
         frame_data->codec_id = K_MP4_CODEC_ID_G711A;
     #if 0
-        frame_data->data = (const uint8_t*)pkt.ptr + 2;
+        frame_data->data = (uint8_t*)pkt.ptr + 2;
         frame_data->data_length = pkt.bytes - 2;
     #else
-        frame_data->data = (const uint8_t*)pkt.ptr;
+        frame_data->data = (uint8_t*)pkt.ptr;
         frame_data->data_length = pkt.bytes;
     #endif
         frame_data->time_stamp = pkt.pts;
     } else if (object_id == MOV_OBJECT_G711u) {
         frame_data->codec_id = K_MP4_CODEC_ID_G711U;
     #if 0
-        frame_data->data = (const uint8_t*)pkt.ptr + 2;
+        frame_data->data = (uint8_t*)pkt.ptr + 2;
         frame_data->data_length = pkt.bytes - 2;
     #else
-        frame_data->data = (const uint8_t*)pkt.ptr;
+        frame_data->data = (uint8_t*)pkt.ptr;
         frame_data->data_length = pkt.bytes;
     #endif
         frame_data->time_stamp = pkt.pts;

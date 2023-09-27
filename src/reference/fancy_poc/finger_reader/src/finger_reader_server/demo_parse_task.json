@@ -1,0 +1,83 @@
+[   {
+        "role":"user",
+        "content":"帮我识别一下手指区域内文本信息。"
+    },
+        {
+        "role": "assistant",
+        "content": "{task:no,no,no,no}"
+    },
+    {
+        "role": "user",
+        "content": "请帮我识别一下两个大拇指包围的矩形区域的文本内容，然后对其进行故事续写，最后用中文声音进行播放。"
+    },
+    {
+        "role": "assistant",
+        "content": "{task:0,0,xx,zh}"
+    },
+    {
+        "role": "user",
+        "content": "你好呀，可以帮我识别一下指间的文本内容吗？进行对话，最后用日文声音进行播报。"
+    },
+    {
+        "role": "assistant",
+        "content": "{task:no,no,dh,jp}"
+    },
+    {
+        "role":"user",
+        "content":"你好，识别左手小拇指和右手无名指包围区域的文本内容，然后进行回答和播放。"
+    },
+    {
+        "role":"assistant",
+        "content":"{task:4,3,wd,no}"
+    },
+    {
+        "role":"user",
+        "content":"帮我提取双手小拇指指定的矩形区域的文本内容，对内容进行续写，然后用进行语音播放，用英语。"
+    },
+    {
+        "role":"assistant",
+        "content":"{task:4,4,xx,en}"
+    },
+    {
+        "role":"user",
+        "content":"帮我识别一下食指区域的文本信息，然后播放出来。"
+    },
+        {
+        "role": "assistant",
+        "content": "{task:1,1,no,no}"
+    },
+    {
+        "role":"user",
+        "content":"帮我识别一下食指区域的文本信息并续写"
+    },
+        {
+        "role": "assistant",
+        "content": "{task:1,1,xx,no}"
+    },
+    {
+        "role":"user",
+        "content":"你好，帮我识别手包围区域的文本。"
+    },
+    {
+        "role":"assistant",
+        "content":"{task:no,no,no,no}"
+    },
+    {
+        "role":"user",
+        "content":"识别一下文字。"
+    },
+    {
+        "role":"assistant",
+        "content":"{task:no,no,no,no}"
+    },
+
+    {
+        "role": "user",
+        "content": "帮我提取左手大拇指和右手中指包围的矩形区域的文本内容，对内容续写，用中文播放回答。"
+    },
+    {
+        "role": "assistant",
+        "content": "{task:0,2,xx,zh}"
+    }
+
+]

@@ -213,6 +213,17 @@ config MMC_SDHCI_OF_DWCMSHC
 	  If you have a controller with this interface, say Y or M here.
 	  If unsure, say N.
 
+config MMC_SDHCI_OF_KENDRYTE
+	tristate "SDHCI OF support for the Synopsys DWC MSHC of kendryte"
+	depends on MMC_SDHCI_PLTFM
+	depends on OF
+	depends on COMMON_CLK
+	help
+	  This selects Synopsys DesignWare Cores Mobile Storage Controller
+	  support.
+	  If you have a controller with this interface, say Y or M here.
+	  If unsure, say N.
+
 config MMC_SDHCI_OF_LIGHT_MPW
 	tristate "SDHCI OF support for the Synopsys DWC MSHC of Light MPW"
 	depends on MMC_SDHCI_PLTFM

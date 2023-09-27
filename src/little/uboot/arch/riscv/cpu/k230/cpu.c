@@ -134,6 +134,8 @@ U_BOOT_CMD_COMPLETE(
 int do_reset(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 {
 	printf("reboot system\n");
+	#ifndef CONFIG_SPL_BUILD
 	writel(0x10001, (void*)SYSCTL_BOOT_BASE_ADDR+0x60);
+	#endif 
 	while(1);
 }

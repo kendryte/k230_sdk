@@ -52,12 +52,6 @@ static int ipcmsg_handle = -1;
 static ui_msg_t *ui_msg_alloc(uint32_t size);
 static int ui_msg_put(ui_msg_t *pmsg);
 
-static void* thread_ipcmsg(void* arg)
-{
-    kd_ipcmsg_run(ipcmsg_handle);
-    return NULL;
-}
-
 static int common_msg_proc_helper(ui_cmd_e cmd, int8_t *pdata)
 {
     ui_msg_t *pmsg = ui_msg_alloc(sizeof(ui_msg_t));
@@ -69,21 +63,6 @@ static int common_msg_proc_helper(ui_cmd_e cmd, int8_t *pdata)
     pmsg->result = *pdata;
 
     return ui_msg_put(pmsg);
-}
-
-static int msg_send_data(uint32_t cmd, void *payload, uint32_t payload_len)
-{
-    k_ipcmsg_message_t* pReq;
-
-    if (ipcmsg_handle < 0)
-        return -1;
-
-    pReq = kd_ipcmsg_create_message(0, cmd, payload,
-        payload_len);
-    kd_ipcmsg_send_only(ipcmsg_handle, pReq);
-    kd_ipcmsg_destroy_message(pReq);
-
-    return 0;
 }
 
 static void msg_recv(int handle, k_ipcmsg_message_t* msg)
@@ -108,6 +87,51 @@ static void msg_recv(int handle, k_ipcmsg_message_t* msg)
     break;
     }
 }
+
+static void* thread_ipcmsg(void* arg)
+{
+    int handle;
+    int fd = 0;
+    printf("Connecting IPCMSG.");
+    while(1)
+    {
+        fd = open("/dev/ipcm_user", O_RDWR);
+        if(fd  < 0)
+        {
+            printf(".");
+            usleep(10 * 1000);
+        } else {
+            close(fd);
+            break;
+        }
+    }
+    if(kd_ipcmsg_connect(&handle, "door_lock", msg_recv))
+    {
+        printf("failed\n.");
+    } else {
+        printf("Success\n.");
+    }
+    ipcmsg_handle = handle;
+    kd_ipcmsg_run(ipcmsg_handle);
+    return NULL;
+}
+
+
+static int msg_send_data(uint32_t cmd, void *payload, uint32_t payload_len)
+{
+    k_ipcmsg_message_t* pReq;
+
+    if (ipcmsg_handle < 0)
+        return -1;
+
+    pReq = kd_ipcmsg_create_message(0, cmd, payload,
+        payload_len);
+    kd_ipcmsg_send_only(ipcmsg_handle, pReq);
+    kd_ipcmsg_destroy_message(pReq);
+
+    return 0;
+}
+
 
 static ui_msg_t *ui_msg_alloc(uint32_t size)
 {
@@ -168,19 +192,12 @@ extern "C" {
 int msg_proc_init(void)
 {
     int ret;
-    int handle;
     k_ipcmsg_connect_t stConnectAttr;
 
     stConnectAttr.u32RemoteId = 1;
     stConnectAttr.u32Port = 101;
     stConnectAttr.u32Priority = 0;
     kd_ipcmsg_add_service("door_lock", &stConnectAttr);
-
-    if (0 != kd_ipcmsg_try_connect(&handle, "door_lock", msg_recv)) {
-        printf("Connect fail\n");
-        return -1;
-    }
-    ipcmsg_handle = handle;
 
     pthread_t tid_thread_ipcmsg;
     pthread_attr_t tattr_thread_ipcmsg;

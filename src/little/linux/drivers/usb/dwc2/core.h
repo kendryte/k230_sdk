@@ -1210,6 +1210,8 @@ struct dwc2_hsotg {
 	struct dwc2_hsotg_ep *eps_in[MAX_EPS_CHANNELS];
 	struct dwc2_hsotg_ep *eps_out[MAX_EPS_CHANNELS];
 #endif /* CONFIG_USB_DWC2_PERIPHERAL || CONFIG_USB_DWC2_DUAL_ROLE */
+    void (*kendryte_phy_init)(struct dwc2_hsotg *hsotg);
+    void __iomem *hs_regs;
 };
 
 /* Normal architectures just use readl/write */

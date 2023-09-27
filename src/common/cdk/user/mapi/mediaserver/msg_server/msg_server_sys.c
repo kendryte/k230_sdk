@@ -287,6 +287,58 @@ k_s32 msg_media_sys_destory_pool(k_s32 id, k_ipcmsg_message_t *msg)
     return ret;
 }
 
+k_s32 msg_media_sys_bind(k_s32 id, k_ipcmsg_message_t *msg)
+{
+    k_s32 ret;
+    k_ipcmsg_message_t *resp_msg;
+    msg_mpp_chn *bind_chn = msg->pBody;
+
+    ret = kd_mapi_sys_bind(&bind_chn->src_chn, &bind_chn->dest_chn);
+    if(ret != K_SUCCESS) {
+        mapi_sys_error_trace("msg_media_sys_bind failed:0x%x\n", ret);
+    }
+
+    resp_msg = kd_ipcmsg_create_resp_message(msg, ret, NULL, 0);
+    if(resp_msg == NULL) {
+        mapi_sys_error_trace("kd_ipcmsg_create_resp_message failed\n");
+        return K_FAILED;
+    }
+
+    ret = kd_ipcmsg_send_async(id, resp_msg, NULL);
+    if(ret != K_SUCCESS) {
+        mapi_sys_error_trace(" kd_ipcmsg_send_async failed:%x\n", ret);
+    }
+    kd_ipcmsg_destroy_message(resp_msg);
+
+    return ret;
+}
+
+k_s32 msg_media_sys_unbind(k_s32 id, k_ipcmsg_message_t *msg)
+{
+    k_s32 ret;
+    k_ipcmsg_message_t *resp_msg;
+    msg_mpp_chn *bind_chn = msg->pBody;
+
+    ret = kd_mapi_sys_unbind(&bind_chn->src_chn, &bind_chn->dest_chn);
+    if(ret != K_SUCCESS) {
+        mapi_sys_error_trace("msg_media_sys_unbind failed:0x%x\n", ret);
+    }
+
+    resp_msg = kd_ipcmsg_create_resp_message(msg, ret, NULL, 0);
+    if(resp_msg == NULL) {
+        mapi_sys_error_trace("kd_ipcmsg_create_resp_message failed\n");
+        return K_FAILED;
+    }
+
+    ret = kd_ipcmsg_send_async(id, resp_msg, NULL);
+    if(ret != K_SUCCESS) {
+        mapi_sys_error_trace(" kd_ipcmsg_send_async failed:%x\n", ret);
+    }
+    kd_ipcmsg_destroy_message(resp_msg);
+
+    return ret;
+}
+
 static msg_module_cmd_t g_module_cmd_table[] = {
     {MSG_CMD_MEDIA_SYS_INIT,            msg_media_sys_init},
     {MSG_CMD_MEDIA_SYS_DEINIT,          msg_media_sys_deinit},
@@ -297,6 +349,8 @@ static msg_module_cmd_t g_module_cmd_table[] = {
     {MSG_CMD_MEDIA_SYS_GET_VB_FROM_POOL_ID, msg_media_sys_get_vb_block_from_pool_id},
     {MSG_CMD_MEDIA_SYS_CREATE_POOL,     msg_media_sys_create_pool},
     {MSG_CMD_MEDIA_SYS_DESTORY_POOL,    msg_media_sys_destory_pool},
+    {MSG_CMD_MEDIA_SYS_BIND,            msg_media_sys_bind},
+    {MSG_CMD_MEDIA_SYS_UNBIND,          msg_media_sys_unbind},
 
 
 
