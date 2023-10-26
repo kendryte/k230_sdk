@@ -399,6 +399,19 @@ int main(int argc, char *argv[]) {
         .audio_sample_rate = 44100
     };
 
+    if (argc > 1) {
+        for (int i = 1; i < argc; i += 2) {
+            if (strcmp(argv[i], "-s") == 0) {
+                sample_context.sensor_type = (k_vicap_sensor_type)atoi(argv[i+1]);
+            } else if (strcmp(argv[i], "-h") == 0) {
+                printf("Usage: ./sample_muxer -s 7\n");
+                printf("-s: the sensor type: default 7\n");
+                printf("     see camera sensor doc.\n");
+                return 0;
+            }
+        }
+    }
+
     printf("mp4 muxer...\n");
 
     k_u32 ret = kd_mapi_sys_init();

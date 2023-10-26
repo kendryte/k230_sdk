@@ -180,6 +180,12 @@ k_u32 connector_set_vo_param(k_vo_pub_attr *attr)
 }
 
 
+k_u32 connector_set_vo_attr(k_vo_pub_attr *pub_attr, k_vo_sync_attr *sync_attr)
+{
+    return kd_vo_set_dev_attr(pub_attr, sync_attr);
+}
+
+
 void connector_set_vo_enable(void)
 {
     kd_vo_enable();

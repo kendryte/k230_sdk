@@ -49,6 +49,12 @@ typedef enum
 
 typedef enum
 {
+    KD_I2S_IN_MONO_RIGHT_CHANNEL = 0,  //mic input
+    KD_I2S_IN_MONO_LEFT_CHANNEL = 1,   //hp input
+} k_i2s_in_mono_channel;
+
+typedef enum
+{
     KD_AUDIO_INPUT_TYPE_I2S  = 0,//i2s in
     KD_AUDIO_INPUT_TYPE_PDM  = 1,//pdm in
     KD_AUDIO_OUTPUT_TYPE_I2S = 2,//i2s out
@@ -97,6 +103,7 @@ typedef struct
     k_u32 sample_rate; /* sample rate */
     k_audio_bit_width bit_width; /* bit_width */
     k_audio_snd_mode snd_mode; /* momo or stereo */
+    k_i2s_in_mono_channel  mono_channel;/* use mic input or headphone input */
     k_i2s_work_mode   i2s_mode;  /*i2s work mode*/
     k_u32 frame_num; /* frame num in buf[2,K_MAX_AUDIO_FRAME_NUM] */
     k_u32 point_num_per_frame;

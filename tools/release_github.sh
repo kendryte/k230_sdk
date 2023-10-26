@@ -84,7 +84,7 @@ menuconfig_to_code.sh|\
 #echo ${RELEASE_K230_SDK_ROOT};
 #echo ${open_tools_name_list};
 
-mkdir -p ${RELEASE_K230_SDK_ROOT}; 
+mkdir -p ${RELEASE_K230_SDK_ROOT};
 rm ${RELEASE_K230_SDK_ROOT}/* -rf;
 cd ${K230_SDK_ROOT};git checkout  -- configs/;
 cp -rf `ls ${K230_SDK_ROOT}|grep -v release_sdk|grep -v output|grep -v toolchain|xargs`  ${RELEASE_K230_SDK_ROOT}/;
@@ -93,11 +93,11 @@ cd ${RELEASE_K230_SDK_ROOT};
 rm src/.src_fetched;
 
 #mpp
-(   
+(
 	set -e;
 
 	cd ${RELEASE_MPP_SRC_DIR}/kernel;
-	mv MakefileOpen Makefile; 
+	mv MakefileOpen Makefile;
 	shopt -s extglob
 	rm -rf ${open_mpp_kernel_name_list};
 	shopt -u extglob
@@ -114,18 +114,18 @@ rm src/.src_fetched;
 	shopt -s extglob
 	rm -rf ${open_mpp_ioctl_name_list};
 	shopt -u extglob
-	
+
 	rm -rf ${RELEASE_MPP_SRC_DIR}/userapps/sample/elf;
 	rm -rf ${RELEASE_MPP_SRC_DIR}/userapps/sample/fastboot_elf;
 
 	rm -rf ${RELEASE_MPP_SRC_DIR}/userapps/sample/sample_jamlink
 )
-#rtsmart 
+#rtsmart
 (
 	rm -rf  ${RELEASE_RTT_SRC_DIR}/kernel/bsp/maix3/board/interdrv/jamlink
 )
 #cdk
-(   
+(
 	set -e ;
     cd ${RELEASE_CDK_SRC_DIR};
 	rm -rf ${delete_cdk_user_name_list};
@@ -137,7 +137,7 @@ rm src/.src_fetched;
 
 	sed -i '21,22d' user/component/ipcmsg/Makefile
 	sed -i '15,16d' user/component/ipcmsg/Makefile
-	
+
 )
 
 
@@ -170,10 +170,12 @@ rm -rf ${open_tools_name_list};
 shopt -u extglob
 cd ${RELEASE_K230_SDK_ROOT};
 
-# github 
+# github
 cp -rf ${K230_SDK_ROOT}/.github  ${RELEASE_K230_SDK_ROOT}/;
 # .gitignore
 sed '/src\//d' ${K230_SDK_ROOT}/.gitignore > ${RELEASE_K230_SDK_ROOT}/.gitignore
+# .gitlab-ci.yml
+cp -rf ${K230_SDK_ROOT}/.gitlab-ci_github.yml  ${RELEASE_K230_SDK_ROOT}/.gitlab-ci.yml
 
 rm -rf .config defconfig;
 sed -i '/FETCH_CODE/d' Makefile;

@@ -62,7 +62,6 @@ void print_usage(const char *name)
 {
     cout << "Usage: " << name << "<kmodel> <input_mode> <debug_mode> <num_storage>" << endl
          << "For example: " << endl
-         << " [for img] ./meta_human.elf meta_human_256.kmodel blender_image.png 0 30" << endl
          << " [for isp] ./meta_human.elf meta_human_256.kmodel None 0 30" << endl
          << "Options:" << endl
          << " 1> kmodel          Meta_Human模型kmodel文件路径 \n"

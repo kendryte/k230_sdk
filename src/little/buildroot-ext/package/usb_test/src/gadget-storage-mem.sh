@@ -32,4 +32,4 @@ echo /dev/loop0 >functions/mass_storage.usb0/lun.0/file
  
 ln -s functions/mass_storage.usb0 configs/c.1
  
-echo 91540000.usb-otg > UDC
+echo 91500000.usb-otg > UDC

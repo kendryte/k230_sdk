@@ -44,7 +44,7 @@ do
 wget https://ai.b-bug.org/k230/downloads/fancy_poc/meta_human/$file || wget https://kendryte-download.canaan-creative.com/k230/downloads/fancy_poc/meta_human/$file;  
 done  
 
-for file in onboard_v2.3.zip
+for file in onboard_v2.4.zip
 do
 wget https://ai.b-bug.org/k230/downloads/fancy_poc/meta_human/k230_board/$file || wget https://kendryte-download.canaan-creative.com/k230/downloads/fancy_poc/meta_human/k230_board/$file;  
 done
@@ -218,11 +218,20 @@ sh run2.sh
 ```
 3) run the scripts on k230
 
-[k230-small-core] ./http 30 256 
-  ### the parameter '30' is the number of storage.
-  ### the parameter '256' is the shape of kmodel.
+[k230-small-core] ./http.sh 
 
 [k230-big-core]   ./meta_human_isp.sh
+```
+
+
+
+```
+####### vi http.sh #######
+
+./http 30 256 
+
+### the parameter '30' is the number of storage.
+### the parameter '256' is the shape of kmodel.6
 ```
 
 

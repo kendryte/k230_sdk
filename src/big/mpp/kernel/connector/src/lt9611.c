@@ -547,20 +547,39 @@ static k_s32 k230_dsi_resolution_init(k_connector_info *info)
     return 0;
 }
 
-static k_s32 k230_vo_resolution_init(k_vo_display_resolution *resolution, k_u32 bg_color, k_u32 intr_line)
+static k_s32 k230_vo_resolution_init(k_connector_type type, k_vo_display_resolution *resolution, k_u32 bg_color, k_u32 intr_line)
 {
     k_vo_display_resolution vo_resolution;
-    k_vo_pub_attr attr;
+    k_vo_pub_attr pub_attr;
+    k_vo_sync_attr sync_attr;
 
-    memset(&attr, 0, sizeof(k_vo_pub_attr));
-    attr.bg_color = bg_color;
-    attr.intf_sync = K_VO_OUT_1080P30;
-    attr.intf_type = K_VO_INTF_MIPI;
-    attr.sync_info = resolution;
+    memset(&pub_attr, 0, sizeof(k_vo_pub_attr));
+    pub_attr.bg_color = bg_color;
+    pub_attr.intf_sync = K_VO_OUT_1080P30;
+    pub_attr.intf_type = K_VO_INTF_MIPI;
+    pub_attr.sync_info = resolution;
+
+    memset(&sync_attr, 0, sizeof(k_vo_sync_attr));
+    if (type == LT9611_MIPI_4LAN_1920X1080_60FPS || type == LT9611_MIPI_4LAN_1920X1080_30FPS) {
+        sync_attr.hsync_start = 2;
+        sync_attr.hsync_stop = 2;
+
+        sync_attr.hsync1_start = 1;
+        sync_attr.hsync1_stop = 2;
+        sync_attr.hsync2_start = 1;
+        sync_attr.hsync2_stop = 2;
+
+        sync_attr.vsync1_start = 1;
+        sync_attr.vsync1_stop = 1;
+        sync_attr.vsync2_start = 1;
+        sync_attr.vsync2_stop = 1;
+    } else {
+        rt_kprintf("Unsupported connector type \n");
+    }
 
     connector_set_vo_init();
     connector_set_vtth_intr(1, intr_line);
-    connector_set_vo_param(&attr);
+    connector_set_vo_attr(&pub_attr, &sync_attr);
     connector_set_vo_enable();
 
     return 0;
@@ -588,7 +607,7 @@ k_s32 lt9611_init(void *ctx, k_connector_info *info)
     rt_thread_mdelay(50);
     ret |= lt9611_enable_hdmi_out(lt9611_dev);
 
-    ret |= k230_vo_resolution_init(&info->resolution, info->bg_color, info->intr_line);
+    ret |= k230_vo_resolution_init(info->type, &info->resolution, info->bg_color, info->intr_line);
     ret |= k230_set_phy_freq(&info->phy_attr);
     ret |= k230_dsi_resolution_init(info);
 

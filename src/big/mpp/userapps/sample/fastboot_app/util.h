@@ -1,11 +1,13 @@
 #ifndef _UTIL_H
 #define _UTIL_H
 #include <stdint.h>
+#include <vector>
 #include <chrono>
 
-#define PROFILING 0
+#define ENABLE_RVV 1
+#define ENABLE_DEBUG 0
+#define ENABLE_PROFILING 0
 
-#define FL 192
 typedef struct
 {
 	int index;
@@ -25,12 +27,29 @@ typedef struct
 	float points[10];
 } landmarks_t;
 
-void read_binary_file(const char *file_name, char *buffer);
+typedef struct
+{
+    int x1;
+    int y1;
+    int x2;
+    int y2;
+} face_coordinate;
+
+void read_binary_file(const char *file_name, char *buffer, size_t size = 0);
+template <class T>
+std::vector<T> read_binary_file(const char *file_name)
+{
+    std::ifstream ifs(file_name, std::ios::binary);
+    ifs.seekg(0, ifs.end);
+    size_t len = ifs.tellg();
+    std::vector<T> vec(len / sizeof(T), 0);
+    ifs.seekg(0, ifs.beg);
+    ifs.read(reinterpret_cast<char *>(vec.data()), len);
+    ifs.close();
+    return std::move(vec);
+}
 void dump(const std::string &info, volatile float *p, size_t size);
 void softmax(float *x, float *dx, uint32_t len);
-uint32_t l2normalize(const float* x, float* dx, int len);
-float calCosinDistance(float* faceFeature0P, float* faceFeature1P, int featureLen);
-uint32_t calulate_score(const float* features, const float* saved_features, uint32_t saved_len, float* score);
 
 class ScopedTiming
 {

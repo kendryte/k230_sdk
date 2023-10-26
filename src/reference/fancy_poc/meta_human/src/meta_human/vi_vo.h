@@ -54,6 +54,7 @@
 
 #include "k_connector_comm.h"
 #include "mpi_connector_api.h"
+#include "k_autoconf_comm.h"
 
 
 #if defined(CONFIG_BOARD_K230_CANMV)

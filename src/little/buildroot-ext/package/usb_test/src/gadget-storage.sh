@@ -32,4 +32,4 @@ fi
  
 ln -s functions/mass_storage.usb0 configs/c.1
  
-echo 91540000.usb-otg > UDC
+echo 91500000.usb-otg > UDC

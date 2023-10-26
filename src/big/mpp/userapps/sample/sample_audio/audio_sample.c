@@ -496,7 +496,7 @@ k_s32 audio_sample_enable_audio_codec(k_bool enable_audio_codec)
     g_enable_audio_codec = enable_audio_codec;
     return K_SUCCESS;
 }
-k_s32 audio_sample_get_ai_i2s_data(const char *filename, k_audio_bit_width bit_width, k_u32 sample_rate,k_u32 channel_count, k_i2s_work_mode i2s_work_mode, k_bool enable_audio3a)
+k_s32 audio_sample_get_ai_i2s_data(const char *filename, k_audio_bit_width bit_width, k_u32 sample_rate,k_u32 channel_count,k_i2s_in_mono_channel  mono_channel, k_i2s_work_mode i2s_work_mode, k_bool enable_audio3a)
 {
     k_aio_dev_attr aio_dev_attr;
     aio_dev_attr.audio_type = KD_AUDIO_INPUT_TYPE_I2S;
@@ -504,6 +504,10 @@ k_s32 audio_sample_get_ai_i2s_data(const char *filename, k_audio_bit_width bit_w
     aio_dev_attr.kd_audio_attr.i2s_attr.bit_width = bit_width;
     aio_dev_attr.kd_audio_attr.i2s_attr.chn_cnt = 2;
     aio_dev_attr.kd_audio_attr.i2s_attr.snd_mode = (1 == channel_count) ? KD_AUDIO_SOUND_MODE_MONO : KD_AUDIO_SOUND_MODE_STEREO;
+    if(1 == channel_count)
+    {
+        aio_dev_attr.kd_audio_attr.i2s_attr.mono_channel = mono_channel;
+    }
     aio_dev_attr.kd_audio_attr.i2s_attr.i2s_mode = i2s_work_mode;
     aio_dev_attr.kd_audio_attr.i2s_attr.frame_num = AUDIO_PERSEC_DIV_NUM;
     aio_dev_attr.kd_audio_attr.i2s_attr.point_num_per_frame = sample_rate / aio_dev_attr.kd_audio_attr.i2s_attr.frame_num;

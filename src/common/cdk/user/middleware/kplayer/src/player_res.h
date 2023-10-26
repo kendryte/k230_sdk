@@ -28,6 +28,7 @@
 
 #include "k_type.h"
 #include "k_payload_comm.h"
+#include "kplayer.h"
 
 
 #ifdef __cplusplus
@@ -39,7 +40,7 @@ extern "C" {
 k_s32 sys_init(k_bool init_vo);
 k_s32 sys_deinit(k_bool deinit_vo);
 
-k_s32 disp_open(k_payload_type video_dec_type,k_u32 width,k_u32 height);//K_PT_H264/K_PT_H265
+k_s32 disp_open(k_payload_type video_dec_type,k_u32 width,k_u32 height,K_PLAYER_CONNECTOR_TYPE type);//K_PT_H264/K_PT_H265
 k_s32 disp_play(k_u8*pdata,k_u32 len,k_u64 timestamp,k_bool end_stream);
 k_s32 disp_close();
 

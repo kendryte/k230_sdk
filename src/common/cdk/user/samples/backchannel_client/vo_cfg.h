@@ -27,8 +27,12 @@
 #define __VO_CFG_H__
 
 #include "k_type.h"
+#include "k_vo_comm.h"
+#include "k_connector_comm.h"
+#include "mpi_connector_api.h"
 
 void vo_init();
+void set_connector_type(k_connector_type &connector_type);
 void vo_enable();
 void vo_deinit();
 

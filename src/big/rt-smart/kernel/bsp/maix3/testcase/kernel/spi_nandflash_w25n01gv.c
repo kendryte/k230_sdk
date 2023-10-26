@@ -354,6 +354,7 @@ static void nandflash_less_page_read(uint32_t col_addr, uint32_t ra_addr, uint8_
     nandflash_wait_idle();
 
     cfg.mode = DWENUM_SPI_EEPROM;
+    spi_dev_w25n->config = cfg;
     spi_dev_w25n->bus->owner = RT_NULL;
 
     cmd[0] = READ_FROM_CACHE_FAST;
@@ -449,6 +450,8 @@ static void nandflash_init(void)
     int i;
     int ret;
     uint32_t addr = 0;
+
+    rt_memcpy(current_flash_info, &default_nandflash_info, sizeof(flash_info_t));
 
     data_prepare();
     nandflash_reset();

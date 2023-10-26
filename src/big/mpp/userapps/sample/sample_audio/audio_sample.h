@@ -40,7 +40,7 @@ extern "C" {
 k_s32 audio_sample_vb_init(k_bool enable_cache, k_u32 sample_rate); //初始化vb
 k_s32 audio_sample_vb_destroy(); //销毁vb
 k_s32 audio_sample_enable_audio_codec(k_bool enable_audio_codec);
-k_s32 audio_sample_get_ai_i2s_data(const char*filename, k_audio_bit_width bit_width, k_u32 sample_rate,k_u32 channel_count,k_i2s_work_mode i2s_work_mode, k_bool enable_audio3a); //获取i2s输入数据
+k_s32 audio_sample_get_ai_i2s_data(const char*filename, k_audio_bit_width bit_width, k_u32 sample_rate,k_u32 channel_count,k_i2s_in_mono_channel  mono_channel,k_i2s_work_mode i2s_work_mode, k_bool enable_audio3a); //获取i2s输入数据
 k_s32 audio_sample_get_ai_pdm_data(const char*filename, k_audio_bit_width bit_width, k_u32 sample_rate,k_u32 channel_count); //获取pdm输入数据
 k_s32 audio_sample_send_ao_data(const char*filename,int nDev, int nChannel,  int samplerate,k_audio_bit_width bit_width,k_i2s_work_mode i2s_work_mode); //发送数据到ao
 k_s32 audio_sample_api_ai_to_ao(int ai_dev_num, int ai_channel, int ao_dev_num, int ao_channel, k_u32 sample_rate, k_audio_bit_width bit_width,k_i2s_work_mode i2s_work_mode, k_bool enable_audio3a); //通过api获取ai数据发送到ao

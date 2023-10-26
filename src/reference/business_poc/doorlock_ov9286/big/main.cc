@@ -1066,7 +1066,7 @@ int main(int argc, char *argv[])
     std::vector<float> feature_result;
     float score_max = 0;
     int score_index = 0;
-    float score_threshold = 0.82f;
+    float score_threshold = 0.75f;
     bool is_label = false; 
     pthread_t vo_thread_handle;
     pthread_t exit_thread_handle;

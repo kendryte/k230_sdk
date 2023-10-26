@@ -8,6 +8,22 @@ default:
   image: ai.b-bug.org:5000/k230_sdk:latest
   interruptible: true
 
+# download dir publish with tag
+download_dir_publish:
+  rules:
+   - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_TAG =~ /^v\d+\.\d+.*$/
+  extends:
+    - .setup_env
+    - .sync_download_dir
+
+# sdk zip and image publish with tag
+release_file_publish:
+  rules:
+   - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_TAG =~ /^v\d+\.\d+.*$/
+  extends:
+    - .setup_env
+    - .sync_release_file
+
 # MR merged
 merge_sync:
   rules:
@@ -93,8 +109,7 @@ build-image:
     - git config --global --add safe.directory $CI_PROJECT_DIR
 
 .sync_github_gitee:
-  timeout: 90m
-  image: ai.b-bug.org:5000/k230_sdk:latest
+  timeout: 30m
   tags:
     - k230_sdk
   script:
@@ -120,6 +135,32 @@ build-image:
     - git push --atomic --tags -u -f gitee main || git push --atomic --tags -u -f gitee main
     - echo "---push to github---"
     - git push --atomic --tags -u -f github main || git push --atomic --tags -u -f github main || git push --atomic --tags -u -f github main
+
+.sync_download_dir:
+  timeout: 60m
+  tags:
+    - k230_sdk
+  script:
+    - cd $CI_PROJECT_DIR
+    - ls -alht
+    - wget -qc https://ai.b-bug.org/k510/downloads/github/sync_file.sh -O ./sync_file.sh
+    - chmod +x ./sync_file.sh
+    - time ./sync_file.sh || time ./sync_file.sh
+    - echo "all file synced"
+
+.sync_release_file:
+  timeout: 60m
+  tags:
+    - k230_sdk
+  script:
+    - cd $CI_PROJECT_DIR
+    - ls -alht
+    - wget -qc https://ai.b-bug.org/k510/downloads/github/sync_release.sh -O ./sync_release.sh
+    - chmod +x ./sync_release.sh
+    - echo $CI_COMMIT_TAG || exit 1
+    - echo $CONF || exit 1
+    - time ./sync_release.sh $CI_COMMIT_TAG $CONF || time ./sync_release.sh $CI_COMMIT_TAG $CONF
+    - echo "all release file synced"
 
 .generate_version: &generate_version
   - echo "----------get version from file----------"

@@ -1,0 +1,24 @@
+{
+   "pankai": {
+      "age": 25,
+      "gender": "male",
+      "role": "family member",
+      "hobbies": "Loves sweets and the preferred temperature is 25 degrees Celsius. Likes gentle and attentive people.",
+      "Recent_Status": "he had cold"
+   },
+   "sj": {
+      "role": "guest"
+   },
+   "\u0000bc": {
+      "role": "guest"
+   },
+   "pjkao": {
+      "role": "guest"
+   },
+   "rrt": {
+      "role": "guest"
+   },
+   "aooas": {
+      "role": "guest"
+   }
+}

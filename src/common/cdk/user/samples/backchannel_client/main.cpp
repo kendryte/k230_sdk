@@ -5,6 +5,7 @@
 #include <thread>
 #include "rtsp_client.h"
 #include "media.h"
+#include "vo_cfg.h"
 
 using namespace std::chrono_literals;
 
@@ -140,10 +141,15 @@ int main(int argc, char *argv[]) {
     g_exit_flag.store(false);
 
     if (argc < 2) {
-        printf("Usage: ./backchannel_client <rtsp_url> \n");
+        printf("Usage: ./backchannel_client <rtsp_url> <out_type>\n");
+        printf("        out_type: vo type, see vo doc, default 0.\n");
         return 0;
     }
     std::string url = argv[1];
+    if (argc > 2) {
+        k_connector_type connector_type = (k_connector_type)atoi(argv[2]);
+        set_connector_type(connector_type);
+    }
 
     MyRtspClient *client = new MyRtspClient();
     if (!client || client->Init() < 0) {

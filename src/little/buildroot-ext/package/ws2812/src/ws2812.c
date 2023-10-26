@@ -23,6 +23,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -31,177 +32,168 @@
 #include <unistd.h>
 #include <sys/select.h>
 
+#define WSIOC_RESET     _IOW('W', 0x10, int)
+#define LED_NUM			24   /* 根据实际使用的数量修改 */
+
 static void sleep_ms(unsigned int ms)
 {
 	struct timeval tval;
-	
+
 	tval.tv_sec = ms / 1000;
 	tval.tv_usec = (ms * 1000) % 1000000;
 	select(0, NULL, NULL, NULL, &tval);
 }
 
-
-/* ws2812	24bit GRB 
+/* ws2812	24bit GRB
 -------------------------------------
 |	8bit G	|	8bit R	|	8bit B	|
 -------------------------------------
+1 --> 1110
+0 --> 1000
 
 */
 
-/* 测试使用灯条共33个ws2812灯珠 */
-// green
-static unsigned char color1[] = { 0xff, 0x0, 0x0, \
-	0xff, 0x0, 0x0, \
-	0xff, 0x0, 0x0, \
-	0xff, 0x0, 0x0, \
-	0xff, 0x0, 0x0, \
-	0xff, 0x0, 0x0, \
-	0xff, 0x0, 0x0, \
-	0xff, 0x0, 0x0, \
-	0xff, 0x0, 0x0, \
-	0xff, 0x0, 0x0, \
-	0xff, 0x0, 0x0, \
-	0xff, 0x0, 0x0, \
-	0xff, 0x0, 0x0, \
-	0xff, 0x0, 0x0, \
-	0xff, 0x0, 0x0, \
-	0xff, 0x0, 0x0, \
-	0xff, 0x0, 0x0, \
-	0xff, 0x0, 0x0, \
-	0xff, 0x0, 0x0, \
-	0xff, 0x0, 0x0, \
-	0xff, 0x0, 0x0, \
-	0xff, 0x0, 0x0, \
-	0xff, 0x0, 0x0, \
-	0xff, 0x0, 0x0, \
-	0xff, 0x0, 0x0, \
-	0xff, 0x0, 0x0, \
-	0xff, 0x0, 0x0, \
-	0xff, 0x0, 0x0, \
-	0xff, 0x0, 0x0, \
-	0xff, 0x0, 0x0, \
-	0xff, 0x0, 0x0, \
-	0xff, 0x0, 0x0, \
-	0xff, 0x0, 0x0
-};
+/* 测试使用灯条共24个ws2812灯珠 */
 
-// blue
-static unsigned char color2[] = { 0x0, 0x0, 0xff, \
-	0x0, 0x0, 0xff, \
-	0x0, 0x0, 0xff, \
-	0x0, 0x0, 0xff, \
-	0x0, 0x0, 0xff, \
-	0x0, 0x0, 0xff, \
-	0x0, 0x0, 0xff, \
-	0x0, 0x0, 0xff, \
-	0x0, 0x0, 0xff, \
-	0x0, 0x0, 0xff, \
-	0x0, 0x0, 0xff, \
-	0x0, 0x0, 0xff, \
-	0x0, 0x0, 0xff, \
-	0x0, 0x0, 0xff, \
-	0x0, 0x0, 0xff, \
-	0x0, 0x0, 0xff, \
-	0x0, 0x0, 0xff, \
-	0x0, 0x0, 0xff, \
-	0x0, 0x0, 0xff, \
-	0x0, 0x0, 0xff, \
-	0x0, 0x0, 0xff, \
-	0x0, 0x0, 0xff, \
-	0x0, 0x0, 0xff, \
-	0x0, 0x0, 0xff, \
-	0x0, 0x0, 0xff, \
-	0x0, 0x0, 0xff, \
-	0x0, 0x0, 0xff, \
-	0x0, 0x0, 0xff, \
-	0x0, 0x0, 0xff, \
-	0x0, 0x0, 0xff, \
-	0x0, 0x0, 0xff, \
-	0x0, 0x0, 0xff, \
-	0x0, 0x0, 0xff
-};
+static void w2812_reset_clear(int fd, int num)
+{
+	unsigned char *clear;
+	sleep(1);
 
-// red
-static unsigned char color3[] = { 0x0, 0xff, 0x0, \
-	0x0, 0xff, 0x0, \
-	0x0, 0xff, 0x0, \
-	0x0, 0xff, 0x0, \
-	0x0, 0xff, 0x0, \
-	0x0, 0xff, 0x0, \
-	0x0, 0xff, 0x0, \
-	0x0, 0xff, 0x0, \
-	0x0, 0xff, 0x0, \
-	0x0, 0xff, 0x0, \
-	0x0, 0xff, 0x0, \
-	0x0, 0xff, 0x0, \
-	0x0, 0xff, 0x0, \
-	0x0, 0xff, 0x0, \
-	0x0, 0xff, 0x0, \
-	0x0, 0xff, 0x0, \
-	0x0, 0xff, 0x0, \
-	0x0, 0xff, 0x0, \
-	0x0, 0xff, 0x0, \
-	0x0, 0xff, 0x0, \
-	0x0, 0xff, 0x0, \
-	0x0, 0xff, 0x0, \
-	0x0, 0xff, 0x0, \
-	0x0, 0xff, 0x0, \
-	0x0, 0xff, 0x0, \
-	0x0, 0xff, 0x0, \
-	0x0, 0xff, 0x0, \
-	0x0, 0xff, 0x0, \
-	0x0, 0xff, 0x0, \
-	0x0, 0xff, 0x0, \
-	0x0, 0xff, 0x0, \
-	0x0, 0xff, 0x0, \
-	0x0, 0xff, 0x0
-};
+	clear = (unsigned char*)malloc(num * 3);
+	memset(clear, 0, num * 3);
 
-static unsigned char grb_color[] = {
-	0x00, 0xff, 0x00,
-	0xff, 0x00, 0x00,
-	0x00, 0x00, 0xff,
-	0x00, 0xff, 0x00,
-	0xff, 0x00, 0x00,
-	0x00, 0x00, 0xff,
-	0x00, 0x8b, 0x00,
-	0x00, 0xcd, 0x00,
-	0x00, 0xef, 0x00,
-	0x00, 0xff, 0x00,
-	0x45, 0x8b, 0x00,
-	0x66, 0xcd, 0x00,
-	0x76, 0xee, 0x00,
-	0x7f, 0xff, 0x00,
-	0x7e, 0x8b, 0x66,
-	0xba, 0xcd, 0x96,
-	0xd8, 0xee, 0xae,
-	0xe7, 0xff, 0xba,
-	0x47, 0x8b, 0x26,
-	0x68, 0xcd, 0x39,
-	0x79, 0xee, 0x42,
-	0x82, 0xff, 0x47,
-	0x95, 0xcd, 0x0c,
-	0xad, 0xee, 0x0e,
-	0xb9, 0xff, 0x0f,
-	0xad, 0xcd, 0x00,
-	0xc9, 0xee, 0x00,
-	0xd7, 0xff, 0x00,
-	0xcd, 0xcd, 0x00,
-	0xee, 0xee, 0x00,
-	0xff, 0xff, 0x00,
-	0xee, 0x76, 0x00,
-	0xff, 0x7f, 0x00,
-};
+	write(fd, clear, num * 3);
+	write(fd, clear, num * 3);
+	sleep(1);
+	free(clear);
+}
 
-/* 33个灯，每个灯24bit */
-static unsigned char light[99] = { 0x0 };
+static void waterfall_light(int fd, int num)
+{
+	int i;
+	int cnt = 10;
+	int len = num * 3;
+	unsigned char *data;
+	data = (unsigned char*)malloc(len);
+
+	w2812_reset_clear(fd, LED_NUM);
+	printf("waterfall light....\n");
+
+	memset(data, 0, len);
+
+	while (cnt--)
+	{
+		for(i = 0; i < num; i++)
+		{
+			data[i*3 + 0] = 0xa9;
+			data[i*3 + 1] = 0xa9;
+			data[i*3 + 2] = 0xa9;
+			write(fd, data, len);
+			sleep_ms(20);
+		}
+
+		memset(data, 0, len);
+		write(fd, data, len);
+	}
+	free(data);
+}
+
+static void breath_light(int fd, int num)
+{
+	int len = num * 3;
+	unsigned char *data;
+	int i, n;
+	data = (unsigned char*)malloc(len);
+
+	w2812_reset_clear(fd, LED_NUM);
+	printf("breathing light.....\n");
+
+	memset(data, 0, len);
+
+	while(1)
+	{
+		for (i = 0; i < 0xff; i++)
+		{
+			for (n = 0; n < num; n++)
+			{
+				data[n * 3] = 0x0;
+				data[n * 3 + 1] = i;
+				data[n * 3 + 2] = 0x0;
+			}
+			write(fd, data, len);
+			sleep_ms(1);
+		}
+
+		for (i = 0xff; i >= 0; i--)
+		{
+			for (n = 0; n < num; n++)
+			{
+				data[n * 3] = 0x0;
+				data[n * 3 + 1] = i;
+				data[n * 3 + 2] = 0x0;
+			}
+			write(fd, data, len);
+			sleep_ms(1);
+		}
+
+		for (i = 0; i < 0xff; i++)
+		{
+			for (n = 0; n < num; n++)
+			{
+				data[n * 3] = i;
+				data[n * 3 + 1] = 0x0;
+				data[n * 3 + 2] = 0x0;
+			}
+			write(fd, data, len);
+			sleep_ms(1);
+		}
+
+		for (i = 0xff; i >= 0; i--)
+		{
+			for (n = 0; n < num; n++)
+			{
+				data[n * 3] = i;
+				data[n * 3 + 1] = 0x0;
+				data[n * 3 + 2] = 0x0;
+			}
+			write(fd, data, len);
+			sleep_ms(1);
+		}
+
+		for (i = 0; i < 0xff; i++)
+		{
+			for (n = 0; n < num; n++)
+			{
+				data[n * 3] = 0x0;
+				data[n * 3 + 1] = 0x0;
+				data[n * 3 + 2] = i;
+			}
+			write(fd, data, len);
+			sleep_ms(1);
+		}
+
+		for (i = 0xff; i >= 0; i--)
+		{
+			for (n = 0; n < num; n++)
+			{
+				data[n * 3] = 0x0;
+				data[n * 3 + 1] = 0x0;
+				data[n * 3 + 2] = i;
+			}
+			write(fd, data, len);
+			sleep_ms(1);
+		}
+	}
+
+	free(data);
+}
+
 
 int main(int argc, char *argv[])
 {
 	int fd;
-	int i = 0;
-	int m = 33;
-	int n;
+	int n = LED_NUM;
 
     fd = open("/dev/ws2812", O_RDWR);
 	if(fd<=0)
@@ -210,147 +202,15 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
-#if 0
-	/* 多彩色 */
-	write(fd, grb_color, sizeof(grb_color));
-
-	/* 闪烁 */
-	write(fd, color1, sizeof(color1));
-	sleep(1);
-	write(fd, color2, sizeof(color2));
-	sleep(1);
-	write(fd, color3, sizeof(color3));
-	sleep(1);
-	write(fd, color1, sizeof(color1));
-	sleep_ms(50);
-	write(fd, color2, sizeof(color2));
-	sleep_ms(50);
-	write(fd, color3, sizeof(color3));
-	sleep_ms(50);
-	write(fd, color1, sizeof(color1));
-	sleep_ms(50);
-	write(fd, color2, sizeof(color2));
-	sleep_ms(50);
-	write(fd, color3, sizeof(color3));
-	sleep_ms(50);
-	write(fd, color1, sizeof(color1));
-	sleep_ms(50);
-	write(fd, color2, sizeof(color2));
-	sleep_ms(50);
-	write(fd, color3, sizeof(color3));
-	sleep_ms(50);
-	write(fd, color1, sizeof(color1));
-	sleep_ms(50);
-	write(fd, color2, sizeof(color2));
-	sleep_ms(50);
-	write(fd, color3, sizeof(color3));
-	sleep_ms(50);
-	write(fd, color1, sizeof(color1));
-	sleep_ms(50);
-	write(fd, color2, sizeof(color2));
-	sleep_ms(50);
-	write(fd, color3, sizeof(color3));
-	sleep_ms(50);
-	write(fd, color1, sizeof(color1));
-	sleep_ms(50);
-	write(fd, color2, sizeof(color2));
-	sleep_ms(50);
-	write(fd, color3, sizeof(color3));
-	sleep_ms(50);
-#endif
-
-#if 0
-	/* 流水灯 */
-	while (1)
+	if (argv[1])
 	{
-		for (i = 0; i < m; i++)
-		{
-			write(fd, light, sizeof(light));
-
-			light[i*3 + 2] = 0xff;
-			if (i > 0)
-				light[(i-1)*3 +2] = 0x0;
-			sleep_ms(50);
-		}
-		m --;
-		if (m < 0)
-		{
-			light[2] = 0xff;
-			write(fd, light, sizeof(light));
-			break;
-		}
+		n = atoi(argv[1]);
 	}
 
-	memset(light, 0, sizeof(light));
-	write(fd, light, sizeof(light));
-#endif
+	// ioctl(fd, WSIOC_RESET, NULL);  /* 产生复位时序接口，按需使用 */
 
-#if 1
-	/* 呼吸灯 */
-	while(1)
-	{
-		for (n = 0; n < 0xff; n++)
-		{
-			for (i = 0; i < m; i++)
-			{
-				light[i*3] = n;	//g
-			}
-			write(fd, light, sizeof(light));
-			sleep_ms(5);
-		}
-
-		for (n = 0xff; n >= 0; n--)
-		{
-			for (i = 0; i < m; i++)
-			{
-				light[i*3] = n;	//g
-			}
-			write(fd, light, sizeof(light));
-			sleep_ms(5);
-		}
-
-		for (n = 0; n < 0xff; n++)
-		{
-			for (i = 0; i < m; i++)
-			{
-				light[i*3 + 1] = n;	//r
-			}
-			write(fd, light, sizeof(light));
-			sleep_ms(5);
-		}
-
-		for (n = 0xff; n >= 0; n--)
-		{
-			for (i = 0; i < m; i++)
-			{
-				light[i*3 + 1] = n;	//r
-			}
-			write(fd, light, sizeof(light));
-			sleep_ms(5);
-		}
-
-		for (n = 0; n < 0xff; n++)
-		{
-			for (i = 0; i < m; i++)
-			{
-				light[i*3 + 2] = n;	//b
-			}
-			write(fd, light, sizeof(light));
-			sleep_ms(5);
-		}
-
-		for (n = 0xff; n >= 0; n--)
-		{
-			for (i = 0; i < m; i++)
-			{
-				light[i*3 + 2] = n;	//b
-			}
-			write(fd, light, sizeof(light));
-			sleep_ms(5);
-		}
-	}
-#endif
-
+	waterfall_light(fd, n);
+	breath_light(fd, n);
+	close(fd);
 	return 0;
 }
-

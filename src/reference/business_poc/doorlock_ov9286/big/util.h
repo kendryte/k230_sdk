@@ -8,7 +8,7 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 #include <string>
-#define mask_thresh_ 0.82
+#define mask_thresh_ 0.75
 #define ENABLE_RVV 1
 #define ENABLE_DEPTH_ROTATE 1
 #define ENABLE_DEBUG 0

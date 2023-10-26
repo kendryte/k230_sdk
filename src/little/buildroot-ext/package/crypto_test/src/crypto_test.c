@@ -247,7 +247,7 @@ int socket_rsa(rsa_type_t rsatype,
                 const uint8_t *d,
                 uint8_t *in,
                 uint8_t *out,
-                uint8_t *outlen)
+                uint32_t *outlen)
 {
     int len;
     int opfd;
@@ -530,6 +530,9 @@ int do_rsa(void)
         if(memcmp(out, rsa_tp[i].s, outlen) == 0)
         {
             printf("RSA sign Success!\n");
+            for(j=0; j<outlen; j++)
+                printf("0x%x\n", out[j]);
+			
         }
         else
         {
@@ -549,6 +552,8 @@ int do_rsa(void)
         if(memcmp(out, rsa_tp[i].m, outlen) == 0)
         {
             printf("RSA verify Success!\n");
+			for(j=0; j<outlen; j++)
+                printf("0x%x\n", out[j]);
         }
         else
         {
@@ -575,6 +580,8 @@ int do_hash(void)
         if(memcmp(out, hash_tp[i].md, 32) == 0)
         {
             printf("sha256 calculate Success!\n");
+			for(j=0; j<32; j++)
+                printf("0x%x\n", out[j]);
         }
         else
         {
@@ -696,6 +703,16 @@ int do_aes_gcm(void)
 		if((memcmp(out, aes_gcm_tp[i].ct, aes_gcm_tp[i].ctlen) == 0) && (memcmp(out+aes_gcm_tp[i].ctlen, aes_gcm_tp[i].tag, aes_gcm_tp[i].taglen) == 0))
 		{
 			printf("gcm encrypt ok\n");
+			printf("ciphertext...\n");
+			for(j=0; j<aes_gcm_tp[i].ctlen; j++)
+			{
+				printf("0x%x\n", out[j]);
+			}
+			printf("tag...\n");
+			for(j=0; j<aes_gcm_tp[i].taglen; j++)
+			{
+				printf("0x%x\n", *(uint8_t *)(out+aes_gcm_tp[i].ctlen + j));
+			}
 		#if 0
 			printf("golden ciphertext	computed ciphertext\n\r");
 			for(j=0; j<aes_gcm_tp[i].ctlen; j++)
@@ -747,6 +764,10 @@ int do_aes_gcm(void)
 		if(memcmp(out, aes_gcm_tp[i].pt, aes_gcm_tp[i].ptlen) == 0)
 		{
 			printf("gcm decrypt ok\n");
+			for(j=0; j<aes_gcm_tp[i].ptlen; j++)
+			{
+				printf("0x%x\n", out[j]);
+			}
 		#if 0
 			printf("golden plaintext	computed plaintext\n\r");
 			for(j=0; j<aes_gcm_tp[i].ptlen; j++)

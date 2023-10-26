@@ -26,7 +26,8 @@ protected:
     runtime_tensor input_tensor(size_t idx);
     void input_tensor(size_t idx, runtime_tensor &tensor);
     runtime_tensor output_tensor(size_t idx);
-
+    dims_t input_shape(size_t idx);
+    dims_t output_shape(size_t idx);
 protected:
     std::unique_ptr<ai2d_builder> ai2d_builder_;
     runtime_tensor ai2d_in_tensor_;

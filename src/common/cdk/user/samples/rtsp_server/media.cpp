@@ -74,7 +74,7 @@ int KdMedia::Init(const KdMediaInputConfig &config) {
         media_attr.media_config.vb_config.comm_pool[3].mode = VB_REMAP_MODE_NOCACHE;
 
         memset(&vcap_dev_info_, 0, sizeof(vcap_dev_info_));
-        if (config.sensor_type <= OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_SPECKLE)
+        if (config.sensor_type <= OV_OV9286_MIPI_1280X720_60FPS_10BIT_LINEAR_IR_SPECKLE || config.sensor_type >= SC_SC035HGS_MIPI_1LANE_RAW10_640X480_120FPS_LINEAR)
             vcap_dev_info_.dw_en = K_FALSE;
         else
             vcap_dev_info_.dw_en = K_TRUE;

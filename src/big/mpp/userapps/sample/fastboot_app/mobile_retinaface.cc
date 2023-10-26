@@ -29,23 +29,38 @@ static float umeyama_args[] =
 MobileRetinaface::MobileRetinaface(const char *kmodel_file, size_t channel, size_t height, size_t width)
     : Model("MobileRetinaface", kmodel_file), ai2d_input_c_(channel), ai2d_input_h_(height), ai2d_input_w_(width)
 {
+#if ENABLE_DEBUG
+    std::cout << __FUNCTION__ << ": c = " << channel << ", h = " << height << ", w = " << width << std::endl;
+#endif
+
     // ai2d output tensor
     ai2d_out_tensor_ = input_tensor(0);
 
     // ai2d config
     dims_t in_shape { 1, ai2d_input_c_, ai2d_input_h_, ai2d_input_w_ };
-    auto out_span = ai2d_out_tensor_.shape();
-    dims_t out_shape { out_span.begin(), out_span.end() };
+    auto out_shape = input_shape(0);
 
     ai2d_datatype_t ai2d_dtype { ai2d_format::NCHW_FMT, ai2d_format::NCHW_FMT, typecode_t::dt_uint8, typecode_t::dt_uint8 };
     ai2d_crop_param_t crop_param { false, 0, 0, 0, 0 };
     ai2d_shift_param_t shift_param { false, 0 };
+    float h_ratio = static_cast<float>(height) / out_shape[2];
+    float w_ratio = static_cast<float>(width) / out_shape[3];
+    float ratio = h_ratio > w_ratio ? h_ratio : w_ratio;
+    int h_pad = out_shape[2] - height / ratio;
+    int h_pad_before = h_pad / 2;
+    int h_pad_after = h_pad - h_pad_before;
+    int w_pad = out_shape[3] - width / ratio;
+    int w_pad_before = w_pad / 2;
+    int w_pad_after = w_pad - w_pad_before;
+
 #if defined(CONFIG_BOARD_K230_CANMV)
 	ai2d_pad_param_t pad_param { true, { { 0, 0 }, { 0, 0 }, { 70, 70 }, { 0, 0 } }, ai2d_pad_mode::constant, { 0, 0, 0 } };
 #else
-    ai2d_pad_param_t pad_param { true, { { 0, 0 }, { 0, 0 }, { 0, 0 }, { 70, 70 } }, ai2d_pad_mode::constant, { 0, 0, 0 } };
+   ai2d_pad_param_t pad_param { true, { { 0, 0 }, { 0, 0 }, { 0, 0 }, { 70, 70 } }, ai2d_pad_mode::constant, { 0, 0, 0 } };
 #endif
-	ai2d_resize_param_t resize_param { true, ai2d_interp_method::tf_bilinear, ai2d_interp_mode::half_pixel };
+
+    // ai2d_pad_param_t pad_param{true, {{ 0, 0 }, { 0, 0 }, { h_pad_before, h_pad_after }, { w_pad_before, w_pad_after }}, ai2d_pad_mode::constant, { 0, 0, 0 }};
+    ai2d_resize_param_t resize_param { true, ai2d_interp_method::tf_bilinear, ai2d_interp_mode::half_pixel };
     ai2d_affine_param_t affine_param { false };
     ai2d_builder_.reset(new ai2d_builder(in_shape, out_shape, ai2d_dtype, crop_param, shift_param, pad_param, resize_param, affine_param));
     ai2d_builder_->build_schedule();
@@ -57,7 +72,7 @@ MobileRetinaface::~MobileRetinaface()
 
 void MobileRetinaface::preprocess(uintptr_t vaddr, uintptr_t paddr)
 {
-#if PROFILING
+#if ENABLE_PROFILING
     ScopedTiming st(model_name() + " " + __FUNCTION__);
 #endif
 
@@ -73,49 +88,88 @@ void MobileRetinaface::preprocess(uintptr_t vaddr, uintptr_t paddr)
 
 void MobileRetinaface::postprocess()
 {
-#if PROFILING
+#if ENABLE_PROFILING
     ScopedTiming st(model_name() + " " + __FUNCTION__);
 #endif
 
-    box_t pred_box[16];
-    landmarks_t pred_landmarks[16];
-    size_t box_num = 0;
-    size_t landmark_num = 0;
-    decode(pred_box, &box_num, pred_landmarks, &landmark_num);
+    std::vector<box_t> pred_box;
+    pred_box.reserve(16);
+    std::vector<landmarks_t> landmarks;
+
+    decode(pred_box, landmarks);
 
     int long_side = ai2d_input_h_ > ai2d_input_w_ ? ai2d_input_h_ : ai2d_input_w_;
     int short_side = ai2d_input_h_ < ai2d_input_w_ ? ai2d_input_h_ : ai2d_input_w_;
     int pad = (long_side - short_side) / 2;
-
     bool width_pad = long_side == ai2d_input_h_ ? true : false;
 
-    face_boxes_.clear();
-    face_boxes_.reserve(sizeof(pred_box) / sizeof(pred_box[0]) * 4);
-    // std::cout << "box_num = " << box_num << ", landmark_num = " << landmark_num << std::endl;
-    int x1 = 0, y1 = 0, x2 = 0, y2 = 0;
-    for (size_t i = 0; i < box_num; i++)
+    // boxes
+    result_.boxes.clear();
+    result_.boxes.reserve(pred_box.size());
+    for (size_t i = 0; i < pred_box.size(); i++)
     {
+        face_coordinate box;
+
         if(width_pad)
         {
-            x1 = (int)(pred_box[i].x * long_side - pred_box[i].w * long_side / 2) - pad;
-            y1 = (int)(pred_box[i].y * long_side - pred_box[i].h * long_side / 2);
-            x2 = (int)(pred_box[i].x * long_side + pred_box[i].w * long_side / 2) - pad;
-            y2 = (int)(pred_box[i].y * long_side + pred_box[i].h * long_side / 2);
+            box.x1 = (int)(pred_box[i].x * long_side - pred_box[i].w * long_side / 2) - pad;
+            box.y1 = (int)(pred_box[i].y * long_side - pred_box[i].h * long_side / 2);
+            box.x2 = (int)(pred_box[i].x * long_side + pred_box[i].w * long_side / 2) - pad;
+            box.y2 = (int)(pred_box[i].y * long_side + pred_box[i].h * long_side / 2);
         }
         else
         {
-            x1 = (int)(pred_box[i].x * long_side - pred_box[i].w * long_side / 2);
-            y1 = (int)(pred_box[i].y * long_side - pred_box[i].h * long_side / 2) - pad;
-            x2 = (int)(pred_box[i].x * long_side + pred_box[i].w * long_side / 2);
-            y2 = (int)(pred_box[i].y * long_side + pred_box[i].h * long_side / 2) - pad;
+            box.x1 = (int)(pred_box[i].x * long_side - pred_box[i].w * long_side / 2);
+            box.y1 = (int)(pred_box[i].y * long_side - pred_box[i].h * long_side / 2) - pad;
+            box.x2 = (int)(pred_box[i].x * long_side + pred_box[i].w * long_side / 2);
+            box.y2 = (int)(pred_box[i].y * long_side + pred_box[i].h * long_side / 2) - pad;
         }
-        face_boxes_.push_back(x1);
-        face_boxes_.push_back(y1);
-        face_boxes_.push_back(x2);
-        face_boxes_.push_back(y2);
-        // std::cout << "face_location: " << x1 << ", " << y1 << ", " << x2 << ", " << y2 << std::endl;
+
+        box.x1 = box.x1 < 0 ? 1 : box.x1;
+        box.y1 = box.y1 < 0 ? 1 : box.y1;
+        box.x2 = box.x2 > ai2d_input_w_ ? ai2d_input_w_ : box.x2;
+        box.y2 = box.y2 > ai2d_input_h_ ? ai2d_input_h_ : box.y2;
+
+        result_.boxes.push_back(box);
+#if ENABLE_DEBUG
+        std::cout << "face_location: (" << box.x1 << ", " << box.y1 << "), (" << box.x2 << ", " << box.y2 << ")" << std::endl;
+#endif
     }
-    // std::cout << "box_num = " << face_boxes_.size() << std::endl;
+
+    // landmarks
+    result_.landmarks.clear();
+    for (size_t i = 0; i < landmarks.size(); i++)
+    {
+        auto landmark = landmarks[i];
+        int x = 0, y = 0;
+#if ENABLE_DEBUG
+        std::cout << "landmark: ";
+#endif
+        for (uint32_t j = 0; j < 5; j++)
+        {
+            if(width_pad)
+            {
+                x = (int)(landmark.points[2 * j + 0] * long_side) - pad;
+                y = (int)(landmark.points[2 * j + 1] * long_side);
+            }
+            else
+            {
+                x = (int)(landmark.points[2 * j + 0] * long_side);
+                y = (int)(landmark.points[2 * j + 1] * long_side) - pad;
+            }
+
+            landmark.points[2 * j + 0] = x;
+            landmark.points[2 * j + 1] = y;
+
+#if ENABLE_DEBUG
+            std::cout << "(" << x << ", " << y << "),";
+#endif
+        }
+#if ENABLE_DEBUG
+        std::cout << std::endl;
+#endif
+        result_.landmarks.push_back(landmark);
+    }
 }
 
 float MobileRetinaface::overlap(float x1, float w1, float x2, float w2)
@@ -247,15 +301,15 @@ landmarks_t MobileRetinaface::get_landmark(float* landmarks, int obj_index)
     return landmark;
 }
 
-void MobileRetinaface::decode(box_t *pred_box, size_t *box_num, landmarks_t *pred_landmarks, size_t *landmark_num)
+void MobileRetinaface::decode(std::vector<box_t> &pred_box, std::vector<landmarks_t> &pred_landmarks)
 {
     const size_t size = 9;
     float *out[size];
     for (size_t i = 0; i < size; i++)
     {
         auto tensor = output_tensor(i);
-        auto mapped_buf = std::move(hrt::map(tensor, hrt::map_read).unwrap());
-        out[i] = reinterpret_cast<float *>(mapped_buf.buffer().data());
+        auto buf = tensor.impl()->to_host().unwrap()->buffer().as_host().unwrap().map(map_access_::map_read).unwrap().buffer();
+        out[i] = reinterpret_cast<float *>(buf.data());
         // dump("kpu output " + std::to_string(i), out[i], 32);
     }
 
@@ -269,8 +323,6 @@ void MobileRetinaface::decode(box_t *pred_box, size_t *box_num, landmarks_t *pre
     float *landms1 = out[7];
     float *landms2 = out[8];
 
-    float RETINAFACE_OBJ_THRESH = 0.2;
-    float RETINAFACE_NMS_THESH = 0.5;
     float box[LOC_SIZE] = { 0.0 };
     float landms[LAND_SIZE] = { 0.0 };
     int objs_num = MIN_SIZE * (1 + 4 + 16);
@@ -299,7 +351,7 @@ void MobileRetinaface::decode(box_t *pred_box, size_t *box_num, landmarks_t *pre
     obj_cnt = 0;
     for (uint32_t oo = 0; oo < objs_num; oo++)
     {
-        if(s_probs[oo] >= RETINAFACE_OBJ_THRESH)
+        if(s_probs[oo] >= obj_threshold_)
         {
             s_probs_copy[obj_cnt] = s_probs[oo];
             s_copy[obj_cnt].index = s[oo].index;
@@ -319,26 +371,27 @@ void MobileRetinaface::decode(box_t *pred_box, size_t *box_num, landmarks_t *pre
     {
         obj_index = s[i].index;
         //cout << "s_probs[obj_index]: " << s_probs[obj_index] << endl;
-        //cout << "RETINAFACE_OBJ_THRESH: " << RETINAFACE_OBJ_THRESH << endl;
-        if (s_probs[obj_index] < RETINAFACE_OBJ_THRESH)
+        //cout << "obj_threshold_: " << obj_threshold_ << endl;
+        if (s_probs[obj_index] < obj_threshold_)
             continue;
         // s_probs[obj_index]: 0.99418
         //cout << "s_probs[obj_index]: " << s_probs[obj_index] << endl;
         //printf("pred conf: %f\n", s_probs[obj_index]);
         box_t a = get_box(boxes, obj_index);
+        pred_box.push_back(a);
+
         landmarks_t l = get_landmark(landmarks, obj_index);
-        pred_box[(*box_num)++] = a;
-        pred_landmarks[(*landmark_num)++] = l;
+        pred_landmarks.push_back(l);
         // box a: 0.543867, 0.470195, 0.090413, 0.116365
-        //cout << "box a: " << a.x << ", " <<  a.y << ", " << a.w << ", " << a.h << ";" << endl;
-        //printf("pred box: %f, %f, %f, %f\n", a.x, a.y, a.w, a.h);
+        // cout << "box a: " << a.x << ", " <<  a.y << ", " << a.w << ", " << a.h << ";" << endl;
+        // printf("pred box: %f, %f, %f, %f\n", a.x, a.y, a.w, a.h);
         for (j = i + 1; j < objs_num; ++j){
             obj_index = s[j].index;
-            if (s_probs[obj_index] < RETINAFACE_OBJ_THRESH)
+            if (s_probs[obj_index] < obj_threshold_)
                 continue;
             box_t b = get_box(boxes, obj_index);
             iou_cal_times += 1;
-            if (box_iou(a, b) >= RETINAFACE_NMS_THESH)
+            if (box_iou(a, b) >= nms_threshold_)
                 s_probs[obj_index] = 0;
         }
     }
@@ -352,7 +405,7 @@ void MobileRetinaface::decode(box_t *pred_box, size_t *box_num, landmarks_t *pre
 }
 #else
 
-void MobileRetinaface::deal_conf_opt(float* conf, float* s_probs, int* s, int size, int* obj_cnt, int* real_count, float RETINAFACE_OBJ_THRESH, float* tmp)
+void MobileRetinaface::deal_conf_opt(float* conf, float* s_probs, int* s, int size, int* obj_cnt, int* real_count, float* tmp)
 {
     softmax_2group_vec(size, conf, conf + size, tmp, tmp + size); //
     softmax_2group_vec(size, conf + 2 * size, conf + 3 * size, tmp + 2 * size, tmp + 3 * size);
@@ -362,7 +415,7 @@ void MobileRetinaface::deal_conf_opt(float* conf, float* s_probs, int* s, int si
     for(int i = 0; i < size; ++i)
     {
         register float soft_vlaue = tmp[size + i];
-        if(soft_vlaue >= RETINAFACE_OBJ_THRESH)
+        if(soft_vlaue >= obj_threshold_)
         {
             s[index_s] = cnt;
             s_probs[index_s] = soft_vlaue;
@@ -370,7 +423,7 @@ void MobileRetinaface::deal_conf_opt(float* conf, float* s_probs, int* s, int si
         }
         cnt += 1;
         soft_vlaue = tmp[size * 3 + i];
-        if(soft_vlaue >= RETINAFACE_OBJ_THRESH)
+        if(soft_vlaue >= obj_threshold_)
         {
             s[index_s] = cnt;
             s_probs[index_s] = soft_vlaue;
@@ -475,7 +528,7 @@ int nms_comparator2(void* pa, void* pb)
         return 0;
 }
 
-void MobileRetinaface::decode(box_t *pred_box, size_t *box_num, landmarks_t *pred_landmarks, size_t *landmark_num)
+void MobileRetinaface::decode(std::vector<box_t> &pred_box, std::vector<landmarks_t> &pred_landmarks)
 {
     const size_t size = 9;
     float *out[size];
@@ -496,13 +549,6 @@ void MobileRetinaface::decode(box_t *pred_box, size_t *box_num, landmarks_t *pre
     float *landms1 = out[7];
     float *landms2 = out[8];
 
-#if 0
-    float RETINAFACE_OBJ_THRESH = 0.6f;
-    float RETINAFACE_NMS_THESH = 0.5f;
-#else
-    float RETINAFACE_OBJ_THRESH = 0.3f;
-    float RETINAFACE_NMS_THESH = 0.2f;
-#endif
     int objs_num = MIN_SIZE * (1 + 4 + 16);
     int* s = (int*)malloc(objs_num * sizeof(int));
     float* s_probs = (float*)malloc(objs_num * sizeof(float));
@@ -512,9 +558,9 @@ void MobileRetinaface::decode(box_t *pred_box, size_t *box_num, landmarks_t *pre
 
     float*tmp = (float*)malloc(16 * MIN_SIZE / 2 * sizeof(float) * CONF_SIZE * 2);
 
-    deal_conf_opt(conf0, s_probs, s, 16 * MIN_SIZE / 2, &obj_cnt, &real_count, RETINAFACE_OBJ_THRESH, tmp);
-    deal_conf_opt(conf1, s_probs, s,  4 * MIN_SIZE / 2, &obj_cnt, &real_count, RETINAFACE_OBJ_THRESH, tmp);
-    deal_conf_opt(conf2, s_probs, s,  1 * MIN_SIZE / 2, &obj_cnt, &real_count, RETINAFACE_OBJ_THRESH, tmp);
+    deal_conf_opt(conf0, s_probs, s, 16 * MIN_SIZE / 2, &obj_cnt, &real_count, tmp);
+    deal_conf_opt(conf1, s_probs, s,  4 * MIN_SIZE / 2, &obj_cnt, &real_count, tmp);
+    deal_conf_opt(conf2, s_probs, s,  1 * MIN_SIZE / 2, &obj_cnt, &real_count, tmp);
 
     float* boxes = (float*)malloc(objs_num * LOC_SIZE * sizeof(float));
     obj_cnt = 0;
@@ -542,18 +588,20 @@ void MobileRetinaface::decode(box_t *pred_box, size_t *box_num, landmarks_t *pre
     for (int i = 0; i < objs_num; ++i)
     {
         int obj_index = s_int[i];
-        if (s_probs[obj_index] < RETINAFACE_OBJ_THRESH)
+        if (s_probs[obj_index] < obj_threshold_)
             continue;
         box_t a = get_box_opt(boxes, obj_index, s[obj_index]);
+        pred_box.push_back(a);
+
         landmarks_t l = get_landmark_opt(landmarks, obj_index, s[obj_index]);
-        pred_box[(*box_num)++] = a;
-        pred_landmarks[(*landmark_num)++] = l;
-        for (int j = i + 1; j < objs_num; ++j){
+        pred_landmarks.push_back(l);
+        for (int j = i + 1; j < objs_num; ++j)
+        {
             obj_index = s_int[j];
-            if (s_probs[obj_index] < RETINAFACE_OBJ_THRESH)
+            if (s_probs[obj_index] < obj_threshold_)
                 continue;
             box_t b = get_box_opt(boxes, obj_index, s[obj_index]);
-            if (box_iou(a, b) >= RETINAFACE_NMS_THESH)
+            if (box_iou(a, b) >= nms_threshold_)
                 s_probs[obj_index] = 0;
         }
     }

@@ -156,4 +156,32 @@ if [ -f out/bin/space_resize.elf ]; then
       cp out/bin/space_resize.elf ${k230_bin}
 fi
 
+if [ -f out/bin/eye_gaze.elf ]; then
+      cp out/bin/eye_gaze.elf ${k230_bin}
+fi
+
+if [ -f out/bin/helmet_detect.elf ]; then
+      cp out/bin/helmet_detect.elf ${k230_bin}
+fi
+
+if [ -f out/bin/puzzle_game.elf ]; then
+      cp out/bin/puzzle_game.elf ${k230_bin}
+fi
+
+if [ -f out/bin/dynamic_gesture.elf ]; then
+      cp out/bin/dynamic_gesture.elf ${k230_bin}
+fi
+
+if [ -f out/bin/ocr_reco.elf ]; then
+      cp out/bin/ocr_reco.elf ${k230_bin}
+fi
+
+if [ -f out/bin/yolop.elf ]; then
+      cp out/bin/yolop.elf ${k230_bin}
+fi
+
+if [ -f out/bin/anomaly_det.elf ]; then
+      cp out/bin/anomaly_det.elf ${k230_bin}
+fi
+
 rm -rf out

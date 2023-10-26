@@ -23,6 +23,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "hand_detection.h"
+#include "k_autoconf_comm.h"
 #include <vector>
 
 HandDetection::HandDetection(const char *kmodel_file, float obj_thresh, float nms_thresh, FrameSize frame_size,const int debug_mode)
@@ -177,7 +178,6 @@ std::vector<BoxInfo> HandDetection::decode_infer(float *data, int stride, FrameS
                         box.y1 = std::max(0, std::min(int(frame_size.height), int(cy - h / 2.f)));
                         box.x2 = std::max(0, std::min(int(frame_size.width), int(cx + w / 2.f)));
                         box.y2 = std::max(0, std::min(int(frame_size.height), int(cy + h / 2.f)));
-
                         #if defined(CONFIG_BOARD_K230_CANMV)
                             if (abs(box.y1-box.y2)< 0.1*frame_size.height)
                                 continue;

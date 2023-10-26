@@ -104,35 +104,6 @@ struct option long_options[] = {
     {NULL, 0, NULL, 0},
 };
 
-static k_vicap_sensor_type get_sensor_type(k_u32 sensor_index)
-{
-    switch (sensor_index)
-    {
-    case 0:
-        return OV_OV9732_MIPI_1280X720_30FPS_10BIT_LINEAR;
-    case 1:
-        return OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_IR;
-    case 2:
-        return OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_SPECKLE;
-    case 3:
-        return IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_LINEAR;
-    case 4:
-        return IMX335_MIPI_2LANE_RAW12_2592X1944_30FPS_LINEAR;
-    case 5:
-        return IMX335_MIPI_4LANE_RAW12_2592X1944_30FPS_LINEAR;
-    case 6:
-        return IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_MCLK_7425_LINEAR;
-    case 7:
-        return IMX335_MIPI_2LANE_RAW12_2592X1944_30FPS_MCLK_7425_LINEAR;
-    case 8:
-        return IMX335_MIPI_4LANE_RAW12_2592X1944_30FPS_MCLK_7425_LINEAR;
-    default:
-        printf("unsupport sensor type %d, use default IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_LINEAR\n", sensor_index);
-        return IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_LINEAR;
-    }
-    return IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_LINEAR;
-}
-
 static k_payload_type get_venc_type(k_u32 vtype_index) {
     switch (vtype_index) {
         case 0:
@@ -154,7 +125,7 @@ k_u32 parse_option(int argc, char *argv[], SampleCtx *psample_ctx) {
         while ((c = getopt_long(argc, argv, "s:n:t:o:h", long_options, &option_index)) != -1) {
             switch (c) {
                 case 's': {
-                    psample_ctx->sensor_type = get_sensor_type(atoi(optarg));
+                    psample_ctx->sensor_type = (k_vicap_sensor_type)atoi(optarg);
                     printf("sensor type: %d.\n", psample_ctx->sensor_type);
                     break;
                 }
@@ -184,15 +155,7 @@ k_u32 parse_option(int argc, char *argv[], SampleCtx *psample_ctx) {
                 case 'h': {
                     printf("Usage: %s -s 0 -n 2 -t 0\n", argv[0]);
                     printf("          -s or --sensor_type [sensor_index],\n");
-                    printf("                                0: ov9732\n");
-                    printf("                                1: ov9286 ir\n");
-                    printf("                                2: ov9286 speckle\n");
-                    printf("                                3: imx335 2LANE 1920Wx1080H\n");
-                    printf("                                4: imx335 2LANE 2592Wx1944H\n");
-                    printf("                                5: imx335 4LANE 2592Wx1944H\n");
-                    printf("                                6: imx335 2LANE MCLK 7425 1920Wx1080H\n");
-                    printf("                                7: imx335 2LANE MCLK 7425 2592Wx1944H\n");
-                    printf("                                8: imx335 4LANE MCLK 7425 2592Wx1944H\n");
+                    printf("                                see vicap doc\n");
                     printf("          -n or --chn_num [number], 1, 2, 3.\n");
                     printf("          -t or --type [type_index],\n");
                     printf("                        0: h264 type\n");
@@ -254,7 +217,7 @@ int main(int argc, char *argv[]) {
 
     k_vicap_dev_set_info dev_attr_info;
     memset(&dev_attr_info, 0, sizeof(dev_attr_info));
-    if (sample_context.sensor_type <= OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_SPECKLE)
+    if (sample_context.sensor_type <= OV_OV9286_MIPI_1280X720_60FPS_10BIT_LINEAR_IR_SPECKLE || sample_context.sensor_type >= SC_SC035HGS_MIPI_1LANE_RAW10_640X480_120FPS_LINEAR)
         dev_attr_info.dw_en = K_FALSE;
     else
         dev_attr_info.dw_en = K_TRUE;

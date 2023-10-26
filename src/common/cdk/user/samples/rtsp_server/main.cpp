@@ -19,39 +19,14 @@ static void sigHandler(int sig_no) {
 static void Usage() {
     std::cout << "Usage: ./rtsp_sever [-v] [-s <sensor_type>] [-t <codec_type>] [-w <width>] [-h <height>] [-b <bitrate_kbps>] [-a <semitones>]" << std::endl;
     std::cout << "-v: enable video session" << std::endl;
-    std::cout << "-s: the sensor type, default 3 :" << std::endl;
-    std::cout << "       0: ov9732." << std::endl;
-    std::cout << "       1: ov9286 ir." << std::endl;
-    std::cout << "       2: ov9286 speckle." << std::endl;
-    std::cout << "       3: imx335 2LANE 1920Wx1080H." << std::endl;
-    std::cout << "       4: imx335 2LANE 2592Wx1944H." << std::endl;
-    std::cout << "       5: imx335 4LANE 2592Wx1944H." << std::endl;
-    std::cout << "       6: imx335 2LANE MCLK 7425 1920Wx1080H." << std::endl;
-    std::cout << "       7: imx335 2LANE MCLK 7425 2592Wx1944H." << std::endl;
-    std::cout << "       8: imx335 4LANE MCLK 7425 2592Wx1944H." << std::endl;
+    std::cout << "-s: the sensor type, default 7 :" << std::endl;
+    std::cout << "       see camera sensor doc." << std::endl;
     std::cout << "-t: the video encoder type: h264/h265, default h265" << std::endl;
     std::cout << "-w: the video encoder width, default 1280" << std::endl;
     std::cout << "-h: the video encoder height, default 720" << std::endl;
     std::cout << "-b: the video encoder bitrate(kbps), default 2000" << std::endl;
     std::cout << "-a: pitch shift semitones [-12,12], default 0" << std::endl;
     exit(-1);
-}
-
-static k_vicap_sensor_type get_sensor_type(k_u32 sensor_index) {
-    switch (sensor_index) {
-    case 0: return OV_OV9732_MIPI_1280X720_30FPS_10BIT_LINEAR;
-    case 1: return OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_IR;
-    case 2: return OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_SPECKLE;
-    case 3: return IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_LINEAR;
-    case 4: return IMX335_MIPI_2LANE_RAW12_2592X1944_30FPS_LINEAR;
-    case 5: return IMX335_MIPI_4LANE_RAW12_2592X1944_30FPS_LINEAR;
-    case 6: return IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_MCLK_7425_LINEAR;
-    case 7: return IMX335_MIPI_2LANE_RAW12_2592X1944_30FPS_MCLK_7425_LINEAR;
-    case 8: return IMX335_MIPI_4LANE_RAW12_2592X1944_30FPS_MCLK_7425_LINEAR;
-    default:
-        printf("unsupport sensor type %d, use default IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_LINEAR\n", sensor_index);
-        return IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_LINEAR;
-    }
 }
 
 int parse_config(int argc, char *argv[], KdMediaInputConfig &config) {
@@ -68,8 +43,8 @@ int parse_config(int argc, char *argv[], KdMediaInputConfig &config) {
         }
         case 's' : {
             int n = atoi(optarg);
-            if (n < 0 || n > 8) Usage();
-            config.sensor_type = get_sensor_type(n);
+            if (n < 0 || n > 27) Usage();
+            config.sensor_type = (k_vicap_sensor_type)n;
             config.video_valid = true;
             break;
         }

@@ -661,7 +661,7 @@ int main() {
     void *vaddr = nullptr;    
     const char* hand_det_kmodel = "hand_det.kmodel";
     const char* handkp_det_kmodel = "handkp_det.kmodel";
-    float obj_thresh = 0.35;
+    float obj_thresh = 0.15;
     float nms_thresh = 0.4;
     int debug_mode = 1;
 

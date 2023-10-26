@@ -1,0 +1,42 @@
+{
+  "timestamp": "31",
+  "indoorEnvironment": {
+    "temperature": 32,
+    "air quality":"good",
+    "illuminance":"dark"
+  },
+  "furniture": {
+    "air_conditioning": {
+      "state": "off",
+      "set_temperature": 32,
+      "mode": "Cold"
+    },
+    "lamp": {
+    "Ceiling light":{
+      "state": "off"
+    },
+    "Floor lamp":{
+      "state": "off"
+    }
+    },
+    "window": {
+      "window1": {
+        "state": "open"
+        },
+      "window2": {
+        "state": "open"
+        }
+    },
+    "curtains": {
+      "curtains1": {
+        "state": "open"
+        },
+      "curtains2": {
+        "state": "open"
+        }
+    },
+    "television": {
+      "state": "off"
+    }
+  }
+}

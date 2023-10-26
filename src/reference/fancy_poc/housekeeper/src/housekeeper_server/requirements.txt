@@ -1,0 +1,6 @@
+pip install pygame
+pip install edge-tts==6.1.8
+pip install urllib3==1.25.11
+pip install keyboard
+pip install openai
+pip install librosa==0.10.0

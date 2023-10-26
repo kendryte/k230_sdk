@@ -38,4 +38,4 @@ echo 120 > configs/c.1/MaxPower
 ln -s functions/Loopback.0 configs/c.2
 ln -s functions/SourceSink.0 configs/c.1
 
-echo 91540000.usb-otg > UDC
+echo 91500000.usb-otg > UDC

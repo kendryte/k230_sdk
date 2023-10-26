@@ -79,6 +79,7 @@ extern k_u32 dwc_dsi_enable(k_u32 enable);
 extern k_u32 dwc_dst_set_test_mode(void);
 extern k_u32 vo_init(void);
 extern k_s32 kd_vo_set_dev_param(k_vo_pub_attr *attr);
+extern k_s32 kd_vo_set_dev_attr(k_vo_pub_attr *pub_attr, k_vo_sync_attr *sync_attr);
 extern void kd_vo_enable(void);
 extern void kd_vo_set_vtth_intr(k_bool status, k_u32 vpos);
 
@@ -93,6 +94,7 @@ k_u32 connector_set_dsi_enable(k_u32 enable);
 k_u32 connector_set_dsi_test_mode(void);
 k_u32 connector_set_vo_init(void);
 k_u32 connector_set_vo_param(k_vo_pub_attr *attr);
+k_u32 connector_set_vo_attr(k_vo_pub_attr *pub_attr, k_vo_sync_attr *sync_attr);
 void connector_set_vo_enable(void);
 void connector_set_vtth_intr(k_bool status, k_u32 vpos);
 void connector_delay_us(uint64_t us);

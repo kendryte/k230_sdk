@@ -153,9 +153,10 @@ k_s32 sys_deinit(k_bool deinit_vo)
     return K_SUCCESS;
 }
 
-static k_s32 _initvo(k_u32 width,k_u32 height,k_u32 vdec_chn)
+static k_s32 _initvo(k_u32 width,k_u32 height,k_u32 vdec_chn,K_PLAYER_CONNECTOR_TYPE type)
 {
     //init vo
+    display_set_connector_type((k_connector_type)type);
     display_layer_init(width,height);
 
     if (K_SUCCESS != kd_mapi_vdec_bind_vo(vdec_chn, 0, BIND_VO_LAYER))
@@ -167,7 +168,7 @@ static k_s32 _initvo(k_u32 width,k_u32 height,k_u32 vdec_chn)
     return K_SUCCESS;
 }
 
-k_s32 disp_open(k_payload_type video_dec_type,k_u32 width,k_u32 height)
+k_s32 disp_open(k_payload_type video_dec_type,k_u32 width,k_u32 height,K_PLAYER_CONNECTOR_TYPE type)
 {
 
     if (_vdec_vb_create_pool(0) != K_SUCCESS)
@@ -198,7 +199,7 @@ k_s32 disp_open(k_payload_type video_dec_type,k_u32 width,k_u32 height)
         return K_FAILED;
     }
 
-    _initvo(width,height,ch);
+    _initvo(width,height,ch,type);
 
     return K_SUCCESS;
 }
@@ -261,7 +262,7 @@ k_s32 disp_play(k_u8*pdata,k_u32 len,k_u64 timestamp,k_bool end_stream)
     k_u8 *virt_addr;
     k_u32 blk_size;
 
-    blk_size = STREAM_BUF_SIZE;
+    blk_size = len;
 
     while(1)
     {

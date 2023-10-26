@@ -54,6 +54,7 @@
 
 #include "k_connector_comm.h"
 #include "mpi_connector_api.h"
+#include "k_autoconf_comm.h"
 
 
 #if defined(CONFIG_BOARD_K230_CANMV)
@@ -624,4 +625,3 @@ void yuv_rotate_90(char *des, char *src,int width,int height)
     }
 
 }
-

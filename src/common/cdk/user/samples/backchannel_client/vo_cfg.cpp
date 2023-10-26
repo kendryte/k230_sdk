@@ -33,11 +33,10 @@
 #include "mapi_vo_api.h"
 #include "mapi_sys_api.h"
 #include "k_video_comm.h"
-#include "k_vo_comm.h"
-#include "k_connector_comm.h"
-#include "mpi_connector_api.h"
 
 #define ENABLE_VO_LAYER   1
+
+static k_connector_type g_connector_type = HX8377_V2_MIPI_4LAN_1080X1920_30FPS;
 
 typedef struct
 {
@@ -162,7 +161,7 @@ static k_s32 sample_connector_init(void)
     k_s32 ret = 0;
     char dev_name[64] = {0};
     k_s32 connector_fd;
-    k_connector_type connector_type = HX8377_V2_MIPI_4LAN_1080X1920_30FPS;
+    k_connector_type connector_type = g_connector_type;
 
     k_connector_info connector_info;
     memset(&connector_info, 0, sizeof(k_connector_info));
@@ -202,6 +201,10 @@ void vo_enable()
     kd_mapi_vo_enable();
 }
 
+void set_connector_type(k_connector_type &connector_type) {
+    g_connector_type = connector_type;
+}
+
 void vo_deinit()
 {
     kd_mapi_vo_disable();
@@ -214,7 +217,7 @@ void vo_layer_init(k_u32 width,k_u32 height)
 
     memset(&info, 0, sizeof(info));
     // config layer
-    if (width > 1080)
+    if (width > 1080 && g_connector_type == HX8377_V2_MIPI_4LAN_1080X1920_30FPS)
     {
         info.act_size.width = height;
         info.act_size.height = width;

@@ -12,50 +12,13 @@ static void sigHandler(int sig_no) {
 }
 
 static void help() {
-    std::cout << "Usage: ./rtsp_demo -s 0 -n 2 -t h265 -w 1280 -h 720." << std::endl;
-    std::cout << "-s: the sensor type:" << std::endl;
-    std::cout << "       0: ov9732." << std::endl;
-    std::cout << "       1: ov9286 ir." << std::endl;
-    std::cout << "       2: ov9286 speckle." << std::endl;
-    std::cout << "       3: imx335 2LANE 1920Wx1080H." << std::endl;
-    std::cout << "       4: imx335 2LANE 2592Wx1944H." << std::endl;
-    std::cout << "       5: imx335 4LANE 2592Wx1944H." << std::endl;
-    std::cout << "       6: imx335 2LANE MCLK 7425 1920Wx1080H." << std::endl;
-    std::cout << "       7: imx335 2LANE MCLK 7425 2592Wx1944H." << std::endl;
-    std::cout << "       8: imx335 4LANE MCLK 7425 2592Wx1944H." << std::endl;
+    std::cout << "Usage: ./rtsp_demo -s 7 -n 2 -t h265 -w 1280 -h 720." << std::endl;
+    std::cout << "-s: the sensor type: default 7" << std::endl;
+    std::cout << "       see camera sensor doc." << std::endl;
     std::cout << "-n: the session number, range: [1, 3]." << std::endl;
     std::cout << "-t: the video encoder type: h264/h265/mjpeg." << std::endl;
     std::cout << "-w: the video encoder width." << std::endl;
     std::cout << "-h: the video encoder height." << std::endl;
-}
-
-static k_vicap_sensor_type get_sensor_type(k_u32 sensor_index)
-{
-    switch (sensor_index)
-    {
-    case 0:
-        return OV_OV9732_MIPI_1280X720_30FPS_10BIT_LINEAR;
-    case 1:
-        return OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_IR;
-    case 2:
-        return OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_SPECKLE;
-    case 3:
-        return IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_LINEAR;
-    case 4:
-        return IMX335_MIPI_2LANE_RAW12_2592X1944_30FPS_LINEAR;
-    case 5:
-        return IMX335_MIPI_4LANE_RAW12_2592X1944_30FPS_LINEAR;
-    case 6:
-        return IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_MCLK_7425_LINEAR;
-    case 7:
-        return IMX335_MIPI_2LANE_RAW12_2592X1944_30FPS_MCLK_7425_LINEAR;
-    case 8:
-        return IMX335_MIPI_4LANE_RAW12_2592X1944_30FPS_MCLK_7425_LINEAR;
-    default:
-        printf("unsupport sensor type %d, use default IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_LINEAR\n", sensor_index);
-        return IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_LINEAR;
-    }
-    return IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_LINEAR;
 }
 
 int main(int argc, char *argv[]) {
@@ -96,7 +59,7 @@ int main(int argc, char *argv[]) {
             } else if (strcmp(argv[i], "-h") == 0) {
                 video_height = atoi(argv[i+1]);
             } else if (strcmp(argv[i], "-s") == 0) {
-                sensor_type = get_sensor_type(atoi(argv[i+1]));
+                sensor_type = (k_vicap_sensor_type)atoi(argv[i+1]);
             }
             else if (strcmp(argv[i], "--help") == 0) {
                 help();
@@ -111,9 +74,8 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    std::string session_name = "session";
-
     for (int i = 0; i < session_num; i++) {
+        std::string session_name = "session";
         SessionAttr session_attr;
         memset(&session_attr, 0, sizeof(session_attr));
         session_attr.session_idx = i;

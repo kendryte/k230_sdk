@@ -33,10 +33,12 @@ extern "C" {
 #endif
 
 #include "k_type.h"
+#include "k_connector_comm.h"
 
 k_s32 vo_init();
 k_s32 vo_deinit();
 void display_layer_init(k_u32 width,k_u32 height);
+void display_set_connector_type(k_connector_type type);
 void display_layer_deinit();
 
 #ifdef __cplusplus

@@ -53,5 +53,5 @@ echo hid > configs/c.1/strings/0x409/configuration
 ln -s functions/hid.usb0/ configs/c.1/
 ln -s functions/hid.usb1/ configs/c.1/
 
-echo 91540000.usb-otg > UDC
+echo 91500000.usb-otg > UDC
 

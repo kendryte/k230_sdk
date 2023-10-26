@@ -48,6 +48,8 @@
 #define PRIVATE_POLL_SZE                                        (1920 * 1080 * 3 / 2)
 #define PRIVATE_POLL_NUM                                        (4)
 
+static k_connector_type g_connector_type = HX8377_V2_MIPI_4LAN_1080X1920_30FPS;
+
 typedef struct
 {
     k_u64 osd_phy_addr;
@@ -172,7 +174,8 @@ static k_s32 sample_connector_init(void)
     k_s32 ret = 0;
     char dev_name[64] = {0};
     k_s32 connector_fd;
-    k_connector_type connector_type = HX8377_V2_MIPI_4LAN_1080X1920_30FPS;
+    k_connector_type connector_type = g_connector_type;
+    printf("connector_type:%d \n",g_connector_type);
     k_connector_info connector_info;
 
     memset(&connector_info, 0, sizeof(k_connector_info));
@@ -202,6 +205,10 @@ static k_s32 sample_connector_init(void)
     return 0;
 }
 
+void display_set_connector_type(k_connector_type type)
+{
+    g_connector_type = type;
+}
 
 void display_layer_init(k_u32 width,k_u32 height)
 {
@@ -225,9 +232,18 @@ void display_layer_init(k_u32 width,k_u32 height)
     // config lyaer
     if (width > 1088)
     {
-        info.act_size.width = height;
-        info.act_size.height = width;
-        info.func = K_ROTATION_90;
+        if (g_connector_type == HX8377_V2_MIPI_4LAN_1080X1920_30FPS)
+        {
+            info.act_size.width = height;
+            info.act_size.height = width;
+            info.func = K_ROTATION_90;
+        }
+        else
+        {
+            info.act_size.width = width;
+            info.act_size.height = height;
+            info.func = 0;
+        }
     }
     else
     {

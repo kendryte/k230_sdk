@@ -1,0 +1,1 @@
+./face_registration.elf face_detection_640.kmodel 0.5 0.2 face_recognition.kmodel 10 0.75 face_pose.kmodel 20 20 20 None 1 ./bin_db/

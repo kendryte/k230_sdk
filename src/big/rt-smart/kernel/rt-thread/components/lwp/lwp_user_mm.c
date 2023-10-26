@@ -367,7 +367,7 @@ void* lwp_mmap2(void *addr, size_t length, int prot,
     if (fd == -1)
     {
         rt_mm_lock();
-        if (length == 0x1b0) /* TODO: workround for tls bug, by aozima, need fix asap. */
+        if (length == 0x1b0||length == 0xb70)  /* TODO: workround for tls bug, by aozima, need fix asap. */
         {
             ret = lwp_map_user(lwp_self(), addr, length + ARCH_PAGE_SIZE, 0);
             ret += ARCH_PAGE_SIZE;

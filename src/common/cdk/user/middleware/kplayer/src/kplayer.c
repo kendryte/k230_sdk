@@ -45,6 +45,7 @@ static k_bool g_play_start = K_FALSE;
 static k_bool g_play_pause = K_FALSE;
 static pthread_t g_play_tid = 0;
 static K_PLAYER_PROGRESS_INFO g_progress_info;
+static K_PLAYER_CONNECTOR_TYPE g_connector_type = K_PLAYER_HX8377_V2_MIPI_4LAN_1080X1920_30FPS;
 
 static k_payload_type _get_payload_type(k_mp4_codec_id_e codec_id)
 {
@@ -158,6 +159,11 @@ k_s32 kd_player_deinit(k_bool deinit_vo)
     return K_SUCCESS;
 }
 
+void kd_player_set_connector_type(K_PLAYER_CONNECTOR_TYPE connector_type)
+{
+    g_connector_type = connector_type;
+}
+
 k_s32 kd_player_setdatasource(const k_char *filePath)
 {
     k_s32 ret;
@@ -175,7 +181,7 @@ k_s32 kd_player_setdatasource(const k_char *filePath)
 
     if (g_video_track != INVALID_STREAM_TRACK)
     {
-        ret = disp_open(g_player_video_info.type,g_player_video_info.width,g_player_video_info.height);
+        ret = disp_open(g_player_video_info.type,g_player_video_info.width,g_player_video_info.height,g_connector_type);
         if (ret != K_SUCCESS)
         {
             printf("disp_open failed\n");
@@ -347,7 +353,7 @@ static int g_pic_size = 0;
 k_s32 kd_picture_init()
 {
     k_s32 ret;
-    ret = disp_open(K_PT_JPEG,g_pic_width,g_pic_height);
+    ret = disp_open(K_PT_JPEG,g_pic_width,g_pic_height,g_connector_type);
     if (ret != K_SUCCESS)
     {
         printf("disp_open failed\n");

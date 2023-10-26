@@ -1,0 +1,23 @@
+{
+  "say_to_familymembers": {
+    "describe": "Use this function when you need to greet or communicate with family members.",
+    "args": {
+      "words":  "What would you like to say to your family members in Chinese"
+    }
+  },
+  "say_to_guest": {
+    "describe": "Use this function when you need to greet and communicate with guest.",
+    "args": {
+      "words":  "What would you like to say to guest in Chinese"
+    }
+  },
+  "say_to_stranger":{
+    "describe": "Use this function when you want to speak with a stranger, take the initiative to say hello and ask for their name.",
+    "args": {
+      "words":  "what would you like to say to stranger to greet and ask his or her name in Chinese"
+    }
+  }
+}
+
+
+

@@ -239,6 +239,21 @@ typedef struct
 
 typedef struct
 {
+    k_u32 hsync_start;
+    k_u32 hsync_stop;
+    k_u32 hsync1_start;
+    k_u32 hsync1_stop;
+    k_u32 hsync2_start;
+    k_u32 hsync2_stop;
+    k_u32 vsync1_start;
+    k_u32 vsync1_stop;
+    k_u32 vsync2_start;
+    k_u32 vsync2_stop;
+} k_vo_sync_attr;
+
+
+typedef struct
+{
     k_u32 n;
     k_u32 m;
     k_u32 voc;

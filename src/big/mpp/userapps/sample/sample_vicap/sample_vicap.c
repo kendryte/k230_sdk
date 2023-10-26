@@ -367,7 +367,7 @@ static void usage(void)
     printf("usage: ./sample_vicap -mode 0 -dev 0 -sensor 0 -chn 0 -chn 1 -ow 640 -oh 480 -preview 1 -rotation 1\n");
     printf("Options:\n");
     printf(" -mode:         vicap work mode[0: online mode, 1: offline mode. only offline mode support multiple sensor input]\tdefault 0\n");
-    printf(" -conn:         vo connector device [0: hx8399, 1: lt9611.]\tdefault 0\n");
+    printf(" -conn:         vo connector device [0: hx8399, 1: lt9611-1920x1080p60, 2: lt9611-1920x1080p30]\tdefault 0\n");
 
     printf(" -itype:        vicap input type[0,1]\t0: sensor input, 1: user raw image input, default 0\n");
     printf(" -ifile:        the input raw image file, only used for user raw image input\n");
@@ -485,6 +485,8 @@ int main(int argc, char *argv[])
             if (conn == 0) {
                 connector_type = HX8377_V2_MIPI_4LAN_1080X1920_30FPS;
             } else if (conn == 1) {
+                connector_type = LT9611_MIPI_4LAN_1920X1080_60FPS;
+            } else if (conn == 2) {
                 connector_type = LT9611_MIPI_4LAN_1920X1080_30FPS;
             } else {
                 printf("unsupport connector deivce.\n");

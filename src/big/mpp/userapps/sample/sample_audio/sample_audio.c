@@ -57,6 +57,7 @@ static  void _help()
     printf("-loglevel: show kernel log level[0,7]\n");
     printf("-bitwidth: set audio bit width(16,24,32)\n");
     printf("-channels: channel count\n");
+    printf("-monochannel:0:mic input 1:headphone input\n");
     printf("-filename: load or save file name\n");
     printf("-audio3a: enable audio3a(0,1)\n");
     //printf("-i2smode:set i2s mode(1:i2s  2:right justified  4:left justified)\n");
@@ -70,13 +71,14 @@ static k_i2s_work_mode g_i2s_work_mode = K_STANDARD_MODE;
 static k_bool    g_enable_audio3a = K_FALSE;
 static char g_wav_name[256];
 static k_u32     g_channel_count = 2;
+static k_i2s_in_mono_channel  g_mono_channel = KD_I2S_IN_MONO_RIGHT_CHANNEL;//mono channel use mic input
 static void *sample_thread_fn(void *arg)
 {
     switch (g_type)
     {
     case 0:
         printf("sample ai i2s module\n");
-        audio_sample_get_ai_i2s_data(g_wav_name,g_bit_width, g_sample_rate,g_channel_count,g_i2s_work_mode, g_enable_audio3a); //采样精度设置为32时，不要启动2组io，因为无法区分数据是哪组
+        audio_sample_get_ai_i2s_data(g_wav_name,g_bit_width, g_sample_rate,g_channel_count,g_mono_channel,g_i2s_work_mode, g_enable_audio3a); //采样精度设置为32时，不要启动2组io，因为无法区分数据是哪组
         break;
     case 1:
         printf("sample ai pdm module\n");
@@ -196,6 +198,10 @@ int main(int argc, char *argv[])
         {
             g_channel_count = atoi(argv[i + 1]);
         }
+        else if (strcmp(argv[i], "-monochannel") == 0)
+        {
+            g_mono_channel = (k_i2s_in_mono_channel)atoi(argv[i + 1]);
+        }
         else if (strcmp(argv[i], "-loglevel") == 0)
         {
             nloglevel = atoi(argv[i + 1]);
@@ -232,7 +238,7 @@ int main(int argc, char *argv[])
     }
 
 
-    printf("audio type:%d,sample rate:%d,bit width:%d,channels:%d,enablecodec:%d\n", g_type, g_sample_rate,nbitwidth,g_channel_count,g_enable_audio_codec);
+    printf("audio type:%d,sample rate:%d,bit width:%d,channels:%d,enablecodec:%d,monochannel:%d\n", g_type, g_sample_rate,nbitwidth,g_channel_count,g_enable_audio_codec,g_mono_channel);
 
     _set_mod_log(K_ID_AO,nloglevel);//K_DBG_EMERG
     _set_mod_log(K_ID_AI,nloglevel);//K_DBG_EMERG

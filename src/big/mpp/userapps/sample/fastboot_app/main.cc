@@ -658,6 +658,7 @@ int main(int argc, char *argv[])
     int num = 0;
     int ret;
     PRINT_TIME_NOW();
+
     if (argc != 2)
     {
         std::cerr << "Usage: " << argv[0] << " <kmodel>" << std::endl;
@@ -676,7 +677,8 @@ int main(int argc, char *argv[])
     size_t size = CHANNEL * ISP_CHN1_HEIGHT * ISP_CHN1_WIDTH;;
 
     MobileRetinaface model(argv[1], CHANNEL, ISP_CHN1_HEIGHT, ISP_CHN1_WIDTH);
-    std::vector<int> boxes;
+    DetectResult box_result;
+    std::vector<face_coordinate> boxes;
 
     TEST_BOOT_TIME_INIT();
 
@@ -711,9 +713,9 @@ int main(int argc, char *argv[])
 
         model.run(reinterpret_cast<uintptr_t>(vbvaddr), reinterpret_cast<uintptr_t>(dump_info.v_frame.phys_addr[0]));
         kd_mpi_sys_munmap(vbvaddr, size);
-        // model.run();
         // get face boxes
-        boxes = model.get_result();
+        box_result = model.get_result();
+        boxes = box_result.boxes;
 #ifdef TEST_BOOT_TIME
         TEST_BOOT_TIME_TRIGER();
         if(boxes.size() > 0)
@@ -726,27 +728,29 @@ int main(int argc, char *argv[])
             printf("boxes %llu \n",(perf_get_smodecycles()));
         }
 #endif
-        if(boxes.size() / 4 < face_count)
+        if(boxes.size() < face_count)
         {
-            for (size_t i = boxes.size() / 4; i < face_count; i++)
+            for (size_t i = boxes.size(); i < face_count; i++)
             {
                 vo_frame.draw_en = 0;
                 vo_frame.frame_num = i + 1;
                 kd_mpi_vo_draw_frame(&vo_frame);
             }
         }
-        for (size_t i = 0, j = 0; i < boxes.size(); i += 4)
+
+        for (size_t i = 0, j = 0; i < boxes.size(); i += 1)
         {
             // std::cout << "[" << boxes[i] << ", " << boxes[i + 1] << ", " << boxes[i + 2] <<", " << boxes[i + 3] << "]" << std::endl;
             vo_frame.draw_en = 1;
-            vo_frame.line_x_start = ((uint32_t)boxes[0 + i]) * ISP_CHN0_WIDTH / ISP_CHN1_WIDTH;
-            vo_frame.line_y_start = ((uint32_t)boxes[1 + i]) * ISP_CHN0_HEIGHT / ISP_CHN1_HEIGHT;
-            vo_frame.line_x_end = ((uint32_t)boxes[2 + i]) * ISP_CHN0_WIDTH / ISP_CHN1_WIDTH;
-            vo_frame.line_y_end = ((uint32_t)boxes[3 + i]) * ISP_CHN0_HEIGHT / ISP_CHN1_HEIGHT;
+            vo_frame.line_x_start = ((uint32_t)boxes[i].x1) * ISP_CHN0_WIDTH / ISP_CHN1_WIDTH;
+            vo_frame.line_y_start = ((uint32_t)boxes[i].y1) * ISP_CHN0_HEIGHT / ISP_CHN1_HEIGHT;
+            vo_frame.line_x_end = ((uint32_t)boxes[i].x2) * ISP_CHN0_WIDTH / ISP_CHN1_WIDTH;
+            vo_frame.line_y_end = ((uint32_t)boxes[i].y2) * ISP_CHN0_HEIGHT / ISP_CHN1_HEIGHT;
             vo_frame.frame_num = ++j;
             kd_mpi_vo_draw_frame(&vo_frame);
         }
-        face_count = boxes.size() / 4;
+
+        face_count = boxes.size();
         ret = kd_mpi_vicap_dump_release(vicap_dev, VICAP_CHN_ID_1, &dump_info);
         if (ret) {
             printf("sample_vicap...kd_mpi_vicap_dump_release failed.\n");
@@ -755,7 +759,7 @@ int main(int argc, char *argv[])
 
 app_exit:
     pthread_join(exit_thread_handle, NULL);
-    for(size_t i = 0;i < boxes.size()/4;i++)
+    for(size_t i = 0;i < boxes.size();i++)
     {
         vo_frame.draw_en = 0;
         vo_frame.frame_num = i + 1;

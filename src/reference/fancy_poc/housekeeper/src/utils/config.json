@@ -1,0 +1,23 @@
+{
+    "kmodel_bytetrack": "bytetrack_yolov5n.kmodel",
+    "pd_thresh": 0.1,
+    "nms_thresh_bytetrack": 0.45,
+    "input_mode": "None",
+    "debug_mode": 2,
+    "fps": 7,
+    "buffer": 60,
+    "kmodel_felldown": "yolov5n-falldown.kmodel",
+    "fdd_thresh": 0.3,
+    "nms_thresh_felldown": 0.45 ,
+    "db_img_dir": "./bin_db/",
+    "kmodel_det": "face_detection_640.kmodel",
+    "obj_thres": 0.5,
+    "nms_thres_face": 0.2,
+    "kmodel_recg": "face_recognition.kmodel",
+    "max_register_face": 20,
+    "recg_thres": 0.7,
+    "kmodel_fp": "face_pose.kmodel",
+    "roll_thres": 30,
+    "yaw_thres": 20,
+    "pitch_thres": 30
+}

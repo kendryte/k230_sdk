@@ -149,7 +149,7 @@ int main(int argc, char *argv[])
         break;
     case DISPALY_VO_LT9611_TEST :
         // sample_connector_init();
-        sample_connector_osd_install_frame(LT9611_MIPI_4LAN_1920X1080_30FPS);
+        sample_connector_osd_install_frame(LT9611_MIPI_4LAN_1920X1080_60FPS);
         break;
     default :
         break;

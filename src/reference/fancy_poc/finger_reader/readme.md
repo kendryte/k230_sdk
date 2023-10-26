@@ -44,7 +44,7 @@ Document version: V1.0 Release date: 2023-8-31
 
 ### 1. 下载服务端源码
 
-- git clone
+- 将src目录下的finger_reader_server目录下载到本地
 
 ### 2.在准备服务端运行环境
 

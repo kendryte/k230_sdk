@@ -32,6 +32,7 @@
 
 #include "canaan-i2s-ws2812.h"
 #define CANAAN_DRIVER_NAME	"canaan-ws2812"
+#define WSIOC_RESET     _IOW('W', 0x10, int)
 
 #define I2S_CHANNEL_0   0
 #define I2S_CHANNEL_1   1
@@ -292,43 +293,17 @@ static void k230_i2s_init(const void *reg, int i2s_tx_num, int word_len)
 static void i2s_transmit_data(const void *reg, int channel_num, void *buf, int len)
 {
     int i = 0;
-    int remanent = len % 4;
     int *data = buf;
-    char *re = buf;
-    int value = 0;
     i2s_t *i2s = (i2s_t*)reg;
 
-    while (i < len/4)
+    while (i < len/8)
     {
         if (i2s->channel[channel_num].isr & 0x10)
         {
-            i2s->channel[channel_num].left_rxtx = data[i];
-            if ((i + 1) >= (len / 4))
-                break;
-            i2s->channel[channel_num].right_rxtx = data[i+1];
-            i += 2;
+            i2s->channel[channel_num].left_rxtx = data[i*2];
+            i2s->channel[channel_num].right_rxtx = data[i*2+1];
+            i++;
         }
-    }
-
-    if (remanent)
-    {
-        for (i = 0; i < remanent; i++)
-        {
-            value |= re[len - 1 - i] << 8*(3-i);
-        }
-        if (i == 3)
-        {
-            value |= 0xff;
-        } else
-        if (i == 2)
-        {
-            value |= 0xffff;
-        } else
-        if (i == 1)
-        {
-            value |= 0xffffff;
-        }
-        i2s->channel[channel_num].right_rxtx = value;
     }
 }
 
@@ -336,6 +311,8 @@ static int ws2812_open(struct inode *inode, struct file *file)
 {
     ws2812_t *ws2812 = container_of(file->private_data,
 					      ws2812_t, mdev);
+
+    k230_i2s_init(ws2812->base, I2S_CHANNEL_0, 32);
     /* enable i2s channel */
     i2s_tx_channel_enable(ws2812->base, I2S_CHANNEL_0, true); //channel0 output enable
 
@@ -357,7 +334,13 @@ static ssize_t ws2812_write(struct file *file, const char __user *buf, size_t si
         return -EFAULT;
     }
 
-    ws2812_data = kmalloc(size * 4 + 4, GFP_KERNEL);
+    if (size % 2)
+    {
+        ws2812_data = kmalloc(size * 4 + 4, GFP_KERNEL);
+    } else {
+        ws2812_data = kmalloc(size * 4, GFP_KERNEL);
+    }
+
 	if (!ws2812_data)
 		return -ENOMEM;
 
@@ -365,16 +348,45 @@ static ssize_t ws2812_write(struct file *file, const char __user *buf, size_t si
     {
         ws2812_data[i] = rgb_to_ws2812(data[i]);
     }
-    ws2812_data[i] = 0xffffffff;
 
-    i2s_transmit_data(ws2812->base, I2S_CHANNEL_0, (void*)ws2812_data, size * 4 + 4);
+    if (size % 2)
+    {
+        ws2812_data[i] = 0x0;
+        i2s_transmit_data(ws2812->base, I2S_CHANNEL_0, (void*)ws2812_data, size * 4 + 4);
+    } else {
+        i2s_transmit_data(ws2812->base, I2S_CHANNEL_0, (void*)ws2812_data, size * 4);
+    }
+
+    kfree(data);
+    kfree(ws2812_data);
     return size;
+}
+
+static long ws2812_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+{
+    unsigned int *data;
+    int i;
+    ws2812_t *ws2812 = container_of(file->private_data, ws2812_t, mdev);
+
+	data = kmalloc(400, GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
+
+    for (i = 0; i < 50; i++)
+        data[i] = 0xffffffff;
+    for (i = 50; i < 100; i++)
+        data[i] = 0x0;
+
+    i2s_transmit_data(ws2812->base, I2S_CHANNEL_0, (void*)data, 400);
+    kfree(data);
+    return 0;
 }
 
 static const struct file_operations ws2812_fops = {
 	.owner = THIS_MODULE,
 	.open = ws2812_open,
     .write = ws2812_write,
+    .unlocked_ioctl = ws2812_ioctl,
 };
 
 static int k230_ws2812_probe(struct platform_device *pdev)
@@ -414,8 +426,6 @@ static int k230_ws2812_probe(struct platform_device *pdev)
     misc->name = "ws2812";
     misc->fops = &ws2812_fops;
     misc->parent = dev;
-
-    k230_i2s_init(ws2812->base, I2S_CHANNEL_0, 32);
 
 	ret = misc_register(misc);
 	if(ret < 0){

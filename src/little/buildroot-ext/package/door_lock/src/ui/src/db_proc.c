@@ -412,7 +412,7 @@ static int write_file_2_mtd(char *file)
    // printf("cmd=%s\n", cmd);
    ret = system(cmd);
    sprintf(cmd, "cd /tmp; rm -rf face_db_*");
-   //system(cmd);
+   system(cmd);
    return ret;
 
 }

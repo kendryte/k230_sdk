@@ -1,0 +1,1 @@
+./ocr_reco.elf ocr_det_int16.kmodel 0.25 0.4 None ocr_rec_int16.kmodel 0

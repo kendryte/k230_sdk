@@ -1,0 +1,56 @@
+cmake_minimum_required(VERSION 3.2)
+project(nncase_sdk C CXX)
+
+set(nncase_sdk_root "${PROJECT_SOURCE_DIR}/../../big/nncase/")
+set(k230_sdk ${nncase_sdk_root}/../../../)
+set(CMAKE_EXE_LINKER_FLAGS "-T ${PROJECT_SOURCE_DIR}/cmake/link.lds --static")
+
+# set opencv
+set(k230_opencv ${k230_sdk}/src/big/utils/lib/opencv)
+include_directories(${k230_opencv}/include/opencv4/)
+link_directories(${k230_opencv}/lib ${k230_opencv}/lib/opencv4/3rdparty)
+
+# set mmz
+link_directories(${k230_sdk}/src/big/mpp/userapps/lib)
+
+# src/big/nncase/riscv64/rvvlib/include/
+
+# set nncase
+include_directories(${nncase_sdk_root}/riscv64)
+include_directories(${nncase_sdk_root}/riscv64/nncase/include)
+include_directories(${nncase_sdk_root}/riscv64/nncase/include/nncase/runtime)
+
+# add json
+include_directories(${PROJECT_SOURCE_DIR}/3rdparty/include)
+
+link_directories(${nncase_sdk_root}/riscv64/nncase/lib/)
+
+set(src main.cc common/utils.cc common/ai_base.cc face_detection/face_detection.cc face_detection/anchors_320.cc face_detection/anchors_640.cc face_gender/face_gender.cc face_recognition/face_recognition.cc face_pose/face_pose.cc falldown_detect.cc BYTETracker.cc kalmanFilter.cc lapjv.cc STrack.cc person_detect.cc)
+set(bin face_recognition.elf)
+
+include_directories(${PROJECT_SOURCE_DIR})
+include_directories(${nncase_sdk_root}/riscv64/rvvlib/include)
+include_directories("/mnt/src/big/nncase/riscv64/rvvlib/include/")
+include_directories("/mnt/src/big/mpp/userapps/api/")
+include_directories("/mnt/src/big/mpp/include/comm/")
+include_directories("/mnt/src/big/mpp/include/")
+include_directories("/mnt/src/big/mpp/userapps/sample/sample_vo/")
+include_directories("3rdparty/include/rapidjson")
+include_directories("common")
+
+include_directories(${k230_sdk}/src/big/mpp/userapps/api/)
+include_directories(${k230_sdk}/src/big/mpp/include)
+include_directories(${k230_sdk}/src/big/mpp/include/comm)
+include_directories(${k230_sdk}/src/big/mpp/userapps/sample/sample_vo)
+include_directories("eigen3")
+include_directories("rapidjson")
+link_directories(${nncase_sdk_root}/riscv64/rvvlib/)
+
+add_executable(${bin} ${src})
+target_link_libraries(${bin} nncase.rt_modules.k230 Nncase.Runtime.Native functional_k230 sys)
+target_link_libraries(${bin} rvv vicap vb cam_device cam_engine
+ hal oslayer ebase fpga isp_drv binder auto_ctrol common cam_caldb isi 3a ahdr buffer_management avs cameric_drv
+ aflt adci aca aee awdr3 cameric_reg_drv t_database_c t_shell_c t_mxml_c t_json_c t_common_c vo sensor)
+
+target_link_libraries(${bin} opencv_imgcodecs opencv_imgproc opencv_core zlib libjpeg-turbo libopenjp2 libpng libtiff libwebp csi_cv)
+install(TARGETS ${bin} DESTINATION bin)

@@ -70,7 +70,7 @@ Document version: V1.0 Release date: 2023-8-31
 
 ### 1. 下载服务端源码
 
-- git clone本项目到本地服务器
+- 将src目录下的multimodal_chat_robot_server代码下载到本地
 
 ### 2.在准备服务端运行环境
 

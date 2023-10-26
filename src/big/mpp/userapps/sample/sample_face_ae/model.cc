@@ -4,24 +4,11 @@
 #include "model.h"
 #include "util.h"
 
-template <class T>
-std::vector<T> read_binary_file(const char *file_name)
-{
-    std::ifstream ifs(file_name, std::ios::binary);
-    ifs.seekg(0, ifs.end);
-    size_t len = ifs.tellg();
-    std::vector<T> vec(len / sizeof(T), 0);
-    ifs.seekg(0, ifs.beg);
-    ifs.read(reinterpret_cast<char *>(vec.data()), len);
-    ifs.close();
-    return std::move(vec);
-}
-
 Model::Model(const char *model_name, const char *kmodel_file): model_name_(model_name)
 {
     // load kmodel
-    kmodel_ = read_binary_file<unsigned char>(kmodel_file);
-    interp_.load_model({ (const gsl::byte *)kmodel_.data(), kmodel_.size() }).expect("cannot load kmodel.");
+    std::ifstream ifs(kmodel_file, std::ios::binary);
+    interp_.load_model(ifs).expect("load_model failed");
 
     // create kpu input tensors
     for (size_t i = 0; i < interp_.inputs_size(); i++)
@@ -30,15 +17,6 @@ Model::Model(const char *model_name, const char *kmodel_file): model_name_(model
         auto shape = interp_.input_shape(i);
         auto tensor = host_runtime_tensor::create(desc.datatype, shape, hrt::pool_shared).expect("cannot create input tensor");
         interp_.input_tensor(i, tensor).expect("cannot set input tensor");
-    }
-
-    // create kpu output tensors
-    for (size_t i = 0; i < interp_.outputs_size(); i++)
-    {
-        auto desc = interp_.output_desc(i);
-        auto shape = interp_.output_shape(i);
-        auto tensor = host_runtime_tensor::create(desc.datatype, shape, hrt::pool_shared).expect("cannot create output tensor");
-        interp_.output_tensor(i, tensor).expect("cannot set output tensor");
     }
 }
 
@@ -61,7 +39,7 @@ std::string Model::model_name() const
 
 void Model::kpu_run()
 {
-#if PROFILING
+#if ENABLE_PROFILING
     ScopedTiming st(model_name() + " " + __FUNCTION__);
 #endif
 
@@ -81,4 +59,14 @@ void Model::input_tensor(size_t idx, runtime_tensor &tensor)
 runtime_tensor Model::output_tensor(size_t idx)
 {
     return interp_.output_tensor(idx).expect("cannot get output tensor");
+}
+
+dims_t Model::input_shape(size_t idx)
+{
+    return interp_.input_shape(idx);
+}
+
+dims_t Model::output_shape(size_t idx)
+{
+    return interp_.output_shape(idx);
 }

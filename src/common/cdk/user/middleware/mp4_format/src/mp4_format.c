@@ -609,7 +609,7 @@ int kd_mp4_write_frame(KD_HANDLE mp4_handle, KD_HANDLE track_handle, k_mp4_frame
 
                 // FIXME, code-refactor expected
                 k_track_ctx *track_audio = get_audio_track(mp4_handle);
-                if (track_audio->add_to_mp4 < 0) {
+                if (track_audio && track_audio->add_to_mp4 < 0) {
                     track_audio->add_to_mp4 = mp4_writer_add_audio(mp4_instance->muxer_instance.mov, MOV_OBJECT_G711u, 1, 16, 8000, NULL, 0);
                 }
                 mp4_writer_init_segment(mp4_instance->muxer_instance.mov);
@@ -636,7 +636,7 @@ int kd_mp4_write_frame(KD_HANDLE mp4_handle, KD_HANDLE track_handle, k_mp4_frame
 
                 // FIXME, code-refactor expected
                 k_track_ctx *track_audio = get_audio_track(mp4_handle);
-                if (track_audio->add_to_mp4 < 0) {
+                if (track_audio && track_audio->add_to_mp4 < 0) {
                     track_audio->add_to_mp4 = mp4_writer_add_audio(mp4_instance->muxer_instance.mov, MOV_OBJECT_G711u, 1, 16, 8000, NULL, 0);
                 }
                 mp4_writer_init_segment(mp4_instance->muxer_instance.mov);

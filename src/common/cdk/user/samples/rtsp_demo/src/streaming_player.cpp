@@ -51,7 +51,7 @@ int StreamingPlayer::StreamingPlayerInit() {
     }
 
     memset(&dev_attr_info_, 0, sizeof(dev_attr_info_));
-    if (sensor_type_ <= OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_SPECKLE)
+    if (sensor_type_ <= OV_OV9286_MIPI_1280X720_60FPS_10BIT_LINEAR_IR_SPECKLE || sensor_type_ >= SC_SC035HGS_MIPI_1LANE_RAW10_640X480_120FPS_LINEAR)
         dev_attr_info_.dw_en = K_FALSE;
     else
         dev_attr_info_.dw_en = K_TRUE;
