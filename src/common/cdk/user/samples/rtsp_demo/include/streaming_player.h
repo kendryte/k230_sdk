@@ -45,6 +45,7 @@ struct SessionAttr {
     uint32_t video_width;
     uint32_t video_height;
     k_vicap_sensor_type sensor_type;
+    k_i2s_in_mono_channel  auido_mono_channel_type;
 };
 
 #define MAX_SESSION_NUM 3
@@ -90,7 +91,7 @@ public:
     void Stop();
 
 private:
-    int CreateAudioEncode();
+    int CreateAudioEncode(const SessionAttr &session_attr);
     int CreateVideoEncode(const SessionAttr &session_attr);
     int StreamingPlayerInit();
     int StreamingPlayerDeinit();

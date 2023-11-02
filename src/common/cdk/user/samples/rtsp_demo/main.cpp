@@ -12,13 +12,15 @@ static void sigHandler(int sig_no) {
 }
 
 static void help() {
-    std::cout << "Usage: ./rtsp_demo -s 7 -n 2 -t h265 -w 1280 -h 720." << std::endl;
+    std::cout << "Usage: ./rtsp_demo -s 7 -n 2 -t h265 -w 1280 -h 720 -a 0." << std::endl;
     std::cout << "-s: the sensor type: default 7" << std::endl;
     std::cout << "       see camera sensor doc." << std::endl;
     std::cout << "-n: the session number, range: [1, 3]." << std::endl;
     std::cout << "-t: the video encoder type: h264/h265/mjpeg." << std::endl;
     std::cout << "-w: the video encoder width." << std::endl;
     std::cout << "-h: the video encoder height." << std::endl;
+    std::cout << "-a: audio input type(0:mic input  1:headphone input):default 0." << std::endl;
+
 }
 
 int main(int argc, char *argv[]) {
@@ -33,6 +35,7 @@ int main(int argc, char *argv[]) {
     int session_num = 1;
     int video_width = 1280;
     int video_height = 720;
+    k_i2s_in_mono_channel audio_input_type = KD_I2S_IN_MONO_RIGHT_CHANNEL;//mic input
 
     if (argc > 1) {
         for (int i = 1; i < argc; i += 2) {
@@ -60,6 +63,8 @@ int main(int argc, char *argv[]) {
                 video_height = atoi(argv[i+1]);
             } else if (strcmp(argv[i], "-s") == 0) {
                 sensor_type = (k_vicap_sensor_type)atoi(argv[i+1]);
+            } else if (strcmp(argv[i], "-a") == 0) {
+                audio_input_type = (k_i2s_in_mono_channel)atoi(argv[i+1]);
             }
             else if (strcmp(argv[i], "--help") == 0) {
                 help();
@@ -67,7 +72,7 @@ int main(int argc, char *argv[]) {
             }
         }
     }
-    
+
     StreamingPlayer *sample_player = new StreamingPlayer(sensor_type, video_width, video_height, session_num);
     if (!sample_player) {
         std::cout << "StreamingPlayer Init failed." << std::endl;
@@ -83,6 +88,7 @@ int main(int argc, char *argv[]) {
         session_attr.video_width = video_width;
         session_attr.video_height = video_height;
         session_attr.session_name = session_name.append(std::to_string(i));
+        session_attr.auido_mono_channel_type = audio_input_type;
 
         ret = sample_player->CreateSession(session_attr);
         if (ret < 0) {
@@ -90,7 +96,7 @@ int main(int argc, char *argv[]) {
             goto end;
         }
     }
-    
+
     sample_player->Start();
 
     while (!g_exit_flag) {

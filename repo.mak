@@ -5,7 +5,7 @@ OPENSBI_VERSION         = "9aa2f6d34e685bbbb0afaab4e308b93a9cd06ec7"
 BUILDROOT-EXT_VERSION   = "8eafd41f1dde4ff48b914d5978cecf7af627fba6"
 LINUX_VERSION           = "04b6371ff02d49cba18adc81dfcdbbec0cbfed56"
 UBOOT_VERSION           = "317894980fd498b863820b1343096fe188faae53"
-CDK_VERSION             = "fea98217f3a781508de19bb2ecfea390526414ba"
+CDK_VERSION             = "dbfb3da07812b2f73257ebc1fb0d54dded1f7740"
 
 RT-SMART_SRC_PATH        = src/big/rt-smart
 MPP_SRC_PATH             = src/big/mpp

@@ -180,7 +180,7 @@ int StreamingPlayer::CreateSession(const SessionAttr &session_attr) {
     ServerMediaSession *sms = ServerMediaSession::createNew(*env_, streamName.c_str(), streamName.c_str(), descriptionString);
 
     if (!audio_created_) {
-        int ret = CreateAudioEncode();
+        int ret = CreateAudioEncode(session_attr);
         if (ret < 0) {
             std::cout << "create audio encode failed." << std::endl;
             return -1;
@@ -296,7 +296,7 @@ int StreamingPlayer::CreateVideoEncode(const SessionAttr &session_attr) {
     return 0;
 }
 
-int StreamingPlayer::CreateAudioEncode() {
+int StreamingPlayer::CreateAudioEncode(const SessionAttr &session_attr) {
     k_aio_dev_attr aio_dev_attr;
     memset(&aio_dev_attr, 0, sizeof(aio_dev_attr));
     aio_dev_attr.audio_type = KD_AUDIO_INPUT_TYPE_I2S;
@@ -305,6 +305,7 @@ int StreamingPlayer::CreateAudioEncode() {
     aio_dev_attr.kd_audio_attr.i2s_attr.chn_cnt = 2;
     aio_dev_attr.kd_audio_attr.i2s_attr.i2s_mode = K_STANDARD_MODE;
     aio_dev_attr.kd_audio_attr.i2s_attr.snd_mode = KD_AUDIO_SOUND_MODE_MONO;
+    aio_dev_attr.kd_audio_attr.i2s_attr.mono_channel =  session_attr.auido_mono_channel_type;
     aio_dev_attr.kd_audio_attr.i2s_attr.frame_num = AUDIO_PERSEC_DIV_NUM;
     aio_dev_attr.kd_audio_attr.i2s_attr.point_num_per_frame = audio_sample_rate_ / aio_dev_attr.kd_audio_attr.i2s_attr.frame_num;
     aio_dev_attr.kd_audio_attr.i2s_attr.i2s_type = K_AIO_I2STYPE_INNERCODEC;
