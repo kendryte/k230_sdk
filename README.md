@@ -143,7 +143,7 @@ make prepare_sourcecode
 
   1. 根据不同开发板或软件功能，选择不同的配置config进行编译，编译命令格式：`make CONF=xxx`，如：
  > - 编译K230-USIP-LP3-EVB板子镜像，执行`make CONF=k230_evb_defconfig`  命令开始编译
- > - 编译CanMV-K230板子的镜像，执行 `make CONF=CONF=k230_canmv_defconfig`  命令开始编译
+ > - 编译CanMV-K230板子的镜像，执行 `make CONF=k230_canmv_defconfig`  命令开始编译
 
 > - 外部目录中自动下载的toolchain会映射至docker镜像中的`/opt/toolchain/`目录下。
 > - 默认参数`-u root`指定docker以root用户执行，k230_sdk无需root权限即可编译
