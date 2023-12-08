@@ -45,15 +45,15 @@ RUN apt-get clean all && \
 
 # local build flag
 RUN echo "False" > /tmp/.flag
-RUN wget -P /tmp/ "https://ai.b-bug.org/k230/downloads/aitest/aitest-0.0.2.dev20230625-py3-none-any.whl" || echo "True" > /tmp/.flag
+RUN wget -P /tmp/ "https://ai.b-bug.org/k230/downloads/aitest/aitest-0.0.3.dev20230717-py3-none-any.whl" || echo "True" > /tmp/.flag
 
 # config pip local source
-RUN FLAG=$(cat /tmp/.flag) && if [ "$FLAG" = "False" ]; then echo \
+RUN echo \
     '[global]\n\
     timeout = 60\n\
     index-url = https://pypi.tuna.tsinghua.edu.cn/simple\n\
     extra-index-url = https://mirrors.aliyun.com/pypi/simple/ https://mirrors.cloud.tencent.com/pypi/simple\n\
-    '  > /etc/pip.conf; cat /etc/pip.conf; else echo "Skip config pip source"; fi 
+    '  > /etc/pip.conf; cat /etc/pip.conf
 
 # install pip software
 RUN python3 -m pip install -U pyyaml pycryptodome gmssl \

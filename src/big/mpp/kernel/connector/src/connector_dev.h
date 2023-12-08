@@ -48,6 +48,7 @@ typedef struct {
     k_s32 (*connector_power) (void *ctx, k_s32 on);
     k_s32 (*connector_init) (void *ctx, k_connector_info *info);
     k_s32 (*connector_get_chip_id) (void *ctx, k_u32 *chip_id);
+    k_s32 (*connector_get_negotiated_data) (void *ctx, k_connector_negotiated_data *negotiated_data);
     k_s32 (*connector_conn_check)(void *ctx, k_s32 *conn);
 } k_connector_function;
 

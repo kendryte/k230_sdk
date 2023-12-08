@@ -97,6 +97,10 @@
 	};
 };
 
+&gpio1 {
+	status = "okay";
+};
+
 &mmc_sd0{
     status = "okay";
     io_fixed_1v8;
@@ -104,6 +108,7 @@
     tx_delay_line = <0x00>;
     bcmdhd_wlan {
         compatible = "android,bcmdhd_wlan";
+        gpio_wl_reg_on = <&port1 0 GPIO_ACTIVE_HIGH>;
     };
 };
 

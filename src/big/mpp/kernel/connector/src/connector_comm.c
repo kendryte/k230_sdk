@@ -105,6 +105,24 @@ k_s32 connector_priv_ioctl(struct connector_driver_dev *dev, k_u32 cmd, void *ar
             }
 			break;
         }
+        case KD_IOC_CONNECTOR_G_NEG_DATA :
+        {
+            k_connector_negotiated_data negotiated_data;
+			if (dev->connector_func.connector_get_negotiated_data == NULL) {
+                rt_kprintf("%s (%s)connector_get_negotiated_data is null\n", __func__, dev->connector_name);
+				return -1;
+			}
+			ret = dev->connector_func.connector_get_negotiated_data(dev, &negotiated_data);
+            if (ret == -1) {
+                rt_kprintf("%s (%s)connector_get_negotiated_data err\n", __func__, dev->connector_name);
+                return -1;
+            }
+            if (sizeof(negotiated_data) != lwp_put_to_user(args, &negotiated_data, sizeof(negotiated_data))){
+                rt_kprintf("%s:%d lwp_put_to_user err\n", __func__, __LINE__);
+                return -1;
+            }
+			break;
+        }
         default:
             break;
     }

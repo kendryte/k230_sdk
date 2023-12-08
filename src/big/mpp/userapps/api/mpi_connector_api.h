@@ -55,6 +55,10 @@ k_s32 kd_mpi_connector_close(k_s32 fd);
 
 k_s32 kd_mpi_connector_open(const char *connector_name);
 
+k_s32 kd_mpi_connector_get_negotiated_data(k_s32 fd, k_connector_negotiated_data *negotiated_data);
+
+k_s32 kd_mpi_connector_adapt_resolution(k_connector_type connector_type, k_connector_negotiated_data *negotiated_data);
+
 k_s32 kd_mpi_get_connector_info(k_connector_type connector_type, k_connector_info *connector_info);
 
 

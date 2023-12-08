@@ -77,6 +77,8 @@ struct AudioStream {
     k_vb_blk_handle blk_handle;
 };
 
+
+
 class Media {
   public:
     ~Media() { }
@@ -96,6 +98,9 @@ class Media {
     int VcapStop();
 
     int VoInit();
+    uint32_t VoGetInserFrame(k_video_frame_info *vf_info, void **pic_vaddr);
+    int VoInsertFrame(k_video_frame_info *vf_info);
+    int VoReleaseInserFrame(uint32_t inser_handle);
     int VoDeInit();
 
     int VencChnCreate(int chn, int width, int height);
@@ -147,6 +152,9 @@ class Media {
     AudioStream audio_innercom_stream_;
     k_u64 venc_width_ {1088};
     k_u64 venc_height_ {1920};
+    k_u32 osd_pool_id_ {0};
+    k_u64 osd_width_ {1088};
+    k_u64 osd_height_ {1920};
     k_u8 venc_snap_chn_ {0};
     k_u8 venc_chn_ {1};
     k_u64 detect_width_ {720};

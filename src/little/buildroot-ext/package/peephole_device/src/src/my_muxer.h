@@ -103,4 +103,6 @@ class MyJpegMuxer {
     std::queue<EventData> queue_;
 };
 
+extern volatile int storage_ready_;
+
 #endif // _MY_MUXER_H

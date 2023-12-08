@@ -15,7 +15,7 @@ typedef struct tag_picture_file_info
 }picture_file_info;
 
 #define MAX_FILES_COUNT  100
-static picture_file_info g_ary_files[MAX_FILES_COUNT];
+static picture_file_info *g_ary_files = NULL;
 static int g_files_count = 0;
 
 static int _file_size(char* filename)
@@ -87,6 +87,7 @@ static int readFileList(char *basePath)
 int _lv_picture_files_init(char *basePath)
 {
     g_files_count = 0;
+    g_ary_files = (picture_file_info*)calloc(sizeof(picture_file_info), MAX_FILES_COUNT);
     return readFileList(basePath);
 }
 

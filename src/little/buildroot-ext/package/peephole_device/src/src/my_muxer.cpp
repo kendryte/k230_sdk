@@ -4,6 +4,8 @@
 #include <memory>
 #include "mp4_format.h"
 
+volatile int storage_ready_ = 0;
+
 class Mp4Muxer {
   public:
     Mp4Muxer() {}
@@ -181,9 +183,6 @@ int MyMp4Muxer::Write(const AVEncFrameData &frame_data) {
         return 0;
     }
 
-    if (callback_ && !callback_->IsMp4SpaceAvailable()) {
-        return -1;
-    }
     // TODO,  adjust timestamp for avsync ...
     //
     AVEncData data;
@@ -229,8 +228,21 @@ void MyMp4Muxer::Process() {
                 usleep(1000 * 10);
                 continue;
             }
+            // FIXME, to control memory used by stream data
+            if (!storage_ready_) {
+                lck.unlock();
+                usleep(1000 * 100);
+                continue;
+            }
+
             data = queue_.top();
             queue_.pop();
+        }
+
+        if (!callback_->IsMp4SpaceAvailable()) {
+            // std::cout << "MyMp4Muxer::Process, no space, discard data" << std::endl;
+            usleep(1000 * 10);
+            continue;
         }
 
         // check cmd first
@@ -352,10 +364,6 @@ int MyJpegMuxer::Write(const UserEventData &event) {
     std::unique_lock<std::mutex> lck(mutex_);
     if (!initialized_) return -1;
 
-    if (callback_ && !callback_->IsJpegSpaceAvailable()) {
-        return -1;
-    }
-
     EventData data;
     data.type = event.type;
     data.timestamp_ms = event.timestamp_ms;
@@ -399,8 +407,22 @@ void MyJpegMuxer::Process() {
                 usleep(1000 * 10);
                 continue;
             }
+
+            // FIXME, to control memory used by jpeg data
+            if (!storage_ready_) {
+                lck.unlock();
+                // std::cout << "jpeg muxer --- waiting for storage ready ... " << std::endl;
+                usleep(1000 * 100);
+                continue;
+            }
+
             data = queue_.front();
             queue_.pop();
+        }
+
+        if (!callback_->IsJpegSpaceAvailable()) {
+            usleep(1000 * 10);
+            continue;
         }
 
         if (save_jpeg(data) < 0) {

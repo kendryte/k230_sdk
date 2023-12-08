@@ -24,17 +24,11 @@
  */
 #include "meta_human.h"
 
-bool Is_File_Exist(const std::string& file_path)
-{
-    std::ifstream file(file_path.c_str());
-    return file.good();
-}
 
 void writeBin0(std::string path, char *buf, int size)
 {
     std::ofstream outfile(path, std::ifstream::binary);
     outfile.write((char *)(buf), size);
-    // outfile.write((float *)(buf), size);
     outfile.close();
 }
 
@@ -50,7 +44,6 @@ void writeBinInt(std::string path, int num)
 
 std::string readBinInt(std::string path)
 {
-
     ifstream file2(path, std::ios::binary);
     int len2 = 0;
     file2.read((char*)&len2, sizeof(len2));
@@ -63,7 +56,6 @@ std::string readBinInt(std::string path)
 
     return str2;
 }
-
 
 // for image
 Meta_Human::Meta_Human(const char *kmodel_file,const int debug_mode):AIBase(kmodel_file,"Meta_Human", debug_mode)
@@ -89,15 +81,12 @@ Meta_Human::Meta_Human(const char *kmodel_file,  FrameCHWSize isp_shape, uintptr
     ai2d_in_tensor_ = hrt::create(typecode_t::dt_uint8, in_shape, hrt::pool_shared).expect("create ai2d input tensor failed");
     #endif
 
-    // ai2d_out_tensor
     ai2d_out_tensor_ = get_input_tensor(0);
-    // fixed padding resize param
     Utils::padding_resize(isp_shape_, {input_shapes_[0][3], input_shapes_[0][2]}, ai2d_builder_, ai2d_in_tensor_, ai2d_out_tensor_, cv::Scalar(104, 117, 123));
 }
 
 Meta_Human::~Meta_Human()
 {
-
 }
 
 // ai2d for image
@@ -120,12 +109,8 @@ void Meta_Human::pre_process()
     auto buf = ai2d_in_tensor_.impl()->to_host().unwrap()->buffer().as_host().unwrap().map(map_access_::map_write).unwrap().buffer();
     memcpy(reinterpret_cast<char *>(buf.data()), (void *)vaddr_, isp_size);
     hrt::sync(ai2d_in_tensor_, sync_op_t::sync_write_back, true).expect("sync write_back failed");
-    // ai2d_builder_->invoke().expect("error occurred in ai2d running");
     ai2d_builder_->invoke(ai2d_in_tensor_,ai2d_out_tensor_).expect("error occurred in ai2d running");
-    // run ai2d
     #endif
-    // auto vaddr_out_buf = ai2d_out_tensor_.impl()->to_host().unwrap()->buffer().as_host().unwrap().map(map_access_::map_read).unwrap().buffer();
-    // unsigned char *output = reinterpret_cast<unsigned char *>(vaddr_out_buf.data());
 }
 
 void Meta_Human::inference()
@@ -154,11 +139,7 @@ void Meta_Human::post_process(FrameSize frame_size,int idx,int num_storage)
             writeBin0(  "pong/" + std::to_string(idx_) +  "_0.bin",(char* )output_0, 1  * net_len/8 * net_len/8  * 1 * 4);
             writeBin0(  "pong/" + std::to_string(idx_) +  "_1.bin",(char *)output_1, 1  * net_len/8 * net_len/8 * 145 * 4);
         }
-        
     }
-    
-    
-
 }
 
 

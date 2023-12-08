@@ -6,6 +6,8 @@ from common.expired_dict import ExpiredDict
 from utils import move_dict_with_role_to_penultimate
 import openai
 import time
+import json
+
 if conf().get('expires_in_seconds'):
     all_sessions = ExpiredDict(conf().get('expires_in_seconds'))
 else:
@@ -108,8 +110,11 @@ class Session(object):
         session = all_sessions.get(session_id, [])
         if len(session) == 0:
             system_prompt = conf().get("character_desc", "")
-            system_item = {'role': 'system', 'content': system_prompt}
-            session.append(system_item)
+            demos_or_presteps = open(conf().get("task_ana_file", ""), "r", encoding="utf-8").read()
+            messages = json.loads(demos_or_presteps)
+            messages.insert(0, {"role": "system", "content": system_prompt})
+            for message in messages:
+                session.append(message)
             all_sessions[session_id] = session
         user_item = {'role': 'user', 'content': query}
         session.append(user_item)

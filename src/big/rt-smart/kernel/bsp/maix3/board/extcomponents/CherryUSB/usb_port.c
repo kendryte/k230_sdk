@@ -63,21 +63,9 @@ static int cdc_write(struct dfs_fd *fd, const void *buf, size_t count) {
     if (count == 0) {
         return 0;
     }
-    #if 0
-    rt_kprintf("write:");
-    for (size_t i = 0; i < count; i++) {
-        rt_kprintf("\\x%02X", ((unsigned char*)buf)[i]);
-    }
-    rt_kprintf("\n");
-    #endif
-    if ((count == 1) && (*(char*)buf == '\n')) {
-        usbd_ep_start_write(CDC_IN_EP, "\r\n", 2);
-    } else {
-        usbd_ep_start_write(CDC_IN_EP, buf, count);
-    }
-    // FIXME: async
-    usleep(10000);
-    // rt_sem_take(&cdc_write_sem, RT_WAITING_FOREVER);
+    // TODO: async
+    rt_sem_take(&cdc_write_sem, RT_WAITING_FOREVER);
+    usbd_ep_start_write(CDC_IN_EP, buf, count);
     return count;
 }
 
@@ -113,7 +101,7 @@ void usb_dc_low_level_init(void)
     }
     device->fops = &cdc_ops;
     rt_sem_init(&cdc_read_sem, "cdc/read", 0, RT_IPC_FLAG_FIFO);
-    rt_sem_init(&cdc_write_sem, "cdc/write", 0, RT_IPC_FLAG_FIFO);
+    rt_sem_init(&cdc_write_sem, "cdc/write", 1, RT_IPC_FLAG_FIFO);
 
 #define MEMORY_MSC 1
 #if !MEMORY_MSC

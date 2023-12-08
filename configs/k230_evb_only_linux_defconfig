@@ -18,7 +18,6 @@ CONFIG_LINUX_DEFCONFIG="k230_evb_linux_enable_vector"
 CONFIG_LINUX_DTB="k230_evb"
 # CONFIG_REMOTE_TEST_PLATFORM is not set
 CONFIG_GEN_IMG_SCRIPT="board/k230_evb_only_linux/gen_image.sh"
-CONFIG_RTT_CONSOLE_ID=3
 
 #
 # toolchain configurations

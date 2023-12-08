@@ -19,6 +19,8 @@ sensor|\
 connector|\
 lib|\
 fft|\
+pm|\
+mediafreq|\
 Makefile|\
 rt-smart.mk|\
 mpp.mk\
@@ -29,6 +31,7 @@ cipher|\
 sensor|\
 connector|\
 fft|\
+pm|\
 Makefile|\
 rt-smart.mk|\
 mpp.mk\
@@ -39,6 +42,7 @@ k_ioctl.h|\
 k_sensor_ioctl.h|\
 k_connector_ioctl.h|\
 k_fft_ioctl.h|\
+k_pm_ioctl.h|\
 )"
 
 delete_cdk_user_name_list="\

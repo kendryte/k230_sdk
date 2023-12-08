@@ -1,0 +1,1 @@
+translate_en_ch.elf translate_encoder.kmodel translate_decoder.kmodel trans_src.model trans_tag.model 0

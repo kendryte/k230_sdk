@@ -106,13 +106,24 @@ int MyApp::EnterPlaybackMode() {
 
 TrigerMode MyApp::EnterPirMode() {
     current_mode_ = PIR_MODE;
-    kmodel_path_ = "person_detect_yolov5n.kmodel";
+    kmodel_path_ = "/bin/person_detect_yolov5n.kmodel";
 
     media_->VcapSetDevAttr();
+    // for vo
+    if (enable_pir_vo_) {
+        VcapChnAttr vcap_chn_attr;
+        memset(&vcap_chn_attr, 0, sizeof(vcap_chn_attr));
+        vcap_chn_attr.output_width = 1088;
+        vcap_chn_attr.output_height = 1920;
+        vcap_chn_attr.crop_width = 1088;
+        vcap_chn_attr.crop_height = 1920;
+        vcap_chn_attr.pixel_format = PIXEL_FORMAT_YUV_SEMIPLANAR_420;
+        media_->VcapSetChnAttr(VICAP_CHN_ID_0, vcap_chn_attr);
+    }
     // for ai
     {
         VcapChnAttr vcap_chn_attr;
-        k_vicap_chn vi_detect_chn = VICAP_CHN_ID_0;
+        k_vicap_chn vi_detect_chn = VICAP_CHN_ID_1;
         vcap_chn_attr.output_width = 720;
         vcap_chn_attr.output_height = 1280;
         vcap_chn_attr.crop_width = 1088;
@@ -132,7 +143,8 @@ TrigerMode MyApp::EnterPirMode() {
         media_->VcapSetChnAttr(VICAP_CHN_ID_2, vcap_chn_attr);
     }
     media_->VcapInit();
-
+    if (enable_pir_vo_)
+        media_->VoInit();
     int venc_snap_chn_ = 0;
     media_->VencSnapChnCreate(venc_snap_chn_, 1088, 1920);
     media_->VencSnapChnStart();
@@ -149,6 +161,8 @@ TrigerMode MyApp::EnterPirMode() {
     while (!ai_exit_flag_ && !venc_exit_flag_) {
         usleep(10000);
     }
+    if (enable_pir_vo_)
+        media_->VoDeInit();
     media_->VcapStop();
     media_->VencSnapChnStop();
     if (person_detect_thread_.joinable())
@@ -170,6 +184,21 @@ void MyApp::StartPersonDetectThread() {
     person_detect_thread_ = std::thread([this]() {
         vector<BoxInfo> results;
         ScopedTiming st;
+        int osd_width = 1088;
+        int osd_height = 1920;
+
+        void *pic_vaddr = NULL;
+        uint32_t insert_vo_handle;
+        k_video_frame_info vf_info;
+        if (enable_pir_vo_) {
+            memset(&vf_info, 0, sizeof(vf_info));
+            vf_info.v_frame.width = osd_width;
+            vf_info.v_frame.height = osd_height;
+            vf_info.v_frame.stride[0] = osd_width;
+            vf_info.v_frame.pixel_format = PIXEL_FORMAT_ARGB_8888;
+            insert_vo_handle = media_->VoGetInserFrame(&vf_info, &pic_vaddr);
+        }
+
         k_u64 paddr = 0;
         void *vaddr = nullptr;
         k_u32 size = 3 * detect_width_ * detect_height_;
@@ -178,7 +207,7 @@ void MyApp::StartPersonDetectThread() {
         person_detect_ = new personDetect(kmodel_path_.c_str(), 0.5, 0.45, {3, detect_height_, detect_width_}, reinterpret_cast<uintptr_t>(vaddr), reinterpret_cast<uintptr_t>(paddr), 0);
         while (!ai_exit_flag_) {
             k_video_frame_info dump_frame;
-            k_s32 ret = media_->VcapGetDumpFrame(VICAP_CHN_ID_0, &dump_frame, vaddr);
+            k_s32 ret = media_->VcapGetDumpFrame(VICAP_CHN_ID_1, &dump_frame, vaddr);
             if (ret != K_SUCCESS) {
                 continue;
             }
@@ -193,7 +222,7 @@ void MyApp::StartPersonDetectThread() {
                     start_detect_.store(true);
                 } else {
                     int elapsed = st.ElapsedSeconds();
-                    if (elapsed >= 10) {
+                    if (elapsed >= detect_stay_dura_) {
                         printf("stay aram...\n");
                         check_stay_.store(true);
                         start_detect_.store(false);
@@ -205,10 +234,30 @@ void MyApp::StartPersonDetectThread() {
                 start_detect_.store(false);
             }
 
-            media_->VcapReleaseDumpFrame(VICAP_CHN_ID_0, &dump_frame);
+            if (enable_pir_vo_) {
+                cv::Mat osd_frame(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
+                if (check_stay_) {
+                    for (auto r : results) {
+                        int x1 =  r.x1 / 720 * osd_width;
+                        int y1 = r.y1 / 1280  * osd_height;
+
+                        int w = (r.x2-r.x1) / 720 * osd_width;
+                        int h = (r.y2-r.y1) / 1280  * osd_height;
+                        cv::rectangle(osd_frame, cv::Rect( x1,y1,w,h ), cv::Scalar(255, 255,0, 0), 6, 2, 0); // ARGB
+                    }
+                }
+
+                memcpy(pic_vaddr, osd_frame.data, osd_width * osd_height * 4);
+                media_->VoInsertFrame(&vf_info);
+            }
+            
+            media_->VcapReleaseDumpFrame(VICAP_CHN_ID_1, &dump_frame);
         }
         delete person_detect_;
         media_->MediaSysFree(paddr, vaddr);
+
+        if (enable_pir_vo_)
+            media_->VoReleaseInserFrame(insert_vo_handle);
     });
 }
 
@@ -378,6 +427,16 @@ TrigerMode MyApp::EnterDoorBellMode() {
 
     StartAencSendThread();
     StartVencSendThread();
+
+    if (enable_pir_vo_ && pir_to_doorbell_) {
+        uint8_t buf[128];
+        UserMessage *msg = (UserMessage*)buf;
+        msg->type = static_cast<int>(UserMsgType::CURRENT_MODE_TYPE);
+        msg->len = snprintf(msg->data, sizeof(buf) - 8,"%s", "doorbell_mode");
+        msg->data[msg->len] = '\0';
+        comm_server_->SendMessage(msg, sizeof(UserMessage) + msg->len + 1);
+        pir_to_doorbell_ = false;
+    }
 
     while(!doorbell_venc_exit_flag_
          &&!doorbell_aenc_exit_flag_
@@ -665,7 +724,7 @@ void MyApp::StartPlayAudioThread() {
         std::fstream audio_file;
         k_u32 music_data_size_ {0};
         k_u8 *music_data_ {nullptr};
-        audio_file.open("./doorbell.g711u", std::ios::in | std::ios::binary);
+        audio_file.open("/bin/doorbell.g711u", std::ios::in | std::ios::binary);
         if (audio_file.is_open()) {
             audio_file.seekg(0, std::ios::end);
             music_data_size_ = audio_file.tellg();
@@ -722,7 +781,8 @@ void MyApp::StartPlayAudioThread() {
             usleep(10000);
         }
 
-        delete []music_data_;
+        if (music_data_)
+            delete []music_data_;
         printf("StartPlayAudioThread stop...\n");
         return;
     });
@@ -734,6 +794,18 @@ void MyApp::ReceiveMessageThread() {
             if (comm_server_->ClientReady()) {
                 client_ready_.store(true);
                 exit_msg_.store(false);
+                if (enable_pir_vo_) {
+                    uint8_t buf[128];
+                    UserMessage *msg = (UserMessage*)buf;
+                    msg->type = static_cast<int>(UserMsgType::CURRENT_MODE_TYPE);
+                    if (current_mode_ == DOORBELL_MODE) {
+                        msg->len = snprintf(msg->data, sizeof(buf) - 8,"%s", "doorbell_mode");
+                    } else if (current_mode_ == PIR_MODE) {
+                        msg->len = snprintf(msg->data, sizeof(buf) - 8,"%s", "pir_mode");
+                    }
+                    msg->data[msg->len] = '\0';
+                    comm_server_->SendMessage(msg, sizeof(UserMessage) + msg->len + 1);
+                }
             }
 
             if (comm_server_->GetKeyPressed() && !key_pressed_) {
@@ -777,6 +849,7 @@ void MyApp::ReceiveMessageThread() {
                 venc_exit_flag_.store(true);
                 send_event_exit_flag_.store(true);
                 current_mode_ = DOORBELL_MODE;
+                pir_to_doorbell_ = true;
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(20));
         }

@@ -44,26 +44,76 @@ static uint64_t get_avail_space_megabytes(const std::string &dir) {
     return (availableDisk >> 20);
 }
 
+// FIXME
+static bool flash_boot(void) {
+    char buf[1024];
+    bool ret = false;
+    FILE* fp = popen("cat /proc/cmdline", "r");
+    if (fp) {
+        while (fgets(buf, 1024, fp) != NULL) {
+            std::string str = buf;
+            if (str.find("ubifs") != std::string::npos) {
+                ret = true;
+                break;
+            }
+        }
+        pclose(fp);
+    } else {
+        std::cout << "popen fail!" << std::endl;
+        return false;
+    }
+    return ret;
+}
+
 int MyApp::Init(unsigned short port) {
+    printf("peephole_before comminit : %llu\n", perf_get_smodecycles());
     if (client_.Init("peephole", this) < 0) {
         std::cout << "MyApp::Init() client_.init failed" << std::endl;
         return -1;
     }
+    printf("peephole_after comminit : %llu\n", perf_get_smodecycles());
 
     key_detect_thread_exit_flag_.store(false);
     key_detect_thread_ = std::thread([this](){
         key_event_handler();
     });
 
+    if (flash_boot()) {
+        storage_ready_ = 0;
+        sd_thd_ = std::thread([]() {
+            usleep(3000 * 1000); // FIXME, netdrv has higher priority
+            std::cout << "install mmc drv... " << std::endl;
+            system("insmod /lib/modules/5.10.4/kernel/drivers/mmc/core/mmc_core.ko");
+            // system("insmod /lib/modules/5.10.4/kernel/drivers/mmc/core/pwrseq_simple.ko");
+            // system("insmod /lib/modules/5.10.4/kernel/drivers/mmc/core/pwrseq_emmc.ko");
+            system("insmod /lib/modules/5.10.4/kernel/drivers/mmc/core/mmc_block.ko");
+            system("insmod /lib/modules/5.10.4/kernel/drivers/mmc/host/sdhci.ko");
+            system("insmod /lib/modules/5.10.4/kernel/drivers/mmc/host/sdhci-pltfm.ko");
+            system("insmod /lib/modules/5.10.4/kernel/drivers/mmc/host/sdhci-of-kendryte.ko");
+            usleep(1000 * 1000);
+            std::cout << "mount sdcard... " << std::endl;
+            system("mkdir -p /sharefs");
+            system("mount -t vfat /dev/mmcblk1p4 /sharefs");
+            system("mkdir -p /sharefs/DCIM/video");
+            system("mkdir -p /sharefs/DCIM/snapshot");
+            std::cout << "mount sdcard... done" << std::endl;
+            storage_ready_ = 1;
+        });
+    } else {
+        storage_ready_ = 1;
+    }
+
     mp4_muxer_.Init(this);
-    if (enable_record_) cmd_start_record();
+    if (enable_mp4_record_) cmd_start_record();
 
     jpeg_muxer_.Init(this);
 
+    printf("peephole_after CreateRtspServer : %llu\n", perf_get_smodecycles());
     if (CreateRtspServer() < 0) {
         std::cout << "MyApp::Init() CreateRtspServer failed" << std::endl;
         return - 1;
     }
+    printf("peephole_after CreateRtspServer : %llu\n", perf_get_smodecycles());
 
     request_power_off_.store(false);
     playback_ack_.store(false);
@@ -72,16 +122,17 @@ int MyApp::Init(unsigned short port) {
         return -1;
     }
 
-    std::cout << " mp4 available space (MB) : " << get_avail_space_megabytes(mp4_dir_) << std::endl;
-    std::cout << "jpeg available space (MB) : " << get_avail_space_megabytes(jpeg_dir_) << std::endl;
+    // std::cout << " mp4 available space (MB) : " << get_avail_space_megabytes(mp4_dir_) << std::endl;
+    // std::cout << "jpeg available space (MB) : " << get_avail_space_megabytes(jpeg_dir_) << std::endl;
 
     // init done, notify the comm-server that we are ready
     client_.Start();
+    printf("peephole_after comm-client start : %llu\n", perf_get_smodecycles());
     return 0;
 }
 
 void MyApp::DeInit() {
-    if (enable_record_) {
+    if (enable_mp4_record_) {
         this->EnableRecord(false);
     }
     if (key_detect_thread_.joinable()) {
@@ -100,6 +151,21 @@ void MyApp::DeInit() {
     client_.DeInit();
     mp4_muxer_.DeInit();
     jpeg_muxer_.DeInit();
+    //
+    if (flash_boot()) {
+        if (sd_thd_.joinable()) {
+            sd_thd_.join();
+        }
+        /*
+        system("umount /sharefs");
+        system("rmmod sdhci-of-kendryte");
+        system("rmmod sdhci-pltfm");
+        system("rmmod sdhci");
+        system("rmmod mmc_block");
+        system("rmmod mmc_core");
+        */
+    }
+    storage_ready_ = 0;
 }
 
 static uint64_t get_steady_time_ms();
@@ -109,7 +175,7 @@ int MyApp::EnterPlaybackMode(bool sync)
     if (!bEnterPlaybackMode)
     {
         std::cout << "EnterPlaybackMode --- 1 -- " << get_steady_time_ms() << std::endl;
-        if (enable_record_) {
+        if (enable_mp4_record_) {
             this->EnableRecord(false);
         }
         // exit all the services except comm
@@ -135,7 +201,7 @@ int MyApp::EnterPlaybackMode(bool sync)
             while (!playback_ack_.load()) {
                 usleep(1000);
                 ++count;
-                if(count > 500) {
+                if(count > 5000) {
                     std::cout << "PLAYBACK_ACK timeout" << std::endl;
                     break;
                 }
@@ -174,6 +240,7 @@ int MyApp::RpcSendEvent(const RpcEventData &event) {
 // IRpcClientCallback
 void MyApp::OnNewClient(int64_t conn_id, const std::string &remote_ip) {
     std::cout << "MyApp::OnNewClient -- id " << (long) conn_id << ", remote_ip : " << remote_ip << std::endl;
+    printf("OnNewClient : %llu\n", perf_get_smodecycles());
     StopRtspServer();
     StartRtspServer();
 }
@@ -212,6 +279,17 @@ void MyApp::OnMessage(const UserMessage *message) {
     case UserMsgType::PLAYBACK_ACK : {
         std::cout << "MyApp::OnMessage() -- PLAYBACK_ACK" << std::endl;
         playback_ack_.store(true);
+        break;
+    }
+    case UserMsgType::CURRENT_MODE_TYPE: {
+        std::cout << "MyApp::OnMessage() -- CURRENT_MODE_TYPE" << std::endl;
+        if (!strcmp(message->data, "doorbell_mode")) {
+            current_mode_ = DOORBELL_MODE;
+        } else if (!strcmp(message->data, "pir_mode")) {
+            current_mode_ = PIR_MODE;
+        } else {
+            current_mode_ = MODE_BUTT;
+        }
         break;
     }
     default: {
@@ -292,7 +370,7 @@ void MyApp::OnEvent(const UserEventData &event) {
     }
     }
 
-    if(enable_record_) {
+    if(enable_jpeg_recod_) {
         jpeg_muxer_.Write(event);
     }
 }
@@ -343,7 +421,7 @@ void MyApp::OnVEncFrameData(const AVEncFrameData &data) {
     }
     rtsp_lck.unlock();
 
-    if (enable_record_) {
+    if (enable_mp4_record_) {
         mp4_muxer_.Write(data);
     }
 }
@@ -368,7 +446,7 @@ void MyApp::OnAEncFrameData(const AVEncFrameData &data) {
     }
     rtsp_lck.unlock();
 
-    if (enable_record_) {
+    if (enable_mp4_record_) {
         // mix the audio data, FIXME
         std::unique_lock<std::mutex> lck(aq_mutex_);
         if (!audio_queue_.empty()) {
@@ -414,7 +492,7 @@ void MyApp::OnBackChannelData(std::string &session_name, const uint8_t *data, si
             data.flags = 0;  // not used
             this->SendAudioData(data, &cb);
 
-            if (enable_record_) {
+            if (enable_mp4_record_) {
                 BackchannelData audio_data;
                 audio_data.size = 320;
                 std::shared_ptr<uint8_t> p(new uint8_t[audio_data.size], std::default_delete<uint8_t[]>());

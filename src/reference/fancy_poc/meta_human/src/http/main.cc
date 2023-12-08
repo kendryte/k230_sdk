@@ -8,7 +8,7 @@
 #include <thread>
 #include <chrono>
 #include <sys/stat.h>
-#include<cstdio>
+#include <cstdio>
 #include <exception>  
 #include "scoped_timing.hpp"
 
@@ -16,7 +16,6 @@ using namespace std;
 
 std::string readBinInt(std::string path)
 {
-
     ifstream file2(path, std::ios::binary);
     int len2 = 0;
     file2.read((char*)&len2, sizeof(len2));
@@ -66,11 +65,10 @@ bool createFolder(string folderPath) {
 
 int main(int argc, char *argv[]) 
 {
-
     cout << ">>>>> Start!! <<<<<" << endl;
-    std::string aaa,abb;
-    std::string bbb;
-    bool flag0, flag1;
+    std::string cur;
+    std::string next;
+    bool flag_cur, flag_next;
     int idx = 0;
 
     std::string ping = "ping";
@@ -128,7 +126,6 @@ int main(int argc, char *argv[])
     std::string execute_folder = ping;
     std::string not_execute_folder = pong;
 
-
     const char *server_ip = "192.168.1.2";
     int server_port = 8080; 
     int sock = socket(AF_INET, SOCK_STREAM, 0); 
@@ -146,7 +143,6 @@ int main(int argc, char *argv[])
         isConnect = connect(sock, (struct sockaddr *)&server_addr, sizeof(server_addr));
     }
     
-    
     {
         while(isConnect < 0)
         {
@@ -159,7 +155,6 @@ int main(int argc, char *argv[])
 
     while(1)
     {
-
         std::string execute_first_bin = execute_folder +  "/" + std::to_string(0) + "_0.bin";
         std::string not_execute_first_bin = not_execute_folder +  "/" + std::to_string(0) + "_0.bin";
 
@@ -184,7 +179,6 @@ int main(int argc, char *argv[])
             }
         }
 
-
         {
             if(Is_File_Exist(not_execute_first_bin))
             {
@@ -205,22 +199,19 @@ int main(int argc, char *argv[])
                 idx = 0;
             }
         }
-        
 
-        aaa =  execute_folder + "/" + std::to_string(idx);
-        bbb =  execute_folder + "/"  + std::to_string(idx+1);
+        cur =  execute_folder + "/" + std::to_string(idx);
+        next =  execute_folder + "/"  + std::to_string(idx+1);
 
-        flag0 = Is_File_Exist( bbb + "_0.bin" );
-        flag1 = Is_File_Exist( bbb + "_1.bin" );
+        flag_cur = Is_File_Exist( next + "_0.bin" );
+        flag_next = Is_File_Exist( next + "_1.bin" );
 
-        if(flag1 && flag0)
+        if(flag_next && flag_cur)
         {
-            // std::cout << " >>>>>> " << execute_folder << " : " <<" std::to_string(idx)= " << std::to_string(idx)  << " <<<<<<<" << std::endl;
-            // ScopedTiming st("trans time", 1);
             string out_bin_pth_file;
             dump_bin_.clear();
             dump_bin_float.clear();
-            out_bin_pth_file = aaa + "_0.bin";
+            out_bin_pth_file = cur + "_0.bin";
 
             {
                 if(Is_File_Exist( out_bin_pth_file ))
@@ -231,11 +222,10 @@ int main(int argc, char *argv[])
 
                 if(Is_File_Exist( out_bin_pth_file ))
                 {
-                    out_bin_pth_file = aaa + "_1.bin";
+                    out_bin_pth_file = cur + "_1.bin";
                     auto buff_float_1 = read_binary_file(out_bin_pth_file.c_str());
                     dump_bin_float.insert(dump_bin_float.end(), buff_float_1.begin(), buff_float_1.end());
                 }
-                
             }
             
             {
@@ -258,15 +248,13 @@ int main(int argc, char *argv[])
                     sent_bytes += bytes_sent;
                 }
             }
-           
 
             {
-                remove((aaa + "_0.bin").c_str());
-                remove((aaa + "_1.bin").c_str());
+                remove((cur + "_0.bin").c_str());
+                remove((cur + "_1.bin").c_str());
             }
 
             idx = idx + 1;   
-
         }
         else
         {

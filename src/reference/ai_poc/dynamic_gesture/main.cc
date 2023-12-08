@@ -110,10 +110,11 @@ void video_proc(char *argv[])
     cv::Mat right_argb;
     cv::Mat middle_argb;
     #if defined(CONFIG_BOARD_K230_CANMV)
-        int show_x = 500;
-        int show_y = 40;
+        int show_x = 580;
+        int show_y = 90;
         int show_width = 1160;
         int show_height = 1000;
+        float ratio = 0.9;
 
         cv::Mat trigger_argb_tmp;
         cv::Mat up_argb_tmp;
@@ -125,27 +126,33 @@ void video_proc(char *argv[])
         Utils::bin_2_mat("trigger.bin", show_height, show_width, trigger_argb_tmp);
         transpose(trigger_argb_tmp, trigger_argb);
         flip(trigger_argb, trigger_argb, 1);
-        std::cout<<"trigger_argb size: "<<trigger_argb.rows<<" "<<trigger_argb.cols<<std::endl;
+        cv::resize(trigger_argb, trigger_argb, cv::Size(int(show_width*ratio), int(show_height*ratio)));
         Utils::bin_2_mat("up.bin", show_height, show_width, up_argb_tmp); 
         transpose(up_argb_tmp, right_argb);
-        flip(right_argb, right_argb, 1);   
+        flip(right_argb, right_argb, 1); 
+        cv::resize(right_argb, right_argb, cv::Size(int(show_width*ratio), int(show_height*ratio)));
         Utils::bin_2_mat("down.bin", show_height, show_width, down_argb_tmp);        
         transpose(down_argb_tmp, left_argb);
         flip(left_argb, left_argb, 1);
+        cv::resize(left_argb, left_argb, cv::Size(int(show_width*ratio), int(show_height*ratio)));
         Utils::bin_2_mat("left.bin", show_height, show_width, left_argb_tmp);        
         transpose(left_argb_tmp, up_argb);
         flip(up_argb, up_argb, 1);
+        cv::resize(up_argb, up_argb, cv::Size(int(show_width*ratio), int(show_height*ratio)));
         Utils::bin_2_mat("right.bin", show_height, show_width, right_argb_tmp);        
         transpose(right_argb_tmp, down_argb);
         flip(down_argb, down_argb, 1);
+        cv::resize(down_argb, down_argb, cv::Size(int(show_width*ratio), int(show_height*ratio)));
         Utils::bin_2_mat("middle.bin", show_height, show_width, middle_argb_tmp);
         transpose(middle_argb_tmp, middle_argb);
         flip(middle_argb, middle_argb, 1);
+        cv::resize(middle_argb, middle_argb, cv::Size(int(show_width*ratio), int(show_height*ratio)));
     #else
         int show_x = 44;
         int show_y = 500;
         int show_width = 1000;
         int show_height = 1160;
+        int ratio = 1;
         
         Utils::bin_2_mat("trigger.bin", show_width, show_height, trigger_argb);
         Utils::bin_2_mat("up.bin", show_width, show_height, up_argb);        
@@ -177,7 +184,7 @@ void video_proc(char *argv[])
         }
 
         cv::Mat osd_frame(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-        cv::Mat show_image = osd_frame(cv::Rect(show_x, show_y, show_width, show_height));
+        cv::Mat show_image = osd_frame(cv::Rect(show_x, show_y, int(show_width*ratio), int(show_height*ratio)));
 
         if (cur_state_== TRIGGER)
         {

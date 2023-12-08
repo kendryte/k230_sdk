@@ -6,7 +6,7 @@ all:
 	@cd sample_audio; make || exit 1
 	@cd sample_dma; make || exit 1
 	@cd sample_mmz; make || exit 1
-#	@cd sample_nonai_2d; make || exit 1
+	@cd sample_nonai_2d; make || exit 1
 	@cd sample_vb; make || exit 1
 	@cd sample_vdec; make || exit 1
 	@cd sample_venc; make || exit 1

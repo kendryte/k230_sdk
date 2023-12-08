@@ -492,7 +492,7 @@ static rt_err_t hash_control(rt_device_t dev, int cmd, void *args)
             while(0 != kd_hardlock_lock(hash_hardlock));
 
             if((ret = sha256_init(&hash_ctx)) != RT_EOK)
-                return ret;
+                goto release_lock;
             
             break;
         }
@@ -500,7 +500,7 @@ static rt_err_t hash_control(rt_device_t dev, int cmd, void *args)
         case RT_HWHASH_CTRL_UPDATE:
         {
             if((ret = sha256_update(&hash_ctx, msg, msglen)) != RT_EOK)
-                return ret;
+                goto release_lock;
             
             break;
         }
@@ -508,7 +508,7 @@ static rt_err_t hash_control(rt_device_t dev, int cmd, void *args)
         case RT_HWHASH_CTRL_FINISH:
         {
             if((ret = sha256_finish(&hash_ctx, &md)) != RT_EOK)
-                return ret;
+                goto release_lock;
 
             lwp_put_to_user(config_args->dgst, md.dgst, md.dlen);
             config_args->dlen = md.dlen;
@@ -521,7 +521,13 @@ static rt_err_t hash_control(rt_device_t dev, int cmd, void *args)
             return RT_EINVAL;
     }
 
+ret_hash:
     return ret;
+
+release_lock:
+    if(ret != RT_EOK)
+        kd_hardlock_unlock(hash_hardlock);
+    goto ret_hash;
 }
 
 static rt_err_t hash_open(rt_device_t dev, rt_uint16_t oflag)

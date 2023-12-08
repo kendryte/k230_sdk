@@ -1228,7 +1228,7 @@ static int kendryte_gcm_aes_crypt(struct aead_request *req, bool encrypt)
 
     // clear key from internal slot
     if((check = clear_key(ctx, keytype, keyslot, keybits)) != SUCCESS )
-		return check;
+		goto done;
 
 	if(aadlen > 0)
 	{

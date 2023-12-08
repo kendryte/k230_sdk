@@ -59,6 +59,22 @@ struct lt9611_dev {
     k_i2c_info i2c_info;
 };
 
+struct lt9611_resolution {
+    k_u8    std_timing_high;
+    k_u8    std_timing_low;
+    k_u8    cea861_vic;
+    k_u32   connector_type;
+};
+
+#define LT9611_RESOLUTION_NUM   2
+struct lt9611_resolution lt9611_resolution[LT9611_RESOLUTION_NUM] = {
+    {0xd1, 0xc0, 16,    LT9611_MIPI_4LAN_1920X1080_60FPS},
+    {0x00, 0x00, 34,    LT9611_MIPI_4LAN_1920X1080_30FPS},
+    //{0x81, 0xc0, 4,     LT9611_MIPI_4LAN_1280X720_60FPS},
+    //{0x00, 0x00, 19,    LT9611_MIPI_4LAN_1280X720_50FPS},
+    //{0x00, 0x00, 1,    LT9611_MIPI_4LAN_640X480_60FPS},
+};
+
 static void connector_set_drvdata(struct connector_driver_dev *dev, void *data)
 {
     dev->driver_data = data;
@@ -631,6 +647,149 @@ static k_s32 lt9611_get_chip_id(void* ctx, k_u32* chip_id)
     return ret;
 }
 
+#define EDID_BLOCK_COUNT    8
+#define EDID_BLOCK_SIZE     32
+static k_s32 lt9611_read_edid(struct lt9611_dev *lt9611_dev, k_u8 *edid_data, k_s32 len)
+{
+    k_s32 ret = 0;
+    k_s32 conn = 0;
+    k_s32 i, j;
+    k_u8 hpd_state = 0x00;
+    k_u8 ddc_state = 0x00;
+    k_u8 reg_val = 0x00;
+
+    ret |= lt9611_write_reg(&lt9611_dev->i2c_info, 0xff, 0x82);
+    ret |= lt9611_read_reg(&lt9611_dev->i2c_info, 0x5e, &hpd_state);
+    conn = !!(hpd_state & 0x04);
+    if (conn == 0) {
+        rt_kprintf("HDMI monitor disconnected \n");
+        return 0;
+    }
+
+    ret |= lt9611_write_reg(&lt9611_dev->i2c_info, 0xff, 0x85);
+    ret |= lt9611_write_reg(&lt9611_dev->i2c_info, 0x03, 0xc9);
+    ret |= lt9611_write_reg(&lt9611_dev->i2c_info, 0x04, 0xa0);
+    ret |= lt9611_write_reg(&lt9611_dev->i2c_info, 0x05, 0x00);
+    ret |= lt9611_write_reg(&lt9611_dev->i2c_info, 0x06, EDID_BLOCK_SIZE);
+    ret |= lt9611_write_reg(&lt9611_dev->i2c_info, 0x14, 0x7f);
+
+    for (i = 0; i < EDID_BLOCK_COUNT; i++) {
+        ret |= lt9611_write_reg(&lt9611_dev->i2c_info, 0x05, i * EDID_BLOCK_SIZE);
+        ret |= lt9611_write_reg(&lt9611_dev->i2c_info, 0x07, 0x36);
+        ret |= lt9611_write_reg(&lt9611_dev->i2c_info, 0x07, 0x31);
+        ret |= lt9611_write_reg(&lt9611_dev->i2c_info, 0x07, 0x37);
+        rt_thread_mdelay(8);
+
+        ret |= lt9611_read_reg(&lt9611_dev->i2c_info, 0x40, &ddc_state);
+        if (ddc_state & 0x02) {
+            //rt_kprintf("DDC answer success \n");
+            for (j = 0; j < EDID_BLOCK_SIZE; j++) {
+                ret |= lt9611_read_reg(&lt9611_dev->i2c_info, 0x83, &reg_val);
+                edid_data[i * EDID_BLOCK_SIZE + j] = reg_val;
+            }
+        } else if (ddc_state & 0x50) {
+            rt_kprintf("HDMI read EDID failed: DDC no ack \n");
+            lt9611_write_reg(&lt9611_dev->i2c_info, 0x07, 0x1f);
+            return -1;
+        } else {
+            rt_kprintf("HDMI read EDID failed \n");
+            lt9611_write_reg(&lt9611_dev->i2c_info, 0x07, 0x1f);
+            return -1;
+        }
+    }
+
+    return 256;
+}
+
+#define MATCH_OK        0
+#define MATCH_FAILED    1
+static k_s32 parse_stardard_timing(k_u8 *stardard_timing, k_s32 len, struct lt9611_resolution *lt9611_resolution)
+{
+    k_s32 i = 0;
+
+    for (i = 0; i < len; i = i + 2) {
+        if ((stardard_timing[i] == lt9611_resolution->std_timing_high) &&
+                (stardard_timing[i + 1] == lt9611_resolution->std_timing_low))
+            return MATCH_OK;
+    }
+
+    return MATCH_FAILED;
+}
+
+static k_s32 parse_cea861_timing(k_u8 *cea861_timing, k_s32 len, struct lt9611_resolution *lt9611_resolution)
+{
+    k_s32 i = 0;
+
+    for (i = 0; i < len; i ++) {
+        if (cea861_timing[i] == lt9611_resolution->cea861_vic)
+            return MATCH_OK;
+    }
+
+    return MATCH_FAILED;
+}
+
+static k_s32 lt9611_parse_edid(k_u8 *edid_data, k_s32 len, k_connector_negotiated_data *negotiated_data)
+{
+    k_u8 stardard_timing[16];
+    k_u8 cea861_timing[256];
+    k_u8 cea861_len = 0;
+    k_s32 i = 0;
+    k_s32 match = 0;
+    k_s32 negotiated_count = 0;
+
+    memcpy(stardard_timing, edid_data + 0x26, 16);
+    if (edid_data[0x7E] == 0x01 && edid_data[0x80] == 0x02) {
+        cea861_len = edid_data[0x84] & 0x1F;
+        memcpy(cea861_timing, edid_data + 0x85, cea861_len);
+    }
+
+    for (i = 0; i < LT9611_RESOLUTION_NUM; i ++) {
+        match = parse_stardard_timing(stardard_timing, 16, &lt9611_resolution[i]);
+        if (match == MATCH_OK) {
+            negotiated_data->negotiated_types[negotiated_count] = lt9611_resolution[i].connector_type;
+            negotiated_count ++;
+            continue;
+        }
+
+        match = parse_cea861_timing(cea861_timing, cea861_len, &lt9611_resolution[i]);
+        if (match == MATCH_OK) {
+            negotiated_data->negotiated_types[negotiated_count] = lt9611_resolution[i].connector_type;
+            negotiated_count ++;
+            continue;
+        }
+    }
+    negotiated_data->negotiated_count = negotiated_count;
+
+    return negotiated_count;
+}
+
+static k_s32 lt9611_get_negotiated_data(void* ctx, k_connector_negotiated_data *negotiated_data)
+{
+    k_s32 ret = 0;
+    struct connector_driver_dev* dev = ctx;
+    struct lt9611_dev *lt9611_dev = connector_get_drvdata(dev);
+    k_u8 edid_data[256];
+
+    memset(edid_data, 0x00, 256);
+    ret = lt9611_read_edid(lt9611_dev, edid_data, 256);
+    if (ret == 0) {
+        negotiated_data->connection_status = 0;
+        negotiated_data->negotiated_count = 1;
+        negotiated_data->negotiated_types[0] = LT9611_MIPI_4LAN_1920X1080_60FPS;
+        return 1;
+    }
+
+    ret = lt9611_parse_edid(edid_data, 256, negotiated_data);
+    if (ret == 0) {
+        negotiated_data->connection_status = 1;
+        negotiated_data->negotiated_count = 1;
+        negotiated_data->negotiated_types[0] = LT9611_MIPI_4LAN_1920X1080_60FPS;
+        return 1;
+    }
+
+    return negotiated_data->negotiated_count;
+}
+
 static k_s32 lt9611_conn_check(void* ctx, k_s32* conn)
 {
     k_s32 ret = 0;
@@ -653,6 +812,7 @@ struct connector_driver_dev lt9611_connector_drv = {
         .connector_power = lt9611_power_on,
         .connector_init = lt9611_init,
         .connector_get_chip_id = lt9611_get_chip_id,
+        .connector_get_negotiated_data = lt9611_get_negotiated_data,
         .connector_conn_check = lt9611_conn_check,
     },
 };

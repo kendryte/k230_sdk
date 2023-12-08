@@ -43,36 +43,36 @@ int Media::Init() {
     // vb for video
     k_u64 pic_size = venc_width_ * venc_height_ * 3 / 2;
     k_u64 stream_size = venc_width_ * venc_height_ / 2;
-    vb_config.comm_pool[2].blk_cnt = 6;
+    vb_config.comm_pool[2].blk_cnt = 3;
     vb_config.comm_pool[2].blk_size = ((pic_size + 0xfff) & ~0xfff);
     vb_config.comm_pool[2].mode = VB_REMAP_MODE_NOCACHE;
-    vb_config.comm_pool[3].blk_cnt = 30;
+    vb_config.comm_pool[3].blk_cnt = 3;
     vb_config.comm_pool[3].blk_size = ((stream_size + 0xfff) & ~0xfff);
     vb_config.comm_pool[3].mode = VB_REMAP_MODE_NOCACHE;
 
     // vb for YUV420SP output
-    vb_config.comm_pool[4].blk_cnt = 5;
+    vb_config.comm_pool[4].blk_cnt = 3;
     vb_config.comm_pool[4].mode = VB_REMAP_MODE_NOCACHE;
     vb_config.comm_pool[4].blk_size = VICAP_ALIGN_UP((venc_width_ * venc_height_ * 3 / 2), 0x1000);
     
     // vb for RGB888 output
-    vb_config.comm_pool[5].blk_cnt = 6;
-    vb_config.comm_pool[5].mode = VB_REMAP_MODE_NOCACHE;
-    vb_config.comm_pool[5].blk_size = VICAP_ALIGN_UP((detect_height_ * detect_width_ * 3 ), 0x1000);
+    // vb_config.comm_pool[5].blk_cnt = 0;
+    // vb_config.comm_pool[5].mode = VB_REMAP_MODE_NOCACHE;
+    // vb_config.comm_pool[5].blk_size = VICAP_ALIGN_UP((detect_height_ * detect_width_ * 3 ), 0x1000);
 
     memset(&sensor_info_, 0, sizeof(sensor_info_));
     kd_mpi_vicap_get_sensor_info(sensor_type_, &sensor_info_);
 
-    vb_config.comm_pool[6].blk_cnt = 6;
-    vb_config.comm_pool[6].blk_size = VICAP_ALIGN_UP(sensor_info_.width * sensor_info_.height * 3 / 2, 0x1000);
-    vb_config.comm_pool[6].mode = VB_REMAP_MODE_NOCACHE;
+    vb_config.comm_pool[5].blk_cnt = 3;
+    vb_config.comm_pool[5].blk_size = VICAP_ALIGN_UP(sensor_info_.width * sensor_info_.height * 3 / 2, 0x1000);
+    vb_config.comm_pool[5].mode = VB_REMAP_MODE_NOCACHE;
 
-    vb_config.comm_pool[7].blk_cnt = 2;
-    vb_config.comm_pool[7].blk_size = ((pic_size + 0xfff) & ~0xfff);
+    vb_config.comm_pool[6].blk_cnt = 3;
+    vb_config.comm_pool[6].blk_size = ((pic_size + 0xfff) & ~0xfff);
+    vb_config.comm_pool[6].mode = VB_REMAP_MODE_NOCACHE;
+    vb_config.comm_pool[7].blk_cnt = 3;
+    vb_config.comm_pool[7].blk_size = ((stream_size + 0xfff) & ~0xfff);
     vb_config.comm_pool[7].mode = VB_REMAP_MODE_NOCACHE;
-    vb_config.comm_pool[8].blk_cnt = 10;
-    vb_config.comm_pool[8].blk_size = ((stream_size + 0xfff) & ~0xfff);
-    vb_config.comm_pool[8].mode = VB_REMAP_MODE_NOCACHE;
 
     k_vb_supplement_config vb_supp;
     memset(&vb_supp, 0, sizeof(vb_supp));
@@ -115,6 +115,7 @@ int Media::VcapSetDevAttr() {
     dev_attr.pipe_ctrl.data = 0xFFFFFFFF;
     dev_attr.pipe_ctrl.bits.af_enable = 0;
     dev_attr.pipe_ctrl.bits.ahdr_enable = 0;
+    dev_attr.pipe_ctrl.bits.dnr3_enable = 0;
     dev_attr.cpature_frame = 0;
     memcpy(&dev_attr.sensor_info, &sensor_info_, sizeof(k_vicap_sensor_info));
 
@@ -144,7 +145,7 @@ int Media::VcapSetChnAttr(k_vicap_chn vicap_chn, const VcapChnAttr &vcap_attr) {
     vicap_chn_attr.chn_enable = K_TRUE;
     vicap_chn_attr.alignment = 12;
     vicap_chn_attr.pix_format = vcap_attr.pixel_format;
-    vicap_chn_attr.buffer_num = 6;
+    vicap_chn_attr.buffer_num = 3;
     vicap_chn_attr.buffer_size = VICAP_ALIGN_UP(sensor_info_.width * sensor_info_.height * 3 / 2, 0x1000);
 
     k_s32 ret = kd_mpi_vicap_set_chn_attr(vicap_dev_, vicap_chn, vicap_chn_attr);
@@ -157,7 +158,13 @@ int Media::VcapSetChnAttr(k_vicap_chn vicap_chn, const VcapChnAttr &vcap_attr) {
 }
 
 int Media::VcapInit() {
-    k_s32 ret = kd_mpi_vicap_init(vicap_dev_);
+    k_s32 ret;
+    ret = kd_mpi_vicap_set_database_parse_mode(vicap_dev_, VICAP_DATABASE_PARSE_HEADER);
+    if (ret) {
+        printf("sample_vicap, kd_mpi_vicap_set_database_parse_mode failed.\n");
+        return ret;
+    }
+    ret = kd_mpi_vicap_init(vicap_dev_);
     if (ret) {
         std::cout << "sample_vicap, kd_mpi_vicap_init failed." << std::endl;
         return ret;
@@ -287,6 +294,96 @@ int Media::VoConnectorInit() {
     return 0;
 }
 
+int Media::VoInsertFrame(k_video_frame_info *vf_info) {
+    int ret = kd_mpi_vo_chn_insert_frame(K_VO_OSD3 + 3, vf_info);
+    if (ret) {
+        printf("VoInsertFrame failed.\n");
+        return -1;
+    }
+
+    return 0;
+}
+
+uint32_t Media::VoGetInserFrame(k_video_frame_info *vf_info, void **pic_vaddr) {
+    k_u64 phys_addr = 0;
+    k_u32 *virt_addr;
+    k_vb_blk_handle handle;
+    k_s32 size;
+
+    k_vo_video_osd_attr attr;
+    attr.global_alptha = 0xff;
+    attr.stride = osd_width_ * 4 / 8;
+    attr.pixel_format = PIXEL_FORMAT_ARGB_8888;
+    attr.display_rect.x = 0;
+    attr.display_rect.y = 0;
+    attr.img_size.width = osd_width_;
+    attr.img_size.height = osd_height_;
+    kd_mpi_vo_set_video_osd_attr(K_VO_OSD3, &attr);
+    kd_mpi_vo_osd_enable(K_VO_OSD3);
+
+    k_vb_pool_config pool_config;
+    memset(&pool_config, 0, sizeof(pool_config));
+    pool_config.blk_size = VICAP_ALIGN_UP((osd_width_ * osd_height_ * 4 * 2), 0x1000);
+    pool_config.blk_cnt = 1;
+    pool_config.mode = VB_REMAP_MODE_NOCACHE;
+    osd_pool_id_ = kd_mpi_vb_create_pool(&pool_config);
+
+    if (vf_info == NULL)
+        return K_FALSE;
+
+    if (vf_info->v_frame.pixel_format == PIXEL_FORMAT_ABGR_8888 || vf_info->v_frame.pixel_format == PIXEL_FORMAT_ARGB_8888)
+        size = vf_info->v_frame.height * vf_info->v_frame.width * 4;
+    else if (vf_info->v_frame.pixel_format == PIXEL_FORMAT_RGB_565 || vf_info->v_frame.pixel_format == PIXEL_FORMAT_BGR_565)
+        size = vf_info->v_frame.height * vf_info->v_frame.width * 2;
+    else if (vf_info->v_frame.pixel_format == PIXEL_FORMAT_ABGR_4444 || vf_info->v_frame.pixel_format == PIXEL_FORMAT_ARGB_4444)
+        size = vf_info->v_frame.height * vf_info->v_frame.width * 2;
+    else if (vf_info->v_frame.pixel_format == PIXEL_FORMAT_RGB_888 || vf_info->v_frame.pixel_format == PIXEL_FORMAT_BGR_888)
+        size = vf_info->v_frame.height * vf_info->v_frame.width * 3;
+    else if (vf_info->v_frame.pixel_format == PIXEL_FORMAT_ARGB_1555 || vf_info->v_frame.pixel_format == PIXEL_FORMAT_ABGR_1555)
+        size = vf_info->v_frame.height * vf_info->v_frame.width * 2;
+    else if (vf_info->v_frame.pixel_format == PIXEL_FORMAT_YVU_PLANAR_420)
+        size = vf_info->v_frame.height * vf_info->v_frame.width * 3 / 2;
+
+    size = size + 4096;
+
+    handle = kd_mpi_vb_get_block(osd_pool_id_, size, NULL);
+    if (handle == VB_INVALID_HANDLE) {
+        printf("%s get vb block error\n", __func__);
+        return K_FAILED;
+    }
+
+    phys_addr = kd_mpi_vb_handle_to_phyaddr(handle);
+    if (phys_addr == 0) {
+        printf("%s get phys addr error\n", __func__);
+        return K_FAILED;
+    }
+
+    virt_addr = (k_u32 *)kd_mpi_sys_mmap(phys_addr, size);
+    if (virt_addr == NULL) {
+        printf("%s mmap error\n", __func__);
+        return K_FAILED;
+    }
+
+    vf_info->mod_id = K_ID_VO;
+    vf_info->pool_id = osd_pool_id_;
+    vf_info->v_frame.phys_addr[0] = phys_addr;
+    if (vf_info->v_frame.pixel_format == PIXEL_FORMAT_YVU_PLANAR_420)
+        vf_info->v_frame.phys_addr[1] = phys_addr + (vf_info->v_frame.height * vf_info->v_frame.stride[0]);
+    *pic_vaddr = virt_addr;
+
+    return handle;
+}
+
+int Media::VoReleaseInserFrame(uint32_t inser_handle) {
+    kd_mpi_vo_osd_disable(K_VO_OSD3);
+    kd_mpi_vb_release_block(k_vb_blk_handle(inser_handle));
+    int ret = kd_mpi_vb_destory_pool(osd_pool_id_);
+    if (ret)
+        printf("vb destory pool ret = %d, osd_pool_id = %d...\n", ret, osd_pool_id_);
+
+    return 0;
+}
+
 int Media::VoDeInit() {
     kd_mpi_vo_disable_video_layer(K_VO_LAYER1);
 
@@ -316,7 +413,7 @@ int Media::VencSnapChnCreate(int chn, int width, int height) {
     attr.venc_attr.pic_height = height;
     k_u64 stream_size = width * height / 2;
     attr.venc_attr.stream_buf_size = VICAP_ALIGN_UP(stream_size, 0x1000);
-    attr.venc_attr.stream_buf_cnt = 10;
+    attr.venc_attr.stream_buf_cnt = 3;
     attr.rc_attr.rc_mode = K_VENC_RC_MODE_MJPEG_FIXQP;
     attr.rc_attr.mjpeg_fixqp.src_frame_rate = 30;
     attr.rc_attr.mjpeg_fixqp.dst_frame_rate = 30;
@@ -398,7 +495,7 @@ int Media::VencChnCreate(int chn, int width, int height) {
     attr.venc_attr.pic_height = height;
     k_u64 stream_size = width * height / 2;
     attr.venc_attr.stream_buf_size = VICAP_ALIGN_UP(stream_size, 0x1000);
-    attr.venc_attr.stream_buf_cnt = 30;
+    attr.venc_attr.stream_buf_cnt = 3;
     attr.venc_attr.type = K_PT_H265;
     attr.venc_attr.profile = VENC_PROFILE_H265_MAIN;
     attr.rc_attr.rc_mode = K_VENC_RC_MODE_CBR;

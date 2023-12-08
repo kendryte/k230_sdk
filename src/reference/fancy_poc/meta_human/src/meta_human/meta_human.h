@@ -32,9 +32,6 @@
 #include "ai_base.h"
 
 
-
-
-
 /**
  * @brief 人体Mesh模型捕捉
  * 主要封装了对于每一帧图片，从预处理、运行到后处理给出结果的过程
@@ -50,7 +47,6 @@ class Meta_Human: public AIBase
         * @return None
         */
         Meta_Human(const char *kmodel_file,const int debug_mode);
-
 
         /**
         * for video
@@ -68,7 +64,6 @@ class Meta_Human: public AIBase
         * @brief Meta_Human析构函数
         * @return None
         */
-
         ~Meta_Human();
 
         /**
@@ -92,8 +87,8 @@ class Meta_Human: public AIBase
 
         /** 
         * @brief Meta_Human post_process 函数，对kmodel输出进行后处理操作
-        * param frame_size 帧率
-        * idx  记录打印序次
+        * @param frame_size 帧率
+        * @param idx  记录打印序次
         * @return None
         */
         void post_process(FrameSize frame_size,int idx,int num_storage);
@@ -105,6 +100,5 @@ class Meta_Human: public AIBase
         runtime_tensor ai2d_out_tensor_;             // ai2d输出tensor
         uintptr_t vaddr_;                            // isp的虚拟地址
         FrameCHWSize isp_shape_;                     // isp对应的地址大小
-
 };
 #endif

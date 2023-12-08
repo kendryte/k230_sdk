@@ -17,10 +17,6 @@ fi
 # ./sharefs &
 # cd -
 
-ifconfig eth0 10.99.231.11
-
-/app/peephole_phone/peephole_phone 10.99.231.10 &
-
 for i in /etc/init.d/S??* ;do
 
      # Ignore dangling symlinks (if any).
@@ -48,6 +44,8 @@ cat /etc/version/release_version
 # 	fi;
 # fi
 
-auto eth0
+# auto eth0
 # iface eth0 inet dhcp
 ifconfig eth0 10.99.231.11
+/app/peephole_phone/peephole_phone 10.99.231.10 &
+

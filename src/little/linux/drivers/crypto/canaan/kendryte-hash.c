@@ -425,6 +425,7 @@ done:
     {
         pr_err("Hash-%s Error!\n", __func__);
         ret = -1;
+        hardlock_unlock(hardlock);
     }
 
     sha256_free(ctx, req->nbytes);
@@ -458,6 +459,7 @@ done:
     {
         pr_err("Hash-%s Error!\n", __func__);
         ret = -1;
+        hardlock_unlock(hardlock);
     }
 
     kfree(msg);
@@ -488,6 +490,7 @@ done:
     {
         pr_err("Hash-%s Error!\n", __func__);
         ret = -1;
+        hardlock_unlock(hardlock);
     }
 
     return ret;

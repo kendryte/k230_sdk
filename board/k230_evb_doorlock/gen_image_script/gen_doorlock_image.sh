@@ -48,7 +48,7 @@ shrink_rootfs()
 	rm -rf usr/bin/k230_timer_demo
 	rm -rf usr/bin/gpio_keys_demo
 	rm -rf lib/modules/5.10.4+/kernel/drivers/gpu/
-	rm -rf /lib/modules/5.10.4+/kernel/drivers/net/wireless/aich/aiw4211lv10/aiw4211lv10.ko
+
 	find mnt/ -type f  -not -name k_ipcm.ko  -not -name sharefs    | xargs rm -rf ;
 	#	rm -rf app/;
 	rm -rf lib/tuning-server;	
@@ -82,16 +82,16 @@ gen_env_bin;
 copy_app;
 
 
-if [ "${CONFIG_REMOTE_TEST_PLATFORM}" = "y" ] ; then 
-	gen_image ${GENIMAGE_CFG_SD_REMOTE}   sysimage-sdcard.img
-else
-	gen_image ${GENIMAGE_CFG_SD}   sysimage-sdcard.img
-fi
+# if [ "${CONFIG_REMOTE_TEST_PLATFORM}" = "y" ] ; then 
+# 	gen_image ${GENIMAGE_CFG_SD_REMOTE}   sysimage-sdcard.img
+# else
+# 	gen_image ${GENIMAGE_CFG_SD}   sysimage-sdcard.img
+# fi
 
-if [ "${CONFIG_GEN_SECURITY_IMG}" = "y" ] ; then 
-	gen_image  ${GENIMAGE_CFG_SD_AES}  sysimage-sdcard_aes.img
-	gen_image ${GENIMAGE_CFG_SD_SM}  sysimage-sdcard_sm.img
-fi
+# if [ "${CONFIG_GEN_SECURITY_IMG}" = "y" ] ; then 
+# 	gen_image  ${GENIMAGE_CFG_SD_AES}  sysimage-sdcard_aes.img
+# 	gen_image ${GENIMAGE_CFG_SD_SM}  sysimage-sdcard_sm.img
+# fi
 
 if [ "${CONFIG_SPI_NOR}" = "y" ]; then 
 	cd  ${BUILD_DIR}/;rm -rf images_bak;cp images images_bak -r;

@@ -252,33 +252,34 @@ int main(int argc, char **argv)
     memset(command, 0x00, sizeof(command));
     snprintf(command, sizeof(command), "%s 1",
             SCRIPT_PATH);
-    fp = popen(command, "r");
-    if (fp == NULL) {
-        printf("popen %s error \n", command);
+    ret = run_command(command);
+    if (ret < 0) {
+        printf("run_command %s error \n", command);
         return -1;
     }
-    while (fgets(pbuff, sizeof(pbuff), fp)) {
-        // no need to compare the last character '\n'
-        if (!strncmp(pbuff, "decompress ota_package.zip success", strlen(pbuff)-1)) {
-            printf("OTA update progress 50% \n");
-        } else if (!strncmp(pbuff, "OTA update success", strlen(pbuff)-1)) {
-            printf("OTA update success \n");
-            ota_reboot_flag = 1;
-        } else {
-            continue;
-        }
-        memset(pbuff, 0x00, sizeof(pbuff));
-    }
-    ret = pclose(fp);
-    if ((WIFEXITED(ret)) && (WEXITSTATUS(ret) != 0)) {
-        printf("OTA update error \n");
-        printf("run %s error \n", OTA_FIRMWARE_PATH);
-        return -1;
-    } else if ((WIFEXITED(ret)) && (WEXITSTATUS(ret) == 0)) {
-        printf("We captured the SIGCHLD signal \n");
-    } else if ((WIFEXITED(ret) == 0) && (WEXITSTATUS(ret) == 255)) {
-        printf("We lost the SIGCHLD signal \n");
-    }
+    ota_reboot_flag = 1;
+    // while (fgets(pbuff, sizeof(pbuff), fp)) {
+    //     // no need to compare the last character '\n'
+    //     if (!strncmp(pbuff, "decompress ota_package.zip success", strlen(pbuff)-1)) {
+    //         printf("OTA update progress 50% \n");
+    //     } else if (!strncmp(pbuff, "OTA update success", strlen(pbuff)-1)) {
+    //         printf("OTA update success \n");
+    //         ota_reboot_flag = 1;
+    //     } else {
+    //         continue;
+    //     }
+    //     memset(pbuff, 0x00, sizeof(pbuff));
+    // }
+    // ret = pclose(fp);
+    // if ((WIFEXITED(ret)) && (WEXITSTATUS(ret) != 0)) {
+    //     printf("OTA update error \n");
+    //     printf("run %s error \n", OTA_FIRMWARE_PATH);
+    //     return -1;
+    // } else if ((WIFEXITED(ret)) && (WEXITSTATUS(ret) == 0)) {
+    //     printf("We captured the SIGCHLD signal \n");
+    // } else if ((WIFEXITED(ret) == 0) && (WEXITSTATUS(ret) == 255)) {
+    //     printf("We lost the SIGCHLD signal \n");
+    // }
 
     // 重启系统
     if (ota_reboot_flag == 1) {

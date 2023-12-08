@@ -57,7 +57,9 @@ typedef struct {
     user_img_obj_t scr_main_btn_signup;
     user_img_obj_t scr_main_btn_import;
     user_img_obj_t scr_main_btn_delete;
+    user_img_obj_t scr_main_btn_ota;
     lv_obj_t *scr_signup;
+    lv_obj_t *scr_ota;
 } lv_ui_t;
 
 extern lv_ui_t lv_ui;
@@ -68,6 +70,7 @@ lv_obj_t *create_msgbox(const char *title, const char *txt);
 void setup_scr_scr_main(void);
 void jump_to_scr_main(void);
 void jump_to_scr_signup(void);
+void jump_to_scr_ota(void);
 void scr_main_display_result(int8_t result);
 
 #ifdef __cplusplus

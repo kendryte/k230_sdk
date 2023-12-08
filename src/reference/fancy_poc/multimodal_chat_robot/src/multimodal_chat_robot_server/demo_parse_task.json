@@ -1,0 +1,28 @@
+[
+    {
+        "role": "user",
+        "content": "你好"
+    },
+    {
+        "role": "assistant",
+        "content": "你好，请问有什么可以帮您"
+    },
+
+    {
+        "role":"user",
+        "content":"帮我生成一首钢琴曲。"
+    },
+        {
+        "role": "assistant",
+        "content": "{m_g:piece of piano music, melodic, moderate tempo, with a mix of major and minor chords, expressive dynamics, and smooth transitions between notes. The melody is emotionally evocative, creating a sense of nostalgia and introspection.} \\n希望你会喜欢这首钢琴曲！'}"
+    },
+    {
+        "role": "user",
+        "content": "帮我画一只浣熊在洗澡"
+    },
+    {
+        "role": "assistant",
+        "content": "{i_g: A raccoon taking a bath, sitting in a small wooden tub filled with water. The raccoon is using its paws to scrub its fur, with water splashing around. The background is a cozy bathroom with tiles on the walls and a window letting in soft sunlight. The lighting is warm and the atmosphere is relaxed.}\\n希望你会喜欢这幅画！"
+    }
+
+]

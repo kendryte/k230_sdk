@@ -88,16 +88,16 @@ gen_env_bin;
 copy_app;
 
 
-if [ "${CONFIG_REMOTE_TEST_PLATFORM}" = "y" ] ; then 
-	gen_image ${GENIMAGE_CFG_SD_REMOTE}   sysimage-sdcard.img
-else
-	gen_image ${GENIMAGE_CFG_SD}   sysimage-sdcard.img
-fi
+# if [ "${CONFIG_REMOTE_TEST_PLATFORM}" = "y" ] ; then 
+# 	gen_image ${GENIMAGE_CFG_SD_REMOTE}   sysimage-sdcard.img
+# else
+# 	gen_image ${GENIMAGE_CFG_SD}   sysimage-sdcard.img
+# fi
 
-if [ "${CONFIG_GEN_SECURITY_IMG}" = "y" ] ; then 
-	gen_image  ${GENIMAGE_CFG_SD_AES}  sysimage-sdcard_aes.img
-	gen_image ${GENIMAGE_CFG_SD_SM}  sysimage-sdcard_sm.img
-fi
+# if [ "${CONFIG_GEN_SECURITY_IMG}" = "y" ] ; then 
+# 	gen_image  ${GENIMAGE_CFG_SD_AES}  sysimage-sdcard_aes.img
+# 	gen_image ${GENIMAGE_CFG_SD_SM}  sysimage-sdcard_sm.img
+# fi
 
 if [ "${CONFIG_SPI_NOR}" = "y" ] ;then 
 	cd  ${BUILD_DIR}/;rm -rf images_bak;cp images images_bak -r;

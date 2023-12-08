@@ -22,13 +22,14 @@ if [ $1 -eq 0 ]; then
 
     rm $data_dir/ota_package -rf
 elif [ $1 -eq 1 ]; then
+    echo "start unzip ota_package"
     cd $data_dir
     rm $data_dir/ota_package.bin -rf
     unzip $data_dir/ota_package.zip
-    if [ $? -ne 0 ]; then
-        echo "decompress ota_package.zip fail"
-        exit 1
-    fi
+    # if [ $? -ne 0 ]; then
+    #     echo "decompress ota_package.zip fail"
+    #     exit 1
+    # fi
     echo "decompress ota_package.zip success"
     rm $data_dir/ota_package.zip -rf
 
@@ -63,35 +64,35 @@ elif [ $1 -eq 1 ]; then
             flash_erase /dev/mtd1 0 0
             dd if=u-boot.img of=/dev/mtd1
         fi
-        if [ -f fh_quick_boot.bin ]; then
-            echo "fh_quick_boot.bin"
+        if [ -f fn_ug_quick_boot.bin ]; then
+            echo "fn_ug_quick_boot.bin"
             flash_erase /dev/mtd2 0 0
-            dd if=fh_quick_boot.bin of=/dev/mtd2
+            dd if=fn_ug_quick_boot.bin of=/dev/mtd2
         fi
-        if [ -f fh_face_data.bin ]; then
+        if [ -f fn_ug_face_data.bin ]; then
             echo "fh_face_data.bin"
             flash_erase /dev/mtd3 0 0
-            dd if=fh_face_data.bin of=/dev/mtd3
+            dd if=fn_ug_face_data.bin of=/dev/mtd3
         fi
-        if [ -f fh_sensor_cfg.bin ]; then
-            echo "fh_sensor_cfg.bin"
+        if [ -f fn_ug_sensor_cfg.bin ]; then
+            echo "fn_ug_sensor_cfg.bin"
             flash_erase /dev/mtd4 0 0
-            dd if=fh_sensor_cfg.bin of=/dev/mtd4
+            dd if=fn_ug_sensor_cfg.bin of=/dev/mtd4
         fi
-        if [ -f fh_speckle.bin ]; then
-            echo "fh_speckle.bin"
+        if [ -f fn_ug_speckle.bin ]; then
+            echo "fn_ug_speckle.bin"
             flash_erase /dev/mtd5 0 0
-            dd if=fh_speckle.bin of=/dev/mtd5
+            dd if=fn_ug_speckle.bin of=/dev/mtd5
         fi
         if [ -f rtt_system.bin ]; then
             echo "rtt_system.bin"
-            flash_erase /dev/mtd6 0 0
-            dd if=rtt_system.bin of=/dev/mtd6
-        fi
-        if [ -f fh_fastboot_app.elf ]; then
-            echo "fh_fastboot_app.elf"
             flash_erase /dev/mtd7 0 0
-            dd if=fh_fastboot_app.elf of=/dev/mtd7
+            dd if=rtt_system.bin of=/dev/mtd7
+        fi
+        if [ -f fn_ug_fastboot_app.elf ]; then
+            echo "ffn_ug_fastboot_app.elf"
+            flash_erase /dev/mtd6 0 0
+            dd if=fn_ug_fastboot_app.elf of=/dev/mtd6
         fi
         if [ -f linux_system.bin ]; then
             echo "linux_system.bin"

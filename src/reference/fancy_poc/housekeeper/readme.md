@@ -228,7 +228,7 @@ LLM模型可以给出计算IOU的正确代码，但是无法通过两个检测�
 
 ## 环境准备
     #######download.sh########
-    for file in onboard_v2.4.zip
+    for file in onboard_v2.5.zip
     do
     wget https://ai.b-bug.org/k230/downloads/fancy_poc/housekeeper/k230_board/$file || wget https://kendryte-download.canaan-creative.com/k230/downloads/fancy_poc/housekeeper/k230_board/$file;  
     done

@@ -42,7 +42,7 @@
 extern "C" {
 #endif /* End of #ifdef __cplusplus */
 
-#define CONNECTOR_NUM_MAX                                  4
+#define CONNECTOR_NUM_MAX                                  128
 
 
 #define BACKGROUND_BLACK_COLOR                            (0x808000)
@@ -50,9 +50,13 @@ extern "C" {
 
 
 typedef enum {
-    HX8377_V2_MIPI_4LAN_1080X1920_30FPS,
-    LT9611_MIPI_4LAN_1920X1080_60FPS,
+    HX8377_V2_MIPI_4LAN_1080X1920_30FPS = 0,
     LT9611_MIPI_4LAN_1920X1080_30FPS,
+    LT9611_MIPI_ADAPT_RESOLUTION = 100,
+    LT9611_MIPI_4LAN_1920X1080_60FPS,
+    LT9611_MIPI_4LAN_1920X1080_50FPS,
+    LT9611_MIPI_4LAN_1920X1080_25FPS,
+    LT9611_MIPI_4LAN_1920X1080_24FPS,
     LT9611_MIPI_4LAN_1280X720_60FPS,
     LT9611_MIPI_4LAN_1280X720_50FPS,
     LT9611_MIPI_4LAN_640X480_60FPS,
@@ -80,6 +84,14 @@ typedef struct {
     k_vo_display_resolution resolution;
     k_connector_type type;
 } k_connector_info;
+
+
+typedef struct
+{
+    k_u32 connection_status;
+    k_u32 negotiated_count;
+    k_connector_type negotiated_types[256];
+} k_connector_negotiated_data;
 
 
 #ifdef __cplusplus

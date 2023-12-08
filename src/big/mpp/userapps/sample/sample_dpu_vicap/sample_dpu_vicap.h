@@ -35,6 +35,11 @@
 #include <pthread.h>
 #include <time.h>
 
+// #include <fcntl.h>
+// #include <rtthread.h>
+// #include <rtdevice.h>
+// #include <math.h>
+
 #include "k_module.h"
 #include "k_type.h"
 #include "k_vb_comm.h"
@@ -47,6 +52,14 @@
 #include "mpi_dma_api.h"
 #include "mpi_dpu_api.h"
 #include "mpi_sys_api.h"
+
+#define ENABLE_ADC   (0)
+#define ENABLE_CDC   (0)
+
+#include <fcntl.h>
+#include <rtthread.h>
+#include <rtdevice.h>
+#include <math.h>
 
 #define SAMPLE_VDD_CHN_NUM  1
 #define SAMPLE_VDD_CHN      0
@@ -78,6 +91,8 @@ static inline void VDD_CHECK_RET(k_s32 ret, const char *func, const int line)
 }
 
 /* vi */
+int sample_adc(float* temp);
+int sample_dv_dpu_update_temp(float temperature_obj);
 int sample_dv_dma_init();
 int sample_dv_dma_delete();
 int sample_dv_dpu_init();

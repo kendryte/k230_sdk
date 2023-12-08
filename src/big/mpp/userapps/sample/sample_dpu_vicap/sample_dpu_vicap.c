@@ -28,6 +28,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/mman.h>
+#include <sys/select.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdint.h>
@@ -55,6 +56,10 @@
 
 #define DISPLAY_WITDH  1088
 #define DISPLAY_HEIGHT 1920
+
+#define IR_BUF_SIZE ((DMA_CHN0_WIDTH * DMA_CHN0_WIDTH *3/2 + 0x3ff) & ~0x3ff)//(5 * 1024 * 1024)
+
+extern k_dpu_dev_attr_t dpu_dev_attr;
 
 typedef struct {
     k_vicap_dev dev_num;
@@ -112,14 +117,26 @@ typedef struct {
 static vicap_device_obj device_obj[VICAP_DEV_ID_MAX];
 static k_u32 dump_count = 0;
 static pthread_t output_tid = 0;
+static pthread_t adc_tid = 0;
 static k_bool exiting = K_FALSE;
+static k_bool dump_exited = K_FALSE;
+static k_bool adc_exited = K_FALSE;
 static k_video_frame_info rgb_buf[VICAP_OUTPUT_BUF_NUM];
+// static k_video_frame_info ir_buf[VICAP_OUTPUT_BUF_NUM];
 static k_u32 rgb_wp=0;
 static k_u32 rgb_rp=0;
 static k_u32 rgb_total_cnt=0;
 static char OUT_PATH[50] = {"\0"};
 static int rgb_dev;
 static int rgb_chn;
+static k_vb_blk_handle ir_handle;
+static k_u64 ir_phys_addr; 
+static k_u8 *ir_virt_addr;
+static k_bool gen_calibration = K_FALSE;
+static k_bool adc_en = K_FALSE;
+#if ENABLE_CDC
+static int fd_usb = -1;
+#endif
 
 static k_u32 sample_vicap_vo_init(void)
 {
@@ -311,6 +328,11 @@ static k_s32 sample_vicap_vb_init(vicap_device_obj *dev_obj)
     config.comm_pool[k+2].blk_size = 5 * 1024 * 1024;
     config.comm_pool[k+2].mode = VB_REMAP_MODE_NOCACHE;
 
+    //ir
+    config.comm_pool[k+3].blk_cnt = (3);
+    config.comm_pool[k+3].blk_size = IR_BUF_SIZE;//5 * 1024 * 1024;
+    config.comm_pool[k+3].mode = VB_REMAP_MODE_NOCACHE;
+
     ret = kd_mpi_vb_set_config(&config);
     if (ret) {
         printf("vb_set_config failed ret:%d\n", ret);
@@ -332,6 +354,44 @@ static k_s32 sample_vicap_vb_init(vicap_device_obj *dev_obj)
         return ret;
     }
 
+    k_vb_blk_handle handle;
+    k_s32 pool_id = 0;
+    k_u64 phys_addr = 0;
+    
+
+    handle = kd_mpi_vb_get_block(VB_INVALID_POOLID, config.comm_pool[k+3].blk_size, NULL);
+    if (handle == VB_INVALID_HANDLE)
+    {
+        printf("%s get vb block error\n", __func__);
+        return -1;
+    }
+    ir_handle  = handle;
+
+    pool_id = kd_mpi_vb_handle_to_pool_id(handle);
+    if (pool_id == VB_INVALID_POOLID)
+    {
+        printf("%s get pool id error\n", __func__);
+        return -1;
+    }
+
+    phys_addr = kd_mpi_vb_handle_to_phyaddr(handle);
+    if (phys_addr == 0)
+    {
+        printf("%s get phys addr error\n", __func__);
+        return -1;
+    }
+
+    ir_phys_addr = phys_addr;
+
+    printf("%s>phys_addr 0x%lx, blk_size %ld\n", __func__, phys_addr, config.comm_pool[k+3].blk_size);
+    ir_virt_addr = (k_u8 *)kd_mpi_sys_mmap_cached(phys_addr, config.comm_pool[k+3].blk_size);
+    if (ir_virt_addr == NULL)
+    {
+        printf("%s mmap error\n", __func__);
+        return -1;
+    }
+    printf("%s>ir_virt_addr_Y %p\n", __func__, ir_virt_addr);
+    
     return 0;
 }
 
@@ -388,7 +448,14 @@ static void dpu_dump()
     k_video_frame_info dump_info;
     k_video_frame_info dma_get_info;
     k_dpu_chn_result_u lcn_result;
+    k_dpu_chn_result_u ir_result;
     k_s32 ret;
+    void *dpu_virt_addr = NULL;
+    k_bool get_ir = K_FALSE;
+#if ENABLE_CDC
+    k_u32 remain_size = 0;
+    void* wp = NULL;
+#endif
 
     for (int dev_num = 0; dev_num < VICAP_DEV_ID_MAX; dev_num++) {
         if (!device_obj[dev_num].dev_enable)
@@ -398,8 +465,11 @@ static void dpu_dump()
             if (!device_obj[dev_num].chn_enable[chn_num])
                 continue;
 
-            //printf("sample_vicap, dev(%d) chn(%d) dump frame.\n", dev_num, chn_num);
+            if(!gen_calibration)
+                if(dpu_dev_attr.dev_param.spp.flag_align)
+                    get_ir = K_TRUE;
 
+            //printf("sample_vicap, dev(%d) chn(%d) dump frame.\n", dev_num, chn_num);
             if(device_obj[dev_num].out_format[chn_num] == PIXEL_FORMAT_YUV_SEMIPLANAR_420)
             {
                 memset(&dump_info, 0 , sizeof(k_video_frame_info));
@@ -407,67 +477,237 @@ static void dpu_dump()
                 if (ret) {
                     printf("sample_vicap, dev(%d) chn(%d) dump frame failed.\n", dev_num, chn_num);
                 }
-
+                printf("dump_info pts: %ld\n", dump_info.v_frame.pts);
                 //printf("addr: [%lx, %lx, %lx]\n", dump_info.v_frame.phys_addr[0], dump_info.v_frame.phys_addr[1], dump_info.v_frame.phys_addr[2]);
 
-                ret = kd_mpi_dma_send_frame(DMA_CHN0, &dump_info, -1);
-                if (ret != K_SUCCESS)
+                if(gen_calibration)
                 {
-                    printf("send frame error\r\n");
-                }
+#if 1
+                    /* save vicap ir file */
+                    // void *dpu_virt_addr = NULL;
+                    k_char vicap_ir_filename[256];
 
-                ret = kd_mpi_dma_get_frame(DMA_CHN0, &dma_get_info, -1);
-                if (ret != K_SUCCESS)
-                {
-                    printf("get frame error\r\n");
-                }
-                //printf("dma addr:%lx\n", dma_get_info.v_frame.phys_addr[0]);
+                    memset(vicap_ir_filename, 0 , sizeof(vicap_ir_filename));
+                    sprintf(vicap_ir_filename, "%svicap_ir_%04d.yuv", OUT_PATH, dump_count);
 
-                ret = kd_mpi_dpu_send_frame(0, dma_get_info.v_frame.phys_addr[0], 200);
-                if (ret) {
-                    printf("kd_mpi_dpu_send_frame lcn failed\n");
-                }
-
-                ret = kd_mpi_dpu_get_frame(0, &lcn_result, 200);
-                if (ret) {
-                    printf("kd_mpi_dpu_get_frame failed\n");
-                }
-
-                /* save file */
-                void *dpu_virt_addr = NULL;
-                k_char dpu_filename[256];
-
-                memset(dpu_filename, 0 , sizeof(dpu_filename));
-                snprintf(dpu_filename, sizeof(dpu_filename), "%sdepth_%04d.bin", OUT_PATH, dump_count);
-
-                dpu_virt_addr = kd_mpi_sys_mmap(lcn_result.lcn_result.depth_out.depth_phys_addr, lcn_result.lcn_result.depth_out.length);
-                if (dpu_virt_addr) {
-                    FILE *file = fopen(dpu_filename, "wb+");
-                    if (file) {
-                        fwrite(dpu_virt_addr, 1, lcn_result.lcn_result.depth_out.length, file);
-                        fclose(file);
-                        printf("save %s success, pts %ld\n", dpu_filename, dump_info.v_frame.pts);
+                    dpu_virt_addr = kd_mpi_sys_mmap(dump_info.v_frame.phys_addr[0], dump_info.v_frame.width* dump_info.v_frame.height*3/2);
+                    if (dpu_virt_addr) {
+                        FILE *file = fopen(vicap_ir_filename, "wb+");
+                        if (file) {
+                            fwrite(dpu_virt_addr, 1, dump_info.v_frame.width* dump_info.v_frame.height*3/2, file);
+                            fclose(file);
+                            printf("save %s success\n", vicap_ir_filename);
+                        } else {
+                            printf("can't create file\n");
+                        }
                     } else {
-                        printf("can't create file\n");
+                        printf("save ir out failed\n");
                     }
-                } else {
-                    printf("save depthout failed\n");
+
+                    kd_mpi_sys_munmap(dpu_virt_addr, dump_info.v_frame.width* dump_info.v_frame.height*3/2);
+#endif
+
+                    ret = kd_mpi_dma_send_frame(DMA_CHN0, &dump_info, -1);
+                    if (ret != K_SUCCESS)
+                    {
+                        printf("send frame error\r\n");
+                    }
+
+                    ret = kd_mpi_dma_get_frame(DMA_CHN0, &dma_get_info, -1);
+                    if (ret != K_SUCCESS)
+                    {
+                        printf("get frame error\r\n");
+                    }
+
+
+                    ret = kd_mpi_dpu_send_frame(0, ir_phys_addr, 200);
+                    if (ret) {
+                        printf("kd_mpi_dpu_send_frame ir failed: %d\n", ret);
+                    }
+
+                    ret = kd_mpi_dpu_send_frame(1, dma_get_info.v_frame.phys_addr[0], 200);
+                    if (ret) {
+                        printf("kd_mpi_dpu_send_frame ir failed: %d\n", ret);
+                    }
+
+                    ret = kd_mpi_dpu_get_frame(0, &lcn_result, 200);
+                    if (ret) {
+                        printf("kd_mpi_dpu_get_frame failed: %d\n", ret);
+                    }
+
+                    ret = kd_mpi_dpu_get_frame(1, &ir_result, 200);
+                    if (ret) {
+                        printf("kd_mpi_dpu_get_frame failed: %d\n", ret);
+                    }
+#if 0
+                    /* save vicap ir file */
+                    // void *dpu_virt_addr = NULL;
+                    k_char ir_filename[256];
+
+                    memset(ir_filename, 0 , sizeof(ir_filename));
+                    sprintf(ir_filename, "%sir_%04d.ir", OUT_PATH, dump_count);
+
+                    dpu_virt_addr = kd_mpi_sys_mmap(ir_result.ir_result.ir_out.ir_phys_addr, ir_result.ir_result.ir_out.length);
+                    if (dpu_virt_addr) {
+                        FILE *file = fopen(ir_filename, "wb+");
+                        if (file) {
+                            fwrite(dpu_virt_addr, 1, ir_result.ir_result.ir_out.length, file);
+                            fclose(file);
+                            printf("save %s success, pts %ld\n", ir_filename, dump_info.v_frame.pts);
+                        } else {
+                            printf("can't create file\n");
+                        }
+                    } else {
+                        printf("save irout failed\n");
+                    }
+
+                    kd_mpi_sys_munmap(dpu_virt_addr, dump_info.v_frame.width* dump_info.v_frame.height*3/2);
+#endif
+                    kd_mpi_dma_release_frame(DMA_CHN0, &dma_get_info);
+                    //printf("depth addr:%lx\n", lcn_result.lcn_result.depth_out.depth_phys_addr);
+
+                    kd_mpi_dpu_release_frame();
                 }
 
-                kd_mpi_dma_release_frame(DMA_CHN0, &dma_get_info);
-                //printf("depth addr:%lx\n", lcn_result.lcn_result.depth_out.depth_phys_addr);
+                else
+                {
+#if 0
+                    /* save vicap depth file */
+                    // void *dpu_virt_addr = NULL;
+                    k_char vicap_depth_filename[256];
 
-                kd_mpi_dpu_release_frame();
+                    memset(vicap_depth_filename, 0 , sizeof(vicap_depth_filename));
+                    sprintf(vicap_depth_filename, "%svicap_depth_%04d.yuv", OUT_PATH, dump_count);
 
-                kd_mpi_sys_munmap(dpu_virt_addr, lcn_result.lcn_result.depth_out.length);
+                    dpu_virt_addr = kd_mpi_sys_mmap(dump_info.v_frame.phys_addr[0], dump_info.v_frame.width* dump_info.v_frame.height*3/2);
+                    if (dpu_virt_addr) {
+                        FILE *file = fopen(vicap_depth_filename, "wb+");
+                        if (file) {
+                            fwrite(dpu_virt_addr, 1, dump_info.v_frame.width* dump_info.v_frame.height*3/2, file);
+                            fclose(file);
+                            printf("save %s success\n", vicap_depth_filename);
+                        } else {
+                            printf("can't create file\n");
+                        }
+                    } else {
+                        printf("save ir out failed\n");
+                    }
+
+                    kd_mpi_sys_munmap(dpu_virt_addr, dump_info.v_frame.width* dump_info.v_frame.height*3/2);
+#endif
+
+                    printf("lcn dma\n");
+                    ret = kd_mpi_dma_send_frame(DMA_CHN0, &dump_info, -1);
+                    if (ret != K_SUCCESS)
+                    {
+                        printf("send frame error\r\n");
+                    }
+
+                    ret = kd_mpi_dma_get_frame(DMA_CHN0, &dma_get_info, -1);
+                    if (ret != K_SUCCESS)
+                    {
+                        printf("get frame error\r\n");
+                    }
+                    //printf("dma addr:%lx\n", dma_get_info.v_frame.phys_addr[0]); 
+
+                    printf("lcn dpu\n");
+                    ret = kd_mpi_dpu_send_frame(0, dma_get_info.v_frame.phys_addr[0], 200);
+                    if (ret) {
+                        printf("kd_mpi_dpu_send_frame lcn failed: %d\n", ret);
+                    }
+
+                    if(get_ir)
+                    {
+                        printf("ir dpu\n");
+
+                        ret = kd_mpi_dpu_send_frame(1, ir_phys_addr, 200);
+
+                        if (ret) {
+                            printf("kd_mpi_dpu_send_frame ir failed: %d\n", ret);
+                        }
+                    }
+
+                    ret = kd_mpi_dpu_get_frame(0, &lcn_result, 200);
+                    if (ret) {
+                        printf("kd_mpi_dpu_get_frame failed: %d\n", ret);
+                    }
+
+#if 0//ENABLE_CDC
+                    remain_size = lcn_result.lcn_result.depth_out.length;
+                    dpu_virt_addr = kd_mpi_sys_mmap(lcn_result.lcn_result.depth_out.depth_phys_addr, lcn_result.lcn_result.depth_out.length);
+                    wp = dpu_virt_addr;
+                    while(remain_size)
+                    {
+                        if(remain_size >= 1024)
+                        {
+                            write(fd_usb, wp, 1024);
+                            wp += 1024;
+                            remain_size -= 1024;
+                        }
+                        else
+                        {
+                            write(fd_usb, wp, remain_size);
+                            wp = NULL;
+                            remain_size = 0;
+                        }
+                    }
+                    kd_mpi_sys_munmap(dpu_virt_addr, lcn_result.lcn_result.depth_out.length);
+#else
+                    /* save file */
+                    // void *dpu_virt_addr = NULL;
+                    k_char dpu_filename[256];
+
+                    memset(dpu_filename, 0 , sizeof(dpu_filename));
+                    snprintf(dpu_filename, sizeof(dpu_filename), "%sdepth_%04d.bin", OUT_PATH, dump_count);
+
+                    dpu_virt_addr = kd_mpi_sys_mmap(lcn_result.lcn_result.depth_out.depth_phys_addr, lcn_result.lcn_result.depth_out.length);
+                    if (dpu_virt_addr) {
+                        FILE *file = fopen(dpu_filename, "wb+");
+                        if (file) {
+                            fwrite(dpu_virt_addr, 1, lcn_result.lcn_result.depth_out.length, file);
+                            fclose(file);
+                            printf("save %s success, pts %ld\n", dpu_filename, dump_info.v_frame.pts);
+                        } else {
+                            printf("can't create file\n");
+                        }
+                    } else {
+                        printf("save depthout failed\n");
+                    }
+
+                    kd_mpi_sys_munmap(dpu_virt_addr, lcn_result.lcn_result.depth_out.length);
+#endif
+
+                    kd_mpi_dma_release_frame(DMA_CHN0, &dma_get_info);
+                    //printf("depth addr:%lx\n", lcn_result.lcn_result.depth_out.depth_phys_addr);
+
+                    kd_mpi_dpu_release_frame();
+
+                    if(get_ir)
+                    {
+                        ret = kd_mpi_dpu_get_frame(1, &ir_result, 200);
+                        if (ret) {
+                            printf("kd_mpi_dpu_get_frame ir failed: %d\n", ret);
+                        }                
+
+                        kd_mpi_dpu_release_frame();
+                        
+
+                        get_ir = K_FALSE;
+                    }
+
+                    // kd_mpi_dpu_release_frame();
+                }
             }
+
 
             if(device_obj[dev_num].out_format[chn_num] == PIXEL_FORMAT_RGB_888 ||
                 device_obj[dev_num].out_format[chn_num] == PIXEL_FORMAT_BGR_888_PLANAR)
             {
                 k_u32 data_size = 0;
                 void *virt_addr = NULL;
+#if !ENABLE_CDC
                 k_char filename[256];
+#endif
 
                 memset(&dump_info, 0 , sizeof(k_video_frame_info));
                 ret = kd_mpi_vicap_dump_frame(dev_num, chn_num, VICAP_DUMP_RGB, &dump_info, 1000);
@@ -476,6 +716,31 @@ static void dpu_dump()
                 }
 
                 //printf("addr: [%lx, %lx, %lx]\n", dump_info.v_frame.phys_addr[0], dump_info.v_frame.phys_addr[1], dump_info.v_frame.phys_addr[2]);
+
+#if 0
+            /* save vicap depth file */
+            // void *dpu_virt_addr = NULL;
+            k_char vicap_rgb_filename[256];
+
+            memset(vicap_rgb_filename, 0 , sizeof(vicap_rgb_filename));
+            sprintf(vicap_rgb_filename, "%svicap_rgb_%04d.rgb", OUT_PATH, dump_count);
+
+            dpu_virt_addr = kd_mpi_sys_mmap(dump_info.v_frame.phys_addr[0], dump_info.v_frame.width* dump_info.v_frame.height*3);
+            if (dpu_virt_addr) {
+                FILE *file = fopen(vicap_rgb_filename, "wb+");
+                if (file) {
+                    fwrite(dpu_virt_addr, 1, dump_info.v_frame.width* dump_info.v_frame.height*3, file);
+                    fclose(file);
+                    printf("save %s success\n", vicap_rgb_filename);
+                } else {
+                    printf("can't create file\n");
+                }
+            } else {
+                printf("save ir out failed\n");
+            }
+            kd_mpi_sys_munmap(dpu_virt_addr, dump_info.v_frame.width* dump_info.v_frame.height*3);
+
+#endif
 
                 if (dump_info.v_frame.pixel_format == PIXEL_FORMAT_YUV_SEMIPLANAR_420) {
                     data_size = dump_info.v_frame.width * dump_info.v_frame.height * 3 /2;
@@ -500,6 +765,30 @@ static void dpu_dump()
                     printf("get frame error\r\n");
                 }
 
+#if ENABLE_CDC
+                remain_size = data_size;
+                printf("data size %d\n", data_size);
+                virt_addr = kd_mpi_sys_mmap(dma_get_info.v_frame.phys_addr[0], data_size);
+                wp = virt_addr;
+                int block = 1024;
+                while(remain_size)
+                {
+                    if(remain_size >= block)
+                    {
+                        write(fd_usb, wp, block);
+                        wp += block;
+                        remain_size -= block;
+                    }
+                    else
+                    {
+                        write(fd_usb, wp, remain_size);
+                        wp = NULL;
+                        remain_size = 0;
+                    }
+                    usleep(5000);
+                }
+                kd_mpi_sys_munmap(virt_addr, data_size);
+#else
                 virt_addr = kd_mpi_sys_mmap(dma_get_info.v_frame.phys_addr[0], data_size);
                 if (virt_addr) {
                     memset(filename, 0 , sizeof(filename));
@@ -519,7 +808,7 @@ static void dpu_dump()
                 }
 
                 kd_mpi_sys_munmap(virt_addr, data_size);
-
+#endif
                 kd_mpi_dma_release_frame(DMA_CHN1, &dma_get_info);
             }
 
@@ -540,6 +829,8 @@ static void dpu_continue_dump()
     k_video_frame_info dump_info;
     k_video_frame_info dma_get_info;
     k_dpu_chn_result_u lcn_result;
+    k_dpu_chn_result_u ir_result;
+    k_bool get_ir = K_FALSE;
     k_s32 ret;
 
     for (int dev_num = 0; dev_num < VICAP_DEV_ID_MAX; dev_num++) {
@@ -550,7 +841,8 @@ static void dpu_continue_dump()
             if (!device_obj[dev_num].chn_enable[chn_num])
                 continue;
 
-            //printf("sample_vicap, dev(%d) chn(%d) dump frame.\n", dev_num, chn_num);
+            if(dpu_dev_attr.dev_param.spp.flag_align)
+                get_ir = K_TRUE;
 
             if(device_obj[dev_num].out_format[chn_num] == PIXEL_FORMAT_RGB_888 ||
                 device_obj[dev_num].out_format[chn_num] == PIXEL_FORMAT_BGR_888_PLANAR)
@@ -615,9 +907,25 @@ static void dpu_continue_dump()
                     printf("kd_mpi_dpu_send_frame lcn failed\n");
                 }
 
+                if(get_ir)
+                {
+                    ret = kd_mpi_dpu_send_frame(1, ir_phys_addr, 200);
+                    if (ret) {
+                        printf("kd_mpi_dpu_send_frame lcn failed\n");
+                    }
+                }
+
                 ret = kd_mpi_dpu_get_frame(0, &lcn_result, 200);
                 if (ret) {
                     printf("kd_mpi_dpu_get_frame failed\n");
+                }
+
+                if(get_ir)
+                {
+                    ret = kd_mpi_dpu_get_frame(1, &ir_result, 200);
+                    if (ret) {
+                        printf("kd_mpi_dpu_get_frame failed\n");
+                    }
                 }
 
                 /* save depth file */
@@ -739,7 +1047,55 @@ static void *dump_thread(void *arg)
         rgb_rp++;
         rgb_rp %= VICAP_OUTPUT_BUF_NUM;
     }
-    exiting = K_FALSE;
+    dump_exited = K_TRUE;
+    return arg;
+}
+
+static void *adc_thread(void *arg)
+{    
+    printf("%s\n", __FUNCTION__);
+    float temp = -300.0;//初始变量建议定义到正常范围之外，如果没有正常赋值，不会影响计算。
+	float old_temp = -300.0;
+	// char input = 'a';
+	while (!exiting)
+	{
+		if (!sample_adc(&temp))
+		{
+			//printf("%f\n", temp - old_temp);
+			if (temp - old_temp > 5 || temp - old_temp < -5)
+			{
+				sample_dv_dpu_update_temp(temp);
+				old_temp = temp;
+			}
+		}
+
+		fd_set rfds;
+		struct timeval tv;
+		int retval;
+
+		FD_ZERO(&rfds);
+		FD_SET(0, &rfds); // 监视标准输入流
+
+		tv.tv_sec = 5; // 设置等待时间为5秒
+		tv.tv_usec = 0;
+
+		retval = select(1, &rfds, NULL, NULL, &tv);
+		if (retval == -1) {
+			perror("select()");
+		}
+		else if (retval > 0) {
+			FD_ISSET(0, &rfds);	
+		}
+		else {
+			printf("Timeout reached\n");
+		}
+
+		//k_u32 display_ms = 1000;//get temperature per 1s
+		//usleep(1000 * display_ms);
+	}
+    adc_exited = K_TRUE;
+    printf("adc exit\n");
+
     return arg;
 }
 
@@ -769,9 +1125,18 @@ static void usage(void)
     exit(1);
 }
 
+static void _set_mod_log(k_mod_id mod_id,k_s32  level)
+{
+    k_log_level_conf level_conf;
+    level_conf.level = level;
+    level_conf.mod_id = mod_id;
+    kd_mpi_log_set_level_conf(&level_conf);
+}
+
 int main(int argc, char *argv[])
 {
     // _set_mod_log(K_ID_VI, 6);
+    _set_mod_log(K_ID_DPU, 7);
     k_s32 ret = 0;
 
     k_u32 work_mode = VICAP_WORK_ONLINE_MODE;
@@ -798,6 +1163,9 @@ int main(int argc, char *argv[])
         usage();
     }
 
+#if ENABLE_CDC
+    fd_usb = open("/dev/ttyUSB1", O_RDWR);
+#endif
     for (int i = 1; i < argc; i += 2)
     {
         if (strcmp(argv[i], "-help") == 0)
@@ -828,6 +1196,18 @@ int main(int argc, char *argv[])
             } else {
                 printf("unsupport mode.\n");
                 return -1;
+            }
+        }
+        else if (strcmp(argv[i], "-adc") == 0)
+        {
+            if(argv[i+1]){
+                adc_en = K_TRUE;
+            }
+        }
+        else if (strcmp(argv[i], "-cal") == 0)
+        {
+            if(argv[i+1]){
+                gen_calibration = K_TRUE;
             }
         }
         else if (strcmp(argv[i], "-dev") == 0)
@@ -1406,6 +1786,7 @@ chn_parse:
         printf("sample_vicap, vo layer init failed.\n");
         goto vb_exit;
     }
+    printf("sample_vicap, vo layer init ok.\n");
 
     for (int dev_num = 0; dev_num < VICAP_DEV_ID_MAX; dev_num++) {
         if (!device_obj[dev_num].dev_enable)
@@ -1435,6 +1816,11 @@ chn_parse:
     memset(&ae_roi, 0, sizeof(k_isp_ae_roi));
 
     k_char select = 0;
+
+    if(adc_en){
+        pthread_create(&adc_tid, NULL, adc_thread, NULL);
+    }
+
     while(K_TRUE)
     {
         if(select != '\n')
@@ -1505,10 +1891,10 @@ chn_parse:
             pthread_create(&output_tid, NULL, dump_thread, NULL);
             break;
         case 'q':
-            if(output_tid)
+            if(output_tid || adc_tid)
             {
                 exiting = K_TRUE;
-                while(exiting)
+                while((output_tid && !dump_exited) || (adc_tid && !adc_exited))
                 {
                     usleep(30000);
                 }
@@ -1517,6 +1903,7 @@ chn_parse:
         default:
             break;
         }
+
         sleep(1);
     }
 
@@ -1568,11 +1955,19 @@ app_exit:
         }
     }
 
+    if(adc_tid)
+    {
+        pthread_cancel(adc_tid);
+        pthread_join(adc_tid, NULL);
+    }
+
     if(output_tid)
     {
         pthread_cancel(output_tid);
         pthread_join(output_tid, NULL);
     }
+    exiting = K_FALSE;
+    printf("%d: exiting %d\n", __LINE__, exiting);
 
     ret = sample_dv_dma_delete();
     if (ret) {
@@ -1592,6 +1987,12 @@ app_exit:
     /*Allow one frame time for the VO to release the VB block*/
     k_u32 display_ms = 1000 / 33;
     usleep(1000 * display_ms);
+
+    kd_mpi_sys_munmap(ir_virt_addr, IR_BUF_SIZE);
+    kd_mpi_vb_release_block(ir_handle);
+#if ENABLE_CDC
+    close(fd_usb);
+#endif
 
 vb_exit:
 

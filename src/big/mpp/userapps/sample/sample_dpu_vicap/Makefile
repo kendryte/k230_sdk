@@ -5,10 +5,16 @@ CURRECT_DIR_NAME=$(shell basename `pwd`)
 LOCAL_SRC_DIR = $(shell pwd)
 BIN = $(MPP_SRC_DIR)/userapps/sample/elf/$(CURRECT_DIR_NAME).elf
 LIBPATH = $(MPP_LIB_PATH)
+LIBPATH += -L$(RTSMART_SRC_DIR)/userapps/sdk/rt-thread/lib/risc-v/rv64
 LIBS = $(MPP_LIBS)
+LIBS += -lrtthread
 
 LOCAL_CFLAGS = -I$(LOCAL_SRC_DIR) \
 			   -I$(LOCAL_SRC_DIR)/../sample_vo
+
+DEVICE_CFLAGS = -I$(RTSMART_SRC_DIR)/userapps \
+		-I$(RTSMART_SRC_DIR)/userapps/sdk/rt-thread/include \
+		-I$(RTSMART_SRC_DIR)/userapps/sdk/rt-thread/components/drivers
 
 SRCS = $(wildcard $(LOCAL_SRC_DIR)/*.c) \
 	   $(LOCAL_SRC_DIR)/../sample_vo/vo_test_case.c \
@@ -21,7 +27,7 @@ all: $(BIN)
 	@echo "${PWD}/Makefile all"
 
 $(OBJS): %.o : %.c
-	@$(CC) $(CC_CFLAGS) $(LOCAL_CFLAGS) $(BSP_CFLGAS) $(RTSMART_CFLAGS) $(MPP_USER_CFLGAS) -c $< -o $@
+	@$(CC)  -DHAVE_CCONFIG_H $(CC_CFLAGS) $(LOCAL_CFLAGS) $(DEVICE_CFLAGS) $(BSP_CFLGAS) $(RTSMART_CFLAGS) $(MPP_USER_CFLGAS) -c $< -o $@
 
 $(BIN): $(OBJS) $(MPP_SRC_DIR)/userapps/lib/libvicap.a
 	@echo LD $@

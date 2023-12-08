@@ -71,6 +71,7 @@ config GEN_IMG_SCRIPT
               generate image scripte;
        default "board/common/gen_image_script/gen_image.sh"
 config RTT_CONSOLE_ID
+        depends on SUPPORT_RTSMART
 	int "RTT console id"
 	default 3
 

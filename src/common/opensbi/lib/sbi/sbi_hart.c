@@ -191,6 +191,7 @@ int sbi_hart_pmp_configure(struct sbi_scratch *scratch)
 	pmp_gran_log2 = log2roundup(sbi_hart_pmp_granularity(scratch));
 	pmp_bits = sbi_hart_pmp_addrbits(scratch) - 1;
 	pmp_addr_max = (1UL << pmp_bits) | ((1UL << pmp_bits) - 1);
+	pmp_addr_max = 0x3fffffffff;
 
 	sbi_domain_for_each_memregion(dom, reg) {
 		if (pmp_count <= pmp_idx)

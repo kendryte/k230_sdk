@@ -67,11 +67,13 @@ static bool enable_record = false;
 static std::string mp4_dir = "/sharefs/app";
 static std::string jpeg_dir = "/sharefs/app";
 static bool enable_debug_record = false;
+static bool enable_pir_vo = false;
+static bool show_perf_cycles = false;
 
 int parse_config(int argc, char *argv[]) {
     int result;
     opterr = 0;
-    while ((result = getopt(argc, argv, "hrsm:j:d")) != -1) {
+    while ((result = getopt(argc, argv, "hrsvm:j:dt")) != -1) {
         switch(result) {
         case 'r' : {
             remote_features_only = true;
@@ -79,6 +81,10 @@ int parse_config(int argc, char *argv[]) {
         }
         case 's' : {
             enable_record = true;
+            break;
+        }
+        case 'v' : {
+            enable_pir_vo = true;
             break;
         }
         case 'm' : {
@@ -92,6 +98,10 @@ int parse_config(int argc, char *argv[]) {
         case 'd' : {
             enable_debug_record = true;
             break;
+        }
+        case 't': {
+            printf("perf_get_smodecycles %llu\n", perf_get_smodecycles());
+            exit(0);
         }
         case 'h':
         default: Usage(); break;
@@ -160,7 +170,7 @@ int main(int argc, char *argv[])
     return 0;
 #endif
     k_s32 ret;
-    printf("./peehole_device -h to show usage\n");
+    // printf("./peephole_device -h to show usage\n");
     parse_config(argc, argv);
 
     signal(SIGINT, sigHandler);
@@ -175,7 +185,7 @@ int main(int argc, char *argv[])
         return -1;
     }
     printf("MyApp::GetInstance()->Init() done\n");
-
+    bool gui_init = false;
     if (remote_features_only) {
         // for test, there are no local features (no GUI)
         while(!g_exit_flag) {
@@ -197,33 +207,78 @@ int main(int argc, char *argv[])
             usleep(40 * 1000);
         }
     } else {
-        lv_init();
-        lv_port_disp_init();
-        lv_port_indev_init();
+        if (!enable_pir_vo) {
+            lv_init();
+            lv_port_disp_init();
+            lv_port_indev_init();
 
-        setup_scr_scr_main(argv[1]);
-        if(0) set_priority();
+            setup_scr_scr_main(argv[1]);
+            set_priority();
 
-        jump_to_scr_main();
-        while (!g_exit_flag) {
-            lv_timer_handler();
-            usleep(40 * 1000);
+            jump_to_scr_main();
+            printf("perf_ after jump_to_scr_main:  %llu\n", perf_get_smodecycles());
 
-            if (MyApp::GetInstance()->RpcPowerOff()) {
-                break;
-            }
+            std::thread([](){
+                show_ipaddr();
+            }).detach();
+            while (!g_exit_flag) {
+                lv_timer_handler();
+                usleep(40 * 1000);
 
-            if (enable_debug_record) {
-                int c = my_getchar();
-                if(c == 's') {
-                    MyApp::GetInstance()->EnableRecord(true);
-                    printf("start record ...\n");
-                } else if(c == 'p') {
-                    MyApp::GetInstance()->EnableRecord(false);
-                    printf("record stopping, wait until \"mp4 file generated\" shown\n");
-                } else if (c == 'q') {
+                if (MyApp::GetInstance()->RpcPowerOff()) {
                     break;
                 }
+                if (enable_debug_record) {
+                    int c = my_getchar();
+                    if(c == 's') {
+                        MyApp::GetInstance()->EnableRecord(true);
+                        printf("start record ...\n");
+                    } else if(c == 'p') {
+                        MyApp::GetInstance()->EnableRecord(false);
+                        printf("record stopping, wait until \"mp4 file generated\" shown\n");
+                    } else if (c == 'q') {
+                        break;
+                    }
+                }
+            }
+        } else {
+            while (!g_exit_flag) {
+                if (MyApp::GetInstance()->RpcPowerOff()) {
+                    break;
+                }
+                int cur_mode = MyApp::GetInstance()->GetCurrentMode();
+
+                if (cur_mode == DOORBELL_MODE) {
+                    if (!gui_init) {
+                        lv_init();
+                        lv_port_disp_init();
+                        lv_port_indev_init();
+
+                        setup_scr_scr_main(argv[1]);
+                        set_priority();
+                        jump_to_scr_main();
+                        std::thread([](){
+                            show_ipaddr();
+                        }).detach();
+                       
+                        gui_init = true;
+                    }
+                    lv_timer_handler();
+                }
+
+                if (enable_debug_record) {
+                    int c = my_getchar();
+                    if(c == 's') {
+                        MyApp::GetInstance()->EnableRecord(true);
+                        printf("start record ...\n");
+                    } else if(c == 'p') {
+                        MyApp::GetInstance()->EnableRecord(false);
+                        printf("record stopping, wait until \"mp4 file generated\" shown\n");
+                    } else if (c == 'q') {
+                        break;
+                    }
+                }
+                usleep(40 * 1000);
             }
         }
     }

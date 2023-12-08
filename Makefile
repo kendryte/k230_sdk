@@ -112,8 +112,8 @@ prepare_sourcecode:prepare_toolchain
 #ai
 	@echo "download nncase sdk"
 	@rm -rf src/big/utils/; rm -rf src/big/ai;
-	@wget -q --show-progress $(DOWNLOAD_URL)/downloads/kmodel/kmodel_v2.4.0.tgz -O - | tar -xzC src/big/
-	@wget -q --show-progress $(DOWNLOAD_URL)/downloads/nncase/nncase_k230_v2.4.0.tgz -O - | tar -xzC src/big/
+	@wget -q --show-progress $(DOWNLOAD_URL)/downloads/kmodel/kmodel_v2.5.1.tgz -O - | tar -xzC src/big/
+	@wget -q --show-progress $(DOWNLOAD_URL)/downloads/nncase/nncase_k230_v2.5.1.tgz -O - | tar -xzC src/big/
 
 #big utils
 	@echo "download big utils"
@@ -138,6 +138,15 @@ prepare_sourcecode:prepare_toolchain
 	@wget -q --show-progress $(DOWNLOAD_URL)/downloads/dl/dl.tar.gz -O - | tar -xzC src/little/buildroot-ext/
 
 	@touch src/.src_fetched
+
+#dictionary_pen
+	@if  [ "k230_evb_usiplpddr4_dictionary_pen_defconfig" == "$${CONF}" ] ; then \
+		echo "download dictionary_pen" ;  \
+		wget -q --show-progress $(DOWNLOAD_URL)/downloads/dictionary_pen/cidianbi_kmodel_v2.5.1.tar.gz -O - | tar -xzC src/reference/business_poc/dictionary_pen_poc/ ;  \
+		cp src/reference/business_poc/dictionary_pen_poc/cidianbi_kmodel_v2.5.1/include src/reference/business_poc/dictionary_pen_poc/ -rf ; \
+	fi;
+
+
 check_toolchain:
 	@if  [ ! -f  $(CONFIG_TOOLCHAIN_PATH_LINUX)/$(CONFIG_TOOLCHAIN_PREFIX_LINUX)gcc ] || \
 		 [ !   -f $(CONFIG_TOOLCHAIN_PATH_RTT)/$(CONFIG_TOOLCHAIN_PREFIX_RTT)gcc  ]; then \
@@ -254,6 +263,15 @@ peephole:check_src
 	mkdir -p build; cd build; cmake ../; \
 	make && make install; rm ./* -rf; \
 	cd -;
+
+.PHONY: dictionary_pen	
+dictionary_pen:check_src
+	@export PATH=$(RTT_EXEC_PATH):$(PATH); \
+	export RTSMART_SRC_DIR=$(K230_SDK_ROOT)/$(RT-SMART_SRC_PATH); \
+	cd $(K230_SDK_ROOT)/src/reference/business_poc/dictionary_pen_poc; \
+	mkdir -p build;  \
+	bash build.sh ;
+
 
 .PHONY: cdk-kernel
 cdk-kernel: linux

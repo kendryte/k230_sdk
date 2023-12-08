@@ -95,6 +95,18 @@ class MyApp {
     void StartSendEventThread();
     TrigerMode GetCurrentMode();
 
+    void EnablePirVo(bool enable_pir_vo) {
+      enable_pir_vo_ = enable_pir_vo;
+    }
+    void DisableFirstSnap(bool disable_first_snap) {
+      doorbell_first_snap_ = !disable_first_snap;
+      first_snap_ = !disable_first_snap;
+    }
+
+    void SetDetectStayDura(int detect_stay_duration) {
+      detect_stay_dura_ = detect_stay_duration;
+    }
+
   private:
     void StartPirSnapThread();
     void StartPersonDetectThread();
@@ -169,6 +181,9 @@ class MyApp {
     std::atomic<bool> doorbell_first_snap_ {true};
     std::string kmodel_path_;
     std::atomic<bool> sys_init_ {false};
+    bool enable_pir_vo_ {false};
+    int detect_stay_dura_ {10};
+    bool pir_to_doorbell_ {false};
 };
 
 #endif // _MY_APP_

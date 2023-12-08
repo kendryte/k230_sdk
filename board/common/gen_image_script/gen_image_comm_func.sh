@@ -2,6 +2,29 @@
 source ${K230_SDK_ROOT}/.config
 source ${K230_SDK_ROOT}/.last_conf
 
+gz_file_add_ver()
+{
+	[ $# -lt 1 ] && return
+	local f="$1"
+	
+	local sdk_ver="v0.0.0";
+	local nncase_ver="0.0.0";
+
+	local sdk_ver_file="${K230_SDK_ROOT}/board/common/post_copy_rootfs/etc/version/release_version"
+	local nncase_ver_file="${K230_SDK_ROOT}/src/big/nncase/riscv64/nncase/include/nncase/version.h"
+
+	
+	
+
+	cat ${sdk_ver_file} | grep v | cut -d- -f 1 > /dev/null && \
+	 	sdk_ver=$(cat ${sdk_ver_file} | grep v | cut -d- -f 1)
+
+	cat ${nncase_ver_file} | grep NNCASE_VERSION -w | cut -d\" -f 2 > /dev/null && \
+		 nncase_ver=$(cat ${nncase_ver_file} | grep NNCASE_VERSION -w | cut -d\" -f 2)
+
+	 cp $f ${CONFIG_BOARD_NAME}_$(echo "$f" | sed -nE "s#[^-]*-([^\.]*).*#\1#p")_${sdk_ver}_nncase_v${nncase_ver}.img.gz; 
+}
+
 
 #依赖 BUILD_DIR，K230_SDK_ROOT
 copye_file_to_images()
@@ -271,6 +294,7 @@ gen_image()
 	rm -rf "${GENIMAGE_TMP}"  
 	gzip -k -f ${image_name}
 	chmod a+rw ${image_name} ${image_name}.gz;
+	gz_file_add_ver ${image_name}.gz
 }
 
 gen_image_spinor_proc_ai_mode()

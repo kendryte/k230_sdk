@@ -53,3 +53,15 @@ int board_init(void)
     writel(sd0_ctrl, (void*)SD0_CTRL);
 	return 0;
 }
+
+void quick_boot_board_init(void)
+{
+    u32 usb0_otg_en_gpio52_dir = readl((void*)(GPIO_BASE_ADDR1 + 0x4));
+    usb0_otg_en_gpio52_dir |= 1 << (52 - 32);
+    writel(usb0_otg_en_gpio52_dir, (void*)(GPIO_BASE_ADDR1 + 0x4));
+
+    u32 usb0_otg_en_gpio52_data = readl((void*)(GPIO_BASE_ADDR1 + 0x0));
+    usb0_otg_en_gpio52_data |= 1 << (52 - 32);
+    writel(usb0_otg_en_gpio52_data, (void*)(GPIO_BASE_ADDR1 + 0x0));
+	return 0;
+}

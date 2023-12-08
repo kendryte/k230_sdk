@@ -16,10 +16,8 @@
 
 #define AUDIO_PERSEC_DIV_NUM 25
 static k_bool g_vb_init = K_FALSE;
-static k_mapi_media_attr_t media_attr = {0};
 static k_bool g_enable_audio_codec = K_TRUE;
 
-extern void kd_mapi_media_init_workaround(k_bool media_init_flag);
 static k_s32 _mapi_sample_vb_init(k_bool enable_cache,k_u32 sample_rate)
 {
     if (g_vb_init)
@@ -37,6 +35,7 @@ static k_s32 _mapi_sample_vb_init(k_bool enable_cache,k_u32 sample_rate)
     }
     #endif
 
+    k_mapi_media_attr_t media_attr;
     memset(&media_attr, 0, sizeof(k_mapi_media_attr_t));
     k_vb_config* config = &media_attr.media_config.vb_config;
 
@@ -59,7 +58,6 @@ static k_s32 _mapi_sample_vb_init(k_bool enable_cache,k_u32 sample_rate)
     }
     printf("mmz blk total size:%.2f MB\n", blk_total_size / 1024 / 1024.0);
 
-    kd_mapi_media_init_workaround(K_FALSE);
     ret = kd_mapi_media_init(&media_attr);
     if(ret != K_SUCCESS) {
         printf("kd_mapi_media_init error: %x\n", ret);

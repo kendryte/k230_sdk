@@ -254,7 +254,8 @@ static void dma_write_data_block_config(rt_bool_t head, rt_bool_t tail, rt_bool_
     writel(value, sec_base_addr + DMA_DSC_CFG_4_OFFSET);
 }
 
-static void dma_write_rwcfg(const rt_uint8_t *out, const rt_uint8_t *in, rt_uint32_t len)
+static void dma_write_rwcfg(const rt_uint8_t *out, const rt_uint8_t *in, rt_uint32_t len, void *in_buff, void *out_buff)
+// static void dma_write_rwcfg(const rt_uint8_t *out, const rt_uint8_t *in, rt_uint32_t len)
 {
     rt_uint64_t in_pa, out_pa;
 
@@ -264,8 +265,8 @@ static void dma_write_rwcfg(const rt_uint8_t *out, const rt_uint8_t *in, rt_uint
         writel((uintptr_t)out, sec_base_addr + DMA_DSC_CFG_1_OFFSET);
     else
     {
-        rt_hw_cpu_dcache_clean_flush(out_kvirt, len);
-        out_pa = virt_to_phys((void*)out_kvirt);
+        rt_hw_cpu_dcache_clean_flush(out_buff, len);
+        out_pa = virt_to_phys((void*)out_buff);
         rt_hw_cpu_dcache_clean_flush((void *)out_pa, len);
         writel(out_pa, sec_base_addr + DMA_DSC_CFG_1_OFFSET);
     }
@@ -274,10 +275,10 @@ static void dma_write_rwcfg(const rt_uint8_t *out, const rt_uint8_t *in, rt_uint
         writel((uintptr_t)in, sec_base_addr + DMA_DSC_CFG_0_OFFSET);
     else    // virtual to physical
     {
-        rt_memcpy(in_kvirt, (void *)in, len);
+        rt_memcpy(in_buff, (void *)in, len);
 
-        rt_hw_cpu_dcache_clean_flush(in_kvirt, len);
-        in_pa = virt_to_phys(in_kvirt);
+        rt_hw_cpu_dcache_clean_flush(in_buff, len);
+        in_pa = virt_to_phys(in_buff);
         rt_hw_cpu_dcache_clean_flush((void *)in_pa, len);
         writel(in_pa, sec_base_addr + DMA_DSC_CFG_0_OFFSET);
     }
@@ -733,33 +734,77 @@ static pufs_status_t _ctx_update(struct sm4_context* sm4_ctx,
     
     dma_write_config_0(RT_FALSE, RT_FALSE, RT_FALSE);
     dma_write_data_block_config(sm4_ctx->start ? RT_FALSE : RT_TRUE, last, RT_TRUE, RT_TRUE, 0);
-    dma_write_rwcfg(out, in, inlen);
-  
-    if ((check = sp38a_prepare(sm4_ctx)) != SUCCESS)
-        return check;
 
-    dma_write_start();
-    while (dma_check_busy_status(&val32));
- 
-    if (val32 != 0)
+    if(inlen > 448)
     {
-        rt_kprintf("[ERROR] DMA status 0: 0x%08x\n", val32);
-        return E_ERROR;
-    }
+        rt_uint8_t *in_buff = RT_NULL;
+        rt_uint8_t *out_buff = RT_NULL;
+        rt_uint8_t array[2*inlen + 16];
+        rt_memset(array, 0, 2*inlen + 16);
+        in_buff = array;
+        out_buff = (array + inlen);
+        dma_write_rwcfg(out, in, inlen, in_buff, out_buff);
 
-    val32 = readl(sec_base_addr + SP38A_STAT_OFFSET);
-    if ((val32 & SP38A_STATUS_ERROR_MASK) != 0)
+        if ((check = sp38a_prepare(sm4_ctx)) != SUCCESS)
+            return check;
+
+        dma_write_start();
+        while (dma_check_busy_status(&val32));
+    
+        if (val32 != 0)
+        {
+            rt_kprintf("[ERROR] DMA status 0: 0x%08x\n", val32);
+            return E_ERROR;
+        }
+
+        val32 = readl(sec_base_addr + SP38A_STAT_OFFSET);
+        if ((val32 & SP38A_STATUS_ERROR_MASK) != 0)
+        {
+            rt_kprintf("[ERROR] SM4 status 0: 0x%08x\n", val32);
+            return E_ERROR;
+        }
+
+        // post-processing
+        if (last == RT_FALSE)
+            sp38a_postproc(sm4_ctx);
+
+        // rt_memcpy(out, out_kvirt, inlen);
+        rt_memcpy(out, out_buff, inlen);
+        *outlen = inlen;
+    }
+    else
     {
-        rt_kprintf("[ERROR] SM4 status 0: 0x%08x\n", val32);
-        return E_ERROR;
+        rt_uint8_t *in_buff = (rt_uint8_t*)in_kvirt;
+        rt_uint8_t *out_buff = (rt_uint8_t*)out_kvirt;
+        dma_write_rwcfg(out, in, inlen, in_buff, out_buff);
+
+        if ((check = sp38a_prepare(sm4_ctx)) != SUCCESS)
+            return check;
+
+        dma_write_start();
+        while (dma_check_busy_status(&val32));
+    
+        if (val32 != 0)
+        {
+            rt_kprintf("[ERROR] DMA status 0: 0x%08x\n", val32);
+            return E_ERROR;
+        }
+
+        val32 = readl(sec_base_addr + SP38A_STAT_OFFSET);
+        if ((val32 & SP38A_STATUS_ERROR_MASK) != 0)
+        {
+            rt_kprintf("[ERROR] SM4 status 0: 0x%08x\n", val32);
+            return E_ERROR;
+        }
+
+        // post-processing
+        if (last == RT_FALSE)
+            sp38a_postproc(sm4_ctx);
+
+        // rt_memcpy(out, out_kvirt, inlen);
+        rt_memcpy(out, out_buff, inlen);
+        *outlen = inlen;
     }
-
-    // post-processing
-    if (last == RT_FALSE)
-        sp38a_postproc(sm4_ctx);
-
-    rt_memcpy(out, out_kvirt, inlen);
-    *outlen = inlen;
 
     debug_func("out", (void*)out, inlen);
 
@@ -1165,6 +1210,7 @@ static rt_err_t sm4_control(rt_device_t dev, int cmd, void *args)
     {
         case RT_SM4_ENC:
         {
+            rt_uint32_t _toutlen;
             // debug
             debug_func("key", _key, _keylen);
             debug_func("iv", _iv, _ivlen);
@@ -1183,7 +1229,7 @@ static rt_err_t sm4_control(rt_device_t dev, int cmd, void *args)
             }
 
             // do encrypt
-            if((check = pufs_enc_sm4((rt_uint8_t *)_out, &_outlen,
+            if((check = pufs_enc_sm4((rt_uint8_t *)_out, &_toutlen,
                                     (const rt_uint8_t *)_in, _inlen,
                                     SM4, SSKEY,
                                     g_keyslot, _keybits,
@@ -1194,7 +1240,7 @@ static rt_err_t sm4_control(rt_device_t dev, int cmd, void *args)
             }
             
             // clear key from hardware
-            if((check = pufs_clear_key(SSKEY, g_keyslot, _keybits) != SUCCESS) || (_outlen != _inlen))
+            if((check = pufs_clear_key(SSKEY, g_keyslot, _keybits) != SUCCESS) || (_outlen != _toutlen))
             {
                 ret = -RT_ERROR;
                 return ret;
@@ -1207,7 +1253,7 @@ static rt_err_t sm4_control(rt_device_t dev, int cmd, void *args)
             // output result
             config_args->outlen = _outlen;
             lwp_put_to_user(config_args->out, _out, _outlen);
-            rt_free(total);
+            
             break;
         }
         case RT_SM4_DEC:
@@ -1254,14 +1300,14 @@ static rt_err_t sm4_control(rt_device_t dev, int cmd, void *args)
             // output result
             config_args->outlen = _outlen;
             lwp_put_to_user(config_args->out, _out, _outlen);
-            rt_free(total);
+            
             break;
         }
 
         default:
             return -RT_EINVAL;
     }
-
+    rt_free(total);
     // release global buffer
     rt_free(in_kvirt);
     rt_free(out_kvirt);

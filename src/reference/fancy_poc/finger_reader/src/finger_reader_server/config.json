@@ -1,5 +1,5 @@
 {
-  "open_ai_api_key": "xxxxxxxxxxxxxxxxxxx",
+  "open_ai_api_key": "xxxxxxxxxxxxxxxxx",
   "model": "gpt-3.5-turbo-0613",
   "proxy": "",
   "speech_recognition": false,

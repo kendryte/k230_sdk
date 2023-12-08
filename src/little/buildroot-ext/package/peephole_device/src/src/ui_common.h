@@ -85,6 +85,7 @@ lv_timer_t *create_oneshot_timer(lv_timer_cb_t timer_xcb, uint32_t period,
 lv_obj_t *create_msgbox(const char *title, const char *txt);
 void setup_scr_scr_main(char *url);
 void jump_to_scr_main(void);
+void show_ipaddr(void);
 void jump_to_scr_playback(void);
 void scr_main_display_result(int8_t result);
 void jump_to_scr_playback_ctrl(uint32_t track_id);

@@ -41,7 +41,7 @@ lv_ui_t lv_ui;
 static int get_ipaddr(const char *interface, char *ipaddr){
     int sock_fd;
     if ((sock_fd = socket(AF_INET, SOCK_STREAM, 0)) == -1){
-        printf("get_ipaddr() -- socket create failed...!\n");
+        // printf("get_ipaddr() -- socket create failed...!\n");
         return -1;
     }
 
@@ -52,7 +52,7 @@ static int get_ipaddr(const char *interface, char *ipaddr){
     strncpy(ifr_ip.ifr_name, interface, sizeof(ifr_ip.ifr_name) - 1);
 
     if(ioctl( sock_fd, SIOCGIFADDR, &ifr_ip) < 0 ){
-        printf("get_ipaddr() -- SIOCGIFADDR ioctl error\n");
+        // printf("get_ipaddr() -- SIOCGIFADDR ioctl error\n");
         close(sock_fd);
         return -1;
     }
@@ -252,14 +252,28 @@ void setup_scr_scr_main(char *url)
     lv_obj_add_flag(obj, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_add_event_cb(obj, scr_main_btn_shutdown_event_handler, LV_EVENT_CLICKED,
                         NULL);
+}
 
+void show_ipaddr(void) {
     std::string net_interface{"eth0"};
     char local_ipaddr[20] = {0};
-    get_ipaddr(net_interface.c_str(), (char*)local_ipaddr);
+    // FIXME
+    system("/sbin/ifup -a");
+    while(get_ipaddr(net_interface.c_str(), (char*)local_ipaddr)) {
+        system("/sbin/ifup eth0");
+        usleep(200000);
+    }
+    printf("perf_get_smodecycles after get ipaddr: %llu\n", perf_get_smodecycles());
+    std::string ipaddr_str = local_ipaddr;
+    std::cout << "get_ipaddr : " << ipaddr_str << std::endl;
+    create_msgbox("", local_ipaddr);
+    /*
+    lv_obj_t *obj;
     obj = lv_msgbox_create(lv_ui.scr_main, NULL, local_ipaddr, NULL, false);
     lv_ui.scr_main_msg_url = obj;
     lv_obj_align_to(obj, lv_ui.scr_main_btn_intercom.obj, LV_ALIGN_OUT_TOP_LEFT, 0, -20);
     lv_obj_set_style_text_font(obj, &lv_font_montserrat_32, LV_PART_MAIN);
+    */
 }
 
 void jump_to_scr_main(void)
@@ -330,7 +344,7 @@ lv_obj_t *create_msgbox(const char *title, const char *txt)
 
     lv_timer_t *timer =
         lv_timer_create(msgbox_timeout_timer_handler,
-                        1 * 1000, (void *)&msgbox);
+                        3 * 1000, (void *)&msgbox);
     lv_timer_set_repeat_count(timer, 1);
     lv_obj_set_user_data(msgbox, timer);
 

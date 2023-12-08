@@ -364,6 +364,14 @@ int KdMedia::CreateVcapVEnc(IOnVEncData *on_venc_data) {
     chn_attr.rc_attr.rc_mode = K_VENC_RC_MODE_CBR;
     chn_attr.rc_attr.cbr.src_frame_rate = 30;
     chn_attr.rc_attr.cbr.dst_frame_rate = 30;
+    if (config_.sensor_type == OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_IR || 
+        config_.sensor_type == OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_SPECKLE) {
+            chn_attr.rc_attr.cbr.src_frame_rate = 15;
+            chn_attr.rc_attr.cbr.dst_frame_rate = 15;
+    } else if (config_.sensor_type == OV_OV9286_MIPI_1280X720_60FPS_10BIT_LINEAR_IR_SPECKLE) {
+            chn_attr.rc_attr.cbr.src_frame_rate = 60;
+            chn_attr.rc_attr.cbr.dst_frame_rate = 60;
+    }
     chn_attr.rc_attr.cbr.bit_rate = config_.bitrate_kbps;
     if (config_.video_type ==  KdMediaVideoType::kVideoTypeH264) {
         chn_attr.venc_attr.type = K_PT_H264;

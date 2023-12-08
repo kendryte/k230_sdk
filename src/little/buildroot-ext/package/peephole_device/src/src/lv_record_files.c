@@ -15,7 +15,8 @@ typedef struct tag_record_file_info
 }record_file_info;
 
 #define MAX_FILES_COUNT  100
-static record_file_info g_ary_files[MAX_FILES_COUNT];
+// static record_file_info g_ary_files[MAX_FILES_COUNT];
+static record_file_info *g_ary_files = NULL;
 static int g_files_count = 0;
 
 static int _file_size(char* filename)
@@ -87,6 +88,7 @@ static int readFileList(char *basePath)
 int _lv_record_files_init(char *basePath)
 {
     g_files_count = 0;
+    g_ary_files = (record_file_info*)calloc(sizeof(record_file_info), MAX_FILES_COUNT);
     return readFileList(basePath);
 }
 

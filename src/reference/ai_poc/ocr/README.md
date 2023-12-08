@@ -17,11 +17,13 @@ Options:
   debug_mode      是否需要调试，0、1、2分别表示不调试、简单调试、详细调试
  
  #单图推理示例：（ocr_img.sh）
-./ocr_rec.elf ocr_det.kmodel 0.25 0.5 test.jpg ocr_rec.kmodel 0
+./ocr_reco.elf ocr_det_int16.kmodel 0.25 0.4 333.jpg ocr_rec_int16.kmodel 0
 
  #视频流推理：（ocr_isp.sh）
-./ocr_rec.elf ocr_det.kmodel 0.25 0.5 None ocr_rec.kmodel 0
+./ocr_reco.elf ocr_det_int16.kmodel 0.25 0.4 None ocr_rec_int16.kmodel 0
 ```
 
+## 2.2 效果展示
 
+<img src="https://kendryte-download.canaan-creative.com/k230/downloads/doc_images/ai_demo/ocr/ocr_result.jpg" alt="文字识别效果图" width="50%" height="50%"/>
 

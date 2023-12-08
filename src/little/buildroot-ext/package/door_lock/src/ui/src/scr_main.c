@@ -48,6 +48,11 @@ static void scr_main_btn_signup_event_handler(lv_event_t *e)
     jump_to_scr_signup();
 }
 
+static void scr_main_btn_ota_event_handler(lv_event_t *e)
+{
+    jump_to_scr_ota();
+}
+
 static void scr_main_btn_import_event_handler(lv_event_t *e)
 {
     static const char* pic_path = "/sharefs/pic";
@@ -64,12 +69,12 @@ static int obj_property_init(void)
 {
     lv_ui.img_root_path = DATA_FILE_PATH"img/";
 
-    lv_ui.scr_main_btn_signup.pos.x = 20;
+    lv_ui.scr_main_btn_signup.pos.x = lv_pct(10);
     lv_ui.scr_main_btn_signup.pos.y = -90;
     lv_ui.scr_main_btn_signup.align = LV_ALIGN_BOTTOM_MID;
     lv_ui.scr_main_btn_signup.img_path = "signup.png";
 
-    lv_ui.scr_main_btn_import.pos.x = lv_pct(-30);
+    lv_ui.scr_main_btn_import.pos.x = lv_pct(-10);
     lv_ui.scr_main_btn_import.pos.y = -96;
     lv_ui.scr_main_btn_import.align = LV_ALIGN_BOTTOM_MID;
     lv_ui.scr_main_btn_import.img_path = "import.png";
@@ -78,6 +83,11 @@ static int obj_property_init(void)
     lv_ui.scr_main_btn_delete.pos.y = -96;
     lv_ui.scr_main_btn_delete.align = LV_ALIGN_BOTTOM_MID;
     lv_ui.scr_main_btn_delete.img_path = "delete.png";
+
+    lv_ui.scr_main_btn_ota.pos.x = lv_pct(-30);
+    lv_ui.scr_main_btn_ota.pos.y = -96;
+    lv_ui.scr_main_btn_ota.align = LV_ALIGN_BOTTOM_MID;
+    lv_ui.scr_main_btn_ota.img_path = "ota.png";
 
     return 0;
 }
@@ -133,6 +143,19 @@ void setup_scr_scr_main(void)
     lv_img_set_src(obj, file_path);
     lv_obj_add_flag(obj, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_add_event_cb(obj, scr_main_btn_delete_event_handler, LV_EVENT_CLICKED,
+                        NULL);
+
+    obj = lv_img_create(lv_ui.scr_main);
+    lv_ui.scr_main_btn_ota.obj = obj;
+    lv_obj_set_pos(obj, lv_ui.scr_main_btn_ota.pos.x,
+                   lv_ui.scr_main_btn_ota.pos.y);
+    lv_obj_set_align(obj, lv_ui.scr_main_btn_ota.align);
+    lv_obj_set_size(obj, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+    snprintf(file_path, sizeof(file_path), "%s%s", lv_ui.img_root_path,
+             lv_ui.scr_main_btn_ota.img_path);
+    lv_img_set_src(obj, file_path);
+    lv_obj_add_flag(obj, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_event_cb(obj, scr_main_btn_ota_event_handler, LV_EVENT_CLICKED,
                         NULL);
 }
 

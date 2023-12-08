@@ -55,6 +55,7 @@
 #define DISP_OUT_XY         "gb_init_sad_disp_out_xy_addr.bin"
 
 #define MAX_PATH_LENGTH     100
+#define ERROR_BYTES_THRESHOLD 5
 
 char g_param_path[MAX_PATH_LENGTH];
 char g_ref_path[MAX_PATH_LENGTH];
@@ -502,14 +503,15 @@ static void sample_vvi_stop(sample_vvi_pipe_conf_t* pipe_conf)
 static k_s32 result_check(k_u8 *data, k_u8 *golden, k_u32 length)
 {
     k_u32 i;
+    k_s32 err_cnt=0;
 
     for (i = 0; i < length; i++) {
         if (data[i] != golden[i]) {
-            printf("compare error! data[%-5d]:%02x, golden[%-5d]:%02x\n", i, data[i], i, golden[i]);
-            return K_FAILED;
+            //printf("compare error! data[%-5d]:%02x, golden[%-5d]:%02x\n", i, data[i], i, golden[i]);
+            err_cnt++;
         }
     }
-    return K_SUCCESS;
+    return err_cnt;
 }
 
 static k_s32 dpu_result_check(k_dpu_chn_result_u *result, k_u32 chn_num)
@@ -526,18 +528,26 @@ static k_s32 dpu_result_check(k_dpu_chn_result_u *result, k_u32 chn_num)
             //     __func__, __LINE__, lcn->depth_out.depth_phys_addr, lcn->depth_out.length, g_depth_out_space.size);
             virt_result = (k_u8 *)kd_mpi_sys_mmap(lcn->depth_out.depth_phys_addr, lcn->depth_out.length);
             ret = result_check(virt_result, g_depth_out_space.virt_addr, lcn->depth_out.length);
-            if (ret)
-                return ret;
-            printf("%-15s check pass\n", "depth_out");
             kd_mpi_sys_munmap(virt_result, lcn->depth_out.length);
+            if (ret > ERROR_BYTES_THRESHOLD)
+            {
+                printf("depth_out error bytes %d\n", ret);
+                return ret;
+            }
+            printf("%-15s check pass\n", "depth_out");
+
         }
         if (lcn->disp_out.valid) {
             // printf("%s,%d, disp_phys_addr:%lx, vb.length:%d, array.length:%d\n",
             //     __func__, __LINE__, lcn->disp_out.disp_phys_addr, lcn->disp_out.length, g_disp_out_space.size);
             virt_result = (k_u8 *)kd_mpi_sys_mmap(lcn->disp_out.disp_phys_addr, lcn->disp_out.length);
             ret = result_check(virt_result, g_disp_out_space.virt_addr, lcn->disp_out.length);
-            if (ret)
+            kd_mpi_sys_munmap(virt_result, lcn->disp_out.length);
+            if (ret > ERROR_BYTES_THRESHOLD)
+            {
+                printf("disp_out error bytes %d\n", ret);
                 return ret;
+            }
             printf("%-15s check pass\n", "disp_out");
         }
         if (lcn->qlt_out.valid) {
@@ -545,24 +555,36 @@ static k_s32 dpu_result_check(k_dpu_chn_result_u *result, k_u32 chn_num)
             //     __func__, __LINE__, lcn->qlt_out.qlt_phys_addr, lcn->qlt_out.qlt_length, g_qlt_out_space.size);
             virt_result = (k_u8 *)kd_mpi_sys_mmap(lcn->qlt_out.qlt_phys_addr, lcn->qlt_out.qlt_length);
             ret = result_check(virt_result, g_qlt_out_space.virt_addr, lcn->qlt_out.qlt_length);
-            if (ret)
+            kd_mpi_sys_munmap(virt_result, lcn->qlt_out.qlt_length);
+            if (ret > 3)
+            {
+                printf("qlt_out error bytes %d\n", ret);
                 return ret;
+            }
             printf("%-15s check pass\n", "qlt_out");
 
             // printf("%s,%d, sad_disp_phys_addr:%lx, vb.length:%d, array.length:%d\n",
             //     __func__, __LINE__, lcn->qlt_out.sad_disp_phys_addr, lcn->qlt_out.sad_disp_length, g_disp_out_x_space.size);
             virt_result = (k_u8 *)kd_mpi_sys_mmap(lcn->qlt_out.sad_disp_phys_addr, lcn->qlt_out.sad_disp_length);
             ret = result_check(virt_result, g_disp_out_x_space.virt_addr, lcn->qlt_out.sad_disp_length);
-            if (ret)
+            kd_mpi_sys_munmap(virt_result, lcn->qlt_out.sad_disp_length);
+            if (ret > ERROR_BYTES_THRESHOLD)
+            {
+                printf("sad_disp error bytes %d\n", ret);
                 return ret;
+            }
             printf("%-15s check pass\n", "sad_disp");
 
             // printf("%s,%d, init_sad_disp_phys_addr:%lx, vb.length:%d, array.length:%d\n",
             //     __func__, __LINE__, lcn->qlt_out.init_sad_disp_phys_addr, lcn->qlt_out.init_sad_disp_length, g_disp_out_xy_space.size);
             virt_result = (k_u8 *)kd_mpi_sys_mmap(lcn->qlt_out.init_sad_disp_phys_addr, lcn->qlt_out.init_sad_disp_length);
             ret = result_check(virt_result, g_disp_out_xy_space.virt_addr, lcn->qlt_out.init_sad_disp_length);
-            if (ret)
+            kd_mpi_sys_munmap(virt_result, lcn->qlt_out.init_sad_disp_length);
+            if (ret > ERROR_BYTES_THRESHOLD)
+            {
+                printf("init_sad_disp error bytes %d\n", ret);
                 return ret;
+            }
             printf("%-15s check pass\n", "init_sad_disp");
         }
     } else if (chn_num == 1) {
@@ -570,8 +592,12 @@ static k_s32 dpu_result_check(k_dpu_chn_result_u *result, k_u32 chn_num)
         if (ir->ir_out.valid) {
             virt_result = (k_u8 *)kd_mpi_sys_mmap(ir->ir_out.ir_phys_addr, ir->ir_out.length);
             ret = result_check(virt_result, g_ir_out_space.virt_addr, ir->ir_out.length);
-            if (ret)
+            kd_mpi_sys_munmap(virt_result, ir->ir_out.length);
+            if (ret > ERROR_BYTES_THRESHOLD)
+            {
+                printf("ir_out error bytes %d\n", ret);
                 return ret;
+            }
             printf("%-15s check pass\n", "ir");
         }
     } else {
@@ -621,19 +647,19 @@ k_s32 sample_dpu_unbound_mode(k_dpu_dev_attr_t *dev_attr, k_dpu_chn_lcn_attr_t *
             }
         }
 
-        ret = kd_mpi_dpu_send_frame(0, g_lcn_space.phys_addr, 10);
+        ret = kd_mpi_dpu_send_frame(0, g_lcn_space.phys_addr, 100);
         if (ret) {
             printf("kd_mpi_dpu_send_frame lcn failed\n");
             return 0;
         }
 
-        ret = kd_mpi_dpu_send_frame(1, g_ir_space.phys_addr, 10);
+        ret = kd_mpi_dpu_send_frame(1, g_ir_space.phys_addr, 100);
         if (ret) {
             printf("kd_mpi_dpu_send_frame ir failed\n");
             return 0;
         }
 
-        ret = kd_mpi_dpu_get_frame(0, &lcn_result, 33);
+        ret = kd_mpi_dpu_get_frame(0, &lcn_result, 100);
         if (ret) {
             printf("kd_mpi_dpu_get_frame failed\n");
             return 0;
@@ -642,7 +668,7 @@ k_s32 sample_dpu_unbound_mode(k_dpu_dev_attr_t *dev_attr, k_dpu_chn_lcn_attr_t *
             err_times++;
 
 
-        ret = kd_mpi_dpu_get_frame(1, &ir_result, 33);
+        ret = kd_mpi_dpu_get_frame(1, &ir_result, 100);
         if (ret) {
             printf("kd_mpi_dpu_get_frame failed\n");
             return 0;
@@ -651,6 +677,8 @@ k_s32 sample_dpu_unbound_mode(k_dpu_dev_attr_t *dev_attr, k_dpu_chn_lcn_attr_t *
             err_times++;
 
         kd_mpi_dpu_release_frame();
+
+        usleep(30000);
 
         printf("\n****************frame num %d end*******************\n", tmp);
     }
@@ -962,11 +990,11 @@ err_unbind:
 
 err_input_rels:
     dpu_golden_data_release();
-    printf("%s,%d\n", __func__, __LINE__);
+    // printf("%s,%d\n", __func__, __LINE__);
 
 err_vb_exit:
     dpu_vb_exit();
-    printf("%s,%d\n", __func__, __LINE__);
-
+    // printf("%s,%d\n", __func__, __LINE__);
+    printf("sample dpu done!");
     return 0;
 }

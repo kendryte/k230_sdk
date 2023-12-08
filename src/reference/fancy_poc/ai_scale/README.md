@@ -1,17 +1,17 @@
 # K230 模拟AI电子秤
 ![Alt text](resource/image.png)
-Document version: V1.0 Release date: 2023-10-7
+Document version: V1.0 Release date: 2023-10-26
 
 ## 介绍
-该项目为K230 模拟AI电子秤开源工程。本工程基于K230应用了度量学习技术实现商品识别。本应用使用PC作为服务端控制上秤、下秤和展示商品；使用K230作为客户端建立对比向量库，然后捕捉图像进行向量相似度对比获得商品类别，将识别结果传给服务端展示给用户。得到商品类别后可以结合商品单价和商品重量得到价签。
+该项目为K230 模拟AI电子秤开源工程。本工程基于K230应用了度量学习技术实现商品识别。本应用使用PC作为服务端控制上秤、下秤、采集新商品和展示称重商品；使用K230作为客户端建立对比向量库，然后捕捉图像进行向量相似度对比获得商品类别，结合商品单价和商品重量得到应付钱数；最后将商品类别和应付钱数在PC端展示给用户。
 
 <img src="./resource/frame.jpg" alt="frame" style="zoom: 50%;" />
 
-本项目主要侧重于K230端功能的实现，使用PC端的“上秤”，“下秤”两个按钮模拟传感器的逻辑。
+本项目主要侧重于K230端功能的实现，使用PC端的“上秤”，“下秤”两个按钮模拟传感器的逻辑。多次点击采集按钮获取开发板摄像头采集的新类别图片；点击添加按钮将新类别添加到底库中；点击清除按钮停止采集。本项目未连接重量传感器，设置默认重量为1kg。
 
 ## 主要特点
 
-- 自学习：无需重新训练模型，在底库数据集中添加对应类别，推理时即可识别；
+- 实时自学习：无需重新训练模型，使用采集功能在底库数据集中添加对应类别，推理时即可识别；
 
 
 - 小样本分类效果良好：每个类别只需要几张图片即可完成分类；
@@ -24,14 +24,14 @@ Document version: V1.0 Release date: 2023-10-7
     wget https://ai.b-bug.org/k230/downloads/fancy_poc/ai_scale/$file || wget https://kendryte-download.canaan-creative.com/k230/downloads/fancy_poc/ai_scale/$file;  
     done  
     
-    for file in onboard_v2.4.zip
+    for file in onboard_v2.5.zip
     do
     wget https://ai.b-bug.org/k230/downloads/fancy_poc/ai_scale/k230_board/$file || wget https://kendryte-download.canaan-creative.com/k230/downloads/fancy_poc/ai_scale/k230_board/$file;  
     done
 
 ## 数据准备
 
-待分类的数据需要按照固定格式进行组织，数据组织形式如下：
+待分类的数据必须要按照固定格式进行组织，数据组织形式如下：
 
 ```
 |-gallery
@@ -51,7 +51,27 @@ Document version: V1.0 Release date: 2023-10-7
 	|...
 ```
 
-数据集的根目录为gallery，gallery包含若干个子文件夹，每个文件夹以类别编号命名，从0开始；类别文件夹下包括若干张图片和一个label.txt文件；label.txt文件中存储类别名称。该数据集用于在商品识别之前创建底库。
+数据集的根目录为gallery，gallery包含若干个子文件夹，每个文件夹以类别编号命名，从0开始；类别文件夹下包括若干张图片(图片不要太大，不超过300kb)和一个label.txt文件，图片从0开始命名，label.txt文件中第一行存储类别名称，第二行存储类别单价，如gallery/0/label.txt：
+
+```shell
+长茄子
+1.23
+```
+
+该数据集用于在商品识别之前创建底库。
+
+本项目提供了示例商品类别底库，请参照onboard_v2.5/gallery中的数据结构组织数据。
+
+## 可执行文件编译
+
+进入SDK目录下的reference/fancy_poc下，执行：
+
+```shell
+chmod +x build_app.sh
+./build_app.sh
+```
+
+在reference/fancy_poc/k230_bin目录下，获取ai_scale.elf和client拷贝到开发板onboard_v2.5内。
 
 ## 服务端准备
 
@@ -78,7 +98,7 @@ Document version: V1.0 Release date: 2023-10-7
 ### 1. 服务端：
 
     # 解压AIScale.zip
-    cd AIScale/AIScale_v1.0
+    cd AIScale
     start AIScale.exe #或双击AIScale.exe启动
 
 **注意：**服务端界面启动后点击**启动**按钮， 服务端服务IP为运行服务器的本机IP，连接端口默认为8080，连接端口可自定义。
@@ -90,12 +110,9 @@ Document version: V1.0 Release date: 2023-10-7
     cd /sharefs/ai_scale
     #小核下执行（IP和端口由服务端设置）
     ./connect.sh 192.168.1.2 8080
-    #小核下修改ai_scale_isp.sh文件的可执行文件名称
-    vi ai_scale_isp.sh
-    #将main.elf换为ai_scale.elf
     #大核下执行（./ai_scale_isp.sh）
     ./ai_scale.elf recognition.kmodel None gallery 5 1
-    #gallery是底库数据集的路径，根据您自定义的数据进行输入
+    #gallery是底库数据集的路径
 
 **注意：** 1、使用./connect.sh命令时需要使用服务端显示的相应IP地址及通信端口；
 
@@ -111,7 +128,7 @@ Document version: V1.0 Release date: 2023-10-7
 
 ![测试说明](./resource/state.jpg)
 
-PC启动服务端，开发板摄像头对准识别商品，调整开发板使得摄像头拍摄到的图像尽可能清晰。然后建立PC和开发板之间的连接，开始上秤识别。
+PC启动服务端，开发板摄像头对准识别商品，调整开发板使得摄像头拍摄到的图像尽可能清晰且距离固定。然后建立PC和开发板之间的连接，开始上秤识别。
 
 ### 服务端展示界面
 
@@ -122,7 +139,8 @@ PC启动服务端，开发板摄像头对准识别商品，调整开发板使得
 
 ![show](./resource/show.gif)
 
-- 称重重量由传感器获取，商品单价可以存储在PC端的数据库中，也可存储在开发板上，在构建底库时同时构建商品价格字典；
+- 本项目依赖网络传输，图片的传输和处理较慢，不可频繁多次点击同一按钮，如有问题，可重新启动；
 
-- 通过识别获得商品类别后，后续可以根据称重重量和单价计算当前商品的价格；
-- 本项目侧重实现K230端的商品识别；
+- 本项目侧重实现K230端的商品识别称重计价；
+
+  

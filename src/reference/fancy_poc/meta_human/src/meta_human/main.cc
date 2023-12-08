@@ -36,27 +36,11 @@
 #include "meta_human.h"
 
 
-
 using std::cerr;
 using std::cout;
 using std::endl;
 
 std::atomic<bool> isp_stop(false);
-
-bool isFolderExist(string folderPath) {
-    struct stat info;
-    if (stat(folderPath.c_str(), &info) != 0) {
-        return false;
-    }
-    return (info.st_mode & S_IFDIR);
-}
-
-bool createFolder(string folderPath) {
-    if (mkdir(folderPath.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0) {
-        return false;
-    }
-    return true;
-}
 
 void print_usage(const char *name)
 {
@@ -105,8 +89,6 @@ void video_proc(char *argv[])
     while (!isp_stop)
     {
         ScopedTiming st("total time", 1);
-
-        
         {
             ScopedTiming st("read capture", atoi(argv[3]));
             // VICAP_CHN_ID_1 out rgb888p
@@ -117,7 +99,6 @@ void video_proc(char *argv[])
                 continue;
             }
         }
-            
 
         {
             ScopedTiming st("isp copy", atoi(argv[3]));
@@ -134,17 +115,14 @@ void video_proc(char *argv[])
         idx++;
 
         if( idx == 2*num_storage )
-            // std::this_thread::sleep_for(std::chrono::milliseconds(15) );
             idx = 0;
 
         cv::Mat osd_frame(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-
         {
             ScopedTiming st("osd copy", atoi(argv[3]));
             memcpy(pic_vaddr, osd_frame.data, osd_width * osd_height * 4);
             //显示通道插入帧
-            kd_mpi_vo_chn_insert_frame(osd_id+3, &vf_info);  //K_VO_OSD0
-            // printf("kd_mpi_vo_chn_insert_frame success \n");
+            kd_mpi_vo_chn_insert_frame(osd_id+3, &vf_info); 
 
             ret = kd_mpi_vicap_dump_release(vicap_dev, VICAP_CHN_ID_1, &dump_info);
             if (ret) {
@@ -156,7 +134,6 @@ void video_proc(char *argv[])
     vo_osd_release_block();
     vivcap_stop();
 
-
     // free memory
     ret = kd_mpi_sys_mmz_free(paddr, vaddr);
     if (ret)
@@ -164,9 +141,7 @@ void video_proc(char *argv[])
         std::cerr << "free failed: ret = " << ret << ", errno = " << strerror(errno) << std::endl;
         std::abort();
     }
-
 }
-
 
 int main(int argc, char *argv[])
 {
@@ -175,29 +150,6 @@ int main(int argc, char *argv[])
     {
         print_usage(argv[0]);
         return -1;
-    }
-
-    std::string ping = "ping";
-    std::string pong = "pong";
-
-    if (!isFolderExist(ping)) {
-        if (!createFolder(ping)) {
-            cout << "create 'ping' folder failed!!" << endl;
-            return 1;
-        }
-        cout << "create 'ping' folder success!!" << endl;
-    } else {
-        cout << "'ping' folder has existed!!" << endl;
-    }
-
-    if (!isFolderExist(pong)) {
-        if (!createFolder(pong)) {
-            cout << "create 'ping' folder failed!!" << endl;
-            return 1;
-        }
-        cout << "create 'ping' folder success!!" << endl;
-    } else {
-        cout << "'ping' folder has existed!!" << endl;
     }
 
     if (strcmp(argv[2], "None") == 0)
@@ -219,9 +171,7 @@ int main(int argc, char *argv[])
 
         Meta_Human mhuman(argv[1],atoi(argv[3]));
         mhuman.pre_process(ori_img);
-        
         mhuman.inference();
-
         mhuman.post_process({ori_w, ori_h},0,100);
        
     }

@@ -253,8 +253,11 @@ int main(int argc, char *argv[])
 
     if (g_type >= 2 && g_type <= 12)
     {
-        printf("enter any key to exit\n");
-        getchar();
+        printf("enter q key to exit\n");
+        while(getchar() != 'q')
+        {
+            usleep(100*1000);
+        }
     }
     audio_sample_exit();
     pthread_join(g_pthread_handle, NULL);

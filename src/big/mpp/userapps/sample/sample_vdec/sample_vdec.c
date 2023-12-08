@@ -85,6 +85,7 @@ typedef struct
     k_u32 act_height;
     k_u32 input_pool_id;
     k_u32 output_pool_id;
+    k_u32 dec_stream_frames;
 } sample_vdec_conf_t;
 
 static sample_vdec_conf_t g_vdec_conf[VDEC_MAX_CHN_NUMS];
@@ -324,6 +325,7 @@ static void *output_thread(void *arg)
         if (status.end_of_stream)
         {
             vdec_debug("%s>ch %d, receive eos\n", __func__, vdec_conf->ch_id);
+            vdec_conf->dec_stream_frames = status.dec_stream_frames;
             break;
         }
         else if (status.width != vdec_conf->act_width && first == 0)
@@ -509,6 +511,11 @@ int main(int argc, char *argv[])
 
     while (1)
     {
+        if(g_vdec_conf[ch].dec_stream_frames == 1 && type == K_PT_JPEG)
+        {
+            sleep(3);
+            vdec_debug("one jpeg picture\n");
+        }
         if (g_vdec_conf[ch].done == K_TRUE)
         {
             sample_vdec_unbind_vo(BIND_VO_LAYER);

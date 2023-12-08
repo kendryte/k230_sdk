@@ -45,12 +45,12 @@ H265LiveFrameSource::parseFrame(std::shared_ptr<uint8_t> data, size_t data_size,
             case 32: // VPS
                 fAuxLine.clear();
                 fVps.reset(), fSps.reset(), fPps.reset();
-                fVps = make_shared_array<uint8_t>(size);;
+                fVps = make_shared_array<uint8_t>(size);
                 memcpy(fVps.get(), buffer, size);
                 vps_size = size;
                 break;
             case 33: // SPS
-                fSps = make_shared_array<uint8_t>(size);;
+                fSps = make_shared_array<uint8_t>(size);
                 memcpy(fSps.get(), buffer, size);
                 sps_size = size;
                 break;

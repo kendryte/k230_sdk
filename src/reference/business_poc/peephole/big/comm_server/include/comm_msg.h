@@ -51,6 +51,7 @@ enum class UserMsgType : int {
     // server->client
     SERVER_MSG_BASE = 100,
     PLAYBACK_ACK,
+    CURRENT_MODE_TYPE,
     //
     UserMsgMax = 1000
 };

@@ -34,6 +34,21 @@
 #include "rtsp_server.h"
 #include "my_muxer.h"
 
+static uint64_t perf_get_smodecycles(void)
+{
+    uint64_t cnt;
+    __asm__ __volatile__(
+        "rdcycle %0" : "=r"(cnt)
+    );
+    return cnt;
+}
+
+typedef enum {
+  PIR_MODE = 1,
+  DOORBELL_MODE,
+  MODE_BUTT,
+} CurrentMode;
+
 /*
    remote bidirection-speech with video:
    1. audio-input(innner_codec) --> OnAEncFrameData() --> rtsp_server.SendAudioData
@@ -59,12 +74,16 @@ class MyApp : public IRpcServerCallback, public IClientCallback, public IOnBackC
         jpeg_dir = jpeg_dir_;
     }
     void EnableRecord(bool enable) {
-        enable_record_.store(enable);
+        enable_mp4_record_.store(enable);
         if (!enable) {
             cmd_stop_record();
         } else {
             cmd_start_record();
         }
+    }
+
+    int GetCurrentMode() {
+      return current_mode_;
     }
 
     void SetPowerOff() { request_power_off_.store(true); }
@@ -137,6 +156,7 @@ class MyApp : public IRpcServerCallback, public IClientCallback, public IOnBackC
     //
     UserCommClient client_;
     std::atomic<bool> playback_ack_{false};
+    std::atomic<int> current_mode_ {0};
     //
     KdRtspServer rtsp_server_;
     std::string stream_url_ = "peephole_stream";
@@ -160,13 +180,15 @@ class MyApp : public IRpcServerCallback, public IClientCallback, public IOnBackC
     std::string jpeg_dir_{"/sharefs/app/peephole_device"};
     MyMp4Muxer mp4_muxer_;
     MyJpegMuxer jpeg_muxer_;
-    std::atomic<bool> enable_record_{false};
+    std::atomic<bool> enable_mp4_record_{false};
+    std::atomic<bool> enable_jpeg_recod_ {true};
     struct BackchannelData{
         std::shared_ptr<uint8_t> data{nullptr};
         size_t size{0};
     };
     std::mutex aq_mutex_;
     std::queue<BackchannelData> audio_queue_;
+    std::thread sd_thd_;
 };
 
 #endif // MY_APP_H_

@@ -26,8 +26,51 @@
 #include "my_app.h"
 #include "media.h"
 
-int main() {
+static bool enable_pir_vo = false;
+static bool disable_first_snap = false;
+static int detect_stay_duration = 10;
+
+static void Usage() {
+    std::cout << "Usage: ./peehole_device [-v] [-d] [-t <duration>]"<< std::endl;
+    std::cout << "-h: print usage" << std::endl;
+    std::cout << "-v: enable pir vo, default false" << std::endl;
+    std::cout << "-d: disable first snap, default false" << std::endl;
+    std::cout << "-t: person detect stay duration(s), default 10s " << std::endl;
+    exit(-1);
+}
+
+static int parse_config(int argc, char *argv[]) {
+    int result;
+    opterr = 0;
+    while ((result = getopt(argc, argv, "vdt:")) != -1) {
+        switch (result) {
+            case 'v' : {
+                enable_pir_vo = true;
+                break;
+            }
+            case 'd' : {
+                disable_first_snap = true;
+                break;
+            }
+            case 't' : {
+                detect_stay_duration = atoi(optarg);
+                break;
+            }
+            case 'h' :
+            default: Usage(); break;
+        }
+    }
+}
+
+int main(int argc, char *argv[]) {
     MyApp *app = new MyApp(16);
+    if (argc > 1)
+        parse_config(argc, argv);
+    
+    app->EnablePirVo(enable_pir_vo);
+    app->DisableFirstSnap(disable_first_snap);
+    app->SetDetectStayDura(detect_stay_duration);
+    
     TrigerMode triger_mode = app->GetCurrentMode();
     // TrigerMode triger_mode = DOORBELL_MODE;
     printf("triger mode = %d...\n", triger_mode);

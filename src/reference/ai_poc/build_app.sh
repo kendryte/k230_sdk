@@ -27,6 +27,7 @@ cp -a ../../big/kmodel/ai_poc/utils/* ${k230_bin}
 cp -a shell/* ${k230_bin}
 
 /opt/toolchain/Xuantie-900-gcc-linux-5.10.4-glibc-x86_64-V2.6.0/bin/riscv64-unknown-linux-gnu-g++ -O3 llamac/llama_run.cc -o out/llama_run -lm
+/opt/toolchain/Xuantie-900-gcc-linux-5.10.4-glibc-x86_64-V2.6.0/bin/riscv64-unknown-linux-gnu-g++ -O3 self_learning_small/main.cc -o out/create_category -lm
 
 if [ -f out/bin/face_detection.elf ]; then
       cp out/bin/face_detection.elf ${k230_bin}
@@ -182,6 +183,38 @@ fi
 
 if [ -f out/bin/anomaly_det.elf ]; then
       cp out/bin/anomaly_det.elf ${k230_bin}
+fi
+
+if [ -f out/bin/face_mesh.elf ]; then
+      cp out/bin/face_mesh.elf ${k230_bin}
+fi
+
+if [ -f out/bin/face_alignment.elf ]; then
+      cp out/bin/face_alignment.elf ${k230_bin}
+fi
+
+if [ -f out/bin/translate_en_ch.elf ]; then
+      cp out/bin/translate_en_ch.elf ${k230_bin}
+fi
+
+if [ -f out/create_category ]; then
+      cp out/create_category ${k230_bin}
+fi
+
+if [ -f out/bin/self_learning.elf ]; then
+      cp out/bin/self_learning.elf ${k230_bin}
+fi
+
+if [ -f out/bin/crosswalk_detect.elf ]; then
+      cp out/bin/crosswalk_detect.elf ${k230_bin}
+fi
+
+if [ -f out/bin/virtual_keyboard.elf ]; then
+      cp out/bin/virtual_keyboard.elf ${k230_bin}
+fi
+
+if [ -f out/bin/sq_handkp_flower.elf ]; then
+      cp out/bin/sq_handkp_flower.elf ${k230_bin}
 fi
 
 rm -rf out

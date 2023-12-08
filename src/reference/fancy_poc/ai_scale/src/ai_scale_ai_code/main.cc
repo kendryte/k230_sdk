@@ -26,7 +26,12 @@
 #include <iostream>
 #include <thread>
 #include <map>
+#include <cstdio>
+#include <cstring>
 #include <dirent.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include "utils.h"
 #include "vi_vo.h"
 #include "gen_embedding.h"
@@ -37,6 +42,16 @@ using std::endl;
 using namespace std;
 
 std::atomic<bool> isp_stop(false);
+
+std::vector<std::vector<float>> g_embeddings; //底库数据创建的向量对比库
+std::map<size_t, std::string> g_label_dict; // 底库类别标签映射
+std::map<int,float> g_price_dict; // 底库类别单价映射
+int g_img_idx=0; // 底库图片索引
+int g_max_classes_idx=0; // 底库类别索引
+string g_dataset_dir="gallery"; // 底库根目录
+string g_result=""; // 识别类别结果
+string g_price="";  // 识别类别单价
+string g_weight=""; // 识别类别重量，默认为1kg，实际应用中可以接入重量传感器
 
 void print_usage()
 {
@@ -61,17 +76,130 @@ void print_usage()
          << endl;
 }
 
-bool fileExists(const std::string &filename) {
+bool file_exists(const std::string &filename) {
     std::ifstream file(filename.c_str());
     return file.good(); 
 }
 
-int save_result(string recog_res)
+bool removeFile(const std::string& filePath) {
+    if (remove(filePath.c_str()) == 0) {
+        return true;
+    }
+    return false;
+}
+
+bool clearDirectory(const std::string& path) {
+    if (mkdir(path.c_str(), 0777) != 0) {
+        return false;
+    }
+
+    DIR* dp = opendir(path.c_str());
+    if (!dp) {
+        return false;
+    }
+
+    struct dirent* entry;
+
+    while ((entry = readdir(dp))) {
+        if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
+            std::string entryPath = path + "/" + entry->d_name;
+            struct stat statbuf;
+
+            if (stat(entryPath.c_str(), &statbuf) == -1) {
+                return false;
+            }
+
+            if (S_ISDIR(statbuf.st_mode)) {
+                // 递归删除子文件夹
+                if (!clearDirectory(entryPath)) {
+                    return false;
+                }
+            } else {
+                // 删除文件
+                if (!removeFile(entryPath)) {
+                    return false;
+                }
+            }
+        }
+    }
+    closedir(dp);
+
+    return true;
+}
+
+bool directoryExists(const std::string& path) {
+    struct stat info;
+    if (stat(path.c_str(), &info) != 0) {
+        return false; // 文件夹不存在
+    }
+
+    return (info.st_mode & S_IFDIR) != 0; // 文件夹存在
+}
+
+bool createDirectory(const std::string& path) {
+    if (mkdir(path.c_str(), 0777) == 0) {
+        return true; // 文件夹创建成功
+    }
+
+    return false; // 文件夹创建失败
+}
+
+
+bool copyFile(const std::string &sourceFilePath,const std::string &destinationFilePath){
+    std::ifstream sourceFile(sourceFilePath, std::ios::binary);
+    if (!sourceFile) {
+        std::cerr << "无法打开源文件: " << sourceFilePath << std::endl;
+        return 1;
+    }
+    std::ofstream destinationFile(destinationFilePath, std::ios::binary);
+    if (!destinationFile) {
+        std::cerr << "无法创建或打开目标文件: " << destinationFilePath << std::endl;
+        return 1;
+    }
+    // 逐个字节复制文件内容
+    char buffer;
+    while (sourceFile.get(buffer)) {
+        destinationFile.put(buffer);
+    }
+    // 关闭文件
+    sourceFile.close();
+    destinationFile.close();
+
+    std::cout << "文件拷贝成功!" << std::endl;
+}
+
+bool copytxtFile(const std::string &sourceFilePath,const std::string &destinationFilePath){
+    std::ifstream sourceFile(sourceFilePath); // 打开源文件
+    if (!sourceFile.is_open()) {
+        std::cerr << "无法打开源文件" << std::endl;
+        return false;
+    }
+
+    std::ofstream destinationFile(destinationFilePath); // 创建或打开目标文件
+    if (!destinationFile.is_open()) {
+        std::cerr << "无法创建或打开目标文件" << std::endl;
+        sourceFile.close(); // 关闭源文件
+        return false;
+    }
+
+    std::string line;
+    while (std::getline(sourceFile, line)) {
+        destinationFile << line << std::endl; // 逐行复制内容
+    }
+
+    sourceFile.close(); // 关闭源文件
+    destinationFile.close(); // 关闭目标文件
+
+    return true;
+
+}
+
+int save_result(string file_name,string recog_res)
 {
-    std::ofstream outfile("res/result.txt");
+    std::ofstream outfile(file_name);
     if (!outfile)
     {
-        std::cout << "无法打开文件 res/result.txt" << std::endl;
+        std::cout << "无法打开文件"+file_name << std::endl;
         return 1;
     }
     outfile << recog_res;
@@ -100,22 +228,22 @@ double calculate_cosine_similarity(const std::vector<float> &embedding1, const s
     return dot_product / (std::sqrt(norm_embedding1) * std::sqrt(norm_embedding2));
 }
 
-std::vector<std::pair<size_t, double>> calculate_cosine_similarity_with_all_files(const std::vector<float> &target_embedding, const std::vector<std::vector<float>> &vector)
+std::vector<std::pair<size_t, double>> calculate_cosine_similarity_with_all_files(const std::vector<float> &target_embedding)
 {
     ScopedTiming st("calculate cosine similarity with all files", 2);
     std::vector<std::pair<size_t, double>> similarities;
-    for (size_t i = 0; i < vector.size(); ++i)
+    for (size_t i = 0; i < g_embeddings.size(); ++i)
     {
-        double similarity = calculate_cosine_similarity(target_embedding, vector[i]);
+        double similarity = calculate_cosine_similarity(target_embedding, g_embeddings[i]);
         similarities.push_back(std::make_pair(i, similarity));
     }
     return similarities;
 }
 
-std::pair<std::vector<size_t>, std::string> get_top_n_similar_files(const std::vector<float> &target_embedding, const std::vector<std::vector<float>> &vector, const std::map<size_t, std::string> &label_dict, size_t n, int debug_mode)
+std::pair<std::vector<size_t>, std::string> get_top_n_similar_files(const std::vector<float> &target_embedding, size_t n, int debug_mode)
 {
     ScopedTiming st("get top_k idx", debug_mode);
-    std::vector<std::pair<size_t, double>> similarities = calculate_cosine_similarity_with_all_files(target_embedding, vector);
+    std::vector<std::pair<size_t, double>> similarities = calculate_cosine_similarity_with_all_files(target_embedding);
     std::sort(similarities.begin(), similarities.end(), [](const auto &a, const auto &b)
               { return a.second > b.second; });
     std::vector<size_t> top_n_indices;
@@ -127,7 +255,7 @@ std::pair<std::vector<size_t>, std::string> get_top_n_similar_files(const std::v
     std::vector<std::string> top_labels;
     for (const auto &index : top_n_indices)
     {
-        top_labels.push_back(label_dict.at(index));
+        top_labels.push_back(g_label_dict.at(index));
     }
     std::map<std::string, int> element_counts;
     for (const auto &label : top_labels)
@@ -156,13 +284,8 @@ vector<float> image_proc(string &kmodel_path, string &image_path, int debug_mode
     return result;
 }
 
-std::pair<std::map<size_t, std::string>, std::vector<std::vector<float>>> build_gallery(
-    std::string &kmodel_path,  std::string &dataset_dir, int debug_mode
-) {
+int build_gallery(std::string &kmodel_path,  std::string &dataset_dir, int debug_mode) {
     ScopedTiming st("build gallery", debug_mode);
-    std::map<size_t, std::string> label_dict;
-    std::vector<std::vector<float>> vectors;
-    size_t idx = 0;
     GenEmbedding ge(kmodel_path, 0);
 
     // Open the directory using traditional method
@@ -178,6 +301,9 @@ std::pair<std::map<size_t, std::string>, std::vector<std::vector<float>>> build_
 
             // Read the single label from labels.txt in each subdirectory
             std::string labels_file_path = category_dir_path + "/label.txt";
+            if(!file_exists(labels_file_path)){
+                continue;
+            }
             std::ifstream labels_file(labels_file_path);
             if (!labels_file.is_open()) {
                 std::cerr << "Error: Could not open labels file for directory " << category_dir_path << std::endl;
@@ -185,7 +311,8 @@ std::pair<std::map<size_t, std::string>, std::vector<std::vector<float>>> build_
             }
 
             std::string label_name;
-            if (std::getline(labels_file, label_name)) {
+            std::string shop_price;
+            if (std::getline(labels_file, label_name)&&std::getline(labels_file,shop_price)) {
                 // Open and process images in the category directory
                 DIR *image_dir;
                 struct dirent *img_ent;
@@ -196,6 +323,9 @@ std::pair<std::map<size_t, std::string>, std::vector<std::vector<float>>> build_
                             continue;
                         }
                         std::string image_path = category_dir_path + "/" + image_name;
+                        if(!file_exists(image_path)){
+                            continue;
+                        }
                         cv::Mat ori_img = cv::imread(image_path);
                         int ori_w = ori_img.cols;
                         int ori_h = ori_img.rows;
@@ -203,26 +333,28 @@ std::pair<std::map<size_t, std::string>, std::vector<std::vector<float>>> build_
                         ge.inference();
                         std::vector<float> result;
                         ge.post_process(result);
-                        vectors.push_back(result);
+                        g_embeddings.push_back(result);
                         // Use the single label for all images in this category
-                        label_dict[idx] = label_name;
-                        idx++;
+                        g_label_dict[g_img_idx] = label_name;
+                        g_price_dict[g_img_idx] = std::stof(shop_price);
+                        g_img_idx++;
                     }
                     closedir(image_dir);
                 }
             }
             labels_file.close();
+            g_max_classes_idx++;
         }
         closedir(dir);
     } else {
         std::cerr << "Error: Could not open directory " << dataset_dir << std::endl;
     }
 
-    return std::make_pair(label_dict, vectors);
+    return 0;
 }
 
 
-void video_proc(string &kmodel_path, std::vector<std::vector<float>> &vectors, std::map<size_t, std::string> &label_dict, size_t top_k, int debug_mode)
+void video_proc(string &kmodel_path, size_t top_k, int debug_mode)
 {
     
     vivcap_start();
@@ -253,7 +385,16 @@ void video_proc(string &kmodel_path, std::vector<std::vector<float>> &vectors, s
 
     vector<float> result;
     string weight_flag="flag/weight.txt";
+    string select_flag="flag/select.txt";
+    string import_flag="flag/import.txt";
+    string clear_flag="flag/clear.txt";
     bool rec_flag = false; 
+    bool slc_flag=false;
+    bool add_class= false;
+    bool clr_flag=false;
+    int select_img_idx=0;
+    string new_class_floder_name="";
+
     while (!isp_stop)
     {
         ScopedTiming st("total time", debug_mode);
@@ -278,12 +419,139 @@ void video_proc(string &kmodel_path, std::vector<std::vector<float>> &vectors, s
             kd_mpi_sys_munmap(vbvaddr, size);
         }
 
-        if (fileExists(weight_flag)){
+        //如果采集标识文件存在，开始采集图片
+        if(file_exists(select_flag)){
+            if(slc_flag){
+
+            }else{
+                Utils::dump_color_image("res/select.jpg",{SENSOR_WIDTH,SENSOR_HEIGHT}, reinterpret_cast<unsigned char *>(vaddr));
+                std::ostringstream oss_s;
+                oss_s << select_img_idx;
+                std::string img_idx = oss_s.str();
+                select_img_idx++;
+                if(!add_class){
+                    std::ostringstream oss_c;
+                    oss_c << g_max_classes_idx;
+                    std::string class_idx = oss_c.str();
+                    new_class_floder_name=g_dataset_dir+"/"+class_idx;
+                    if (directoryExists(new_class_floder_name)) {
+                        std::cout << "文件夹已存在" << std::endl;
+                    } else {
+                        if (createDirectory(new_class_floder_name)) {
+                            std::cout << "文件夹创建成功" << std::endl;
+                            add_class=true;
+                            g_max_classes_idx++;
+                        } else {
+                            std::cerr << "无法创建文件夹" << std::endl;
+                        }
+                    }
+                }else{
+                    string source_path="res/select.jpg";
+                    string destination_path=new_class_floder_name+"/"+img_idx+".jpg";
+                    copyFile(source_path,destination_path);
+                }
+                slc_flag=true;
+            }
+        }else{
+            if(slc_flag){
+                slc_flag=false;
+            }else{
+
+            }
+        }
+
+        //如果导入标识文件存在，开始添加新类别到embeddings
+        if(file_exists(import_flag)){
+            if(file_exists("flag/goodinf.txt"))
+            {
+                string source_path="flag/goodinf.txt";
+                string destination_path=new_class_floder_name+"/label.txt";
+                copytxtFile(source_path,destination_path);
+                {
+                    // Open the directory using traditional method
+                    DIR *dir;
+                    struct dirent *ent;
+                    std::string category_dir_path = new_class_floder_name;
+                    // Read the single label from labels.txt in each subdirectory
+                    std::string labels_file_path = category_dir_path + "/label.txt";
+                    std::ifstream labels_file(labels_file_path);
+                    if (!labels_file.is_open()) {
+                        std::cerr << "Error: Could not open labels file for directory " << category_dir_path << std::endl;
+                        continue;
+                    }
+
+                    std::string label_name;
+                    std::string shop_price;
+                    if (std::getline(labels_file, label_name)&&std::getline(labels_file,shop_price)) {
+                        // Open and process images in the category directory
+                        DIR *image_dir;
+                        struct dirent *img_ent;
+                        if ((image_dir = opendir(category_dir_path.c_str())) != nullptr) {
+                            while ((img_ent = readdir(image_dir)) != nullptr) {
+                                std::string image_name = img_ent->d_name;
+                                if (image_name == "." || image_name == ".." || image_name.substr(image_name.find_last_of(".") + 1) != "jpg") {
+                                    continue;
+                                }
+                                std::string image_path = category_dir_path + "/" + image_name;
+                                cv::Mat ori_img = cv::imread(image_path);
+                                int ori_w = ori_img.cols;
+                                int ori_h = ori_img.rows;
+                                ge.pre_process(ori_img);
+                                ge.inference();
+                                std::vector<float> result;
+                                ge.post_process(result);
+                                g_embeddings.push_back(result);
+                                // Use the single label for all images in this category
+                                g_label_dict[g_img_idx] = label_name;
+                                g_price_dict[g_img_idx] = std::stof(shop_price);
+                                g_img_idx++;
+                                
+                            }
+                            closedir(image_dir);
+                        }
+                    }
+                    labels_file.close();
+                }
+                std::remove("flag/goodinf.txt");
+                std::remove(import_flag.c_str());
+                select_img_idx=0;
+                add_class=false;
+                new_class_floder_name="";
+            
+            }
+
+        }
+
+        if(file_exists(clear_flag)){
+            if(clr_flag){
+
+            }else{
+                std::ostringstream oss_c;
+                oss_c << (g_max_classes_idx-1);
+                std::string class_idx = oss_c.str();
+                string newest_class_path=g_dataset_dir+"/"+class_idx;
+                cout<<newest_class_path<<endl;
+                save_result("flag/clear_c.txt",newest_class_path);
+                select_img_idx=0;
+                g_max_classes_idx--;
+                clr_flag=true;
+            }
+            
+        }else{
+            if(clr_flag){
+                clr_flag=false;
+            }else{
+
+            }
+        }
+
+        //如果称重标识存在，开始称重
+        if (file_exists(weight_flag)){
             if (rec_flag){
             }
             else
             {
-                Utils::dump_color_image("res/res.png",{SENSOR_WIDTH,SENSOR_HEIGHT}, reinterpret_cast<unsigned char *>(vaddr));
+                Utils::dump_color_image("res/res.jpg",{SENSOR_WIDTH,SENSOR_HEIGHT}, reinterpret_cast<unsigned char *>(vaddr));
                 result.clear();
                 ge.pre_process();
                 ge.inference();
@@ -305,10 +573,10 @@ void video_proc(string &kmodel_path, std::vector<std::vector<float>> &vectors, s
         cv::Mat osd_frame(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
         cv::Mat osd_frame_tmp;
 
-        if(fileExists(weight_flag) && rec_flag){
+        if(file_exists(weight_flag) && rec_flag){
             ScopedTiming st("embedding search", debug_mode);
             // Get the top k similar files
-            std::pair<std::vector<size_t>, std::string> indexis = get_top_n_similar_files(result, vectors, label_dict, top_k, debug_mode);
+            std::pair<std::vector<size_t>, std::string> indexis = get_top_n_similar_files(result, top_k, debug_mode);
             // Print the result
             std::cout << "Top " << top_k << " similar file indices:[";
             for (const auto &idx : indexis.first)
@@ -316,10 +584,11 @@ void video_proc(string &kmodel_path, std::vector<std::vector<float>> &vectors, s
                 std::cout << " " << idx;
             }
             std::cout << "] Recognition result: " << indexis.second << std::endl;
-            string text = indexis.second;
-            // string text="";
-            save_result(text);
-            Utils::draw_rec_res(osd_frame, text, {osd_width, osd_height}, {SENSOR_WIDTH, SENSOR_HEIGHT});
+            g_result = indexis.second;
+            g_weight=std::to_string(1);
+            g_price=std::to_string(1*g_price_dict.at(indexis.first[0]));
+            string text=g_result+"\n"+g_weight+"\n"+g_price;
+            save_result("res/result.txt",text);
         }
 
         {
@@ -351,14 +620,10 @@ void video_proc(string &kmodel_path, std::vector<std::vector<float>> &vectors, s
 
 void image_recognition(string &kmodel_path, string &image_path, string &dataset_dir, int top_k, int debug_mode)
 {
-    std::pair<std::map<size_t, std::string>, std::vector<std::vector<float>>> res = build_gallery(kmodel_path,dataset_dir,debug_mode);
-    // Read the vectors
-    std::vector<std::vector<float>> vectors = res.second;
-    // Generate the labels dictionary
-    std::map<size_t, std::string> label_dict = res.first;
+    build_gallery(kmodel_path,dataset_dir,debug_mode);
     std::vector<float> target_embedding = image_proc(kmodel_path, image_path, debug_mode);
     // Get the top k similar files
-    std::pair<std::vector<size_t>, std::string> result = get_top_n_similar_files(target_embedding, vectors, label_dict, top_k, debug_mode);
+    std::pair<std::vector<size_t>, std::string> result = get_top_n_similar_files(target_embedding, top_k, debug_mode);
     // Print the result
     std::cout << "Top " << top_k << " similar file indices:";
     for (const auto &index : result.first)
@@ -375,12 +640,8 @@ void video_recognition(char *argv[])
     string dataset_dir=argv[3];
     size_t top_k = std::stoi(argv[4]);
     int debug_mode = std::stoi(argv[5]);
-    std::pair<std::map<size_t, std::string>, std::vector<std::vector<float>>> res = build_gallery(kmodel_path,dataset_dir,debug_mode);
-    // Read the vectors
-    std::vector<std::vector<float>> vectors = res.second;
-    // Generate the labels dictionary
-    std::map<size_t, std::string> label_dict = res.first;
-    video_proc(kmodel_path, vectors, label_dict, top_k, debug_mode);
+    build_gallery(kmodel_path,dataset_dir,debug_mode);
+    video_proc(kmodel_path, top_k, debug_mode);
 }
 
 int main(int argc, char *argv[])
@@ -396,6 +657,7 @@ int main(int argc, char *argv[])
     string dataset_dir=argv[3];
     size_t top_k = std::stoi(argv[4]);
     int debug_mode = std::stoi(argv[5]);
+    g_dataset_dir=dataset_dir;
     // video
     if (strcmp(argv[2], "None") == 0)
     {
@@ -411,7 +673,7 @@ int main(int argc, char *argv[])
     // image
     else
     {
-        image_recognition(kmodel_path, image_path,dataset_dir, top_k, debug_mode);
+        image_recognition(kmodel_path, image_path, dataset_dir, top_k, debug_mode);
     }
     return 0;
 }

@@ -116,6 +116,11 @@ static void device_disable(void)
     writel(value, 0x9110006c);
 }
 
+__weak void quick_boot_board_init(void)
+{
+	/* Nothing to do! */
+}
+
 //weak;
 int spl_board_init_f(void)
 {
@@ -137,13 +142,7 @@ int spl_board_init_f(void)
     // /* load/boot image from boot device */
     //if(quick_boot() == 1){//默认非快起；
     if(quick_boot()){//默认快起
-        u32 usb0_otg_en_gpio52_dir = readl((void*)(GPIO_BASE_ADDR1 + 0x4));
-        usb0_otg_en_gpio52_dir |= 1 << (52 - 32);
-        writel(usb0_otg_en_gpio52_dir, (void*)(GPIO_BASE_ADDR1 + 0x4));
-
-        u32 usb0_otg_en_gpio52_data = readl((void*)(GPIO_BASE_ADDR1 + 0x0));
-        usb0_otg_en_gpio52_data |= 1 << (52 - 32);
-        writel(usb0_otg_en_gpio52_data, (void*)(GPIO_BASE_ADDR1 + 0x0));
+        quick_boot_board_init();
 
         //record_boot_time_info("ls");
         ret += k230_img_load_boot_sys(BOOT_SYS_AUTO);
