@@ -57,6 +57,10 @@ extern "C" {
  */
 k_s32 kd_mpi_vicap_get_sensor_info(k_vicap_sensor_type sensor_type, k_vicap_sensor_info *sensor_info);
 
+k_s32 kd_mpi_vicap_get_sensor_type(k_vicap_sensor_type *sensor_type, const char *sensor_string);
+
+const char *kd_mpi_vicap_get_sensor_string(k_vicap_sensor_type sensor_type);
+
 /**
  * @brief Get the sensor device open fd of the the VICAP
  *
@@ -306,6 +310,18 @@ k_s32 kd_mpi_vicap_set_slave_enable(k_vicap_slave_id id, k_vicap_slave_enable *e
  * @note
  */
 k_s32 kd_mpi_vicap_set_slave_attr(k_vicap_slave_id id, k_vicap_slave_info *info);
+
+/**
+ * @brief vicap set 3d mode
+ *
+ * @param [in] enable 3d mode enable
+ * @return k_s32
+ * @retval 0 success
+ * @retval "not 0" see err code
+ * @see K_ERR_CODE_E
+ * @note
+ */
+k_s32 kd_mpi_vicap_3d_mode_crtl(k_bool enable);
 
 /** @} */ /** <!-- ==== VICAP End ==== */
 

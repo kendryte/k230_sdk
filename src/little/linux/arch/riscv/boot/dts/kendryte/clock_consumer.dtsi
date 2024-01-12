@@ -42,6 +42,10 @@
     clocks = <&ssi1_clk>;
 };
 
+&spi2 {
+    clocks = <&ssi2_clk>;
+};
+
 &i2c0 {
     clocks = <&i2c0_clk>;
 };

@@ -414,7 +414,16 @@ static k_sensor_mode ov5647_mode_info[] = {
             .data_type = 0x2B, //RAW10
         },
         .reg_list = ov5647_2592x1944_10bpp,
-        .mclk_setting = {{K_FALSE}, {K_FALSE}, {K_FALSE}},
+        .mclk_setting = {
+            {
+                .mclk_setting_en = K_TRUE,
+                .setting.id = SENSOR_MCLK0,
+                .setting.mclk_sel = SENSOR_PLL0_CLK_DIV4,
+                .setting.mclk_div = 16,
+            },
+            {K_FALSE},
+            {K_FALSE},
+        },
     },
     {
         .index = 2,
@@ -624,7 +633,7 @@ static k_s32 ov5647_sensor_init(void *ctx, k_sensor_mode mode)
         current_mode->ae_info.gain_accuracy = 1024;
 
         current_mode->ae_info.min_gain = 1.0;
-        current_mode->ae_info.max_gain = 63.9375;
+        current_mode->ae_info.max_gain = 8;//63.9375;
 
         current_mode->ae_info.int_time_delay_frame = 2;
         current_mode->ae_info.gain_delay_frame = 2;
@@ -718,7 +727,7 @@ static k_s32 ov5647_sensor_init(void *ctx, k_sensor_mode mode)
          current_mode->ae_info.gain_accuracy = 1024;
 
         current_mode->ae_info.min_gain = 1.0;
-        current_mode->ae_info.max_gain = 63.9375;
+        current_mode->ae_info.max_gain = 8;//63.9375;
 
         current_mode->ae_info.int_time_delay_frame = 2;
         current_mode->ae_info.gain_delay_frame = 2;
@@ -1204,7 +1213,8 @@ struct sensor_driver_dev ov5647_sensor_drv = {
         .i2c_bus = NULL,
         .i2c_name = OV5647_IIC, // "i2c3",
         .slave_addr = 0x36,
-        .size = SENSOR_REG_VALUE_8BIT,
+        .reg_addr_size = SENSOR_REG_VALUE_16BIT,
+        .reg_val_size = SENSOR_REG_VALUE_8BIT,
     },
     .sensor_name = "ov5647",
     .sensor_func = {

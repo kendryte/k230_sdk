@@ -51,6 +51,7 @@ link_directories(${k230_sdk}/src/big/mpp/userapps/lib)
 link_directories(${k230_sdk}/src/common/cdk/user/mapi/mediaserver/lib)
 link_directories(${ipcmsg_root}/slave/lib)
 link_directories(${datafifo_root}/host/lib)
+link_directories(${k230_sdk}/src/big/rt-smart/userapps/sdk/rt-thread/lib/risc-v/rv64)
 
 add_executable(${BIN} ${APP_SOURCES})
 target_link_libraries(${BIN} -Wl,--start-group rvv Nncase.Runtime.Native nncase.rt_modules.k230 functional_k230 sys vicap vb cam_device cam_engine
@@ -59,6 +60,6 @@ target_link_libraries(${BIN} -Wl,--start-group rvv Nncase.Runtime.Native nncase.
 
 target_link_libraries(${BIN} opencv_imgcodecs opencv_imgproc opencv_core zlib libjpeg-turbo libopenjp2 libpng libtiff libwebp csi_cv)
 
-target_link_libraries(${BIN} mapi ipcmsg datafifo venc aenc vdec adec ai ao vvi vdss)
+target_link_libraries(${BIN} mapi ipcmsg datafifo venc aenc vdec adec ai ao vvi vdss dpu dma rtthread)
 
 install(TARGETS ${BIN} DESTINATION out)

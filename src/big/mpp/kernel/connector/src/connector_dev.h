@@ -50,6 +50,7 @@ typedef struct {
     k_s32 (*connector_get_chip_id) (void *ctx, k_u32 *chip_id);
     k_s32 (*connector_get_negotiated_data) (void *ctx, k_connector_negotiated_data *negotiated_data);
     k_s32 (*connector_conn_check)(void *ctx, k_s32 *conn);
+    k_s32 (*connector_set_mirror)(void *ctx, k_connector_mirror *mirror);
 } k_connector_function;
 
 
@@ -83,7 +84,7 @@ extern k_s32 kd_vo_set_dev_param(k_vo_pub_attr *attr);
 extern k_s32 kd_vo_set_dev_attr(k_vo_pub_attr *pub_attr, k_vo_sync_attr *sync_attr);
 extern void kd_vo_enable(void);
 extern void kd_vo_set_vtth_intr(k_bool status, k_u32 vpos);
-
+extern void k230_set_pixclk(k_u32 div);
 
 k_s32 connector_priv_ioctl(struct connector_driver_dev *dev, k_u32 cmd, void *args);
 void connector_drv_list_init(struct connector_driver_dev *drv_list[]);
@@ -99,5 +100,5 @@ k_u32 connector_set_vo_attr(k_vo_pub_attr *pub_attr, k_vo_sync_attr *sync_attr);
 void connector_set_vo_enable(void);
 void connector_set_vtth_intr(k_bool status, k_u32 vpos);
 void connector_delay_us(uint64_t us);
-
+void connector_set_pixclk(k_u32 div);
 #endif /* _SENSOR_DEV_H_ */

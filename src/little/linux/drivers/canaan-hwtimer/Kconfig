@@ -3,6 +3,6 @@ menu "canaan-hwtimer"
 
 config CANAAN_HWTIMER
 	bool "canaan hwtimer driver"
-	default y
+	default n
 
 endmenu

@@ -111,29 +111,6 @@ public:
 
 private:
     /** 
-     * @brief svd
-     * @param a     原始矩阵
-     * @param u     左奇异向量
-     * @param s     对角阵
-     * @param v     右奇异向量
-     * @return None
-     */
-    void svd22(const float a[4], float u[4], float s[2], float v[4]);
-    
-    /**
-    * @brief 使用Umeyama算法计算仿射变换矩阵
-    * @param src  原图像点位置
-    * @param dst  目标图像（224*224）点位置。
-    */
-    void image_umeyama_224(float* src, float* dst);
-
-    /**
-    * @brief 获取affine变换矩阵
-    * @param sparse_points  原图像人脸五官点位置
-    */
-    void get_affine_matrix(float* sparse_points);
-
-    /** 
      * @brief softmax
      * @param input   原始数据
      * @param output  softmax之后的数据

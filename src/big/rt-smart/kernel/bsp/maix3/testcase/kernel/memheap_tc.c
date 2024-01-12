@@ -54,10 +54,10 @@ static void test_memheap_alloc(void)
 static void test_memheap_free(void)
 {
     int cnt = 0;
-    /* test realloc */
+    /* test free */
     while (cnt < TEST_TIMES)
     {
-        rt_uint32_t slice_size = rand() % SLICE_SIZE_MAX;
+        rt_uint32_t slice_size = rand() % (SLICE_SIZE_MAX - 1) + 1;//Eliminate the zero
         rt_uint32_t ptr_index = rand() % SLICE_NUM;
         if (ptr[ptr_index])
         {
@@ -86,13 +86,21 @@ static void test_memheap_realloc(void)
         rt_uint32_t slice_size = rand() % (SLICE_SIZE_MAX - 1) + 1;//Eliminate the zero
         rt_uint32_t ptr_index = rand() % SLICE_NUM;
         int is_null_ptr = 0;
+
         if (ptr[ptr_index])
         {
             is_null_ptr = 0;
             ptr[ptr_index] = rt_memheap_realloc(&heap1, ptr[ptr_index], slice_size);
+            if (!ptr[ptr_index])
+            {
+                is_null_ptr = 1;
+            }
         }
         else
+        {
             is_null_ptr = 1;
+        }
+
         cnt ++;
         if (cnt % (TEST_TIMES / 10) == 0)
         {

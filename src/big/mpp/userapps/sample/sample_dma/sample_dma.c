@@ -105,9 +105,14 @@ static pthread_t tid1;
 
 static void *getchar_entry(void *parameter)
 {
-    if ((char)(getchar()) == 'q')
+    while (1)
     {
-        g_end = K_TRUE;
+        if((char)(getchar()) == 'q')
+        {
+            g_end = K_TRUE;
+            break;
+        }
+        usleep(50000);
     }
 
     return NULL;

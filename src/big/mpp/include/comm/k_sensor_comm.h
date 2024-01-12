@@ -41,7 +41,7 @@
 extern "C" {
 #endif /* End of #ifdef __cplusplus */
 
-#define SENSOR_NUM_MAX 6
+#define SENSOR_NUM_MAX 8
 
 #define REG_NULL  0xFFFF
 
@@ -95,6 +95,9 @@ typedef enum {
     SC_SC201CS_MIPI_1LANE_RAW10_1600X1200_30FPS_LINEAR = 25,
     SC_SC201CS_SLAVE_MODE_MIPI_1LANE_RAW10_1600X1200_30FPS_LINEAR = 26,
 
+    OV_OV5647_MIPI_CSI1_1920X1080_30FPS_10BIT_LINEAR = 27,
+    OV_OV5647_MIPI_CSI2_1920X1080_30FPS_10BIT_LINEAR = 28,
+
     SENSOR_TYPE_MAX,
 } k_vicap_sensor_type;
 
@@ -115,9 +118,10 @@ typedef enum {
 } k_sensor_af_mode;
 
 typedef enum {
-	SENSOR_COLOR = 0,
-	SENSOR_MONO = 1,
-	SENSOR_COLOR_GRAY = 2,
+	SENSOR_COLOR = 0,	//color sensor and with IR filter, output color image
+	SENSOR_MONO = 1,	//mono sensor
+	SENSOR_COLOR_GRAY = 2,	//color sensor, output gray image, don't need WB&color correction
+	SENSOR_COLOR_IR = 3,	//color sensor and without IR filter, output color image
 } k_sensor_color_type;
 
 /**

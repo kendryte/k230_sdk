@@ -125,7 +125,9 @@ typedef enum {
     ISP_MI_DATAMODE_RAW10         = 13,
     ISP_MI_DATAMODE_RAW14         = 14,
     ISP_MI_DATAMODE_RAW16         = 15,
-    ISP_MI_DATAMODE_META          = 16,
+    ISP_MI_DATAMODE_RAW20         = 16,
+    ISP_MI_DATAMODE_RAW24         = 17,
+    ISP_MI_DATAMODE_META          = 18,
     ISP_MI_DATAMODE_MAX
 } k_isp_mi_data_mode;
 
@@ -139,22 +141,22 @@ typedef enum {
     ISP_PIX_FMT_YUV420SP,                   /**< ISP output format: YUV420 Semi-Planar */
     ISP_PIX_FMT_YUV444P,                    /**< ISP output format: YUV422 Planer */
     ISP_PIX_FMT_YUV444I,                    /**< ISP output format: YUV422 Interleaved */
+    ISP_PIX_FMT_YUV400,                     /**< ISP output format: YUV400 Y only format */
     ISP_PIX_FMT_RGB888,                     /**< ISP output format: RGB888 Raster Scan*/
     ISP_PIX_FMT_RGB888P,                    /**< ISP output format: RGB888 Planar */
-    ISP_PIX_FMT_RAW8,                       /**< ISP output format: Raw 8bit */
+    ISP_PIX_FMT_RAW8,                       /**< ISP output format: Raw 8-bit */
     ISP_PIX_FMT_RAW10,                      /**< ISP output format: Raw 10bit */
     ISP_PIX_FMT_RAW10_ALIGNED_MODE0,        /**< ISP output format: Raw 10bit in align mode 0 */
     ISP_PIX_FMT_RAW10_ALIGNED_MODE1,        /**< ISP output format: Raw 10bit in align mode 1 */
-    ISP_PIX_FMT_RAW12,                      /**< ISP output format: Raw 12bit */
-    ISP_PIX_FMT_RAW12_ALIGNED_MODE0,        /**< ISP output format: Raw 12bit in align mode 0 */
-    ISP_PIX_FMT_RAW12_ALIGNED_MODE1,        /**< ISP output format: Raw 12bit in align mode 1 */
+    ISP_PIX_FMT_RAW12,                      /**< ISP output format: Raw 12-bit */
+    ISP_PIX_FMT_RAW12_ALIGNED_MODE0,        /**< ISP output format: Raw 12-bit in align mode 0 */
+    ISP_PIX_FMT_RAW12_ALIGNED_MODE1,        /**< ISP output format: Raw 12-bit in align mode 1 */
     ISP_PIX_FMT_RAW14,                      /**< ISP output format: Raw 14bit */
     ISP_PIX_FMT_RAW14_ALIGNED_MODE0,        /**< ISP output format: Raw 14bit in align mode 0 */
     ISP_PIX_FMT_RAW14_ALIGNED_MODE1,        /**< ISP output format: Raw 14bit in align mode 1 */
-    ISP_PIX_FMT_RAW16,                      /**< ISP output format: Raw 16bit */
-    ISP_PIX_FMT_MAX                         /**< Total number of out format */
+    ISP_PIX_FMT_RAW16,                      /**< ISP output format: Raw 16-bit */
+    ISP_PIX_FMT_MAX                         /**< Total number of output formats */
 } k_isp_output_pix_format;
-
 
 /**
  * @brief Defines the data width of isp
@@ -430,6 +432,10 @@ typedef struct {
     k_isp_module_cfg pdaf;
     k_isp_module_cfg cproc;
     k_isp_module_cfg gtm;
+    k_isp_module_cfg ynr;
+    k_isp_module_cfg lut3d;
+    k_isp_module_cfg exp;
+    k_isp_module_cfg afm;
 } k_isp_submodule_cfg;
 
 /**
@@ -499,6 +505,7 @@ typedef struct {
 
 typedef struct {
     k_u8 roiNum;
+    float                roiWeight;
     k_isp_roi_windows roiWindow[ISP_AE_ROI_WINDOWS_MAX];  /**< ROI windows */
 } k_isp_ae_roi;
 

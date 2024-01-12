@@ -38,25 +38,47 @@ static k_s32 dma_dev_attr_init(k_dma_dev_attr_t *dev_attr)
     return K_SUCCESS;
 }
 
-static k_s32 dma_chn_attr_init(k_dma_chn_attr_u attr[8])
+static k_s32 dma_chn_attr_init(k_dma_chn_attr_u attr[8], k_bool gen_calibration)
 {
     k_gdma_chn_attr_t *gdma_attr;
 
+    if(gen_calibration)
+    {
+        gdma_attr = &attr[DMA_CHN1].gdma_attr;
+        gdma_attr->buffer_num = 1;
+        if(gdma_attr->rotation == DEGREE_0)
+            gdma_attr->rotation = DEGREE_270;
+        gdma_attr->x_mirror = K_FALSE;
+        gdma_attr->y_mirror = K_FALSE;
+        gdma_attr->width = DMA_CHN0_WIDTH;
+        gdma_attr->height = DMA_CHN0_HEIGHT;
+        gdma_attr->src_stride[0] = DMA_CHN0_SRC_STRIDE;
+        gdma_attr->dst_stride[0] = DMA_CHN0_DST_STRIDE;
+        gdma_attr->src_stride[1] = DMA_CHN0_SRC_STRIDE;
+        gdma_attr->dst_stride[1] = DMA_CHN0_DST_STRIDE;
+        gdma_attr->work_mode = DMA_UNBIND;
+        gdma_attr->pixel_format = DMA_PIXEL_FORMAT_YVU_SEMIPLANAR_420_8BIT;
+    }
+    else
+    {
+        gdma_attr = &attr[DMA_CHN1].gdma_attr;
+        gdma_attr->buffer_num = 1;
+        if(gdma_attr->rotation == DEGREE_0)
+            gdma_attr->rotation = DEGREE_90;
+        gdma_attr->x_mirror = K_FALSE;
+        gdma_attr->y_mirror = K_FALSE;
+        gdma_attr->width = DMA_CHN0_WIDTH;
+        gdma_attr->height = DMA_CHN0_HEIGHT;
+        gdma_attr->src_stride[0] = DMA_CHN0_SRC_STRIDE;
+        gdma_attr->dst_stride[0] = DMA_CHN0_DST_STRIDE;
+        gdma_attr->work_mode = DMA_UNBIND;
+        gdma_attr->pixel_format = DMA_PIXEL_FORMAT_YUV_400_8BIT;
+    }
+
     gdma_attr = &attr[DMA_CHN0].gdma_attr;
     gdma_attr->buffer_num = 1;
-    gdma_attr->rotation = DEGREE_90;
-    gdma_attr->x_mirror = K_FALSE;
-    gdma_attr->y_mirror = K_FALSE;
-    gdma_attr->width = DMA_CHN0_WIDTH;
-    gdma_attr->height = DMA_CHN0_HEIGHT;
-    gdma_attr->src_stride[0] = DMA_CHN0_SRC_STRIDE;
-    gdma_attr->dst_stride[0] = DMA_CHN0_DST_STRIDE;
-    gdma_attr->work_mode = DMA_UNBIND;
-    gdma_attr->pixel_format = DMA_PIXEL_FORMAT_YUV_400_8BIT;
-
-    gdma_attr = &attr[DMA_CHN1].gdma_attr;
-    gdma_attr->buffer_num = 1;
-    gdma_attr->rotation = DEGREE_90;
+    if(gdma_attr->rotation == DEGREE_0)
+        gdma_attr->rotation = DEGREE_90;
     gdma_attr->x_mirror = K_FALSE;
     gdma_attr->y_mirror = K_FALSE;
     gdma_attr->width = DMA_CHN0_WIDTH;
@@ -70,10 +92,12 @@ static k_s32 dma_chn_attr_init(k_dma_chn_attr_u attr[8])
     gdma_attr->work_mode = DMA_UNBIND;
     gdma_attr->pixel_format = DMA_PIXEL_FORMAT_BGR_888_PLANAR;
 
+    printf("gdma rotation: ch 0 = %d, ch 1 = %d\n", attr[DMA_CHN0].gdma_attr.rotation, attr[DMA_CHN1].gdma_attr.rotation);
+
     return K_SUCCESS;
 }
 
-int sample_dv_dma_init()
+int sample_dv_dma_init(k_gdma_rotation_e *dma_rotation, k_bool gen_calibration)
 {
     k_s32 ret;
 
@@ -81,8 +105,11 @@ int sample_dv_dma_init()
      * This part is used to initialize the parameters of the dma.
      ***********************************************************/
     memset(chn_attr, 0, sizeof(k_dma_chn_attr_u)*DMA_MAX_CHN_NUMS);
+    chn_attr[0].gdma_attr.rotation = dma_rotation[0];
+    chn_attr[1].gdma_attr.rotation = dma_rotation[1];
+
     dma_dev_attr_init(&dma_dev_attr);
-    dma_chn_attr_init(chn_attr);
+    dma_chn_attr_init(chn_attr, gen_calibration);
 
     /************************************************************
      * This part is the demo that actually starts to use DMA

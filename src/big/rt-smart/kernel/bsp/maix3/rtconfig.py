@@ -52,7 +52,7 @@ if PLATFORM == 'gcc':
         CFLAGS += ' -O0 -gdwarf-2'
         AFLAGS += ' -gdwarf-2'
     else:
-        CFLAGS += ' -O1 -g'
+        CFLAGS += ' -O1 -g -gdwarf-2'
         
     CFLAGS += ' ' +  os.getenv('KCFLAGS', '-DDBGLV=0')
 

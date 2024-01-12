@@ -23,17 +23,4 @@
 #  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #  */
 
-
-
-obj-$(CONFIG_SIPLP4_3200_WODT) += gen_siplp4_3200_hwodt.o
-obj-$(CONFIG_SIPLP4_3200_WALLODT) += gen_siplp4_3200_allodt.o
-
-#arch/riscv/cpu/k230/ddr4/sip_lpddr4_init_32_swap_3200_with_wodt.c
-$(obj)/gen_siplp4_3200_hwodt.c: $(src)/sip_lpddr4_init_32_swap_3200_with_wodt.c   
-	($(srctree)/arch/riscv/cpu/k230/ddr_2d.sh $< $@ 0x50000 0x53fff 0x54000 0x5433d  0x542bd || exit 1)
-
-$(obj)/gen_siplp4_3200_allodt.c: $(src)/sip_lpddr4_init_32_swap_3200_with_allodt.c
-	($(srctree)/arch/riscv/cpu/k230/ddr_2d.sh $< $@ 0x50000 0x53fff 0x54000 0x5433d  0x542bd || exit 1)
-
-
-
+obj-y += board.o

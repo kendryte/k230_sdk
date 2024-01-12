@@ -88,7 +88,7 @@ void video_proc(char *argv[])
 
     while (!isp_stop)
     {
-        ScopedTiming st("total time", 1);
+        ScopedTiming st("total time", atoi(argv[3]));
         {
             ScopedTiming st("read capture", atoi(argv[3]));
             // VICAP_CHN_ID_1 out rgb888p
@@ -117,12 +117,12 @@ void video_proc(char *argv[])
         if( idx == 2*num_storage )
             idx = 0;
 
-        cv::Mat osd_frame(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
+        // cv::Mat osd_frame(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
         {
             ScopedTiming st("osd copy", atoi(argv[3]));
-            memcpy(pic_vaddr, osd_frame.data, osd_width * osd_height * 4);
+            // memcpy(pic_vaddr, osd_frame.data, osd_width * osd_height * 4);
             //显示通道插入帧
-            kd_mpi_vo_chn_insert_frame(osd_id+3, &vf_info); 
+            // kd_mpi_vo_chn_insert_frame(osd_id+3, &vf_info); 
 
             ret = kd_mpi_vicap_dump_release(vicap_dev, VICAP_CHN_ID_1, &dump_info);
             if (ret) {

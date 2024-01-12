@@ -961,7 +961,8 @@ struct sensor_driver_dev sc201cs_sensor_drv = {
         .i2c_bus = NULL,
         .i2c_name = "i2c1",
         .slave_addr = 0x30,
-        .size = SENSOR_REG_VALUE_8BIT,
+        .reg_addr_size = SENSOR_REG_VALUE_16BIT,
+        .reg_val_size = SENSOR_REG_VALUE_8BIT,
     },
     .sensor_name = "sc201cs",
     .sensor_func = {

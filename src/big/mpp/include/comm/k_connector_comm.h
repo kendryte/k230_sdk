@@ -51,7 +51,9 @@ extern "C" {
 
 typedef enum {
     HX8377_V2_MIPI_4LAN_1080X1920_30FPS = 0,
-    LT9611_MIPI_4LAN_1920X1080_30FPS,
+    LT9611_MIPI_4LAN_1920X1080_30FPS = 1,
+    ST7701_V1_MIPI_2LAN_480X800_30FPS = 2,
+    ST7701_V1_MIPI_2LAN_480X854_30FPS = 3,
     LT9611_MIPI_ADAPT_RESOLUTION = 100,
     LT9611_MIPI_4LAN_1920X1080_60FPS,
     LT9611_MIPI_4LAN_1920X1080_50FPS,
@@ -77,6 +79,7 @@ typedef struct {
     k_u32 dsi_test_mode;
     k_u32 bg_color;
     k_u32 intr_line;
+    k_u32 pixclk_div;
     k_dsi_lan_num lan_num;
     k_dsi_work_mode work_mode;
     k_vo_dsi_cmd_mode cmd_mode;
@@ -84,6 +87,13 @@ typedef struct {
     k_vo_display_resolution resolution;
     k_connector_type type;
 } k_connector_info;
+
+typedef enum
+{
+    K_CONNECTOR_MIRROR_HOR = 1, 
+    K_CONNECTOR_MIRROR_VER,
+    K_CONNECTOR_MIRROR_BOTH,
+}k_connector_mirror;
 
 
 typedef struct

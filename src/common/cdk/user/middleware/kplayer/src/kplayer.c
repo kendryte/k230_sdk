@@ -45,7 +45,7 @@ static k_bool g_play_start = K_FALSE;
 static k_bool g_play_pause = K_FALSE;
 static pthread_t g_play_tid = 0;
 static K_PLAYER_PROGRESS_INFO g_progress_info;
-static K_PLAYER_CONNECTOR_TYPE g_connector_type = K_PLAYER_HX8377_V2_MIPI_4LAN_1080X1920_30FPS;
+static int g_connector_type = 0;
 
 static k_payload_type _get_payload_type(k_mp4_codec_id_e codec_id)
 {
@@ -159,7 +159,7 @@ k_s32 kd_player_deinit(k_bool deinit_vo)
     return K_SUCCESS;
 }
 
-void kd_player_set_connector_type(K_PLAYER_CONNECTOR_TYPE connector_type)
+void kd_player_set_connector_type(int connector_type)
 {
     g_connector_type = connector_type;
 }

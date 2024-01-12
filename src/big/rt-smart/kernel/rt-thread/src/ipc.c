@@ -607,7 +607,7 @@ rt_inline void _thread_update_priority(struct rt_thread *thread, rt_uint8_t prio
 
     /* change priority of the thread */
     rt_thread_control(thread,
-                      RT_THREAD_CTRL_CHANGE_PRIORITY,
+                      RT_THREAD_CTRL_UPDATE_PRIORITY,
                       &priority);
 
     if ((thread->stat & RT_THREAD_STAT_MASK) == RT_THREAD_SUSPEND)
@@ -1160,7 +1160,7 @@ rt_err_t rt_mutex_release(rt_mutex_t mutex)
             priority = _thread_get_mutex_priority(thread);
 
             rt_thread_control(thread,
-                              RT_THREAD_CTRL_CHANGE_PRIORITY,
+                              RT_THREAD_CTRL_UPDATE_PRIORITY,
                               &priority);
 
             need_schedule = RT_TRUE;

@@ -77,11 +77,6 @@ unsigned long fw_platform_init(unsigned long arg0, unsigned long arg1,
 	u32 hartid, hart_count = 0;
 	int rc, root_offset, cpus_offset, cpu_offset, len;
 
-#ifdef K230_LITTLE_CORE
-        (*(volatile uint32_t *)((size_t)(0x91108020))) = (1);
-        (*(volatile uint32_t *)((size_t)(0x91108030))) = (1);
-#endif
-
 	root_offset = fdt_path_offset(fdt, "/");
 	if (root_offset < 0)
 		goto fail;

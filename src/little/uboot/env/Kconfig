@@ -272,9 +272,47 @@ config ENV_IS_IN_NAND
 	  Currently, CONFIG_ENV_OFFSET_REDUND is not supported when
 	  using CONFIG_ENV_OFFSET_OOB.
 
+config ENV_IS_IN_SPI_NAND
+	bool "Environment in a SPI NAND device"
+	depends on !CHAIN_OF_TRUST
+	help
+	  Define this if you have a SPI NAND device which you want to use for the
+	  environment.
+
+	  - CONFIG_ENV_OFFSET:
+	  - CONFIG_ENV_SIZE:
+
+	  These two #defines specify the offset and size of the environment
+	  area within the first NAND device.  CONFIG_ENV_OFFSET must be
+	  aligned to an erase block boundary.
+
+	  - CONFIG_ENV_OFFSET_REDUND (optional):
+
+	  This setting describes a second storage area of CONFIG_ENV_SIZE
+	  size used to hold a redundant copy of the environment data, so
+	  that there is a valid backup copy in case there is a power failure
+	  during a "saveenv" operation.	 CONFIG_ENV_OFFSET_REDUND must be
+	  aligned to an erase block boundary.
+
+	  - CONFIG_ENV_RANGE (optional):
+
+	  Specifies the length of the region in which the environment
+	  can be written.  This should be a multiple of the NAND device's
+	  block size.  Specifying a range with more erase blocks than
+	  are needed to hold CONFIG_ENV_SIZE allows bad blocks within
+	  the range to be avoided.
+
+	  - CONFIG_ENV_OFFSET_OOB (optional):
+
+	  Enables support for dynamically retrieving the offset of the
+	  environment from block zero's out-of-band data.  The
+	  "nand env.oob" command can be used to record this offset.
+	  Currently, CONFIG_ENV_OFFSET_REDUND is not supported when
+	  using CONFIG_ENV_OFFSET_OOB.
+
 config ENV_RANGE
 	hex "Length of the region in which the environment can be written"
-	depends on ENV_IS_IN_NAND
+	depends on ENV_IS_IN_NAND || ENV_IS_IN_SPI_NAND
 	range ENV_SIZE 0x7fffffff
 	default ENV_SIZE
 	help
@@ -449,6 +487,13 @@ config SYS_REDUNDAND_ENVIRONMENT
 	  which is used by env import/export commands which are independent of
 	  storing variables to redundant location on a non volatile device.
 
+config ENV_SPINAND_NAME
+        string "Name of the SPINAND for the environment"
+        depends on ENV_IS_IN_SPI_NAND
+        default "spi-nand0" 
+        help
+            Define this to a string that is the name of the spinand.
+          
 config ENV_FAT_INTERFACE
 	string "Name of the block device for the environment"
 	depends on ENV_IS_IN_FAT
@@ -552,7 +597,7 @@ config ENV_ADDR_REDUND
 config ENV_OFFSET
 	hex "Environment offset"
 	depends on ENV_IS_IN_EEPROM || ENV_IS_IN_MMC || ENV_IS_IN_NAND || \
-		    ENV_IS_IN_SPI_FLASH
+		    ENV_IS_IN_SPI_FLASH || ENV_IS_IN_SPI_NAND
 	default 0x3f8000 if ARCH_ROCKCHIP && ENV_IS_IN_MMC
 	default 0x140000 if ARCH_ROCKCHIP && ENV_IS_IN_SPI_FLASH
 	default 0xF0000 if ARCH_SUNXI
@@ -569,7 +614,7 @@ config ENV_OFFSET
 config ENV_OFFSET_REDUND
 	hex "Redundant environment offset"
 	depends on (ENV_IS_IN_EEPROM || ENV_IS_IN_MMC || ENV_IS_IN_NAND || \
-		    ENV_IS_IN_SPI_FLASH) && SYS_REDUNDAND_ENVIRONMENT
+		    ENV_IS_IN_SPI_FLASH || ENV_IS_IN_SPI_NAND) && SYS_REDUNDAND_ENVIRONMENT
 	default 0
 	help
 	  Offset from the start of the device (or partition) of the redundant
@@ -771,6 +816,14 @@ config SPL_ENV_IS_IN_SPI_FLASH
 	default y
 	help
 	  Similar to ENV_IS_IN_SPI_FLASH, used for SPL environment.
+
+config SPL_ENV_IS_IN_SPI_NAND
+	bool "SPL Environment is in SPI nand"
+	depends on !SPL_ENV_IS_NOWHERE
+	depends on ENV_IS_IN_SPI_NAND
+	default y
+	help
+	  Similar to ENV_IS_IN_SPI_NAND, used for SPL environment.
 
 config SPL_ENV_IS_IN_FLASH
 	bool "SPL Environment in flash memory"

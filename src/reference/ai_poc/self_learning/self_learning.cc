@@ -20,7 +20,7 @@
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.f
  */
 
 #include "self_learning.h"
@@ -44,10 +44,13 @@ float getMold(const vector<float>& vec){   //求向量的模长
 
 float getSimilarity(const vector<float>& lhs, const vector<float>& rhs){
     int n = lhs.size();
-    // assert(n == rhs.size());
+
     float tmp = 0.0;  //内积
     for (int i = 0; i<n; ++i)
+    {
         tmp += lhs[i] * rhs[i];
+    }
+
     return tmp / (getMold(lhs)*getMold(rhs));
 }
 
@@ -59,22 +62,6 @@ bool endsWith(const std::string& str, const std::string suffix) {
 
     return (str.rfind(suffix) == (str.length() - suffix.length()));
 } 
-
-void GetFileNames(string path,vector<string>& filenames)
-{
-    DIR *pDir;
-    struct dirent* ptr;
-    if(!(pDir = opendir(path.c_str()))){
-        cout <<"Folder doesn't Exist!"<< endl;
-        return;
-    }
-    while((ptr = readdir(pDir))!=0) {
-        if (strcmp(ptr->d_name, ".") != 0 && strcmp(ptr->d_name, "..") != 0){
-            filenames.push_back(path + "/" + ptr->d_name);
-    }
-    }
-    closedir(pDir);
-}
 
 vector<string> split(const string &str, const string &pattern)
 {
@@ -92,155 +79,118 @@ vector<string> split(const string &str, const string &pattern)
 }
 
 
-// for image
-SL::SL(const char *kmodel_file, const int debug_mode): AIBase(kmodel_file,"self_learning", debug_mode)
+SelfLearning::SelfLearning(const char *kmodel_file, FrameSize crop_wh, float thres, int topk, FrameCHWSize isp_shape, uintptr_t vaddr, uintptr_t paddr, const int debug_mode)
+:topk(topk), thres(thres), AIBase(kmodel_file,"self_learning", debug_mode)
 {
-
-    model_name_ = "self_learning";
-    
-    ai2d_out_tensor_ = get_input_tensor(0);
-
-}
-
-
-// for video
-SL::SL(const char *kmodel_file, FrameCHWSize isp_shape, uintptr_t vaddr, uintptr_t paddr, const int debug_mode):AIBase(kmodel_file,"self_learning", debug_mode)
-{
-    model_name_ = "self_learning";
-    
     vaddr_ = vaddr;
-
     isp_shape_ = isp_shape;
     dims_t in_shape{1, isp_shape_.channel, isp_shape_.height, isp_shape_.width};
-    int isp_size = isp_shape_.channel * isp_shape_.height * isp_shape_.width;
-    #if 0
-    ai2d_in_tensor_ = host_runtime_tensor::create(typecode_t::dt_uint8, in_shape, { (gsl::byte *)vaddr, isp_size },
-        true, hrt::pool_shared).expect("cannot create input tensor");
-    #else
+
     ai2d_in_tensor_ = hrt::create(typecode_t::dt_uint8, in_shape, hrt::pool_shared).expect("create ai2d input tensor failed");
-    #endif
-
-    // ai2d_out_tensor
     ai2d_out_tensor_ = get_input_tensor(0);
-    // fixed padding resize param
-    Utils::resize(ai2d_builder_, ai2d_in_tensor_, ai2d_out_tensor_);
+
+    crop_box.w = float(crop_wh.width);
+    crop_box.h = float(crop_wh.height);
+    crop_box.x = (isp_shape.width / 2.0) - (crop_box.w / 2.0);
+    crop_box.y = (isp_shape.height / 2.0) - (crop_box.h / 2.0);
+
+    Utils::crop_resize(crop_box, ai2d_builder_, ai2d_in_tensor_, ai2d_out_tensor_);
 }
 
-
-SL::~SL()
+SelfLearning::~SelfLearning()
 {
 
 }
 
-// ai2d for image
-void SL::pre_process(cv::Mat ori_img)
-{
-    ScopedTiming st(model_name_ + " pre_process image", debug_mode_);
-
-    cv::cvtColor( ori_img, ori_img,cv::COLOR_BGR2RGB);
-
-    std::vector<uint8_t> chw_vec;
-    Utils::hwc_to_chw(ori_img, chw_vec);
-    Utils::resize({ori_img.channels(), ori_img.rows, ori_img.cols}, chw_vec, ai2d_out_tensor_);
-}
-
-// ai2d for video
-void SL::pre_process()
+void SelfLearning::pre_process()
 {
     ScopedTiming st(model_name_ + " pre_process video", debug_mode_);
-    #if 0
-    ai2d_builder_->invoke().expect("error occurred in ai2d running");
-    #else
+
     size_t isp_size = isp_shape_.channel * isp_shape_.height * isp_shape_.width;
     auto buf = ai2d_in_tensor_.impl()->to_host().unwrap()->buffer().as_host().unwrap().map(map_access_::map_write).unwrap().buffer();
+
     memcpy(reinterpret_cast<char *>(buf.data()), (void *)vaddr_, isp_size);
+
     hrt::sync(ai2d_in_tensor_, sync_op_t::sync_write_back, true).expect("sync write_back failed");
     ai2d_builder_->invoke(ai2d_in_tensor_,ai2d_out_tensor_).expect("error occurred in ai2d running");
-    // run ai2d
-    #endif
 }
 
-void SL::inference()
+void SelfLearning::inference()
 {
-    ScopedTiming st(model_name_ + " inference", debug_mode_);
     this->run();
     this->get_output();
 }
 
-void SL::post_process( vector<Evec>& results,int topK)
+float* SelfLearning::get_kpu_output(int *out_len)
 {
+    *out_len = output_shapes_[0][1];
+    return p_outputs_[0];
+}
 
+void SelfLearning::post_process(std::vector<std::string> features, std::vector<Evec> &results)
+{
     ScopedTiming st(model_name_ + " post_process", debug_mode_);
+
     float *output = p_outputs_[0];
-
     int length = output_shapes_[0][1];
+
     vector<float> output_vec(output, output + length);
-
-    // Utils::dump_binary_file("onboard.bin", (char *)output, length * sizeof(float));
-
-    // float output_mold = getMold(output_vec);
-
-    const char* filePath = "vectors";
-
-    vector<string> dirs;
-    GetFileNames(filePath,dirs);
-
-    vector<string> files;
-    for( auto dir:dirs )
-    {
-        GetFileNames(dir,files);
-    }
-
-    for(auto file:files)
+    for(auto file:features)
     {
         if( endsWith( file, ".bin") )
         {
-            vector<float> vec = Utils::read_binary_file< float >(file.c_str());
-
+            vector<float> vec = Utils::read_binary_file< float >(("features/" + file).c_str());
             float score = getSimilarity(output_vec, vec);
-
-            if( results.size() < topK )
+            if (score > thres)
             {
-                Evec evec;
-                vector<string> res = split( file, "/" );
-                evec.category = res[1];
-                evec.score = score;
-                evec.bin_file = file;
-                results.push_back( evec );
-                std::sort(results.begin(), results.end(), GreaterSort);
-
-            }
-            else
-            {
-                if( score <= results[topK-1].score )
+                vector<string> res = split( file, "_" );
+                bool is_same = false;
+                for (auto r: results)
                 {
-                    continue;
+                    if (r.category ==  res[0])
+                    {
+                        if (r.score < score)
+                        {
+                            r.bin_file = file;
+                            r.score = score;
+                        }
+                        is_same = true;
+                    }
                 }
-                else
+                
+                if (!is_same)
                 {
-                    Evec evec;
-                    vector<string> res = split( file, "/" );
-                    evec.category = res[1];
-                    evec.score = score;
-                    evec.bin_file = file;
-                    results.push_back( evec );
-                    std::sort(results.begin(), results.end(), GreaterSort);
-                    
-                    results.pop_back();
+                    if( results.size() < topk)
+                    {
+                        Evec evec;
+                        evec.category = res[0];
+                        evec.score = score;
+                        evec.bin_file = file;
+                        results.push_back( evec );
+                        std::sort(results.begin(), results.end(), GreaterSort);
+
+                    }
+                    else
+                    {
+                        if( score <= results[topk-1].score )
+                        {
+                            continue;
+                        }
+                        else
+                        {
+                            Evec evec;
+                            evec.category = res[0];
+                            evec.score = score;
+                            evec.bin_file = file;
+                            results.push_back( evec );
+                            std::sort(results.begin(), results.end(), GreaterSort);
+                            
+                            results.pop_back();
+                        }
+                    }
                 }
             }
         }
     }
-    
 }
 
-float* SL::get_vecOutput( )
-{
-    return p_outputs_[0]  ;
-}
-
-int SL::get_len()
-{
-    int length = output_shapes_[0][1];
-    return length;
-}

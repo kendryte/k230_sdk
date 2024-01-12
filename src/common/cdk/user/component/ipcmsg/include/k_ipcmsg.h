@@ -150,7 +150,7 @@ void kd_ipcmsg_run(k_s32 s32Id);
  * @param[in] u32BodyLen Length of pBody.
  * @return ::k_ipcmsg_message_t* Created message.
  */
-k_ipcmsg_message_t* kd_ipcmsg_create_message(k_u32 u32Module, k_u32 u32CMD, void* pBody, k_u32 u32BodyLen);
+k_ipcmsg_message_t* kd_ipcmsg_create_message(k_u32 u32Module, k_u32 u32CMD, const void* pBody, k_u32 u32BodyLen);
 
 /**
  * @brief Create the response message.

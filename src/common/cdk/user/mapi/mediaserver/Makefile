@@ -24,6 +24,7 @@ MAPI_SRC_VENC=venc
 MAPI_SRC_VDEC=vdec
 
 MAPI_SRC_VO=vo
+MAPI_SRC_DPU=dpu
 
 $(shell if [ ! -e $(TARGET_DIR) ];then mkdir -p $(TARGET_DIR); fi)
 $(shell if [ ! -e $(BUILD_DIR) ];then mkdir -p $(BUILD_DIR); fi)
@@ -40,7 +41,7 @@ OS_TYPE=$(CLIENT_OS_TYPE)
 PLATFRORM=$(CLIENT_PLATFORM)
 MAPI_SRC_MSG=msg_client
 INCS=-Imsg_client/include
-LIBPATH=-L$(CDK_SRC_DIR)/compoent/ipcmsg/slave/lib
+LIBPATH=-L$(CDK_SRC_DIR)/component/ipcmsg/slave/lib
 endif
 
 ifeq ($(OS_TYPE),rt-smart)
@@ -55,6 +56,7 @@ AR=riscv64-unknown-linux-gnu-ar -rcs
 endif
 
 INCS+=-Ivenc
+INCS+=-Idpu
 
 #add common include
 INCS+=-I../include
@@ -71,6 +73,11 @@ INCS+=-I$(MPP_SRC_DIR)/userapps/api
 #add ipcmsg include
 INCS+=-I$(CDK_SRC_DIR)/user/component/ipcmsg/include
 INCS+=-I$(CDK_SRC_DIR)/user/component/datafifo/include
+
+RT_SMART_INCS =-I$(RTSMART_SRC_DIR)/userapps
+RT_SMART_INCS += -I$(RTSMART_SRC_DIR)/userapps/sdk/rt-thread/include
+RT_SMART_INCS += -I$(RTSMART_SRC_DIR)/userapps/sdk/rt-thread/components/drivers
+
 
 MSG_SRCS:= $(foreach dir, $(MAPI_SRC_MSG), $(wildcard $(dir)/*.c $()))
 MSG_COBJS:= $(addprefix $(BUILD_DIR)/,$(patsubst %.c,%.o,$(notdir $(MSG_SRCS))))
@@ -111,8 +118,11 @@ ISP_COBJS:= $(addprefix $(BUILD_DIR)/,$(patsubst %.c,%.o,$(notdir $(ISP_SRCS))))
 VO_SRCS:= $(foreach dir, $(MAPI_SRC_VO), $(wildcard $(dir)/*.c $()))
 VO_COBJS:= $(addprefix $(BUILD_DIR)/,$(patsubst %.c,%.o,$(notdir $(VO_SRCS))))
 
+DPU_SRCS:= $(foreach dir, $(MAPI_SRC_DPU), $(wildcard $(dir)/*.c $()))
+DPU_COBJS:= $(addprefix $(BUILD_DIR)/,$(patsubst %.c,%.o,$(notdir $(DPU_SRCS))))
+
 all:$(BIN)
-	@rm -f $(MSG_COBJS) $(SYS_COBJS) $(VVI_COBJS) $(VDSS_COBJS) $(VENC_COBJS) $(VDEC_COBJS) $(LOG_COBJS) $(AI_COBJS) $(AO_COBJS) $(AENC_COBJS) $(ADEC_COBJS) $(VICAP_COBJS) $(SENSOR_COBJS) $(ISP_COBJS) $(VO_COBJS)
+	@rm -f $(MSG_COBJS) $(SYS_COBJS) $(VVI_COBJS) $(VDSS_COBJS) $(VENC_COBJS) $(VDEC_COBJS) $(LOG_COBJS) $(AI_COBJS) $(AO_COBJS) $(AENC_COBJS) $(ADEC_COBJS) $(VICAP_COBJS) $(SENSOR_COBJS) $(ISP_COBJS) $(VO_COBJS) $(DPU_COBJS)
 
 $(MSG_COBJS) : $(BUILD_DIR)/%.o: $(MAPI_SRC_MSG)/%.c
 	$(CC) -c $(CFLAGS) $< -o $@ $(INCS)  $(DEFINE)
@@ -159,7 +169,10 @@ $(ISP_COBJS) : $(BUILD_DIR)/%.o: $(MAPI_SRC_ISP)/%.c
 $(VO_COBJS) : $(BUILD_DIR)/%.o: $(MAPI_SRC_VO)/%.c
 	$(CC) -c $(CFLAGS) $< -o $@ $(INCS)  $(DEFINE)
 
-$(BIN):$(MSG_COBJS) $(SYS_COBJS) $(VVI_COBJS) $(VDSS_COBJS) $(VENC_COBJS) $(VDEC_COBJS) $(LOG_COBJS) $(AI_COBJS) $(AO_COBJS) $(AENC_COBJS) $(ADEC_COBJS)  $(VICAP_COBJS) $(SENSOR_COBJS) $(ISP_COBJS) $(VO_COBJS)
-	$(AR) -o $(TARGET_DIR)/$(BIN) $(MSG_COBJS) $(SYS_COBJS) $(VVI_COBJS) $(VDSS_COBJS)  $(VENC_COBJS) $(VDEC_COBJS)  $(LOG_COBJS) $(AI_COBJS) $(AO_COBJS) $(AENC_COBJS) $(ADEC_COBJS) $(VICAP_COBJS) $(SENSOR_COBJS) $(ISP_COBJS) $(VO_COBJS)
+$(DPU_COBJS) : $(BUILD_DIR)/%.o: $(MAPI_SRC_DPU)/%.c
+	$(CC) -c $(CFLAGS) $< -o $@ $(INCS) $(RT_SMART_INCS)  $(DEFINE)
+
+$(BIN):$(MSG_COBJS) $(SYS_COBJS) $(VVI_COBJS) $(VDSS_COBJS) $(VENC_COBJS) $(VDEC_COBJS) $(LOG_COBJS) $(AI_COBJS) $(AO_COBJS) $(AENC_COBJS) $(ADEC_COBJS)  $(VICAP_COBJS) $(SENSOR_COBJS) $(ISP_COBJS) $(VO_COBJS) $(DPU_COBJS)
+	$(AR) -o $(TARGET_DIR)/$(BIN) $(MSG_COBJS) $(SYS_COBJS) $(VVI_COBJS) $(VDSS_COBJS)  $(VENC_COBJS) $(VDEC_COBJS)  $(LOG_COBJS) $(AI_COBJS) $(AO_COBJS) $(AENC_COBJS) $(ADEC_COBJS) $(VICAP_COBJS) $(SENSOR_COBJS) $(ISP_COBJS) $(VO_COBJS) $(DPU_COBJS)
 clean:
-	@rm -f $(TARGET_DIR)/$(BIN) $(MSG_COBJS) $(SYS_COBJS) $(VVI_COBJS) $(VDSS_COBJS) $(VENC_COBJS) $(VDEC_COBJS)  $(LOG_COBJS) $(AI_COBJS) $(AO_COBJS) $(AENC_COBJS) $(ADEC_COBJS) $(VICAP_COBJS) $(SENSOR_COBJS) $(ISP_COBJS) $(VO_COBJS)
+	@rm -f $(TARGET_DIR)/$(BIN) $(MSG_COBJS) $(SYS_COBJS) $(VVI_COBJS) $(VDSS_COBJS) $(VENC_COBJS) $(VDEC_COBJS)  $(LOG_COBJS) $(AI_COBJS) $(AO_COBJS) $(AENC_COBJS) $(ADEC_COBJS) $(VICAP_COBJS) $(SENSOR_COBJS) $(ISP_COBJS) $(VO_COBJS) $(DPU_COBJS)

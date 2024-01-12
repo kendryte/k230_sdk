@@ -69,6 +69,7 @@ msg_server_module_t *mapi_msg_get_adec_mod(void);
 msg_server_module_t *mapi_msg_get_arec_mod(void);
 msg_server_module_t *mapi_msg_get_vvi_mod(void);
 msg_server_module_t *mapi_msg_get_vvo_mod(void);
+msg_server_module_t *mapi_msg_get_dpu_mod(void);
 msg_server_module_t *mapi_msg_get_vicap_mod(void);
 msg_server_module_t *mapi_msg_get_sensor_mod(void);
 msg_server_module_t *mapi_msg_get_isp_mod(void);

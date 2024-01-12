@@ -3,469 +3,516 @@
  * (C) Copyright 2000-2010
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  *
+ * (C) Copyright 2008
+ * Stuart Wood, Lab X Technologies <stuart.wood@labxtechnologies.com>
+ *
+ * (C) Copyright 2004
+ * Jian Zhang, Texas Instruments, jzhang@ti.com.
+ *
  * (C) Copyright 2001 Sysgo Real-Time Solutions, GmbH <www.elinos.com>
  * Andreas Heppel <aheppel@sysgo.de>
- *
- * (C) Copyright 2008 Atmel Corporation
  */
+
 #include <common.h>
-#include <dm.h>
+#include <command.h>
 #include <env.h>
 #include <env_internal.h>
+#include <linux/stddef.h>
 #include <malloc.h>
-#include <spi.h>
-#include <spi_flash.h>
+#include <memalign.h>
+#include <nand.h>
 #include <search.h>
 #include <errno.h>
-#include <uuid.h>
-#include <asm/cache.h>
-#include <asm/global_data.h>
-#include <dm/device-internal.h>
 #include <u-boot/crc.h>
-#include <nand.h>
+#include <mtd.h>
 
-#define	OFFSET_INVALID		(~(u32)0)
+#if defined(CONFIG_CMD_SAVEENV) && defined(CONFIG_CMD_MTD) && \
+		!defined(CONFIG_SPL_BUILD)
+#define CMD_SAVEENV
+#elif defined(CONFIG_ENV_OFFSET_REDUND) && !defined(CONFIG_SPL_BUILD)
+#error CONFIG_ENV_OFFSET_REDUND must have CONFIG_CMD_SAVEENV & CONFIG_CMD_MTD
+#endif
 
-#ifdef CONFIG_ENV_OFFSET_REDUND
-#define ENV_OFFSET_REDUND	CONFIG_ENV_OFFSET_REDUND
+#ifndef CONFIG_ENV_RANGE
+#define CONFIG_ENV_RANGE	CONFIG_ENV_SIZE
+#endif
 
-static ulong env_offset		= CONFIG_ENV_OFFSET;
-static ulong env_new_offset	= CONFIG_ENV_OFFSET_REDUND;
+#define SPINAND_NAME CONFIG_ENV_SPINAND_NAME
 
-#else
-
-#define ENV_OFFSET_REDUND	OFFSET_INVALID
-
-#endif /* CONFIG_ENV_OFFSET_REDUND */
+#if defined(ENV_IS_EMBEDDED)
+static env_t *env_ptr = &environment;
+#elif defined(CONFIG_NAND_ENV_DST)
+static env_t *env_ptr = (env_t *)CONFIG_NAND_ENV_DST;
+#endif /* ENV_IS_EMBEDDED */
 
 DECLARE_GLOBAL_DATA_PTR;
 
-static int setup_flash_device(struct spi_flash **env_flash)
+static struct mtd_info *get_mtd_by_name(const char *name)
 {
-#if CONFIG_IS_ENABLED(DM_SPI_FLASH)
-	struct udevice *new;
-	int	ret;
+	struct mtd_info *mtd;
 
-	/* speed and mode will be read from DT */
-	ret = spi_flash_probe_bus_cs(CONFIG_ENV_SPI_BUS, CONFIG_ENV_SPI_CS,
-				     &new);
-	if (ret) {
-		env_set_default("spi_flash_probe_bus_cs() failed", 0);
-		return ret;
-	}
+	mtd_probe_devices();
 
-	*env_flash = dev_get_uclass_priv(new);
-#else
-	*env_flash = spi_flash_probe(CONFIG_ENV_SPI_BUS, CONFIG_ENV_SPI_CS,
-				     CONFIG_ENV_SPI_MAX_HZ, CONFIG_ENV_SPI_MODE);
-	if (!*env_flash) {
-		env_set_default("spi_flash_probe() failed", 0);
-		return -EIO;
-	}
-#endif
-	return 0;
+	mtd = get_mtd_device_nm(name);
+	if (IS_ERR_OR_NULL(mtd))
+		printf("MTD device %s not found, ret %ld\n", name,
+		       PTR_ERR(mtd));
+
+	return mtd;
 }
 
-#if defined(CONFIG_ENV_OFFSET_REDUND)
-static int env_sf_save(void)
+static uint mtd_len_to_pages(struct mtd_info *mtd, u64 len)
 {
-	env_t	env_new;
-	char	*saved_buffer = NULL, flag = ENV_REDUND_OBSOLETE;
-	u32	 saved_offset = 0, sector;
-	u32	sect_size = CONFIG_ENV_SECT_SIZE;
-	int	ret;
-	struct spi_flash *env_flash;
-	size_t saved_size = 0,lenth,len;
+	do_div(len, mtd->writesize);
 
-	ret = setup_flash_device(&env_flash);
-	if (ret)
-		return ret;
+	return len;
+}
 
-	if (IS_ENABLED(CONFIG_ENV_SECT_SIZE_AUTO))
-		sect_size = env_flash->mtd.erasesize;
+static bool mtd_is_aligned_with_min_io_size(struct mtd_info *mtd, u64 size)
+{
+	return !do_div(size, mtd->writesize);
+}
 
-	ret = env_export(&env_new);
-	if (ret)
-		return -EIO;
-	env_new.flags	= ENV_REDUND_ACTIVE;
+static bool mtd_is_aligned_with_block_size(struct mtd_info *mtd, u64 size)
+{
+	return !do_div(size, mtd->erasesize);
+}
 
-	if (gd->env_valid == ENV_VALID) {
-		env_new_offset = CONFIG_ENV_OFFSET_REDUND;
-		env_offset = CONFIG_ENV_OFFSET;
+static bool mtd_oob_write_is_empty(struct mtd_oob_ops *op)
+{
+	int i;
+
+	for (i = 0; i < op->len; i++)
+		if (op->datbuf[i] != 0xff)
+			return false;
+
+	for (i = 0; i < op->ooblen; i++)
+		if (op->oobbuf[i] != 0xff)
+			return false;
+
+	return true;
+}
+
+static int mtd_special_write_oob(struct mtd_info *mtd, u64 off,
+				 struct mtd_oob_ops *io_op,
+				 bool write_empty_pages, bool woob)
+{
+	int ret = 0;
+
+	/*
+	 * By default, do not write an empty page.
+	 * Skip it by simulating a successful write.
+	 */
+	if (!write_empty_pages && mtd_oob_write_is_empty(io_op)) {
+		io_op->retlen = mtd->writesize;
+		io_op->oobretlen = woob ? mtd->oobsize : 0;
 	} else {
-		env_new_offset = CONFIG_ENV_OFFSET;
-		env_offset = CONFIG_ENV_OFFSET_REDUND;
+		ret = mtd_write_oob(mtd, off, io_op);
 	}
-
-	/* Is the sector larger than the env (i.e. embedded) */
-	if (sect_size > CONFIG_ENV_SIZE) {
-		saved_size = sect_size - CONFIG_ENV_SIZE;
-		saved_offset = env_new_offset + CONFIG_ENV_SIZE;
-		saved_buffer = memalign(ARCH_DMA_MINALIGN, saved_size);
-		if (!saved_buffer) {
-			ret = -ENOMEM;
-			goto done;
-		}
-		len = saved_size;
-		ret = nand_read(env_flash, saved_offset,
-					&saved_size, saved_buffer);
-		if (ret)
-			goto done;
-	}
-
-	sector = DIV_ROUND_UP(CONFIG_ENV_SIZE, sect_size);
-
-	puts("Erasing SPI flash...");
-	ret = nand_erase(env_flash, env_new_offset,
-				sector * sect_size);
-	if (ret)
-		goto done;
-
-	puts("Writing to SPI flash...");
-
-	lenth = CONFIG_ENV_SIZE,
-	ret = nand_write(env_flash, env_new_offset,
-		&lenth, &env_new);
-	if (ret)
-		goto done;
-
-	saved_size = len;
-	if (sect_size > CONFIG_ENV_SIZE) {
-		ret = nand_write(env_flash, saved_offset,
-					&saved_size, saved_buffer);
-		if (ret)
-			goto done;
-	}
-	lenth = sizeof(env_new.flags);
-	ret = nand_write(env_flash, env_offset + offsetof(env_t, flags),
-				&lenth, &flag);
-	if (ret)
-		goto done;
-
-	puts("done\n");
-
-	gd->env_valid = gd->env_valid == ENV_REDUND ? ENV_VALID : ENV_REDUND;
-
-	printf("Valid environment: %d\n", (int)gd->env_valid);
-
-done:
-	spi_flash_free(env_flash);
-
-	if (saved_buffer)
-		free(saved_buffer);
 
 	return ret;
 }
 
-static int env_sf_load(void)
+/*
+ * This is called before nand_init() so we can't read NAND to
+ * validate env data.
+ *
+ * Mark it OK for now. env_relocate() in env_common.c will call our
+ * relocate function which does the real validation.
+ *
+ * When using a NAND boot image (like sequoia_nand), the environment
+ * can be embedded or attached to the U-Boot image in NAND flash.
+ * This way the SPL loads not only the U-Boot image from NAND but
+ * also the environment.
+ */
+static int env_spinand_init(void)
 {
-	int ret;
-	int read1_fail, read2_fail;
-	env_t *tmp_env1, *tmp_env2;
-	struct spi_flash *env_flash;
-	size_t lenth;
+#if defined(ENV_IS_EMBEDDED) || defined(CONFIG_NAND_ENV_DST)
+	int crc1_ok = 0, crc2_ok = 0;
+	env_t *tmp_env1;
 
-	tmp_env1 = (env_t *)memalign(ARCH_DMA_MINALIGN,
-			CONFIG_ENV_SIZE);
-	tmp_env2 = (env_t *)memalign(ARCH_DMA_MINALIGN,
-			CONFIG_ENV_SIZE);
-	if (!tmp_env1 || !tmp_env2) {
-		env_set_default("malloc() failed", 0);
-		ret = -EIO;
-		goto out;
+#ifdef CONFIG_ENV_OFFSET_REDUND
+	env_t *tmp_env2;
+
+	tmp_env2 = (env_t *)((ulong)env_ptr + CONFIG_ENV_SIZE);
+	crc2_ok = crc32(0, tmp_env2->data, ENV_SIZE) == tmp_env2->crc;
+#endif
+	tmp_env1 = env_ptr;
+	crc1_ok = crc32(0, tmp_env1->data, ENV_SIZE) == tmp_env1->crc;
+
+	if (!crc1_ok && !crc2_ok) {
+		gd->env_addr	= 0;
+		gd->env_valid	= ENV_INVALID;
+
+		return 0;
+	} else if (crc1_ok && !crc2_ok) {
+		gd->env_valid = ENV_VALID;
+	}
+#ifdef CONFIG_ENV_OFFSET_REDUND
+	else if (!crc1_ok && crc2_ok) {
+		gd->env_valid = ENV_REDUND;
+	} else {
+		/* both ok - check serial */
+		if (tmp_env1->flags == 255 && tmp_env2->flags == 0)
+			gd->env_valid = ENV_REDUND;
+		else if (tmp_env2->flags == 255 && tmp_env1->flags == 0)
+			gd->env_valid = ENV_VALID;
+		else if (tmp_env1->flags > tmp_env2->flags)
+			gd->env_valid = ENV_VALID;
+		else if (tmp_env2->flags > tmp_env1->flags)
+			gd->env_valid = ENV_REDUND;
+		else /* flags are equal - almost impossible */
+			gd->env_valid = ENV_VALID;
 	}
 
-	ret = setup_flash_device(&env_flash);
-	if (ret)
-		goto out;
+	if (gd->env_valid == ENV_REDUND)
+		env_ptr = tmp_env2;
+	else
+#endif
+	if (gd->env_valid == ENV_VALID)
+		env_ptr = tmp_env1;
 
-	lenth = CONFIG_ENV_SIZE;
-	read1_fail = nand_read(env_flash, CONFIG_ENV_OFFSET,
-				    &lenth, tmp_env1);
-	lenth = CONFIG_ENV_SIZE;
-	read2_fail = nand_read(env_flash, CONFIG_ENV_OFFSET_REDUND,
-				    &lenth, tmp_env2);
+	gd->env_addr = (ulong)env_ptr->data;
+
+#else /* ENV_IS_EMBEDDED || CONFIG_NAND_ENV_DST */
+	gd->env_addr	= (ulong)&default_environment[0];
+	gd->env_valid	= ENV_VALID;
+#endif /* ENV_IS_EMBEDDED || CONFIG_NAND_ENV_DST */
+
+	return 0;
+}
+
+#ifdef CMD_SAVEENV
+/*
+ * The legacy NAND code saved the environment in the first NAND device i.e.,
+ * nand_dev_desc + 0. This is also the behaviour using the new NAND code.
+ */
+static int writeenv(size_t offset, u_char *buf)
+{
+	size_t end = offset + CONFIG_ENV_RANGE;
+	size_t amount_saved = 0;
+	size_t blocksize, len;
+	struct mtd_info *mtd;
+	u_char *char_ptr;
+	struct mtd_oob_ops io_op = {};
+
+	mtd = get_mtd_by_name(SPINAND_NAME);
+	if (IS_ERR_OR_NULL(mtd))
+		return 1;
+
+	blocksize = mtd->erasesize;
+	len = min(blocksize, (size_t)CONFIG_ENV_SIZE);
+
+	io_op.mode = MTD_OPS_AUTO_OOB;
+	io_op.len = mtd->writesize;
+	io_op.ooblen = 0;
+	io_op.oobbuf = NULL;
+
+	while (amount_saved < CONFIG_ENV_SIZE && offset < end) {
+		if (mtd_block_isbad(mtd, offset)) {
+			offset += blocksize;
+		} else {
+			io_op.datbuf = &buf[amount_saved];
+			if (mtd_special_write_oob(mtd, offset, &io_op, NULL, NULL))
+				goto out_put_mtd;
+
+			offset += io_op.retlen;
+			amount_saved += io_op.retlen;
+		}
+	}
+	if (amount_saved != CONFIG_ENV_SIZE)
+		goto out_put_mtd;
+
+	return 0;
+
+out_put_mtd:
+	put_mtd_device(mtd);
+    return 1;
+}
+
+struct nand_env_location {
+	const char *name;
+	const nand_erase_options_t erase_opts;
+};
+
+static int erase_and_write_env(const struct nand_env_location *location,
+		u_char *env_new)
+{
+	struct mtd_info *mtd;
+	int ret = 0;
+	struct erase_info erase_op = {};
+	u64 off, len;
+
+	off = location->erase_opts.offset;
+	len = location->erase_opts.length;
+
+	erase_op.mtd = mtd;
+	erase_op.addr = off;
+	erase_op.len = len;
+	erase_op.scrub = NULL;
+
+	mtd = get_mtd_by_name(SPINAND_NAME);
+	if (IS_ERR_OR_NULL(mtd))
+		return 1;
+
+	if (!mtd_is_aligned_with_block_size(mtd, off)) {
+		printf("Offset not aligned with a block (0x%x)\n",
+		       mtd->erasesize);
+		goto out_put_mtd;
+	}
+
+//	if (!mtd_is_aligned_with_block_size(mtd, len)) {
+//		printf("Size not a multiple of a block (0x%x)\n",
+//		       mtd->erasesize);
+//		goto out_put_mtd;
+//	}
+
+	printf("Erasing %s...\n", location->name);
+	while (erase_op.len) {
+		ret = mtd_erase(mtd, &erase_op);
+
+		/* Abort if its not a bad block error */
+		if (ret != -EIO)
+			break;
+
+		printf("Skipping bad block at 0x%08llx\n", erase_op.fail_addr);
+
+		/* Skip bad block and continue behind it */
+		erase_op.len -= erase_op.fail_addr - erase_op.addr;
+		erase_op.len -= mtd->erasesize;
+		erase_op.addr = erase_op.fail_addr + mtd->erasesize;
+	}
+
+	if (ret && ret != -EIO)
+		goto out_put_mtd;
+
+	printf("Writing to %s... ", location->name);
+	ret = writeenv(location->erase_opts.offset, env_new);
+	puts(ret ? "FAILED!\n" : "OK\n");
+
+	return ret;
+
+out_put_mtd:
+	put_mtd_device(mtd);
+    return 1;
+}
+
+static int env_spinand_save(void)
+{
+	int	ret = 0;
+	ALLOC_CACHE_ALIGN_BUFFER(env_t, env_new, 1);
+	int	env_idx = 0;
+	static const struct nand_env_location location[] = {
+		{
+			.name = "SPINAND",
+			.erase_opts = {
+				.length = CONFIG_ENV_RANGE,
+				.offset = CONFIG_ENV_OFFSET,
+			},
+		},
+#ifdef CONFIG_ENV_OFFSET_REDUND
+		{
+			.name = "redundant SPINAND",
+			.erase_opts = {
+				.length = CONFIG_ENV_RANGE,
+				.offset = CONFIG_ENV_OFFSET_REDUND,
+			},
+		},
+#endif
+	};
+
+
+	if (CONFIG_ENV_RANGE < CONFIG_ENV_SIZE)
+		return 1;
+
+	ret = env_export(env_new);
+	if (ret)
+		return ret;
+
+#ifdef CONFIG_ENV_OFFSET_REDUND
+	env_idx = (gd->env_valid == ENV_VALID);
+#endif
+
+	ret = erase_and_write_env(&location[env_idx], (u_char *)env_new);
+#ifdef CONFIG_ENV_OFFSET_REDUND
+	if (!ret) {
+		/* preset other copy for next write */
+		gd->env_valid = gd->env_valid == ENV_REDUND ? ENV_VALID :
+				ENV_REDUND;
+		return ret;
+	}
+
+	env_idx = (env_idx + 1) & 1;
+	ret = erase_and_write_env(&location[env_idx], (u_char *)env_new);
+	if (!ret)
+		printf("Warning: primary env write failed,"
+				" redundancy is lost!\n");
+#endif
+
+	return ret;
+}
+#endif /* CMD_SAVEENV */
+
+static int readenv(size_t offset, u_char *buf)
+{
+	size_t end = offset + CONFIG_ENV_RANGE;
+	size_t amount_loaded = 0;
+	size_t blocksize, len;
+	struct mtd_info *mtd;
+	u_char *char_ptr;
+	struct mtd_oob_ops io_op = {};
+
+	mtd = get_mtd_by_name(SPINAND_NAME);
+	if (IS_ERR_OR_NULL(mtd)){
+                printf("readenv: 1 \n");
+		return 1;
+        }
+
+	blocksize = mtd->erasesize;
+	len = min(blocksize, (size_t)CONFIG_ENV_SIZE);
+
+	io_op.mode = MTD_OPS_AUTO_OOB;
+	io_op.len = mtd->writesize;
+	io_op.ooblen = 0;
+	io_op.oobbuf = NULL;
+
+	while (amount_loaded < CONFIG_ENV_SIZE && offset < end) {
+		if (mtd_block_isbad(mtd, offset)) {
+			offset += blocksize;
+		} else {
+			io_op.datbuf = &buf[amount_loaded];
+			if (mtd_read_oob(mtd, offset, &io_op)){
+                                printf("readenv: 2 \n");
+				goto out_put_mtd;
+                        }
+
+			offset += io_op.retlen;
+			amount_loaded += io_op.retlen;
+		}
+	}
+
+	if (amount_loaded != CONFIG_ENV_SIZE){
+                printf("readenv: 3 \n");
+		goto out_put_mtd;
+        }
+
+	return 0;
+
+out_put_mtd:
+	put_mtd_device(mtd);
+    return 1;
+}
+
+#ifdef CONFIG_ENV_OFFSET_OOB
+static int get_nand_env_oob(struct mtd_info *mtd, unsigned long *result)
+{
+	struct mtd_oob_ops ops;
+	uint32_t oob_buf[ENV_OFFSET_SIZE / sizeof(uint32_t)];
+	int ret;
+
+	ops.datbuf	= NULL;
+	ops.mode	= MTD_OOB_AUTO;
+	ops.ooboffs	= 0;
+	ops.ooblen	= ENV_OFFSET_SIZE;
+	ops.oobbuf	= (void *)oob_buf;
+
+	ret = mtd->read_oob(mtd, ENV_OFFSET_SIZE, &ops);
+	if (ret) {
+		printf("error reading OOB block 0\n");
+		return ret;
+	}
+
+	if (oob_buf[0] == ENV_OOB_MARKER) {
+		*result = ovoid ob_buf[1] * mtd->erasesize;
+	} else if (oob_buf[0] == ENV_OOB_MARKER_OLD) {
+		*result = oob_buf[1];
+	} else {
+		printf("No dynamic environment marker in OOB block 0\n");
+		return -ENOENT;
+	}
+
+	return 0;
+}
+#endif
+
+#ifdef CONFIG_ENV_OFFSET_REDUND
+static int env_spinand_load(void)
+{
+#if defined(ENV_IS_EMBEDDED)
+	return 0;
+#else
+	int read1_fail, read2_fail;
+	env_t *tmp_env1, *tmp_env2;
+	int ret = 0;
+
+	tmp_env1 = (env_t *)memalign(ARCH_DMA_MINALIGN, CONFIG_ENV_SIZE);
+	tmp_env2 = (env_t *)memalign(ARCH_DMA_MINALIGN, CONFIG_ENV_SIZE);
+	if (tmp_env1 == NULL || tmp_env2 == NULL) {
+		puts("Can't allocate buffers for environment\n");
+		env_set_default("memalign() failed", 0);
+		ret = -EIO;
+		goto done;
+	}
+
+	read1_fail = readenv(CONFIG_ENV_OFFSET, (u_char *) tmp_env1);
+	read2_fail = readenv(CONFIG_ENV_OFFSET_REDUND, (u_char *) tmp_env2);
 
 	ret = env_import_redund((char *)tmp_env1, read1_fail, (char *)tmp_env2,
 				read2_fail, H_EXTERNAL);
 
-	spi_flash_free(env_flash);
-out:
+done:
 	free(tmp_env1);
 	free(tmp_env2);
 
 	return ret;
+#endif /* ! ENV_IS_EMBEDDED */
 }
-#else
-static int env_sf_save(void)
+#else /* ! CONFIG_ENV_OFFSET_REDUND */
+/*
+ * The legacy NAND code saved the environment in the first NAND
+ * device i.e., nand_dev_desc + 0. This is also the behaviour using
+ * the new NAND code.
+ */
+static int env_spinand_load(void)
 {
-	u32	 saved_offset = 0, sector;
-	u32	sect_size = CONFIG_ENV_SECT_SIZE;
-	char	*saved_buffer = NULL;
-	int	ret = 1;
-	env_t	env_new;
-	struct spi_flash *env_flash;
-	size_t saved_size = 0,lenth,len;
-
-	ret = setup_flash_device(&env_flash);
-	if (ret)
-		return ret;
-
-	if (IS_ENABLED(CONFIG_ENV_SECT_SIZE_AUTO))
-		sect_size = env_flash->mtd.erasesize;
-
-	/* Is the sector larger than the env (i.e. embedded) */
-	if (sect_size > CONFIG_ENV_SIZE) {
-		saved_size = sect_size - CONFIG_ENV_SIZE;
-		saved_offset = CONFIG_ENV_OFFSET + CONFIG_ENV_SIZE;
-		saved_buffer = malloc(saved_size);
-		if (!saved_buffer)
-			goto done;
-
-		len = saved_size;
-		ret = nand_read(env_flash, saved_offset,
-			&saved_size, saved_buffer);
-		if (ret)
-			goto done;
-	}
-
-	ret = env_export(&env_new);
-	if (ret)
-		goto done;
-
-	sector = DIV_ROUND_UP(CONFIG_ENV_SIZE, sect_size);
-
-	puts("Erasing SPI flash...");
-	ret = nand_erase(env_flash, CONFIG_ENV_OFFSET,
-		sector * sect_size);
-	if (ret)
-		goto done;
-
-	puts("Writing to SPI flash...");
-	lenth = CONFIG_ENV_SIZE,
-	ret = nand_write(env_flash, CONFIG_ENV_OFFSET,
-		&lenth, &env_new);
-	if (ret)
-		goto done;
-
-	if (sect_size > CONFIG_ENV_SIZE) {
-
-		saved_size = len;
-		ret = nand_write(env_flash, saved_offset,
-			&saved_size, saved_buffer);
-		if (ret)
-			goto done;
-	}
-
-	ret = 0;
-	puts("done\n");
-
-done:
-	spi_flash_free(env_flash);
-
-	if (saved_buffer)
-		free(saved_buffer);
-
-	return ret;
-}
-
-static int env_sf_load(void)
-{
+#if !defined(ENV_IS_EMBEDDED)
 	int ret;
-	char *buf = NULL;
-	struct spi_flash *env_flash;
-	size_t lenth = CONFIG_ENV_SIZE;
-	buf = (char *)memalign(ARCH_DMA_MINALIGN, CONFIG_ENV_SIZE);
-	if (!buf) {
-		env_set_default("malloc() failed", 0);
+	ALLOC_CACHE_ALIGN_BUFFER(char, buf, CONFIG_ENV_SIZE);
+
+#if defined(CONFIG_ENV_OFFSET_OOB)
+	struct mtd_info *mtd  = get_nand_dev_by_index(0);
+	/*
+	 * If unable to read environment offset from NAND OOB then fall through
+	 * to the normal environment reading code below
+	 */
+	if (mtd && !get_nand_env_oob(mtd, &nand_env_oob_offset)) {
+		printf("Found Environment offset in OOB..\n");
+	} else {
+		env_set_default("no env offset in OOB", 0);
+		return;
+	}
+#endif
+
+	ret = readenv(CONFIG_ENV_OFFSET, (u_char *)buf);
+	if (ret) {
+		env_set_default("readenv() failed", 0);
 		return -EIO;
 	}
 
-	ret = setup_flash_device(&env_flash);
-	if (ret)
-		goto out;
-
-	ret = nand_read(env_flash,
-		CONFIG_ENV_OFFSET, &lenth, buf);
-	if (ret) {
-		env_set_default("spi_flash_read() failed", 0);
-		goto err_read;
-	}
-
-	ret = env_import(buf, 1, H_EXTERNAL);
-	if (!ret)
-		gd->env_valid = ENV_VALID;
-
-err_read:
-	spi_flash_free(env_flash);
-out:
-	free(buf);
-
-	return ret;
-}
-#endif
-
-static int env_sf_erase(void)
-{
-	int ret;
-	env_t env;
-	struct spi_flash *env_flash;
-	size_t lenth = CONFIG_ENV_SIZE;
-
-	ret = setup_flash_device(&env_flash);
-	if (ret)
-		return ret;
-
-	memset(&env, 0, sizeof(env_t));
-	ret = nand_write(env_flash, CONFIG_ENV_OFFSET, &lenth, &env);
-	if (ret)
-		goto done;
-
-	lenth = CONFIG_ENV_SIZE;
-	if (ENV_OFFSET_REDUND != OFFSET_INVALID)
-		ret = nand_write(env_flash, ENV_OFFSET_REDUND, &lenth, &env);
-
-done:
-	spi_flash_free(env_flash);
-
-	return ret;
-}
-
-__weak void *env_sf_get_env_addr(void)
-{
-#ifndef CONFIG_SPL_BUILD
-	return (void *)CONFIG_ENV_ADDR;
-#else
-	return NULL;
-#endif
-}
-
-/*
- * check if Environment on CONFIG_ENV_ADDR is valid.
- */
-static int env_sf_init_addr(void)
-{
-	env_t *env_ptr = (env_t *)env_sf_get_env_addr();
-
-	if (!env_ptr)
-		return -ENOENT;
-
-	if (crc32(0, env_ptr->data, ENV_SIZE) == env_ptr->crc) {
-		gd->env_addr = (ulong)&(env_ptr->data);
-		gd->env_valid = ENV_VALID;
-	} else {
-		gd->env_valid = ENV_INVALID;
-	}
+	return env_import(buf, 1, H_EXTERNAL);
+#endif /* ! ENV_IS_EMBEDDED */
 
 	return 0;
 }
-
-#if defined(CONFIG_ENV_SPI_EARLY)
-/*
- * early load environment from SPI flash (before relocation)
- * and check if it is valid.
- */
-static int env_sf_init_early(void)
-{
-	int ret;
-	int read1_fail;
-	int read2_fail;
-	int crc1_ok;
-	env_t *tmp_env2 = NULL;
-	env_t *tmp_env1;
-	struct spi_flash *env_flash;
-	size_t lenth = CONFIG_ENV_SIZE;
-
-	/*
-	 * if malloc is not ready yet, we cannot use
-	 * this part yet.
-	 */
-	if (!gd->malloc_limit)
-		return -ENOENT;
-
-	tmp_env1 = (env_t *)memalign(ARCH_DMA_MINALIGN,
-			CONFIG_ENV_SIZE);
-	if (IS_ENABLED(CONFIG_SYS_REDUNDAND_ENVIRONMENT))
-		tmp_env2 = (env_t *)memalign(ARCH_DMA_MINALIGN,
-					     CONFIG_ENV_SIZE);
-
-	if (!tmp_env1 || !tmp_env2)
-		goto out;
-
-	ret = setup_flash_device(&env_flash);
-	if (ret)
-		goto out;
-
-	read1_fail = nand_read(env_flash, CONFIG_ENV_OFFSET,
-				    &lenth, tmp_env1);
-
-	lenth = CONFIG_ENV_SIZE;
-	if (IS_ENABLED(CONFIG_SYS_REDUNDAND_ENVIRONMENT)) {
-		read2_fail = nand_read(env_flash,
-					    CONFIG_ENV_OFFSET_REDUND,
-					    &lenth, tmp_env2);
-		ret = env_check_redund((char *)tmp_env1, read1_fail,
-				       (char *)tmp_env2, read2_fail);
-
-		if (ret < 0)
-			goto err_read;
-
-		if (gd->env_valid == ENV_VALID)
-			gd->env_addr = (unsigned long)&tmp_env1->data;
-		else
-			gd->env_addr = (unsigned long)&tmp_env2->data;
-	} else {
-		if (read1_fail)
-			goto err_read;
-
-		crc1_ok = crc32(0, tmp_env1->data, ENV_SIZE) ==
-				tmp_env1->crc;
-		if (!crc1_ok)
-			goto err_read;
-
-		/* if valid -> this is our env */
-		gd->env_valid = ENV_VALID;
-		gd->env_addr = (unsigned long)&tmp_env1->data;
-	}
-
-	spi_flash_free(env_flash);
-
-	return 0;
-err_read:
-	spi_flash_free(env_flash);
-
-	free(tmp_env1);
-	if (IS_ENABLED(CONFIG_SYS_REDUNDAND_ENVIRONMENT))
-		free(tmp_env2);
-out:
-	/* env is not valid. always return 0 */
-	gd->env_valid = ENV_INVALID;
-	return 0;
-}
-#endif
-
-static int env_sf_init(void)
-{
-	int ret = env_sf_init_addr();
-	if (ret != -ENOENT)
-		return ret;
-#ifdef CONFIG_ENV_SPI_EARLY
-	return env_sf_init_early();
-#endif
-	/*
-	 * return here -ENOENT, so env_init()
-	 * can set the init bit and later if no
-	 * other Environment storage is defined
-	 * can set the default environment
-	 */
-	return -ENOENT;
-}
+#endif /* CONFIG_ENV_OFFSET_REDUND */
 
 U_BOOT_ENV_LOCATION(spinand) = {
-	.location	= ENVL_NAND,
+	.location	= ENVL_SPINAND,
 	ENV_NAME("SPINAND")
-	.load		= env_sf_load,
-	.save		= ENV_SAVE_PTR(env_sf_save),
-	.erase		= ENV_ERASE_PTR(env_sf_erase),
-	.init		= env_sf_init,
+	.load		= env_spinand_load,
+#if defined(CMD_SAVEENV)
+	.save		= env_save_ptr(env_spinand_save),
+#endif
+	.init		= env_spinand_init,
 };
+

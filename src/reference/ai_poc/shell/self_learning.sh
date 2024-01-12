@@ -1,0 +1,1 @@
+self_learning.elf recognition.kmodel 400 400 0.5 3 0

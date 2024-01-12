@@ -22,8 +22,10 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include <fcntl.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include "k_comm_ipcmsg.h"
 #include "mapi_vicap_api.h"
 #include "msg_client_dispatch.h"
 #include "mapi_vicap_comm.h"
@@ -31,8 +33,11 @@
 #include "msg_vicap.h"
 #include "k_type.h"
 #include "k_vicap_comm.h"
+#include "../../component/ipcmsg/include/k_ipcmsg.h"
 
 #include <stdio.h>
+#include <sys/mman.h>
+#include <unistd.h>
 
 k_s32 kd_mapi_vicap_get_sensor_fd(k_vicap_sensor_attr *sensor_attr)
 {
@@ -226,5 +231,99 @@ k_s32 kd_mapi_vicap_set_mclk(k_vicap_mclk_id id, k_vicap_mclk_sel sel, k_u8 mclk
     if(ret != K_SUCCESS) {
         mapi_vicap_error_trace("mapi_send_sync failed\n");
     }
+    return ret;
+}
+
+#define pr(fmt,...) fprintf(stderr,"\033[0m[client] "fmt"\n",##__VA_ARGS__)
+#define DEBUG_MESSAGE 0
+
+k_s32 kd_mapi_vicap_tuning(char* string, k_u32 size, char** response, k_u32* response_len)
+{
+    k_s32 ret = 0;
+    k_ipcmsg_message_t *req = NULL;
+    k_ipcmsg_message_t *resp = NULL;
+    // FIXME: full size cause data error
+    const k_u32 block_size = K_IPCMSG_MAX_CONTENT_LEN / 2;
+    extern k_s32 mapi_media_msg_get_id(void);
+    req = kd_ipcmsg_create_message(
+        MODFD(K_MAPI_MOD_VICAP, 0, 0),
+        MSG_CMD_MEDIA_VICAP_TUNING,
+        &size, sizeof(k_u32)
+    );
+    if(req == NULL) {
+        return -1;
+    }
+    pr("send command length %u", size);
+    ret = kd_ipcmsg_send_only(mapi_media_msg_get_id(), req);
+    kd_ipcmsg_destroy_message(req);
+    if (ret) {
+        return ret;
+    }
+    k_u32 offset = 0;
+    do {
+        k_u32 fixed_size = (size > offset + block_size) ? block_size : (size - offset);
+        req = kd_ipcmsg_create_message(
+            MODFD(K_MAPI_MOD_VICAP, 0, 0),
+            MSG_CMD_MEDIA_VICAP_TUNING,
+            string + offset, fixed_size
+        );
+        if(req == NULL) {
+            return -1;
+        }
+        offset += fixed_size;
+        if (offset >= size) {
+            // last message
+            ret = kd_ipcmsg_send_sync(mapi_media_msg_get_id(), req, &resp, K_IPCMSG_SEND_SYNC_TIMEOUT);
+        } else {
+            ret = kd_ipcmsg_send_only(mapi_media_msg_get_id(), req);
+        }
+        pr("send command %u/%u", offset, size);
+        #if DEBUG_MESSAGE
+        fwrite(req->pBody, 1, req->u32BodyLen, stderr);
+        fprintf(stderr, "\n");
+        #endif
+        kd_ipcmsg_destroy_message(req);
+        if (ret) {
+            return ret;
+        }
+    } while(offset < size);
+    k_u32 buffer_phys = 0;
+    static k_u32 last_buffer_phys = 0;
+    if (resp->u32BodyLen == 8) {
+        *response_len = (*(k_u64*)resp->pBody) >> 32;
+        buffer_phys = (*(k_u64*)resp->pBody) & 0xffffffffUL;
+    }
+    pr("get response length %u, code: %d, phys: %08x", *response_len, resp->s32RetVal, buffer_phys);
+    ret = resp->s32RetVal;
+    kd_ipcmsg_destroy_message(resp);
+
+    static int mem_fd = -1;
+    if (mem_fd < 0) {
+        mem_fd = open("/dev/mem", O_RDWR | O_SYNC);
+        if (mem_fd < 0) {
+            perror("open(\"/dev/mem\") error");
+            return K_FAILED;
+        }
+    }
+
+    static void* buffer_virt = NULL;
+    static size_t buffer_size = 0;
+    if ((last_buffer_phys != buffer_phys) || (buffer_size < *response_len)) {
+        // mmap
+        if (buffer_virt != MAP_FAILED) {
+            munmap(buffer_virt, buffer_size);
+            buffer_virt = MAP_FAILED;
+        }
+        // align 4k
+        buffer_size = (*response_len & 0xfffff000UL) + 0x1000UL;
+        buffer_virt = mmap(NULL, buffer_size, PROT_READ, MAP_SHARED, mem_fd, buffer_phys);
+        if (buffer_virt == MAP_FAILED) {
+            perror("mmap(\"/dev/mem\") error");
+            return K_FAILED;
+        }
+    }
+
+    *response = malloc(*response_len);
+    memcpy(*response, buffer_virt, *response_len);
     return ret;
 }

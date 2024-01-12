@@ -45,7 +45,7 @@ CONFIG_SDCAED=y
 #
 # wifi configurations
 #
-# CONFIG_AP6212A is not set
+CONFIG_AP6212A=y
 # CONFIG_AP6256 is not set
 # CONFIG_SUPPORT_RTSMART is not set
 CONFIG_SUPPORT_LINUX=y

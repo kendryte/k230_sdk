@@ -38,11 +38,9 @@ AIBase::AIBase(const char *kmodel_file,const string model_name, const int debug_
 {
     if (debug_mode > 1)
         cout << "kmodel_file:" << kmodel_file << endl;
-    // kmodel_vec_ = Utils::read_binary_file<unsigned char>(kmodel_file);
-    // kmodel_interp_.load_model({(const gsl::byte *)kmodel_vec_.data(), kmodel_vec_.size()}).expect("cannot load kmodel.");
+    kmodel_vec_ = Utils::read_binary_file<unsigned char>(kmodel_file);
 
-    std::ifstream ifs(kmodel_file, std::ios::binary);
-    kmodel_interp_.load_model(ifs).expect("Invalid kmodel");
+    kmodel_interp_.load_model({(const gsl::byte *)kmodel_vec_.data(), kmodel_vec_.size()}).expect("cannot load kmodel.");
 
     set_input_init();
     set_output_init();

@@ -85,7 +85,6 @@ cv::Mat Utils::padding_resize(const cv::Mat img, const FrameSize &frame_size, co
         }
     }
     {
-        // 104, 117, 123,BGR
         cv::copyMakeBorder(cropped_img, cropped_img, top, bottom, left, right, cv::BORDER_CONSTANT, padding);
     }
     return cropped_img;
@@ -400,4 +399,3 @@ void Utils::affine(float *affine_matrix, std::unique_ptr<ai2d_builder> &builder,
     builder->build_schedule();
     builder->invoke(ai2d_in_tensor,ai2d_out_tensor).expect("error occurred in ai2d running");
 }
-

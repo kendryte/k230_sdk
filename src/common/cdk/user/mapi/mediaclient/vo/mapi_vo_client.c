@@ -540,6 +540,7 @@ k_s32 kd_mapi_get_connector_info(k_connector_type connector_type, k_connector_in
     connector_info->lan_num = info.connector_info.lan_num;
     connector_info->work_mode = info.connector_info.work_mode;
     connector_info->cmd_mode = info.connector_info.cmd_mode;
+    connector_info->type = connector_type;
 
     memcpy(&connector_info->phy_attr, &info.connector_info.phy_attr, sizeof(k_connectori_phy_attr));
     memcpy(&connector_info->resolution, &info.connector_info.resolution, sizeof(k_vo_display_resolution));

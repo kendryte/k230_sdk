@@ -1,0 +1,37 @@
+software =
+{
+    version = "0.1.0";
+    description = "Firmware update for k230 Project";
+    hardware-compatibility: [ "1.0", "1.2", "1.3"];
+
+    bootenv: (
+        {
+            name = "vram";
+            value = "4M";
+        },
+    );
+    files: (
+        {
+            filename = "file_test.txt";
+            path = "/etc/file_test.txt";
+            device = "/dev/mmcblk1p3";
+            filesystem = "ext4";
+            sha256 = "df4917cfb04d372ed365f1bb1ed9bf14d1ecbea8018033b7f3205fcf6654a214";
+        },
+        {
+            filename = "encrypted.ciphertext";
+            path = "/encrypted.plain";
+            device = "/dev/mmcblk1p4";
+            filesystem = "vfat";
+            encrypted = true;
+            sha256 = "5a3c59db5986b3bfd29e9e3d42f18860d9c7bb6a889165b6b27592e322ef5a7b";
+        }
+    );
+    scripts: (
+        {
+            filename = "script_test.sh";
+            type = "shellscript";
+            sha256 = "55fb88b4903e223e7e3a55509b826b4d23921749c868350050e24c80ad4b6d0a";
+        }
+    );
+}

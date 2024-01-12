@@ -13,16 +13,16 @@ gz_file_add_ver()
 	local sdk_ver_file="${K230_SDK_ROOT}/board/common/post_copy_rootfs/etc/version/release_version"
 	local nncase_ver_file="${K230_SDK_ROOT}/src/big/nncase/riscv64/nncase/include/nncase/version.h"
 
-	
-	
+	local storage="$(echo "$f" | sed -nE "s#[^-]*-([^\.]*).*#\1#p")"
+	local conf_name="${CONF%%_defconfig}"
 
 	cat ${sdk_ver_file} | grep v | cut -d- -f 1 > /dev/null && \
 	 	sdk_ver=$(cat ${sdk_ver_file} | grep v | cut -d- -f 1)
 
 	cat ${nncase_ver_file} | grep NNCASE_VERSION -w | cut -d\" -f 2 > /dev/null && \
 		 nncase_ver=$(cat ${nncase_ver_file} | grep NNCASE_VERSION -w | cut -d\" -f 2)
-
-	 cp $f ${CONFIG_BOARD_NAME}_$(echo "$f" | sed -nE "s#[^-]*-([^\.]*).*#\1#p")_${sdk_ver}_nncase_v${nncase_ver}.img.gz; 
+	rm -rf  ${conf_name}_${storage}_${sdk_ver}_nncase_v${nncase_ver}.img.gz;
+	ln -s  $f ${conf_name}_${storage}_${sdk_ver}_nncase_v${nncase_ver}.img.gz;
 }
 
 
@@ -62,6 +62,10 @@ copye_file_to_images()
 		fakeroot -- cpio -idm < ../rootfs.cpio ; 
 
 		cp -rf ${K230_SDK_ROOT}/tools/ota/ota_public.pem  	${BUILD_DIR}/images/little-core/rootfs/etc/
+		cp -rf ${K230_SDK_ROOT}/tools/ota/fw_env.config  	${BUILD_DIR}/images/little-core/rootfs/etc/
+		cp -rf ${K230_SDK_ROOT}/tools/ota/ota_aes_key_iv  	${BUILD_DIR}/images/little-core/rootfs/etc/
+		cp -rf ${K230_SDK_ROOT}/tools/ota/hwrevision  	${BUILD_DIR}/images/little-core/rootfs/etc/
+
 		cp -rf ${K230_SDK_ROOT}/board/common/post_copy_rootfs/*  	${BUILD_DIR}/images/little-core/rootfs/
 		fakeroot -- cp -rf ${BUILD_DIR}/images/little-core/ko-apps/* ${BUILD_DIR}/images/little-core/rootfs/
 		cd ${BUILD_DIR}/images/little-core/rootfs/; \
@@ -417,12 +421,13 @@ shrink_rootfs_common()
 	rm -rf mnt/*;
 	rm -rf app/;
 	rm -rf lib/tuning-server;	
+	rm -rf usr/sbin/wpa_supplicant usr/sbin/hostapd;
 	rm -rf usr/bin/stress-ng  bin/bash usr/sbin/sshd usr/bin/trace-cmd usr/bin/lvgl_demo_widgets;
 	rm -rf usr/bin/ssh  etc/ssh/moduli  usr/lib/libssl.so.1.1 usr/bin/ssh-keygen \
 		usr/libexec/ssh-keysign  usr/bin/ssh-keyscan  usr/bin/ssh-add usr/bin/ssh-agent usr/libexec/ssh-pkcs11-helper\
 		  usr/lib/libncurses.so.6.1 usr/lib/libvg_lite_util.so  usr/bin/par_ops usr/bin/sftp  usr/libexec/lzo/examples/lzotest;
-	#find . -name *.ko | xargs rm -rf ;
-
+    rm -rf usr/bin/wdt_test_demo;
+    rm -rf usr/bin/swupdate
 	#裁剪大核rootfs;
 	cd ${BUILD_DIR}/images/big-core/root/bin/;
 	find . -type f  -not -name init.sh  -not -name  fastboot_app.elf -not -name   test.kmodel  | xargs rm -rf ; 
@@ -439,24 +444,9 @@ gen_image_spinand()
 {
 	cd  ${BUILD_DIR}/;rm -rf images_bak;cp images images_bak -r;
 
+	shrink_rootfs_common;
 	#裁剪小核rootfs
 	cd ${BUILD_DIR}/images/little-core/rootfs/; 
-	rm -rf lib/modules/;
-	rm -rf lib/libstdc++*;
-	rm -rf usr/bin/fio;
-	rm -rf usr/bin/usb_test;
-	rm -rf usr/bin/hid_gadget_test;
-	rm -rf usr/bin/gadget*;
-	rm -rf usr/bin/otp_test_demo;
-	rm -rf usr/bin/iotwifi*;
-	rm -rf usr/bin/i2c-tools.sh;
-	rm -rf mnt/*;
-	rm -rf app/;
-	rm -rf lib/tuning-server;	
-	rm -rf usr/bin/stress-ng  bin/bash usr/sbin/sshd usr/bin/trace-cmd;
-	#find . -name *.ko | xargs rm -rf ;
-	fakeroot -- ${K230_SDK_ROOT}/tools/mkcpio-rootfs.sh; 
-
 
 	#裁剪大核romfs;
 	#$(RT-SMART_SRC_PATH)/userapps/root

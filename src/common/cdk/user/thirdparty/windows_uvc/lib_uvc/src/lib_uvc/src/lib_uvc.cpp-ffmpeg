@@ -1,0 +1,530 @@
+#include "lib_uvc.h"
+#include <iostream>
+#include<thread>
+using namespace std;
+#include <windows.h>
+
+extern "C"
+{
+#include "libavutil/avutil.h"
+#include "libavformat/avformat.h"
+#include "libavcodec/avcodec.h"
+#include "libavdevice/avdevice.h"
+}
+
+#include "libusb.h"
+
+#pragma  comment(lib,"avformat.lib")
+#pragma  comment(lib,"avutil.lib")
+#pragma  comment(lib,"avcodec.lib")
+#pragma  comment(lib,"avdevice.lib")
+#pragma  comment(lib,"libusb-1.0.lib")
+#pragma  comment(lib,"pthread.lib")
+
+static const int WEB_K230_VID = 0x1b3f;
+static const int WEB_K230_PID = 0x2247;
+
+static const int K230_VID = 0x29f1;
+static const int K230_PID = 0x0230;
+
+static s_GrabberInitParam  g_uvc_param;
+static AVFormatContext* g_ifmtCtx= nullptr;
+static std::thread g_uvc_thread;
+static bool g_start_grab_data = false;
+static unsigned int g_videoindex = -1;
+
+static const int g_uvc_rgb_data_start_code = 0xaabbccdd;
+static const int g_uvc_depth_data_start_code = 0xddccbbaa;
+
+typedef struct {
+	int data_start_code;
+	int data_size;
+}UVC_PRIVATE_DATA_HEAD_INFO;
+
+//Show Device  
+static void show_dshow_device() {
+	AVFormatContext* pFormatCtx = avformat_alloc_context();
+	AVDictionary* options = NULL;
+	av_dict_set(&options, "list_devices", "true", 0);
+	AVInputFormat* iformat = av_find_input_format("dshow");
+	avformat_open_input(&pFormatCtx, "video=dummy", iformat, &options);  //dummy可以用任意字符代替
+}
+
+static int save_packet(int cnt, uint8_t* data, int size)
+{
+	char sFilename[256];
+	sprintf(sFilename, "test%d.jpg", cnt);
+	FILE* fp = fopen(sFilename, "ab");
+	fwrite(data, size, 1, fp);
+	fclose(fp);
+	return 0;
+}
+
+static int _init_uvc()
+{
+	AVDictionary* opt = NULL;
+
+	//init
+	g_ifmtCtx = avformat_alloc_context();
+	//ifmtCtx->video_codec_id = AV_CODEC_ID_MJPEG; // 指定编解码格式
+	//ifmtCtx->video_codec_id = AV_CODEC_ID_H264;
+	g_ifmtCtx->video_codec_id = AV_CODEC_ID_RAWVIDEO;
+
+	AVInputFormat* ifmt = av_find_input_format("dshow");
+	if (ifmt == NULL)
+	{
+		printf("av_find_input_format faifailed\n");
+		return -1;
+	}
+
+	//av_dict_set(&opt, "video_size", "1920x1080", 0);
+	//av_dict_set(&opt, "video_size", "1280x720", 0);
+	/*
+	av_dict_set_int(&opt, "rtbufsize", 2 * 1024 * 1024, 0);  //为摄像头图像采集分配的内存，太小会丢失，太大会导致延时。可以设置为128*1024*1024
+	av_dict_set(&opt, "start_time_realtime", 0, 0); //直播减少延时的，但是测试没啥效果
+	av_dict_set(&opt, "video_size", "1280x720", 0); //设置分辨率，要看是否支持。windows可通过showDshowDeviceOption("dshow")查看。
+	av_dict_set(&opt, "framerate", "30", 0);
+	*/
+
+	if (avformat_open_input(&g_ifmtCtx, "video=UVC Camera", ifmt, &opt) != 0) //
+	{
+		printf("avformat_open_input faild.\n");
+		return -1;
+	}
+
+	if (avformat_find_stream_info(g_ifmtCtx, NULL) < 0)
+	{
+		printf("avformat_find_stream_info faild.\n");
+		return -1;
+	}
+
+	g_videoindex = -1;
+	for (unsigned int i = 0; i < g_ifmtCtx->nb_streams; i++)
+	{
+		if (g_ifmtCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO)
+		{
+			g_videoindex = i;
+			break;
+		}
+	}
+	if (g_videoindex == -1)
+	{
+		printf("video stream index not find.\n");
+		return -1;
+	}
+	AVCodecParameters* codecpar = g_ifmtCtx->streams[g_videoindex]->codecpar;
+	printf("video width:%d,video height:%d,codec_id:%d\n", codecpar->width, codecpar->height, codecpar->codec_id);
+
+	return 0;
+}
+
+static void _do_uvc_packet(AVPacket* inPacket)
+{
+	UVC_PRIVATE_DATA_HEAD_INFO uvc_data_head;
+	memcpy(&uvc_data_head, inPacket->data, sizeof(uvc_data_head));
+	if (uvc_data_head.data_start_code == g_uvc_rgb_data_start_code)
+	{
+		printf("=======uvc rgb data\n");
+		if (g_uvc_param.uvc_data_func != nullptr)
+		{
+			g_uvc_param.uvc_data_func(KD_UVC_RGB_DATA_TYPE,inPacket->data+sizeof(uvc_data_head), uvc_data_head.data_size);
+		}
+	}
+	else if (uvc_data_head.data_start_code == g_uvc_depth_data_start_code)
+	{
+		printf("=======uvc depth data\n");
+		if (g_uvc_param.uvc_data_func != nullptr)
+		{
+			g_uvc_param.uvc_data_func(KD_UVC_DEPTH_DATA_TYPE,inPacket->data + sizeof(uvc_data_head), uvc_data_head.data_size);
+		}
+	}
+
+}
+
+static void _grab_uvc_data()
+{
+	AVPacket* inPacket = av_packet_alloc();
+
+	while (g_start_grab_data)
+	{
+		if (av_read_frame(g_ifmtCtx, inPacket) >= 0)
+		{
+			if (inPacket->stream_index == g_videoindex)
+			{
+				_do_uvc_packet(inPacket);
+			}
+
+			av_packet_unref(inPacket);
+		}
+	}
+
+	av_packet_free(&inPacket);
+}
+
+bool kd_uvc_init(const s_GrabberInitParam& pInitParam)
+{
+	g_uvc_param = pInitParam;
+	avdevice_register_all();
+	show_dshow_device();
+	return true;
+}
+
+bool kd_uvc_close()
+{
+	return true;
+}
+
+bool kd_uvc_start_grab()
+{
+	if (_init_uvc() != 0)
+	{
+		return false;
+	}
+
+	g_start_grab_data = true;
+	g_uvc_thread = std::thread(_grab_uvc_data);
+
+	return true;
+}
+
+bool kd_uvc_stop_grab()
+{
+	g_start_grab_data = false;
+	g_uvc_thread.join();
+	if (g_ifmtCtx != nullptr)
+	{
+		avformat_close_input(&g_ifmtCtx);
+		g_ifmtCtx = nullptr;
+	}
+	
+	return true;
+}
+
+
+#include <stdio.h>
+#include <stdlib.h>
+
+#define DMA_BUF_SIZE	0x400
+
+int kd_uvc_lib_usb_test_back()
+{
+	int fd_file;
+	struct stat stat_buf;
+	libusb_device_handle* hdev = NULL;
+	unsigned int ret;
+	int status;
+	uint8_t bInterfaceNumber = 0x1;//0x1:video stream   0x00:video control
+
+	/* open the device using libusb */
+	status = libusb_init_context(NULL, NULL, 0);
+	if (status < 0) {
+		printf("libusb_init() failed: %s\n", libusb_error_name(status));
+		return -1;
+	}
+
+	hdev = libusb_open_device_with_vid_pid(NULL, (uint16_t)K230_VID, (uint16_t)K230_PID);
+	if (hdev == nullptr) {
+		printf("libusb_open() failed\n");
+		return -1;
+	}
+
+	/* We need to claim the first interface */
+	libusb_set_auto_detach_kernel_driver(hdev, 1);
+	status = libusb_claim_interface(hdev, bInterfaceNumber);
+	if (status != LIBUSB_SUCCESS) {
+		libusb_close(hdev);
+		printf("libusb_claim_interface failed: %s\n", libusb_error_name(status));
+		return -1;
+	}
+
+
+	const int K_UVC_SET_CUR = 0x01;
+	const int req = K_UVC_SET_CUR;
+	uint8_t probe = 1;
+	const int K_UVC_VS_PROBE_CONTROL = 0x01;
+	const int K_UVC_VS_COMMIT_CONTROL = 0x02;
+
+	uint8_t reqbuf[60];
+	memset(reqbuf, 0xaa, sizeof(reqbuf));
+
+	for (int i = 0; i < 100; i++)
+	{
+		/* do the transfer */
+		ret = libusb_control_transfer(
+			hdev,
+			req == K_UVC_SET_CUR ? 0x21 : 0xA1,
+			req,
+			probe ? (K_UVC_VS_PROBE_CONTROL << 8) : (K_UVC_VS_COMMIT_CONTROL << 8),
+			bInterfaceNumber,
+			reqbuf, sizeof(reqbuf), 0
+		);
+
+		if (ret != sizeof(reqbuf))
+		{
+			printf("libusb_control_transfer error %s", libusb_strerror(ret));
+			break;
+		}
+	}
+
+	return 0;
+}
+
+
+#include "libuvc/libuvc.h"
+#include <stdio.h>
+#include <windows.h>
+
+
+/* This callback function runs once per frame. Use it to perform any
+ * quick processing you need, or have it put the frame into your application's
+ * input queue. If this function takes too long, you'll start losing frames. */
+void uvc_data_cb(uvc_frame_t* frame, void* ptr) {
+	uvc_frame_t* bgr;
+	uvc_error_t ret;
+	enum uvc_frame_format* frame_format = (enum uvc_frame_format*)ptr;
+
+	printf("callback! frame_format = %d, width = %d, height = %d, length = %lu, ptr = %p\n",
+		frame->frame_format, frame->width, frame->height, frame->data_bytes, ptr);
+
+	switch (frame->frame_format) {
+	case UVC_FRAME_FORMAT_H264:
+		printf("======h264 data\n");
+		break;
+	case UVC_COLOR_FORMAT_MJPEG:
+		printf("======mjpeg data\n");
+		break;
+	case UVC_COLOR_FORMAT_YUYV:
+		/* Do the BGR conversion */
+		printf("======yuv data\n");
+		break;
+	default:
+		break;
+	}
+}
+
+
+int kd_uvc_lib_usb_test()
+{
+	uvc_context_t* ctx;
+	uvc_device_t* dev;
+	uvc_device_handle_t* devh;
+	uvc_stream_ctrl_t ctrl;
+	uvc_error_t res;
+
+	/* Initialize a UVC service context. Libuvc will set up its own libusb
+   * context. Replace NULL with a libusb_context pointer to run libuvc
+   * from an existing libusb context. */
+	res = uvc_init(&ctx, NULL);
+
+	if (res < 0) {
+		uvc_perror(res, "uvc_init");
+		return res;
+	}
+
+	printf("UVC initialized\n");
+
+	/* Locates the first attached UVC device, stores in dev */
+	res = uvc_find_device(
+		ctx, &dev,
+		K230_VID, K230_PID, NULL); /* filter devices: vendor_id, product_id, "serial_num" */
+
+	if (res < 0)
+	{
+		uvc_perror(res, "uvc_find_device"); /* no devices found */
+	}
+	else
+	{
+		printf("Device found\n");
+		/* Try to open the device: requires exclusive access */
+		res = uvc_open(dev, &devh);
+
+		if (res < 0) 
+		{
+			uvc_perror(res, "uvc_open"); /* unable to open device */
+		}
+		else
+		{
+			printf("Device opened\n");
+		}
+
+		/* Print out a message containing all the information that libuvc
+		* knows about the device */
+		uvc_print_diag(devh, stderr);
+
+		const uvc_format_desc_t* format_desc = uvc_get_format_descs(devh);
+		const uvc_frame_desc_t* frame_desc = format_desc->frame_descs;
+		enum uvc_frame_format frame_format;
+		int width = 1920;
+		int height = 1080;
+		int fps = 30;
+
+		switch (format_desc->bDescriptorSubtype) {
+		case UVC_VS_FORMAT_MJPEG:
+			frame_format = UVC_COLOR_FORMAT_MJPEG;
+			break;
+		case UVC_VS_FORMAT_FRAME_BASED:
+			frame_format = UVC_FRAME_FORMAT_H264;
+			break;
+		case UVC_VS_FORMAT_UNCOMPRESSED:
+			frame_format = UVC_FRAME_FORMAT_UNCOMPRESSED;
+			break;
+		default:
+			frame_format = UVC_FRAME_FORMAT_NV12;
+			break;
+		}
+
+		if (frame_desc) {
+			width = frame_desc->wWidth;
+			height = frame_desc->wHeight;
+			fps = 10000000 / frame_desc->dwDefaultFrameInterval;
+		}
+
+		printf("\nFirst format: (%4s) %dx%d %dfps\n", format_desc->fourccFormat, width, height, fps);
+
+		/* Try to negotiate first stream profile */
+		res = uvc_get_stream_ctrl_format_size(
+			devh, &ctrl, /* result stored in ctrl */
+			frame_format,
+			width, height, fps /* width, height, fps */
+		);
+
+		/* Print out the result */
+		uvc_print_stream_ctrl(&ctrl, stderr);
+
+		if (res < 0) 
+		{
+			uvc_perror(res, "get_mode"); /* device doesn't provide a matching stream */
+		}
+		else
+		{
+			/* Start the video stream. The library will call user function cb:
+			*   uvc_data_cb(frame, (void *) 12345)
+			*/
+			res = uvc_start_streaming(devh, &ctrl, uvc_data_cb, (void*)12345, 0);
+
+			if (res < 0)
+			{
+				uvc_perror(res, "start_streaming"); /* unable to start stream */
+			}
+			else
+			{
+				puts("Streaming...");
+
+				Sleep(10); /* stream for 10 seconds */
+				/* End the stream. Blocks until last callback is serviced */
+				uvc_stop_streaming(devh);
+				printf("Done streaming.\n");
+
+			}
+		}
+		/* Release our handle on the device */
+		uvc_close(devh);
+		printf("Device closed\n");
+	}
+	/* Release the device descriptor */
+	uvc_unref_device(dev);
+
+	return 0;
+}
+
+extern "C"
+{
+#include "leouvc.h"
+}
+
+static int save_rgb_packet(uint8_t* data, int size)
+{
+	static int cnt = 0;
+	cnt += 1;
+	char sFilename[256];
+	sprintf(sFilename, "test%d.rgb", cnt);
+	FILE* fp = fopen(sFilename, "ab");
+	fwrite(data, size, 1, fp);
+	fclose(fp);
+	return 0;
+}
+
+static int save_depth_packet(uint8_t* data, int size)
+{
+	static int cnt = 0;
+	cnt += 1;
+	char sFilename[256];
+	sprintf(sFilename, "test%d.bin", cnt);
+	FILE* fp = fopen(sFilename, "ab");
+	fwrite(data, size, 1, fp);
+	fclose(fp);
+	return 0;
+}
+
+static bool g_web_camera = true;
+void cam1_callback(uvc_frame_t* frame, void* ptr)
+{
+	if (!g_web_camera)
+	{
+		UVC_PRIVATE_DATA_HEAD_INFO uvc_data_head;
+		memcpy(&uvc_data_head, frame->data, sizeof(uvc_data_head));
+		if (uvc_data_head.data_start_code == g_uvc_rgb_data_start_code)
+		{
+			printf("=======uvc rgb data\n");
+			save_rgb_packet((unsigned char*)frame->data + sizeof(uvc_data_head), uvc_data_head.data_size);
+#if 0
+			if (g_uvc_param.uvc_data_func != nullptr)
+			{
+				g_uvc_param.uvc_data_func(KD_UVC_RGB_DATA_TYPE, inPacket->data + sizeof(uvc_data_head), uvc_data_head.data_size);
+			}
+#endif 
+		}
+		else if (uvc_data_head.data_start_code == g_uvc_depth_data_start_code)
+		{
+			printf("=======uvc depth data\n");
+			save_depth_packet((unsigned char*)frame->data + sizeof(uvc_data_head), uvc_data_head.data_size);
+#if 0
+			if (g_uvc_param.uvc_data_func != nullptr)
+			{
+				g_uvc_param.uvc_data_func(KD_UVC_DEPTH_DATA_TYPE, inPacket->data + sizeof(uvc_data_head), uvc_data_head.data_size);
+			}
+#endif 
+		}
+	}
+	else
+	{
+		printf("============uvc frame\n");
+	}
+
+	
+}
+int kd_uvc_lib_usb_test_ex(bool bweb_camera)
+{
+	g_web_camera = bweb_camera;
+	UVC_UTILS_DEVICE cam1;
+	if (bweb_camera)
+	{
+		cam1.format = UVC_FRAME_FORMAT_MJPEG;
+		cam1.frameWidth = 1920;
+		cam1.frameHeight = 1080;
+		cam1.targetFps = 30;
+		cam1.pid = WEB_K230_PID;
+		cam1.vid = WEB_K230_VID;
+	}
+	else
+	{
+		cam1.format = UVC_FRAME_FORMAT_NV12;
+		cam1.frameWidth = 1920;
+		cam1.frameHeight = 1080;
+		cam1.targetFps = 30;
+		cam1.pid = K230_PID;
+		cam1.vid = K230_VID;
+	}
+
+
+	cam1.cb = cam1_callback;
+	
+	init_uvc_camera_device(&cam1);
+
+	start_uvc_camera_device(&cam1);
+
+	Sleep(1000*100);
+	free_uvc_camera_device(&cam1);
+
+	return 0;
+}

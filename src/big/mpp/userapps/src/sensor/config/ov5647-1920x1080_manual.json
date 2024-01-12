@@ -48,14 +48,14 @@
         {
           "class": "CManualWb",
           "driver_load": true,
-          "gain": [1.0, 1.0, 1.0, 1.0]
+          "gain": [1.3552, 1.0, 1.0, 1.4445]
         },
         {
           "bit": 13,
           "ccmatrix": [
-            1.0, 0, 0, 
-            0, 1.0, 0, 
-            0, 0, 1.0
+            1.8846, -0.49571, -0.388893, 
+            -0.34724, 1.70192, -0.354679, 
+            -0.000328715, -0.844644, 1.845
           ],
           "ccoffset": [0, 0, 0],
           "class": "CCcm",
@@ -335,7 +335,7 @@
           ]
         },
         {
-          "class": "CWdrv41",
+          "class": "CWdrv4",
           "contrast": 512,
           "enable": false,
           "entropy": [
@@ -344,8 +344,8 @@
           ],
           "entropy_base": 200,
           "entropy_slope": 700,
-          "flat_strength": 1,
-          "flat_thr": 1,
+          "flat_strength": 4,
+          "flat_thr": 19,
           "gamma_down": [
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 4, 9, 16, 36, 64, 136, 256, 576,
             1023
@@ -366,9 +366,9 @@
           "strength": 128
         },
         {
-          "blend_motion": 80,
+          "blend_motion": 95,
           "blend_slope": 2,
-          "blend_static": 20,
+          "blend_static": 95,
           "class": "C3dnrv3_1",
           "dialte_h": 7,
           "enable": true,
@@ -385,7 +385,7 @@
           "range_h": 7,
           "range_v": 7,
           "sadweight": 16,
-          "sigma": 8,
+          "sigma": 5,
           "strength": 110,
           "thr_motion_slope": 16,
           "tnr_en": false
@@ -456,7 +456,7 @@
           "dmsc_demoire_t2_shift": 4,
           "dmsc_denoise_strength": 0,
           "dmsc_depurple_cbcr_mode": 3,
-          "dmsc_depurple_enable": true,
+          "dmsc_depurple_enable": false,
           "dmsc_depurple_sat_shrink": 8,
           "dmsc_depurple_thr": 20,
           "dmsc_dir_thr_max": 0,
@@ -466,7 +466,7 @@
           "dmsc_sharpen_enable": true,
           "dmsc_sharpen_factor_black": 80,
           "dmsc_sharpen_factor_white": 120,
-          "dmsc_sharpen_line_enable": true,
+          "dmsc_sharpen_line_enable": false,
           "dmsc_sharpen_line_r1": 0,
           "dmsc_sharpen_line_r2": 0,
           "dmsc_sharpen_line_strength": 8,

@@ -186,6 +186,7 @@
 #define RX_TIMEOUT			1000		/* timeout in ms */
 
 #define MAX(a,b,c) ((a)>(b)?((a)>(c)?(a):(c)):((b)>(c)?(b):(c)))
+#define NSEC_PER_SEC 1000000000L
 
 typedef enum {
     BYTE_1 = 0,
@@ -272,6 +273,7 @@ typedef union _spi_dmacr_u
 struct dw_spi_plat {
 	s32 frequency;		/* Default clock frequency, -1 for none */
 	s32 dtr_frequency;
+    s32 def_rxdly_ns;
 	void __iomem *regs;
 };
 
@@ -291,6 +293,7 @@ struct dw_spi_priv {
 	unsigned long bus_clk_rate;
 	unsigned int freq;		/* Default frequency */
 	unsigned int dtr_freq;
+    unsigned int def_rxdly;
 	unsigned int mode;
 
 	u32 fifo_len;			/* depth of the FIFO buffer */
@@ -436,6 +439,9 @@ static int dw_spi_of_to_plat(struct udevice *bus)
 
 	plat->dtr_frequency = dev_read_u32_default(bus, "dtr-max-frequency",
 					       500000);
+                           
+    plat->def_rxdly_ns = dev_read_u32_default(bus, "rx-sample-delay-ns",
+					       5);
 
 	if (dev_read_bool(bus, "spi-slave"))
 		return -EINVAL;
@@ -478,8 +484,7 @@ static void spi_hw_init(struct udevice *bus, struct dw_spi_priv *priv)
 	} else if (FIELD_GET(CTRLR0_SPI_FRF_MASK, cr0)) {
 		priv->caps |= DW_SPI_CAP_ENHANCED;
 	}
-
-	dw_write(priv, DW_SPI_RX_SAMPLE_DLY, 5|(0<<16));
+	dw_write(priv, DW_SPI_RX_SAMPLE_DLY, priv->def_rxdly|(0<<16));
 	dw_write(priv, DW_SPI_SSIENR, 1);
 	
 
@@ -577,11 +582,14 @@ static int dw_spi_probe(struct udevice *bus)
 	priv->regs = plat->regs;
 	priv->freq = priv->def_freq = plat->frequency;
 	priv->dtr_freq = plat->dtr_frequency;
-	priv->bus_clk_rate = 800000000;
-	// ret = dw_spi_get_clk(bus, &priv->bus_clk_rate);
-	// if (ret)
-	// 	return ret;
-	
+
+	ret = dw_spi_get_clk(bus, &priv->bus_clk_rate);
+	if (ret)
+		return ret;
+	priv->def_rxdly = DIV_ROUND_CLOSEST(plat->def_rxdly_ns,
+							NSEC_PER_SEC /
+							priv->bus_clk_rate);
+
 	ret = dw_spi_reset(bus);
 	if (ret)
 		return ret;

@@ -91,12 +91,12 @@ static void test_otp_read(void)
 {
     rt_off_t pos;
     rt_size_t size;
-    rt_uint32_t buffer[768] = {0};
+    rt_uint32_t buffer[256] = {0};
     rt_uint32_t ret;
 
     // initilize param
-    pos = 0x900;
-    size = 0x280;
+    pos = 0x0;
+    size = 0x300;
 
     otp_open();
     ret = otp_read(pos, (void *)buffer, size);
@@ -113,11 +113,11 @@ static void test_otp_write(void)
 {
     rt_off_t pos;
     rt_size_t size;
-    rt_uint32_t buffer[768] = {0};
+    rt_uint32_t buffer[256] = {0};
     rt_uint32_t ret;
 
     // initilize param
-    pos = 0x0;
+    pos = 0xc;
     size = 0x4;
     buffer[0] = 0xff11ff11;
 

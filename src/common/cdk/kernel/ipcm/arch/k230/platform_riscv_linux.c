@@ -65,7 +65,7 @@ static int ipcm_probe(struct platform_device *pdev)
 
 static int ipcm_remove(struct platform_device *pdev)
 {
-	devm_iounmap(&pdev->dev, mail_box_reg_base);
+	iounmap(mail_box_reg_base);//devm_iounmap(&pdev->dev, mail_box_reg_base);
 	return 0;
 }
 

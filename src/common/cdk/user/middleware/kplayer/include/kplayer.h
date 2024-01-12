@@ -49,11 +49,6 @@ typedef struct kPLAYER_PROGRESS_INFO_E
     k_u64  cur_time;
 }K_PLAYER_PROGRESS_INFO;
 
-typedef enum {
-    K_PLAYER_HX8377_V2_MIPI_4LAN_1080X1920_30FPS,
-    K_PLAYER_LT9611_MIPI_4LAN_1920X1080_30FPS,
-} K_PLAYER_CONNECTOR_TYPE;
-
 typedef k_s32 (*K_PLAYER_EVENT_FN)(K_PLAYER_EVENT_E enEvent, void* pData);
 
 /**
@@ -75,7 +70,7 @@ k_s32 kd_player_deinit(k_bool deinit_vo);
 *   @param[in] connector_type : set vo connector type
 *   @retval  N/A
 */
-void kd_player_set_connector_type(K_PLAYER_CONNECTOR_TYPE connector_type);
+void kd_player_set_connector_type(int connector_type);
 
 /**
 *   @brief register call back fun

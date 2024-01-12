@@ -58,13 +58,16 @@ LIBS+=-laenc
 LIBS+=-ladec
 LIBS+=-lvdec
 LIBS+=-lconnector
+LIBS+=-ldpu
+LIBS+=-ldma
 
-
+LIBS+=-lrtthread
 
 LIBPATH=-L$(IPCMSG_ROOT)/slave/lib
 LIBPATH+=-L$(MPI_ROOT)/userapps/lib
 LIBPATH+=-L$(MAPI_ROOT)/mediaserver/lib
 LIBPATH+=-L$(DATAFIFO_ROOT)/host/lib
+LIBPATH+=-L$(RTSMART_SRC_DIR)/userapps/sdk/rt-thread/lib/risc-v/rv64
 
 #add common include
 INCS=-I$(IPCMSG_ROOT)/include

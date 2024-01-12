@@ -1,0 +1,99 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="头文件\include">
+      <UniqueIdentifier>{580a7c70-c603-4adb-807d-c7b3cff6c857}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\libuvc">
+      <UniqueIdentifier>{42a1c62c-0151-4563-a556-a2de2ac30383}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\_include">
+      <UniqueIdentifier>{67acf41c-04ae-4881-9d17-132ad0ef8c53}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\_include\libuvc">
+      <UniqueIdentifier>{fc4b05b4-89ae-483c-826f-1272741860e8}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="_include\libuvc\utlist.h">
+      <Filter>头文件\_include\libuvc</Filter>
+    </ClInclude>
+    <ClInclude Include="_include\libuvc\libuvc\libuvc.h">
+      <Filter>头文件\_include\libuvc</Filter>
+    </ClInclude>
+    <ClInclude Include="_include\libuvc\libuvc\libuvc_config.h">
+      <Filter>头文件\_include\libuvc</Filter>
+    </ClInclude>
+    <ClInclude Include="_include\libuvc\libuvc\libuvc_internal.h">
+      <Filter>头文件\_include\libuvc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\lib_uvc.h">
+      <Filter>头文件\include</Filter>
+    </ClInclude>
+    <ClInclude Include="_include\kd_uvc.h">
+      <Filter>头文件\_include</Filter>
+    </ClInclude>
+    <ClInclude Include="_include\kd_uvc_dev_imp.h">
+      <Filter>头文件\_include</Filter>
+    </ClInclude>
+    <ClInclude Include="_include\kd_uvc_common.h">
+      <Filter>头文件\_include</Filter>
+    </ClInclude>
+    <ClInclude Include="_include\calib_bin_interface.h">
+      <Filter>头文件\_include</Filter>
+    </ClInclude>
+    <ClInclude Include="_include\kd_uvc_cache_frame.h">
+      <Filter>头文件\_include</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\libuvc\ctrl.c">
+      <Filter>源文件\libuvc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\libuvc\ctrl-gen.c">
+      <Filter>源文件\libuvc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\libuvc\device.c">
+      <Filter>源文件\libuvc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\libuvc\diag.c">
+      <Filter>源文件\libuvc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\libuvc\frame.c">
+      <Filter>源文件\libuvc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\libuvc\init.c">
+      <Filter>源文件\libuvc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\libuvc\misc.c">
+      <Filter>源文件\libuvc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\libuvc\stream.c">
+      <Filter>源文件\libuvc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\kd_uvc.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\lib_uvc.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\kd_uvc_dev_imp.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\kd_uvc_cache_frame.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

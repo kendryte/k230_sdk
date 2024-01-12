@@ -153,7 +153,7 @@ k_s32 sys_deinit(k_bool deinit_vo)
     return K_SUCCESS;
 }
 
-static k_s32 _initvo(k_u32 width,k_u32 height,k_u32 vdec_chn,K_PLAYER_CONNECTOR_TYPE type)
+static k_s32 _initvo(k_u32 width,k_u32 height,k_u32 vdec_chn,int type)
 {
     //init vo
     display_set_connector_type((k_connector_type)type);
@@ -168,7 +168,7 @@ static k_s32 _initvo(k_u32 width,k_u32 height,k_u32 vdec_chn,K_PLAYER_CONNECTOR_
     return K_SUCCESS;
 }
 
-k_s32 disp_open(k_payload_type video_dec_type,k_u32 width,k_u32 height,K_PLAYER_CONNECTOR_TYPE type)
+k_s32 disp_open(k_payload_type video_dec_type,k_u32 width,k_u32 height,int type)
 {
 
     if (_vdec_vb_create_pool(0) != K_SUCCESS)

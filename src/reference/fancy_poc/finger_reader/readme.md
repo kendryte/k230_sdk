@@ -2,7 +2,7 @@
 
 ![](./resource/example_images/canaan-cover.png)
 
-Document version: V1.0 Release date: 2023-8-31
+Document version: V1.3 Release date: 2024-1-9
 
 ## 介绍
 
@@ -65,7 +65,7 @@ Document version: V1.0 Release date: 2023-8-31
 
 ![image-20230717115015191](./resource/example_images/4.png)
 
-**注意：**服务端服务ip为运行服务器的本地ip，连接端口默认为8000，如果需要更改的话请在channel/Client_Server/Client_Server_Poc.py中的startup函数中进行更改
+**注意：** 服务端服务ip为运行服务器的本地ip，连接端口默认为8000，如果需要更改的话请在channel/Client_Server/Client_Server_Poc.py中的startup函数中进行更改
 
 ## 客户端准备
 

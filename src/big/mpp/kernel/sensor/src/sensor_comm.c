@@ -33,6 +33,8 @@ extern struct sensor_driver_dev imx335_sensor_drv;
 extern struct sensor_driver_dev sc035hgs_sensor_drv;
 extern struct sensor_driver_dev ov5647_sensor_drv;
 extern struct sensor_driver_dev sc201cs_sensor_drv;
+extern struct sensor_driver_dev ov5647_sensor_csi1_drv;
+extern struct sensor_driver_dev ov5647_sensor_csi2_drv;
 
 struct sensor_driver_dev *sensor_drv_list[SENSOR_NUM_MAX] = {
     &ov9732_sensor_drv,
@@ -41,6 +43,8 @@ struct sensor_driver_dev *sensor_drv_list[SENSOR_NUM_MAX] = {
     &sc035hgs_sensor_drv,
     &ov5647_sensor_drv,
     &sc201cs_sensor_drv,
+    &ov5647_sensor_csi1_drv,
+    &ov5647_sensor_csi2_drv,
 };
 
 void sensor_drv_list_init(struct sensor_driver_dev *drv_list[])
@@ -59,22 +63,26 @@ k_s32 sensor_reg_read(k_sensor_i2c_info *i2c_info, k_u16 reg_addr, k_u16 *buf)
 
     RT_ASSERT(i2c_info != RT_NULL);
 
-    i2c_reg[0] = reg_addr >> 8;
-    i2c_reg[1] = reg_addr & 0xff;
+    if (i2c_info->reg_addr_size == SENSOR_REG_VALUE_8BIT) {
+        i2c_reg[0] = reg_addr & 0xff;
+    } else if (i2c_info->reg_addr_size == SENSOR_REG_VALUE_16BIT) {
+        i2c_reg[0] = reg_addr >> 8;
+        i2c_reg[1] = reg_addr & 0xff;
+    }
 
     msg[0].addr  = i2c_info->slave_addr;
     msg[0].flags = RT_I2C_WR;
-    msg[0].len   = sizeof(i2c_reg);
+    msg[0].len   = i2c_info->reg_addr_size;
     msg[0].buf   = i2c_reg;
 
     msg[1].addr  = i2c_info->slave_addr;
     msg[1].flags = RT_I2C_RD;
-    msg[1].len   = i2c_info->size;
+    msg[1].len   = i2c_info->reg_val_size;
     msg[1].buf   = i2c_buf;
 
     if (rt_i2c_transfer(i2c_info->i2c_bus, msg, 2) == 2)
     {
-        *buf = (i2c_info->size == SENSOR_REG_VALUE_8BIT) ? i2c_buf[0] : (i2c_buf[0] << 8) | i2c_buf[1];
+        *buf = (i2c_info->reg_val_size == SENSOR_REG_VALUE_8BIT) ? i2c_buf[0] : (i2c_buf[0] << 8) | i2c_buf[1];
         // rt_kprintf("sensor_reg_read: [0x%04x] = [0x%02x] i2c_info->size is %d \n", reg_addr, *buf, i2c_info->size);
         return RT_EOK;
     }
@@ -83,26 +91,32 @@ k_s32 sensor_reg_read(k_sensor_i2c_info *i2c_info, k_u16 reg_addr, k_u16 *buf)
     return RT_ERROR;
 }
 
-
 k_s32 sensor_reg_write(k_sensor_i2c_info *i2c_info, k_u16 reg_addr, k_u16 reg_val)
 {
     struct rt_i2c_msg msgs;
     k_u8 buf[4];
+    k_u8 len = 0;
 
     RT_ASSERT(i2c_info != RT_NULL);
 
-    buf[0] = reg_addr >> 8;
-    buf[1] = reg_addr & 0xff;
-    if (i2c_info->size == SENSOR_REG_VALUE_8BIT) {
-        buf[2] = reg_val & 0xff;
-    } else if (i2c_info->size == SENSOR_REG_VALUE_16BIT) {
-        buf[2] = reg_val >> 8;
-        buf[3] = reg_val & 0xff;
+    if (i2c_info->reg_addr_size == SENSOR_REG_VALUE_8BIT) {
+        buf[len++] = reg_addr & 0xff;
+    } else if (i2c_info->reg_addr_size == SENSOR_REG_VALUE_16BIT) {
+        buf[len++] = reg_addr >> 8;
+        buf[len++] = reg_addr & 0xff;
     }
+
+    if (i2c_info->reg_val_size == SENSOR_REG_VALUE_8BIT) {
+        buf[len++] = reg_val & 0xff;
+    } else if (i2c_info->reg_val_size == SENSOR_REG_VALUE_16BIT) {
+        buf[len++] = reg_val >> 8;
+        buf[len++] = reg_val & 0xff;
+    }
+
     msgs.addr = i2c_info->slave_addr;
     msgs.flags = RT_I2C_WR;
     msgs.buf = buf;
-    msgs.len = 2 + i2c_info->size;
+    msgs.len = len;
 
     if (rt_i2c_transfer(i2c_info->i2c_bus, &msgs, 1) == 1)
     {
@@ -112,7 +126,6 @@ k_s32 sensor_reg_write(k_sensor_i2c_info *i2c_info, k_u16 reg_addr, k_u16 reg_va
 
     return RT_ERROR;
 }
-
 
 k_s32 sensor_reg_list_write(k_sensor_i2c_info *i2c_info, const k_sensor_reg *reg_list)
 {
@@ -772,7 +785,13 @@ static void i2c_read(k_s32 argc, char** argv)
         return;
     }
     i2c_info.slave_addr = salve_addr;
-    i2c_info.size = SENSOR_REG_VALUE_8BIT;
+    i2c_info.reg_val_size = SENSOR_REG_VALUE_8BIT;
+
+    if (reg_addr & 0xff00) {
+        i2c_info.reg_addr_size = SENSOR_REG_VALUE_16BIT;
+    } else {
+        i2c_info.reg_addr_size = SENSOR_REG_VALUE_8BIT;
+    }
 
     if (sensor_reg_read(&i2c_info, reg_addr, &reg_val)) {
         rt_kprintf("i2c read failed\n");
@@ -825,7 +844,13 @@ static void i2c_write(k_s32 argc, char** argv)
         return;
     }
     i2c_info.slave_addr = salve_addr;
-    i2c_info.size = SENSOR_REG_VALUE_8BIT;
+    i2c_info.reg_val_size = SENSOR_REG_VALUE_8BIT;
+
+    if (reg_addr & 0xff00) {
+        i2c_info.reg_addr_size = SENSOR_REG_VALUE_16BIT;
+    } else {
+        i2c_info.reg_addr_size = SENSOR_REG_VALUE_8BIT;
+    }
 
     if (sensor_reg_write(&i2c_info, reg_addr, reg_val)) {
         rt_kprintf("i2c write failed\n");

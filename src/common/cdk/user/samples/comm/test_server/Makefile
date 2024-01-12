@@ -54,12 +54,16 @@ LIBS+=-lvicap
 LIBS+=-lsensor
 LIBS+=-lvo
 LIBS+=-lconnector
+LIBS+=-ldpu
+LIBS+=-ldma
 
 LIBS+=-lpthread
+LIBS+=-lrtthread
 LIBPATH=-L$(MAPI_ROOT)/mediaserver/lib
 LIBPATH+=-L$(IPCMSG_ROOT)/slave/lib
 LIBPATH+=-L$(DATAFIFO_ROOT)/host/lib
 LIBPATH+=-L$(MPP_SRC_DIR)/userapps/lib
+LIBPATH+=-L$(RTSMART_SRC_DIR)/userapps/sdk/rt-thread/lib/risc-v/rv64
 
 #add common include
 INCS=-I./ -I../include

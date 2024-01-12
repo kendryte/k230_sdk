@@ -19,7 +19,7 @@
 
 #define OTP_BYPASS_ADDR_P           0x91102040
 #define OTP_REG_OFFSET              0x0
-#define OTP_USER_START_OFFSET       0xA00
+#define OTP_USER_START_OFFSET       0x0
 
 typedef enum
 {
@@ -137,7 +137,7 @@ static struct nvmem_config kendryte_otp_nvmem_config = {
     .word_size = 4,
     .reg_read = k230_otp_read,
     // .reg_write = k230_otp_write,
-    .size = 0xC00,
+    .size = 0x300,
 };
 
 

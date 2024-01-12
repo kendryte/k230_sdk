@@ -1,4 +1,4 @@
-set(src main.cc utils.cc ai_base.cc self_learning.cc)
+set(src main.cc utils.cc self_learning.cc ai_base.cc )
 set(bin self_learning.elf)
 
 include_directories(${PROJECT_SOURCE_DIR})
@@ -7,7 +7,9 @@ include_directories(${k230_sdk}/src/big/mpp/userapps/api/)
 include_directories(${k230_sdk}/src/big/mpp/include)
 include_directories(${k230_sdk}/src/big/mpp/include/comm)
 include_directories(${k230_sdk}/src/big/mpp/userapps/sample/sample_vo)
+
 link_directories(${nncase_sdk_root}/riscv64/rvvlib/)
+
 
 add_executable(${bin} ${src})
 target_link_libraries(${bin} -Wl,--start-group rvv Nncase.Runtime.Native nncase.rt_modules.k230 functional_k230 sys vicap vb cam_device cam_engine

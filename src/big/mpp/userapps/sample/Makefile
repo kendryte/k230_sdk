@@ -1,8 +1,10 @@
 MPP_BUILD_DIR ?= $(shell pwd)
 FASTBOOT_BUILD_DIR=$(MPP_BUILD_DIR)/userapps/sample/fastboot_app
+TRIPLE_CAMERA_BUILD_DIR=$(MPP_BUILD_DIR)/userapps/sample/sample_triple_camera_facedetect
 all:
 	@rm -f elf/*
 	@mkdir -p $(FASTBOOT_BUILD_DIR)
+	@mkdir -p $(TRIPLE_CAMERA_BUILD_DIR)
 	@cd sample_audio; make || exit 1
 	@cd sample_dma; make || exit 1
 	@cd sample_mmz; make || exit 1
@@ -33,12 +35,14 @@ all:
 	@cd sample_face_ae; make || exit 1
 	@cd fastboot_app; mkdir -p $(FASTBOOT_BUILD_DIR); cd $(FASTBOOT_BUILD_DIR); cmake $(MPP_SRC_DIR)/userapps/sample/fastboot_app;  make && make install;
 	@cd sample_dpu_vicap; make || exit 1
+	@cd sample_triple_camera_facedetect; mkdir -p $(TRIPLE_CAMERA_BUILD_DIR); cd $(TRIPLE_CAMERA_BUILD_DIR); cmake $(MPP_SRC_DIR)/userapps/sample/sample_triple_camera_facedetect;  make && make install;
 	@cd sample_dpu_vo; make || exit 1
 	@cd sample_pwm; make || exit 1
 	@cd sample_pm; make || exit 1
 	@cd sample_fft; make || exit 1
 	@cd sample_canaan_uart_rx; make || exit 1
 	@cd sample_canaan_uart_tx; make || exit 1
+	#@cd opencv_camera_test; make || exit 1
 clean:
 	@cd sample_audio; make clean
 	@cd sample_dma; make clean

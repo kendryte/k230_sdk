@@ -115,12 +115,6 @@ int main(int argc, char *argv[])
         vo_osd_insert_multi_frame_test();
         break;
 
-    case DISPALY_VO_WRITEBACK_TEST :
-        printf("DISPALY_VO_WRITEBACK_TEST ------------------ \n");
-        dwc_dsi_init();
-        vo_writeback_test();
-        break;
-
     case DISPALY_VVI_BING_VO_OSD_DUMP_FRAME_TEST :
         printf("DISPALY_VVI_BANG_VO_OSD_DUMP_FRAME_TEST ------------------ \n");
         dwc_dsi_init();
@@ -151,6 +145,16 @@ int main(int argc, char *argv[])
         // sample_connector_init();
         sample_connector_osd_install_frame(LT9611_MIPI_4LAN_1920X1080_60FPS);
         break;
+    case DISPALY_VO_ST7701_480x854_TEST :
+        sample_connector_osd_install_frame(ST7701_V1_MIPI_2LAN_480X854_30FPS);
+        break;
+    case DISPALY_VO_ST7701_480x800_TEST :
+        sample_connector_osd_install_frame(ST7701_V1_MIPI_2LAN_480X800_30FPS);
+        break;
+    case DISPALY_VO_WRITEBACK_TEST :
+        // sample_connector_wbc_dump_frame(HX8377_V2_MIPI_4LAN_1080X1920_30FPS);
+        break;
+
     default :
         break;
     }

@@ -229,13 +229,13 @@ int sbi_write_enable(int write_enable)
 	if(write_enable)
 	{
 		prot	  = PMP_R | PMP_W;
-		addr	  = 0x91214000;
+		addr	  = 0x91213000;
 		log2size = log2roundup(0x1000);
 	}
 	else
 	{
 		prot	  = PMP_R;
-		addr	  = 0x91214000;
+		addr	  = 0x91213000;
 		log2size = log2roundup(0x1000);
 	}
 	pmp_set(1, prot, addr, log2size);

@@ -70,8 +70,8 @@ extern "C" {
 #elif defined(CONFIG_BOARD_K230_CANMV)
 // usip evb gpio config
 // display gpio
-#define DISPLAY_LCD_RST_GPIO                            9
-#define DISPLAY_LCD_BACKLIGHT_EN                        31
+#define DISPLAY_LCD_RST_GPIO                            20
+#define DISPLAY_LCD_BACKLIGHT_EN                        25
 
 // imx335 gpio config
 #define VICAP_IMX335_RST_GPIO                           46

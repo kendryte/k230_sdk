@@ -44,7 +44,7 @@ gen_dictionary_pen_device_app()
     cd ${K230_SDK_ROOT}; make dictionary_pen;
     #creat dictionary_pen dir
     mkdir -p ${BUILD_DIR}/images/big-core/app/dictionary_pen/
-    cp ${K230_SDK_ROOT}/src/reference/business_poc/dictionary_pen_poc/cidianbi_kmodel_v2.5.1/*  ${BUILD_DIR}/images/big-core/app/dictionary_pen/ -rf 
+    cp ${K230_SDK_ROOT}/src/reference/business_poc/dictionary_pen_poc/cidianbi_kmodel_v2.7.0/*  ${BUILD_DIR}/images/big-core/app/dictionary_pen/ -rf 
     cp ${K230_SDK_ROOT}/src/reference/business_poc/dictionary_pen_poc/include  ${BUILD_DIR}/images/big-core/app/dictionary_pen/ -rf 
     cp ${K230_SDK_ROOT}/src/reference/business_poc/dictionary_pen_poc/build/dictionary_pen.elf  ${BUILD_DIR}/images/big-core/app/dictionary_pen/ -rf 
 

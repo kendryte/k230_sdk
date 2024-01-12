@@ -61,6 +61,8 @@ k_s32 kd_mpi_connector_adapt_resolution(k_connector_type connector_type, k_conne
 
 k_s32 kd_mpi_get_connector_info(k_connector_type connector_type, k_connector_info *connector_info);
 
+k_s32 kd_mpi_connector_set_mirror(k_s32 fd, k_connector_mirror mirror);
+
 
 /** @} */ /** <!-- ==== connector End ==== */
 

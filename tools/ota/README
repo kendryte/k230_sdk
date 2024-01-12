@@ -1,22 +1,37 @@
+swupdate 
+官方文档：
+http://sbabic.github.io/swupdate/
+非官方翻译中文文档：
+https://zqb-all.github.io/swupdate/swupdate.html
+
 1. 密钥生成
-生成RSA私钥
+1.1 生成RSA私钥
 openssl genrsa -out ota_private.pem 2048
 基于私钥生成公钥
 openssl rsa -in ota_private.pem -pubout -out ota_public.pem
 sdk编译会把公钥ota_public.pem拷贝到/etc目录下
 
-2. 打包升级文件
-参考ota_package目录，
-升级脚本会拷贝rootfs的文件覆盖当前文件系统文件。
-除了文件系统外，都是以分区的方式进行升级，把分区的二进制文件(linux_system.bin/rtt_system.bin等等)直接拷贝到ota_package目录下。
-./package_kpk.sh ota_package
-产生 ota_package.kpk 即为ota升级包。
-升级包放在服务器上，修改buildroot-ext/package/ota/src/ota.conf的server_url，K230设备会通过wget从服务器下载升级包。
+1.2 生成AES密钥
+生成AES key
+openssl rand -hex 32
+生成AES iv
+openssl rand -hex 16
+sdk编译会把ota_aes_key_iv拷贝到/etc目录下
 
-3. 编译升级程序
-升级程序源码位于buildroot-ext/package/ota，编译buildroot会产生ota，拷贝到文件系统/usr/bin目录下。
+2. 文件功能描述
+2.1 加密文件
+openssl enc -aes-256-cbc -in <input file> -out <out file> -K <aes key> -iv <aes iv>
+2.2 硬件版本号
+sdk编译会把hwrevision拷贝到/etc目录下，OTA升级时会比对文件里面的硬件版本号，如果不一致则不会升级。
+2.3 uboot参数分区描述文件
+sdk编译会把fw_env.config拷贝到/etc目录下，升级程序会根据这个配置文件对uboot的参数进行读写。
+
+3. 升级固件打包
+参考swupdate_package目录，执行swupdate.sh生成k230_1.0.swu，即为升级固件。
 
 4. ota升级
-执行ota，会从远端服务器下载升级包进行升级。服务器链接可以修改/etc/目录下的ota.conf配置文件。
-如果固件的分区有改动，可以修改ota_upgrade.sh文件同步分区的改动。dd命令可以对整个磁盘空间做读写操作。
-由于norflash磁盘空间太小限制，该方案未实现灾难恢复功能，需保证升级过程中不受其他因素影响。
+所以先建立有线网络或无线网络
+
+执行
+swupdate -l 15 -w "--document-root /var/www/swupdate/  --port 9090" -k /etc/ota_public.pem -K /etc/ota_aes_key_iv -b "0 1 2 3 4 5 6 7 12"
+PC端网页连接端口号后，就可以升级固件。

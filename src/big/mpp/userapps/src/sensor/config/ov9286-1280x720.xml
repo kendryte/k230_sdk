@@ -1465,7 +1465,7 @@
       </AF>
       <AEC index="1" type="struct" size="[1 1]">
          <SetPoint index="1" type="double" size="[1 1]">
-            [ 45]
+            [ 25]
          </SetPoint>
          <ClmTolerance index="1" type="double" size="[1 1]">
             [ 10]

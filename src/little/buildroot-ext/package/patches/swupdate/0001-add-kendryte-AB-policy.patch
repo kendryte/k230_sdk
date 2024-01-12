@@ -1,0 +1,112 @@
+From 053e6562731806ed4f0e28592c6eb0f881644dc0 Mon Sep 17 00:00:00 2001
+From: jiangxiangbing <jiangxiangbing@canaan-creative.com>
+Date: Wed, 13 Dec 2023 15:19:09 +0800
+Subject: [PATCH] add kendryte AB policy
+
+---
+ parser/parser.c | 47 +++++++++++++++++++++++++++++++++++++++++------
+ 1 file changed, 41 insertions(+), 6 deletions(-)
+
+diff --git a/parser/parser.c b/parser/parser.c
+index 31efe46..65c7ac7 100755
+--- a/parser/parser.c
++++ b/parser/parser.c
+@@ -260,7 +260,40 @@ static int run_embscript(parsertype p, void *elem, struct img_type *img,
+ 	return lua_parser_fn(L, embfcn, img);
+ }
+ 
+-static int parse_common_attributes(parsertype p, void *elem, struct img_type *image)
++static void kendryte_AB_policy(char *s, struct swupdate_cfg *swcfg)
++{
++    const char ch = ':';
++    char *ptr, *envval;
++    char s_tmp[64];
++    char *partition, *A, *B;
++    if (!s || !strlen(s)) return;
++    strcpy(s_tmp, s);
++    TRACE("s_tmp:%s \n", s_tmp);
++    ptr = strchr(s_tmp, ch);
++    if (ptr != NULL)
++    {
++        *ptr = '\0';
++        partition = s_tmp;
++        A = ptr + 1;
++        ptr = strchr(A, ch);
++        if (ptr == NULL) return;
++        *ptr = '\0';
++        B = ptr + 1;
++        envval = bootloader_env_get(partition);
++        if (envval == NULL || *envval == 'A' || *envval == 'a') {
++            strcpy(s, B);
++            dict_set_value(&swcfg->bootloader, partition, "B");
++        }
++        else {
++            strcpy(s, A);
++            dict_set_value(&swcfg->bootloader, partition, "A");
++        }
++        
++        TRACE("s:%s \n", s);
++    }
++}
++
++static int parse_common_attributes(parsertype p, void *elem, struct img_type *image, struct swupdate_cfg *swcfg)
+ {
+ 	char seek_str[MAX_SEEK_STRING_SIZE];
+ 	const char* compressed;
+@@ -277,6 +310,8 @@ static int parse_common_attributes(parsertype p, void *elem, struct img_type *im
+ 	GET_FIELD_STRING(p, elem, "path", image->path);
+ 	GET_FIELD_STRING(p, elem, "volume", image->volname);
+ 	GET_FIELD_STRING(p, elem, "device", image->device);
++    kendryte_AB_policy(image->device, swcfg);
++    
+ 	GET_FIELD_STRING(p, elem, "mtdname", image->path);
+ 	GET_FIELD_STRING(p, elem, "filesystem", image->filesystem);
+ 	GET_FIELD_STRING(p, elem, "type", image->type);
+@@ -340,7 +375,7 @@ static int parse_partitions(parsertype p, void *cfg, struct swupdate_cfg *swcfg)
+ 			ERROR("No memory: malloc failed");
+ 			return -ENOMEM;
+ 		}
+-		if (parse_common_attributes(p, elem, partition) < 0) {
++		if (parse_common_attributes(p, elem, partition, swcfg) < 0) {
+ 			free_image(partition);
+ 			return -1;
+ 		}
+@@ -407,7 +442,7 @@ static int parse_scripts(parsertype p, void *cfg, struct swupdate_cfg *swcfg, lu
+ 			return -ENOMEM;
+ 		}
+ 
+-		if (parse_common_attributes(p, elem, script) < 0) {
++		if (parse_common_attributes(p, elem, script, swcfg) < 0) {
+ 			free_image(script);
+ 			return -1;
+ 		}
+@@ -500,7 +535,7 @@ static int parse_bootloader(parsertype p, void *cfg, struct swupdate_cfg *swcfg,
+ 			return -ENOMEM;
+ 		}
+ 
+-		if (parse_common_attributes(p, elem, script) < 0) {
++		if (parse_common_attributes(p, elem, script, swcfg) < 0) {
+ 			free_image(script);
+ 			return -1;
+ 		}
+@@ -557,7 +592,7 @@ static int parse_images(parsertype p, void *cfg, struct swupdate_cfg *swcfg, lua
+ 			return -ENOMEM;
+ 		}
+ 
+-		if (parse_common_attributes(p, elem, image) < 0) {
++		if (parse_common_attributes(p, elem, image, swcfg) < 0) {
+ 			free_image(image);
+ 			return -1;
+ 		}
+@@ -640,7 +675,7 @@ static int parse_files(parsertype p, void *cfg, struct swupdate_cfg *swcfg, lua_
+ 			return -ENOMEM;
+ 		}
+ 
+-		if (parse_common_attributes(p, elem, file) < 0) {
++		if (parse_common_attributes(p, elem, file, swcfg) < 0) {
+ 			free_image(file);
+ 			return -1;
+ 		}
+-- 
+2.39.1
+

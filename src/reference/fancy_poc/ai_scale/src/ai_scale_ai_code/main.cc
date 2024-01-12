@@ -440,16 +440,15 @@ void video_proc(string &kmodel_path, size_t top_k, int debug_mode)
                         if (createDirectory(new_class_floder_name)) {
                             std::cout << "文件夹创建成功" << std::endl;
                             add_class=true;
-                            g_max_classes_idx++;
+                            // g_max_classes_idx++;
                         } else {
                             std::cerr << "无法创建文件夹" << std::endl;
                         }
                     }
-                }else{
-                    string source_path="res/select.jpg";
-                    string destination_path=new_class_floder_name+"/"+img_idx+".jpg";
-                    copyFile(source_path,destination_path);
                 }
+                string source_path="res/select.jpg";
+                string destination_path=new_class_floder_name+"/"+img_idx+".jpg";
+                copyFile(source_path,destination_path);
                 slc_flag=true;
             }
         }else{
@@ -514,6 +513,7 @@ void video_proc(string &kmodel_path, size_t top_k, int debug_mode)
                 }
                 std::remove("flag/goodinf.txt");
                 std::remove(import_flag.c_str());
+                g_max_classes_idx++;
                 select_img_idx=0;
                 add_class=false;
                 new_class_floder_name="";
@@ -527,13 +527,12 @@ void video_proc(string &kmodel_path, size_t top_k, int debug_mode)
 
             }else{
                 std::ostringstream oss_c;
-                oss_c << (g_max_classes_idx-1);
+                oss_c << g_max_classes_idx;
                 std::string class_idx = oss_c.str();
                 string newest_class_path=g_dataset_dir+"/"+class_idx;
                 cout<<newest_class_path<<endl;
                 save_result("flag/clear_c.txt",newest_class_path);
                 select_img_idx=0;
-                g_max_classes_idx--;
                 clr_flag=true;
             }
             

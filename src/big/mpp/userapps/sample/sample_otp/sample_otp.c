@@ -85,7 +85,7 @@ int main()
     int ret = 0;
     uint32_t pos;
     uint32_t size;
-    uint32_t buffer[768] = {0};
+    uint32_t buffer[256] = {0};
 
     rt_device_t otp_dev;
     printf("otp_driver test\n");
@@ -107,7 +107,7 @@ int main()
 
     // read test    initilize param
     pos = 0x0;
-    size = 0xC00;
+    size = 0x300;
 
     ret = otp_read(otp_dev, pos, (void *)buffer, size);
     if(ret < 0)
@@ -118,7 +118,7 @@ int main()
 
 #ifdef _debug_write
     // write test   initilize param
-    pos = 0x4;
+    pos = 0x10;
     size = 0x4;
     buffer[0] = 0xff11ff11;
 
@@ -131,7 +131,7 @@ int main()
 
     // read test
     pos = 0x0;
-    size = 0xC00;
+    size = 0x300;
     ret = otp_read(otp_dev, pos, (void *)buffer, size);
     if(ret < 0)
     {

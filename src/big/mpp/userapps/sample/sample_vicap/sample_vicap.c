@@ -87,9 +87,12 @@ typedef struct {
 
     k_bool chn_enable[VICAP_CHN_ID_MAX];
     k_pixel_format out_format[VICAP_CHN_ID_MAX];
+    
     k_bool crop_enable[VICAP_CHN_ID_MAX];
 
     k_vicap_window out_win[VICAP_CHN_ID_MAX];
+
+    k_vicap_window crop_win[VICAP_CHN_ID_MAX];
 
     k_u32 buf_size[VICAP_CHN_ID_MAX];
 
@@ -101,7 +104,7 @@ typedef struct {
     k_bool dw_enable;
 } vicap_device_obj;
 
-#define MAX_VO_LAYER_NUM 2
+#define MAX_VO_LAYER_NUM 3
 
 typedef struct {
     k_u16 width[MAX_VO_LAYER_NUM];
@@ -150,8 +153,10 @@ static k_s32 sample_vicap_vo_layer_init(k_vicap_vo_layer_conf *layer_conf, k_u32
     k_u16 rotation = 0;
     k_u16 relative_height = 0;
     k_u16 total_height = 0;
+    osd_info osd_info;
 
     memset(&info, 0, sizeof(info));
+    memset(&osd_info, 0, sizeof(osd_info));
 
     for (int i = 0; i < MAX_VO_LAYER_NUM; i++) {
         if (layer_conf->enable[i]) {
@@ -198,7 +203,7 @@ static k_s32 sample_vicap_vo_layer_init(k_vicap_vo_layer_conf *layer_conf, k_u32
         }
     }
 
-    for (int i = 0; i < MAX_VO_LAYER_NUM; i++) {
+    for (int i = 0; i < MAX_VO_LAYER_NUM - 1; i++) {
         if (layer_conf->enable[i]) {
             info[i].offset.x = (display_width - info[i].act_size.width)/2;
             info[i].offset.y = margin + relative_height;
@@ -212,6 +217,19 @@ static k_s32 sample_vicap_vo_layer_init(k_vicap_vo_layer_conf *layer_conf, k_u32
         }
     }
 
+    // osd enable 
+    if(layer_conf->enable[2])
+    {
+        osd_info.act_size.width = layer_conf->width[2]; ;
+        osd_info.act_size.height = layer_conf->height[2];;
+        osd_info.offset.x = (display_width - layer_conf->width[2])/2;;
+        osd_info.offset.y = margin + relative_height;
+        osd_info.global_alptha = 0xff;
+        osd_info.format = PIXEL_FORMAT_RGB_888;//PIXEL_FORMAT_ARGB_4444; //PIXEL_FORMAT_ARGB_1555;//PIXEL_FORMAT_ARGB_8888;
+
+        vo_creat_osd_test(layer_conf->layer[2], &osd_info);
+    }
+
     return ret;
 }
 
@@ -223,6 +241,11 @@ static void sample_vicap_vo_enable(void)
 static void sample_vicap_disable_vo_layer(k_vo_layer layer)
 {
     kd_mpi_vo_disable_video_layer(layer);
+}
+
+static void sample_vicap_disable_vo_osd(k_vo_osd layer)
+{
+    kd_mpi_vo_osd_disable(layer);
 }
 
 static k_s32 sample_vicap_vb_init(vicap_device_obj *dev_obj)
@@ -386,8 +409,10 @@ static void usage(void)
     printf(" -chn:          vicap output channel id[0,1,2]\tdefault 0\n");
     printf(" -ow:           the output image width, default same with input width\n");
     printf(" -oh:           the output image height, default same with input height\n");
-    printf(" -ox:           the output image start position of x\n");
-    printf(" -oy:           the output image start position of y\n");
+    printf(" -ox:           the output crop image start position of x\n");
+    printf(" -oy:           the output crop image start position of y\n");
+    printf(" -crop_x:       the output crop image width\n");
+    printf(" -crop_y:       the output crop image height\n");
     printf(" -fps:          frame-per-second, 0 if unused\n");
     printf(" -crop:         crop enable[0: disable, 1: enable]\n");
     printf(" -ofmt:         the output pixel format[0: yuv, 1: rgb888, 2: rgb888p, 3: raw], only channel 0 support raw data, default yuv\n");
@@ -425,7 +450,7 @@ int main(int argc, char *argv[])
     k_u8 salve_en = 0;
 
     k_u32 work_mode = VICAP_WORK_ONLINE_MODE;
-    k_connector_type connector_type = HX8377_V2_MIPI_4LAN_1080X1920_30FPS;
+    k_connector_type connector_type = HX8377_V2_MIPI_4LAN_1080X1920_30FPS;//HX8377_V2_MIPI_4LAN_1080X1920_30FPS;//ST7701_V1_MIPI_2LAN_480X854_30FPS;//ST7701_V1_MIPI_2LAN_480X800_30FPS;//HX8377_V2_MIPI_4LAN_1080X1920_30FPS;
     k_connector_info connector_info;
     k_u32 display_width;
     k_u32 display_height;
@@ -565,6 +590,17 @@ chn_parse:
                             k_u16 y_start = atoi(argv[i + 1]);
                             device_obj[cur_dev].out_win[cur_chn].v_start = y_start;
                         }
+                        else if (strcmp(argv[i], "-crop_x") == 0)
+                        {
+                            k_u16 crop_w = atoi(argv[i + 1]);
+                            device_obj[cur_dev].crop_win[cur_chn].width = crop_w;
+                        }
+                        else if (strcmp(argv[i], "-crop_y") == 0)
+                        {
+                            k_u16 crop_y = atoi(argv[i + 1]);
+                            device_obj[cur_dev].crop_win[cur_chn].height = crop_y;
+                        }
+
                         else if (strcmp(argv[i], "-ow") == 0)
                         {
                             k_u16 out_width = atoi(argv[i + 1]);
@@ -820,6 +856,18 @@ chn_parse:
                             device_obj[cur_dev].sensor_type = SC_SC201CS_SLAVE_MODE_MIPI_1LANE_RAW10_1600X1200_30FPS_LINEAR;
                             // kd_mpi_vicap_set_mclk(VICAP_MCLK0, VICAP_PLL1_CLK_DIV4, 22, 1);         // set mclk0 = 27 M = 2376 / 4 / 22
                             // kd_mpi_vicap_set_mclk(VICAP_MCLK1, VICAP_PLL1_CLK_DIV4, 22, 1);         // set mclk1 = 27 M = 2376 / 4 / 22
+                            break;
+                        }
+                        case 26:
+                        {
+                            device_obj[cur_dev].sensor_type = OV_OV5647_MIPI_CSI1_1920X1080_30FPS_10BIT_LINEAR;
+                            // kd_mpi_vicap_set_mclk(VICAP_MCLK0, VICAP_PLL0_CLK_DIV4, 16, 1);
+                            break;
+                        }
+                        case 27:
+                        {
+                            device_obj[cur_dev].sensor_type = OV_OV5647_MIPI_CSI2_1920X1080_30FPS_10BIT_LINEAR;
+                            // kd_mpi_vicap_set_mclk(VICAP_MCLK0, VICAP_PLL0_CLK_DIV4, 16, 1);
                             break;
                         }
                         default:
@@ -1177,9 +1225,10 @@ chn_parse:
             }
 
             if (device_obj[dev_num].crop_enable[chn_num]) {
-                chn_attr.crop_win = chn_attr.out_win;
-                chn_attr.crop_win.h_start = device_obj[dev_num].out_win[chn_num].h_start;
-                chn_attr.crop_win.v_start = device_obj[dev_num].out_win[chn_num].v_start;
+                chn_attr.crop_win.width = device_obj[dev_num].crop_win[chn_num].width;  //chn_attr.out_win;1166;// 
+                chn_attr.crop_win.height = device_obj[dev_num].crop_win[chn_num].height; //1944;//
+                chn_attr.crop_win.h_start =device_obj[dev_num].out_win[chn_num].h_start;  //713;
+                chn_attr.crop_win.v_start =device_obj[dev_num].out_win[chn_num].v_start;  //0;//
             } else {
                 chn_attr.crop_win.width = device_obj[dev_num].in_width;
                 chn_attr.crop_win.height = device_obj[dev_num].in_height;
@@ -1197,6 +1246,9 @@ chn_parse:
 
             printf("sample_vicap, set dev(%d) chn(%d) attr, buffer_size(%d), out size[%dx%d]\n", \
                 dev_num, chn_num, chn_attr.buffer_size, chn_attr.out_win.width, chn_attr.out_win.height);
+
+            printf("sample_vicap out_win h_start is %d ,v_start is %d \n", chn_attr.out_win.h_start, chn_attr.out_win.v_start);
+
             ret = kd_mpi_vicap_set_chn_attr(dev_num, chn_num, chn_attr);
             if (ret) {
                 printf("sample_vicap, kd_mpi_vicap_set_chn_attr failed.\n");
@@ -1216,7 +1268,13 @@ chn_parse:
                     vo_chn = K_VO_DISPLAY_CHN_ID2;
                     layer = K_VO_LAYER2;
                     rotation = 4;//layer2 unsupport roation
-                } else if (vo_count >= MAX_VO_LAYER_NUM){
+                } 
+                else if (vo_count == 2) {
+                    vo_chn = K_VO_DISPLAY_CHN_ID3;
+                    layer = K_VO_OSD0;
+                    rotation = 4;//layer2 unsupport roation
+                } 
+                else if (vo_count >= MAX_VO_LAYER_NUM){
                     printf("only support bind two vo channel.\n");
                     continue;
                 }
@@ -1284,6 +1342,7 @@ chn_parse:
 
     k_isp_ae_roi ae_roi;
     memset(&ae_roi, 0, sizeof(k_isp_ae_roi));
+    static k_u32 dump_count = 0;
 
     k_char select = 0;
     while(K_TRUE)
@@ -1325,7 +1384,6 @@ chn_parse:
                         continue;
                     }
 
-                    static k_u32 dump_count = 0;
                     k_char *suffix;
                     k_u32 data_size = 0;
                     k_u8 lbit = 0;
@@ -1423,16 +1481,16 @@ chn_parse:
                 }
 
                 for (int index = 0; index < hdr_frame; index++) {
-                    hdr_buf_base_vir_addr += data_size * index;
-                    printf("sample_vicap, dump hdr buf(%p) data size:%u\n", hdr_buf_base_vir_addr, data_size);
-                    if (hdr_buf_base_vir_addr) {
+                    void *hdr_buf_addr = hdr_buf_base_vir_addr + data_size * index;
+                    printf("sample_vicap, dump hdr buf(%p) data size:%u\n", hdr_buf_addr, data_size);
+                    if (hdr_buf_addr) {
                         memset(filename, 0 , sizeof(filename));
-                        snprintf(filename, sizeof(filename), "dev_%02d_%dx%d_hdr_%02d.raw", \
-                            dev_num, device_obj[dev_num].in_width, device_obj[dev_num].in_height, index);
-                        printf("save dump hdr buffer to file(%s)\n", filename);
-                        FILE *file = fopen(filename, "wb+");
+                        snprintf(filename, sizeof(filename), "dev_%02d_%dx%d_%dhdr_%02d_%04d.raw", \
+                            dev_num, device_obj[dev_num].in_width, device_obj[dev_num].in_height, hdr_frame, index, dump_count);
+                        FILE *file = fopen(filename, "wb");
                         if (file) {
-                            fwrite(hdr_buf_base_vir_addr, data_size, 1, file);
+                            printf("save dump hdr buffer to file(%s)\n", filename);
+                            fwrite(hdr_buf_addr, data_size, 1, file);
                             fclose(file);
                         } else {
                             printf("sample_vicap, open dump hdr file failed(%s)\n", strerror(errno));
@@ -1440,6 +1498,7 @@ chn_parse:
                     } else {
                         printf("sample_vicap, map dump hdr addr failed.\n");
                     }
+                    dump_count++;
                 }
             }
             break;
@@ -1571,13 +1630,25 @@ app_exit:
                 } else if (vo_count == 1) {
                     vo_chn = K_VO_DISPLAY_CHN_ID2;
                     layer = K_VO_LAYER2;
-                } else {
+                } 
+                else if (vo_count == 2) {
+                    vo_chn = K_VO_DISPLAY_CHN_ID2;
+                    layer = K_VO_OSD0;
+                }else {
                     printf("only support unbind two vo chn.\n");
                     continue;
                 }
-                sample_vicap_disable_vo_layer(layer);
-                printf("sample_vicap, vo_count(%d), dev(%d) chn(%d) unbind vo chn(%d) layer(%d)\n", vo_count, dev_num, chn_num, vo_chn, layer);
-                sample_vicap_unbind_vo(dev_num, chn_num, vo_chn);
+                if(vo_count < 2)
+                {
+                    sample_vicap_disable_vo_layer(layer);
+                    printf("sample_vicap, vo_count(%d), dev(%d) chn(%d) unbind vo chn(%d) layer(%d)\n", vo_count, dev_num, chn_num, vo_chn, layer);
+                    sample_vicap_unbind_vo(dev_num, chn_num, vo_chn);
+                }
+                else
+                {
+                    sample_vicap_disable_vo_osd(layer);
+                    sample_vicap_unbind_vo(dev_num, chn_num, vo_chn);
+                }
                 vo_count++;
             }
         }

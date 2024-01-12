@@ -36,14 +36,19 @@ int main(int argc, char *argv[])
 #if 1
     signal(SIGINT, sig_handler);
 
-    if (argc < 2) {
-        printf("Usage: ./%s <*.mp4> \n",argv[0]);
+    if (argc < 3) {
+        printf("Usage: ./%s <*.mp4> <type(connect type,see vo doc)> \n",argv[0]);
         return 0;
     }
 
     printf("file pathname:%s\n",argv[1]);
+    int connect_type = atoi(argv[2]);
+    printf("connector type:%d\n",connect_type);
+
     sem_init(&g_stop_player_sem,0,0);
     kd_player_init(K_TRUE);
+
+    kd_player_set_connector_type(connect_type);
 
     kd_player_regcallback(player_event_cb,NULL);
 

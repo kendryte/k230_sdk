@@ -39,8 +39,13 @@ fi
 if [ -f out/bin/face_registration.elf ]; then
       cp out/bin/face_registration.elf ${k230_bin}
 fi
+
 if [ -f out/bin/ai_scale.elf ]; then
       cp out/bin/ai_scale.elf ${k230_bin}
+fi
+
+if [ -f out/bin/face_recognition.elf ]; then
+      cp out/bin/face_recognition.elf ${k230_bin}
 fi
 
 /opt/toolchain/Xuantie-900-gcc-linux-5.10.4-glibc-x86_64-V2.6.0/bin/riscv64-unknown-linux-gnu-g++ ./multimodal_chat_robot/src/multimodal_chat_robot_client/socket_gpt/main.cc -o ${k230_bin}/socket_gpt_image_audio

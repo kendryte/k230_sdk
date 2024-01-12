@@ -30,7 +30,6 @@
 FaceMesh::FaceMesh(const char *kmodel_file,const char *post_kmodel_file, const int debug_mode) : AIBase(kmodel_file,"FaceMesh", debug_mode),post_obj_(post_kmodel_file,debug_mode)
 {
     model_name_ = "FaceMesh";
-    constant_init();
     ai2d_out_tensor_ = get_input_tensor(0);
     post_ver_dim_ = post_obj_.output_shapes_[0][1];
 }
@@ -39,7 +38,6 @@ FaceMesh::FaceMesh(const char *kmodel_file,const char *post_kmodel_file, const i
 FaceMesh::FaceMesh(const char *kmodel_file,const char *post_kmodel_file, FrameCHWSize isp_shape, uintptr_t vaddr, uintptr_t paddr, const int debug_mode) : AIBase(kmodel_file,"FaceMesh", debug_mode),post_obj_(post_kmodel_file,debug_mode)
 {
     model_name_ = "FaceMesh";
-    constant_init();
     post_ver_dim_ = post_obj_.output_shapes_[0][1];
     vaddr_ = vaddr;
 

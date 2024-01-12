@@ -241,20 +241,35 @@ static void *bind_mode_get_frame(void *parameter)
     pthread_exit(0);
 }
 
-static void usage(char *argv[])
+static void usage(void)
 {
-    printf("\n%s [0/1]\n", argv[0]);
-    printf("0: default dilusense; 1: GZ1\n");
+    printf("Options:\n");
+    printf(" -sensor:       sensor type[see K230_Camera_Sensor_Adaptation_Guide.md]\n");
+    printf(" -mirror:       vo mirror[0: no change, 1: enable vo mirror]\n");
+    printf(" -help:         print this help\n");
 }
 
 int main(int argc, char *argv[])
 {
     k_s32 ret;
-    k_s32 sensor_index = 0;
-    usage(argv);
-    if(argc == 2)
+    k_s32 sensor_index = OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_SPECKLE;
+    k_bool mirror=K_FALSE;
+
+    for (int i = 1; i < argc; i += 2)
     {
-        sensor_index = atoi(argv[1]);
+        if (strcmp(argv[i], "-help") == 0)
+        {
+            usage();
+            return 0;
+        }
+        else if (strcmp(argv[i], "-sensor") == 0)
+        {
+            sensor_index = atoi(argv[i + 1]);
+        }
+        else if (strcmp(argv[i], "-mirror") == 0)
+        {
+            mirror = atoi(argv[i + 1]);
+        }
     }
 
     g_vdd_cfg[0].img_height = DMA_CHN0_HEIGHT;
@@ -272,7 +287,7 @@ int main(int argc, char *argv[])
         goto err_vb_exit;
     }
 
-    ret = sample_dv_vo_init();
+    ret = sample_dv_vo_init(mirror);
     if (ret) {
         printf("sample_dv_vo_init failed\n");
         goto err_unbind;

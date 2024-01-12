@@ -116,7 +116,6 @@ k_s32 mapi_send_sync_with_resp(k_u32 module, k_u32 cmd, void *req_body, void* re
     kd_ipcmsg_destroy_message(resp);
 
     return ret;
-    return ret;
 }
 
 static void meida_msg_receive_proc(k_s32 id, k_ipcmsg_message_t *msg)

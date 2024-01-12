@@ -45,20 +45,20 @@ config GEN_SECURITY_IMG
 config UBOOT_DEFCONFIG
         string "uboot defconfig  "
         help  
-              uboot defconfig ;
-       default "k230_evb"
+                uboot defconfig ;
+        default BOARD_NAME
 
 config LINUX_DEFCONFIG
         string "linux defconfig  "
         help  
-              linux defconfig ;
-       default "k230_evb"
+                linux defconfig ;
+        default BOARD_NAME
 
 config LINUX_DTB
         string "linux dtb name"
         help  
-              linux  dtb name ;
-       default "k230_evb"
+                linux  dtb name ;
+        default BOARD_NAME
 
 config REMOTE_TEST_PLATFORM
         bool "config REMOTE_TEST_PLATFORM"

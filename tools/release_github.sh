@@ -60,7 +60,7 @@ user/component/datafifo/slave/build \
 user/component/datafifo/slave/Makefile \
 user/mapi/mediaclient/lib/*.a \
 user/mapi/mediaclient/lib/*.a \
-user/out \
+user/out
 "
 
 #open_cdk_kernel_name_list="!(\
@@ -133,6 +133,12 @@ rm src/.src_fetched;
 	set -e ;
     cd ${RELEASE_CDK_SRC_DIR};
 	rm -rf ${delete_cdk_user_name_list};
+
+	# reserve ISP tuning server
+	mkdir -p user/out/little
+	cp -r user/samples/tuning-server/build/t_frameworks/t_server_c/t_server_c-6.1.0 user/out/little
+	rm -rf user/samples/tuning-server
+
 	find  . -name *.o | xargs rm -rf;
 	find . -type d -empty -not -name . | xargs rm -rf ;
     find . -type d -empty -not -name . | xargs rm -rf ;

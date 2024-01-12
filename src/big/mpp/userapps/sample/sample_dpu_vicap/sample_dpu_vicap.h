@@ -93,7 +93,7 @@ static inline void VDD_CHECK_RET(k_s32 ret, const char *func, const int line)
 /* vi */
 int sample_adc(float* temp);
 int sample_dv_dpu_update_temp(float temperature_obj);
-int sample_dv_dma_init();
+int sample_dv_dma_init(k_gdma_rotation_e *dma_rotation, k_bool gen_calibration);
 int sample_dv_dma_delete();
 int sample_dv_dpu_init();
 int sample_dv_dpu_delete();

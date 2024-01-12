@@ -27,7 +27,6 @@ cp -a ../../big/kmodel/ai_poc/utils/* ${k230_bin}
 cp -a shell/* ${k230_bin}
 
 /opt/toolchain/Xuantie-900-gcc-linux-5.10.4-glibc-x86_64-V2.6.0/bin/riscv64-unknown-linux-gnu-g++ -O3 llamac/llama_run.cc -o out/llama_run -lm
-/opt/toolchain/Xuantie-900-gcc-linux-5.10.4-glibc-x86_64-V2.6.0/bin/riscv64-unknown-linux-gnu-g++ -O3 self_learning_small/main.cc -o out/create_category -lm
 
 if [ -f out/bin/face_detection.elf ]; then
       cp out/bin/face_detection.elf ${k230_bin}
@@ -197,10 +196,6 @@ if [ -f out/bin/translate_en_ch.elf ]; then
       cp out/bin/translate_en_ch.elf ${k230_bin}
 fi
 
-if [ -f out/create_category ]; then
-      cp out/create_category ${k230_bin}
-fi
-
 if [ -f out/bin/self_learning.elf ]; then
       cp out/bin/self_learning.elf ${k230_bin}
 fi
@@ -215,6 +210,34 @@ fi
 
 if [ -f out/bin/sq_handkp_flower.elf ]; then
       cp out/bin/sq_handkp_flower.elf ${k230_bin}
+fi
+
+if [ -f out/bin/face_verification.elf ]; then
+      cp out/bin/face_verification.elf ${k230_bin}
+fi
+
+if [ -f out/bin/dms.elf ]; then
+      cp out/bin/dms.elf ${k230_bin}
+fi
+
+if [ -f out/bin/distraction_reminder.elf ]; then
+      cp out/bin/distraction_reminder.elf ${k230_bin}
+fi
+
+if [ -f out/bin/kws.elf ]; then
+      cp out/bin/kws.elf ${k230_bin}
+fi
+
+if [ -f out/bin/tts_zh.elf ]; then
+      cp out/bin/tts_zh.elf ${k230_bin}
+fi
+
+if [ -f out/bin/person_distance.elf ]; then
+      cp out/bin/person_distance.elf ${k230_bin}
+fi
+
+if [ -f out/bin/demo_mix.elf ]; then
+      cp out/bin/demo_mix.elf ${k230_bin}
 fi
 
 rm -rf out

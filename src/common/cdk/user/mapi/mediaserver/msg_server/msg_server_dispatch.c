@@ -77,6 +77,7 @@ static void meida_msg_receive_proc(k_s32 id, k_ipcmsg_message_t *msg)
     case K_MAPI_MOD_AO:
     case K_MAPI_MOD_VVI:
     case K_MAPI_MOD_VVO:
+    case K_MAPI_MOD_DPU:
     case K_MAPI_MOD_VICAP:
     case K_MAPI_MOD_SENSOR:
     case K_MAPI_MOD_ISP:
@@ -163,6 +164,7 @@ k_s32 media_msg_server_init(void)
 
     g_server_context.server_modules[K_MAPI_MOD_VI] = mapi_msg_get_vi_mod();
     g_server_context.server_modules[K_MAPI_MOD_VVI] = mapi_msg_get_vvi_mod();
+    g_server_context.server_modules[K_MAPI_MOD_DPU] = mapi_msg_get_dpu_mod();
     g_server_context.server_modules[K_MAPI_MOD_VICAP] = mapi_msg_get_vicap_mod();
     g_server_context.server_modules[K_MAPI_MOD_SENSOR] = mapi_msg_get_sensor_mod();
     g_server_context.server_modules[K_MAPI_MOD_ISP] = mapi_msg_get_isp_mod();

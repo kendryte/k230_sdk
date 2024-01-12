@@ -30,6 +30,7 @@
 #include "mapi_vicap_comm.h"
 #include "mapi_sys_api.h"
 #include "mpi_vicap_api.h"
+#include "mpi_isp_api.h"
 #include "k_vicap_comm.h"
 
 #define CHECK_MAPI_VICAP_NULL_PTR(paraname, ptr)                      \
@@ -310,4 +311,9 @@ k_s32 kd_mapi_vicap_set_mclk(k_vicap_mclk_id id, k_vicap_mclk_sel sel, k_u8 mclk
     }
 
     return K_SUCCESS;
+}
+
+k_s32 kd_mapi_vicap_tuning(char* string, k_u32 size, char** response, k_u32* response_len)
+{
+    return kd_mpi_isp_tuning(string, size, response, response_len);
 }

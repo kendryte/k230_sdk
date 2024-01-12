@@ -330,7 +330,7 @@ static int dwcmshc_probe(struct platform_device *pdev)
     if(memcmp(host->hw_name,"91581000",8) == 0) {
         priv->have_phy = 0;
         data = readl(priv->hs_regs + 8);
-        data |= 1<<2;
+        data |= 1<<2 | 1<<0;
         writel(data, priv->hs_regs + 8);
     } else {
         priv->have_phy = 1;

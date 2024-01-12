@@ -9,6 +9,8 @@
 #include <linux/platform_device.h>
 #endif
 
+extern int plat_sdio_rescan(int slot);
+
 #ifdef CONFIG_DHD_USE_STATIC_BUF
 #if defined(BCMDHD_MDRIVER) && !defined(DHD_STATIC_IN_DRIVER)
 extern void *dhd_wlan_mem_prealloc(uint bus_type, int index,
@@ -119,6 +121,7 @@ dhd_wlan_set_carddetect(int present)
 		printf("======== Card detection to remove PCIE card! ========\n");
 #endif
 	}
+	plat_sdio_rescan(1);
 
 	return err;
 }

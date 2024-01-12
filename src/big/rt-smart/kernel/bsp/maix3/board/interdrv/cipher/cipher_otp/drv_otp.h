@@ -28,8 +28,8 @@
 
 #include <rtdef.h>
 
-#define OTP_READ_OFFSET             0x4000
-#define OTP_WRITE_OFFSET            0x4A00
+#define OTP_READ_OFFSET             0x3500
+#define OTP_WRITE_OFFSET            0x3500
 
 #define WORD_SIZE   4
 

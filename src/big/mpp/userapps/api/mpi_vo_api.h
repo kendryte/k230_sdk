@@ -413,6 +413,8 @@ k_s32 kd_mpi_vo_chn_dump_frame(k_u32 chn_num, k_video_frame_info *vf_info, k_u32
 k_s32 kd_mpi_vo_chn_dump_release(k_u32 chn_num, const k_video_frame_info *vf_info);
 
 
+k_s32 kd_mpi_wbc_dump_frame(k_video_frame_info *vf_info, k_u32 timeout_ms);
+k_s32 kd_mpi_wbc_dump_release(const k_video_frame_info *vf_info);
 
 /** @} */ /** <!-- ==== DISPLAY End ==== */
 

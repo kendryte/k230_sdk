@@ -9,8 +9,8 @@
 #include <dt-bindings/interrupt-controller/irq.h>
 
 / {
-	model = "T-HEAD c910 ice";
-	compatible = "thead,c910_ice";
+	model = "kendryte,k230";
+	compatible = "kendryte,k230";
 	#address-cells = <2>;
 	#size-cells = <2>;
 
@@ -198,6 +198,19 @@
 			#size-cells = <0>;
 			interrupt-parent = <&intc>;
 			interrupts = <155>,<157>,<162>;
+			interrupt-names = "spi_txe","spi_rxf","spi_done";
+			num-cs = <1>;
+			reg-io-width = <4>;
+			status = "disabled";
+		};
+
+		spi2: spi@91583000 {
+			compatible = "snps,dwc-ssi-1.01a";
+			reg = <0x0 0x91583000 0x0 0x1000>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			interrupt-parent = <&intc>;
+			interrupts = <164>,<166>,<171>;
 			interrupt-names = "spi_txe","spi_rxf","spi_done";
 			num-cs = <1>;
 			reg-io-width = <4>;
@@ -426,10 +439,10 @@
 				reg                 = <0x0 0x91213000 0x0 0x2AC>;
 			};
 
-			otp: otp@91214000 {
+			otp: otp@91213500 {
 				status              = "okay";
 				compatible          = "canaan,k230-otp";
-				reg                 = <0x0 0x91214000 0x0 0xC00>;
+				reg                 = <0x0 0x91213500 0x0 0x300>;
 			};
 		};
 

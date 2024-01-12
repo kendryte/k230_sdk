@@ -141,7 +141,7 @@ void* read_venc_data_pth(void* arg)
                 if(pmsg->msg_type == MSG_KEY_TYPE)
                 {
                     k_u32 chn_num  = pmsg->chn;
-                    pfn_venc_dataproc datafunc = pmsg->upfunc;
+                    pfn_venc_dataproc datafunc = (pfn_venc_dataproc)pmsg->upfunc;
                     memcpy(&venc_data.status, &pmsg->status, sizeof(k_venc_chn_status));
 
                     venc_data.u32_pack_cnt = pmsg->status.cur_packs;

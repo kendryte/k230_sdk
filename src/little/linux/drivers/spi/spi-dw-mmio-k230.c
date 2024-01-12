@@ -23,9 +23,9 @@
 
 #include "spi-dw-k230.h"
 
-#define DRIVER_NAME "dw_spi_mmio"
+#define DRIVER_NAME "dw_spi_mmio_k230"
 
-struct dw_spi_mmio {
+struct dw_spi_mmio_k230 {
 	struct dw_spi  dws;
 	struct clk     *clk;
 	struct clk     *pclk;
@@ -63,7 +63,7 @@ struct dw_spi_mscc {
 static void dw_spi_mscc_set_cs(struct spi_device *spi, bool enable)
 {
 	struct dw_spi *dws = spi_master_get_devdata(spi->master);
-	struct dw_spi_mmio *dwsmmio = container_of(dws, struct dw_spi_mmio, dws);
+	struct dw_spi_mmio_k230 *dwsmmio = container_of(dws, struct dw_spi_mmio_k230, dws);
 	struct dw_spi_mscc *dwsmscc = dwsmmio->priv;
 	u32 cs = spi->chip_select;
 
@@ -80,7 +80,7 @@ static void dw_spi_mscc_set_cs(struct spi_device *spi, bool enable)
 }
 
 static int dw_spi_mscc_init(struct platform_device *pdev,
-			    struct dw_spi_mmio *dwsmmio,
+			    struct dw_spi_mmio_k230 *dwsmmio,
 			    const char *cpu_syscon, u32 if_si_owner_offset)
 {
 	struct dw_spi_mscc *dwsmscc;
@@ -114,14 +114,14 @@ static int dw_spi_mscc_init(struct platform_device *pdev,
 }
 
 static int dw_spi_mscc_ocelot_init(struct platform_device *pdev,
-				   struct dw_spi_mmio *dwsmmio)
+				   struct dw_spi_mmio_k230 *dwsmmio)
 {
 	return dw_spi_mscc_init(pdev, dwsmmio, "mscc,ocelot-cpu-syscon",
 				OCELOT_IF_SI_OWNER_OFFSET);
 }
 
 static int dw_spi_mscc_jaguar2_init(struct platform_device *pdev,
-				    struct dw_spi_mmio *dwsmmio)
+				    struct dw_spi_mmio_k230 *dwsmmio)
 {
 	return dw_spi_mscc_init(pdev, dwsmmio, "mscc,jaguar2-cpu-syscon",
 				JAGUAR2_IF_SI_OWNER_OFFSET);
@@ -136,7 +136,7 @@ static int dw_spi_mscc_jaguar2_init(struct platform_device *pdev,
 static void dw_spi_sparx5_set_cs(struct spi_device *spi, bool enable)
 {
 	struct dw_spi *dws = spi_master_get_devdata(spi->master);
-	struct dw_spi_mmio *dwsmmio = container_of(dws, struct dw_spi_mmio, dws);
+	struct dw_spi_mmio_k230 *dwsmmio = container_of(dws, struct dw_spi_mmio_k230, dws);
 	struct dw_spi_mscc *dwsmscc = dwsmmio->priv;
 	u8 cs = spi->chip_select;
 
@@ -160,7 +160,7 @@ static void dw_spi_sparx5_set_cs(struct spi_device *spi, bool enable)
 }
 
 static int dw_spi_mscc_sparx5_init(struct platform_device *pdev,
-				   struct dw_spi_mmio *dwsmmio)
+				   struct dw_spi_mmio_k230 *dwsmmio)
 {
 	const char *syscon_name = "microchip,sparx5-cpu-syscon";
 	struct device *dev = &pdev->dev;
@@ -189,7 +189,7 @@ static int dw_spi_mscc_sparx5_init(struct platform_device *pdev,
 }
 
 static int dw_spi_alpine_init(struct platform_device *pdev,
-			      struct dw_spi_mmio *dwsmmio)
+			      struct dw_spi_mmio_k230 *dwsmmio)
 {
 	dwsmmio->dws.caps = DW_SPI_CAP_CS_OVERRIDE;
 
@@ -197,7 +197,7 @@ static int dw_spi_alpine_init(struct platform_device *pdev,
 }
 
 static int dw_spi_dw_apb_init(struct platform_device *pdev,
-			      struct dw_spi_mmio *dwsmmio)
+			      struct dw_spi_mmio_k230 *dwsmmio)
 {
 	k230_dw_spi_dma_setup_generic(&dwsmmio->dws);
 
@@ -205,7 +205,7 @@ static int dw_spi_dw_apb_init(struct platform_device *pdev,
 }
 
 static int dw_spi_dwc_ssi_init(struct platform_device *pdev,
-			       struct dw_spi_mmio *dwsmmio)
+			       struct dw_spi_mmio_k230 *dwsmmio)
 {
 	dwsmmio->dws.caps = DW_SPI_CAP_DWC_SSI;
 
@@ -215,7 +215,7 @@ static int dw_spi_dwc_ssi_init(struct platform_device *pdev,
 }
 
 static int dw_spi_keembay_init(struct platform_device *pdev,
-			       struct dw_spi_mmio *dwsmmio)
+			       struct dw_spi_mmio_k230 *dwsmmio)
 {
 	dwsmmio->dws.caps = DW_SPI_CAP_KEEMBAY_MST | DW_SPI_CAP_DWC_SSI;
 
@@ -225,14 +225,14 @@ static int dw_spi_keembay_init(struct platform_device *pdev,
 static int dw_spi_mmio_probe(struct platform_device *pdev)
 {
 	int (*init_func)(struct platform_device *pdev,
-			 struct dw_spi_mmio *dwsmmio);
-	struct dw_spi_mmio *dwsmmio;
+			 struct dw_spi_mmio_k230 *dwsmmio);
+	struct dw_spi_mmio_k230 *dwsmmio;
 	struct resource *mem;
 	struct dw_spi *dws;
 	int ret;
 	int num_cs;
 
-	dwsmmio = devm_kzalloc(&pdev->dev, sizeof(struct dw_spi_mmio),
+	dwsmmio = devm_kzalloc(&pdev->dev, sizeof(struct dw_spi_mmio_k230),
 			GFP_KERNEL);
 	if (!dwsmmio)
 		return -ENOMEM;
@@ -324,7 +324,7 @@ out_clk:
 
 static int dw_spi_mmio_remove(struct platform_device *pdev)
 {
-	struct dw_spi_mmio *dwsmmio = platform_get_drvdata(pdev);
+	struct dw_spi_mmio_k230 *dwsmmio = platform_get_drvdata(pdev);
 
 	k230_dw_spi_remove_host(&dwsmmio->dws);
 	pm_runtime_disable(&pdev->dev);

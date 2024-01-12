@@ -10,6 +10,7 @@ all:
 	@cd sample_vicap; make
 	@cd sample_audio; make
 	@cd sample_vo; make
+	@cd sample_dpu_uvc; make
 clean:
 	@cd rt-smart; make clean
 	@cd sample_venc; make clean
@@ -22,3 +23,4 @@ clean:
 	@cd sample_vicap; make clean
 	@cd sample_audio; make clean
 	@cd sample_vo; make clean
+	# @cd sample_dpu_uvc; make clean

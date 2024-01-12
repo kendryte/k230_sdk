@@ -23,6 +23,7 @@ const k_connector_info connector_info_list[] = {
         0, 
         BACKGROUND_BLACK_COLOR,
         11,
+        7,
         K_DSI_4LAN,
         K_BURST_MODE,
         K_VO_LP_MODE,
@@ -36,6 +37,7 @@ const k_connector_info connector_info_list[] = {
         0, 
         BACKGROUND_BLACK_COLOR,
         10,
+        0,
         K_DSI_4LAN,
         K_BURST_MODE,
         K_VO_LP_MODE,
@@ -49,6 +51,7 @@ const k_connector_info connector_info_list[] = {
         0, 
         BACKGROUND_BLACK_COLOR,
         10,
+        0,
         K_DSI_4LAN,
         K_BURST_MODE,
         K_VO_LP_MODE,
@@ -62,6 +65,7 @@ const k_connector_info connector_info_list[] = {
         0, 
         BACKGROUND_BLACK_COLOR,
         10,
+        0,
         K_DSI_4LAN,
         K_BURST_MODE,
         K_VO_LP_MODE,
@@ -70,6 +74,48 @@ const k_connector_info connector_info_list[] = {
         //{15, 295, 0x17, 0x96},
         //{74250, 445500, 2200, 1920, 44, 148, 88, 1125, 1080, 5, 4, 36},
         LT9611_MIPI_4LAN_1920X1080_30FPS,
+    },
+    // {
+    //     "st7701",
+    //     0, 
+    //     0, 
+    //     BACKGROUND_PINK_COLOR,
+    //     9,
+    //     39,             // pixclk div 
+    //     K_DSI_2LAN,
+    //     K_BURST_MODE,
+    //     K_VO_LP_MODE,
+    //     {12, 191, 0x2f, 0x92},
+    //     {14850, 178200, 550, 480, 10, 20, 40, 900, 800, 5, 20, 75},
+    //     ST7701_V1_MIPI_2LAN_480X800_30FPS,
+    // },
+    {
+        "st7701",
+        0, 
+        0, 
+        BACKGROUND_PINK_COLOR,
+        10,
+        24,             // pixclk div 
+        K_DSI_2LAN,
+        K_BURST_MODE,
+        K_VO_LP_MODE,
+        {10, 259, 0x27, 0x84},           // 285.12M
+        {23760, 285120, 660, 480, 10, 20, 150, 1200, 800, 10, 20, 370},         // 1024 + 30 = 1060
+        ST7701_V1_MIPI_2LAN_480X800_30FPS,
+    },
+    {
+        "st7701",
+        0, 
+        0, 
+        BACKGROUND_PINK_COLOR,
+        10,
+        24,             // pixclk div 
+        K_DSI_2LAN,
+        K_BURST_MODE,
+        K_VO_LP_MODE,
+        {10, 259, 0x27, 0x84},           // 285.12M
+        {23760, 285120, 660, 480, 10, 20, 150, 1200, 854, 10, 20, 316},         // 1024 + 30 = 1060
+        ST7701_V1_MIPI_2LAN_480X854_30FPS,
     },
 };
 
@@ -181,6 +227,7 @@ k_s32 kd_mpi_connector_power_set(k_s32 fd, k_bool on)
     return ret;
 }
 
+
 k_s32 kd_mpi_connector_id_get(k_s32 fd, k_u32 *sensor_id)
 {
     k_s32 ret;
@@ -226,3 +273,16 @@ k_s32 kd_mpi_connector_get_negotiated_data(k_s32 fd, k_connector_negotiated_data
     return ret;
 }
 
+
+k_s32 kd_mpi_connector_set_mirror(k_s32 fd, k_connector_mirror mirror)
+{
+    k_s32 ret;
+
+    ret = ioctl(fd, KD_IOC_CONNECTOR_S_MIRROR, &mirror);
+    if (ret != 0) {
+        pr_err("%s, error(%d)\n", __func__, ret);
+        return K_ERR_VO_NOT_SUPPORT;
+    }
+
+    return ret;
+}

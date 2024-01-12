@@ -15,8 +15,51 @@
 #define pr_warn(...) //printf(__VA_ARGS__)
 #define pr_err(...)  printf(__VA_ARGS__)
 
+static const k_vicap_sensor_type_map sensor_type_map_list[] = {
+    {
+        "cam-ov9732-mode0",
+        OV_OV9732_MIPI_1280X720_30FPS_10BIT_LINEAR
+    },
+    {
+        "cam-ov97286-mode0",
+        OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_IR
+    },
+    {
+        "cam-ov97286-mode1",
+        OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_SPECKLE
+    },
+    {
+        "cam-ov97286-mode2",
+        OV_OV9286_MIPI_1280X720_60FPS_10BIT_LINEAR_IR
+    },
+    {
+        "cam-ov97286-mode3",
+        OV_OV9286_MIPI_1280X720_60FPS_10BIT_LINEAR_SPECKLE
+    },
+    {
+        "cam-ov97286-mode4",
+        OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_IR_SPECKLE
+    },
+    {
+        "cam-ov97286-mode5",
+        OV_OV9286_MIPI_1280X720_60FPS_10BIT_LINEAR_IR_SPECKLE
+    },
+    {
+        "cam-imx335-mode0",
+        IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_LINEAR
+    },
+    {
+        "cam-imx335-mode1",
+        IMX335_MIPI_2LANE_RAW12_2592X1944_30FPS_LINEAR
+    },
+    {
+        "cam-imx335-mode2",
+        IMX335_MIPI_4LANE_RAW12_2592X1944_30FPS_LINEAR
+    },
 
-const k_vicap_sensor_info sensor_info_list[] = {
+};
+
+static const k_vicap_sensor_info sensor_info_list[] = {
     {
         "ov9732",
         1280,
@@ -374,9 +417,9 @@ const k_vicap_sensor_info sensor_info_list[] = {
         "ov5647",
         2592,
         1944,
-        VICAP_CSI2,
+        VICAP_CSI0,
         VICAP_MIPI_2LANE,
-        VICAP_SOURCE_CSI2,
+        VICAP_SOURCE_CSI0,
         K_TRUE,
         VICAP_MIPI_PHY_800M,
         VICAP_CSI_DATA_TYPE_RAW10,
@@ -450,8 +493,74 @@ const k_vicap_sensor_info sensor_info_list[] = {
         0,
         SC_SC201CS_SLAVE_MODE_MIPI_1LANE_RAW10_1600X1200_30FPS_LINEAR,
     },
+
+    {         
+        "ov5647_csi2",         
+        1920,         
+        1080,         
+        VICAP_CSI2,         
+        VICAP_MIPI_2LANE,        
+        VICAP_SOURCE_CSI2,         
+        K_TRUE,         
+        VICAP_MIPI_PHY_800M,         
+        VICAP_CSI_DATA_TYPE_RAW10,         
+        VICAP_LINERA_MODE,         
+        VICAP_FLASH_DISABLE,         
+        VICAP_VI_FIRST_FRAME_FS_TR0,         
+        0,         
+        OV_OV5647_MIPI_CSI2_1920X1080_30FPS_10BIT_LINEAR,     
+    },
+    {         
+        "ov5647_csi1",         
+        1920,         
+        1080,         
+        VICAP_CSI1,         
+        VICAP_MIPI_2LANE,        
+        VICAP_SOURCE_CSI1,         
+        K_TRUE,         
+        VICAP_MIPI_PHY_800M,         
+        VICAP_CSI_DATA_TYPE_RAW10,         
+        VICAP_LINERA_MODE,         
+        VICAP_FLASH_DISABLE,         
+        VICAP_VI_FIRST_FRAME_FS_TR0,         
+        0,         
+        OV_OV5647_MIPI_CSI1_1920X1080_30FPS_10BIT_LINEAR,     
+    }
 };
 
+const char *kd_mpi_vicap_get_sensor_string(k_vicap_sensor_type sensor_type)
+{
+    printf("kd_mpi_vicap_get_sensor_string, sensor_type(%d)\n", sensor_type);
+
+    if (sensor_type >= SENSOR_TYPE_MAX) {
+        pr_err("%s, invalid sensor type.\n", __func__);
+        return NULL;
+    }
+
+    for(k_s32 i = 0; i < sizeof(sensor_type_map_list)/sizeof(k_vicap_sensor_type_map); i++) {
+        if (sensor_type_map_list[i].sensor_type == sensor_type) {
+            printf("kd_mpi_vicap_get_sensor_string, sensor_string(%s)\n", sensor_type_map_list[i].sensor_string);
+            return sensor_type_map_list[i].sensor_string;
+        }
+    }
+    return NULL;
+}
+
+k_s32 kd_mpi_vicap_get_sensor_type(k_vicap_sensor_type *sensor_type, const char *sensor_string)
+{
+    if(!sensor_string) {
+        pr_err("%s, type_string is null\n",__func__);
+        return K_ERR_VICAP_NULL_PTR;
+    }
+
+    for(k_s32 i = 0; i < sizeof(sensor_type_map_list)/sizeof(k_vicap_sensor_type_map); i++) {
+        if (!strcmp(sensor_string, sensor_type_map_list[i].sensor_string)) {
+            *sensor_type = sensor_type_map_list[i].sensor_type;
+            return 0;
+        }
+    }
+    return K_ERR_UNEXIST;
+}
 
 k_s32 kd_mpi_vicap_get_sensor_info(k_vicap_sensor_type sensor_type, k_vicap_sensor_info *sensor_info)
 {

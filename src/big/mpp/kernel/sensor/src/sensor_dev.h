@@ -74,7 +74,8 @@ typedef struct {
     struct rt_i2c_bus_device *i2c_bus;
     const char *i2c_name;
     k_u16 slave_addr;
-    k_sensor_reg_bits size;
+    k_sensor_reg_bits reg_addr_size;
+    k_sensor_reg_bits reg_val_size;
 } k_sensor_i2c_info;
 
 struct sensor_driver_dev {

@@ -24,7 +24,7 @@
       "motionThreshold": 0.7,
       "roiWeight": 0.6,
       "semMode": 1,
-      "setPoint": 45,
+      "setPoint": 25,
       "targetFilter": 0.5,
       "tolerance": 10,
       "wdrContrast.max": 110,

@@ -558,7 +558,7 @@ static k_s32 ov9732_sensor_init(void *ctx, k_sensor_mode mode)
         current_mode->ae_info.int_time_delay_frame = 2;
         current_mode->ae_info.gain_delay_frame = 2;
         //current_mode->ae_info.ae_min_interval_frame = 2.5;
-        current_mode->ae_info.color_type = SENSOR_COLOR;	//color sensor
+        current_mode->ae_info.color_type = SENSOR_COLOR_IR;	//color sensor without IR filter
 
         current_mode->ae_info.integration_time_increment = current_mode->ae_info.one_line_exp_time;
         current_mode->ae_info.gain_increment = OV9732_MIN_GAIN_STEP;
@@ -1052,7 +1052,8 @@ struct sensor_driver_dev ov9732_sensor_drv = {
         .i2c_bus = NULL,
         .i2c_name = "i2c1",
         .slave_addr = 0x36,
-        .size = SENSOR_REG_VALUE_8BIT,
+        .reg_addr_size = SENSOR_REG_VALUE_16BIT,
+        .reg_val_size = SENSOR_REG_VALUE_8BIT,
     },
     .sensor_name = "ov9732",
     .sensor_func = {

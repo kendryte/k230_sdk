@@ -95,8 +95,8 @@ static void device_disable(void)
         writel(0x30001, 0x9110303c);
     // check disable status
     value = 1000000;
-    while (!(readl(0x9110302c) & 0x1) || !(readl(0x91103080) & 0x1) ||
-        !(readl(0x9110310c) & 0x1) || !(readl(0x91103040) & 0x1) && value)
+    while ((!(readl(0x9110302c) & 0x1) || !(readl(0x91103080) & 0x1) ||
+        !(readl(0x9110310c) & 0x1) || !(readl(0x91103040) & 0x1)) && value)
         value--;
     // disable ai clk
     value = readl(0x91100008);

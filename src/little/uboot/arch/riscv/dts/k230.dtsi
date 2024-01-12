@@ -1,0 +1,188 @@
+/* Copyright (c) 2023, Canaan Bright Sight Co., Ltd
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ * 1. Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ * CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+/dts-v1/;
+#include <dt-bindings/pinctrl/k230_evb.h>
+
+/ {
+	model = "kendryte k230";
+	compatible = "kendryte,k230";
+	#address-cells = <2>;
+	#size-cells = <2>;
+
+	aliases {
+		uart0 = &serial0;
+	};
+
+	chosen {
+		bootargs = "console=ttyS0,115200n8  debug loglevel=7";
+		stdout-path = "uart0:115200n8";
+	};
+
+	cpus {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		timebase-frequency = <27000000>;
+		u-boot,dm-pre-reloc;
+		cpu@0 {
+			device_type = "cpu";
+			reg = <0>;
+			status = "okay";
+			compatible = "riscv";
+			riscv,isa = "rv64imafdcvsu";
+			mmu-type = "riscv,sv39";
+			clock-frequency = <800000000>;
+			u-boot,dm-pre-reloc;
+		};
+	};
+
+	soc {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		compatible = "simple-bus";
+		ranges;
+		u-boot,dm-pre-reloc;
+
+		def_50mhz: default_50mhz {
+			compatible = "fixed-clock";
+			clock-frequency = <50000000>;
+			clock-output-names = "fix-50mhz";
+			#clock-cells = <0>;
+			u-boot,dm-pre-reloc;
+		};
+
+		def_200mhz: default_200mhz {
+			compatible = "fixed-clock";
+			clock-frequency = <200000000>;
+			clock-output-names = "fix-200mhz";
+			#clock-cells = <0>;
+			u-boot,dm-pre-reloc;
+		};
+
+		def_800mhz: default_800mhz {
+			compatible = "fixed-clock";
+			clock-frequency = <800000000>;
+			clock-output-names = "fix-800mhz";
+			#clock-cells = <0>;
+			u-boot,dm-pre-reloc;
+		};
+
+		serial0: serial@91400000 {
+			compatible = "snps,dw-apb-uart";
+			reg = <0x0 0x91400000 0x0 0x400>;
+			clocks = <&def_50mhz>;
+			clock-names = "baudclk";
+			reg-shift = <2>;
+			reg-io-width = <4>;
+			u-boot,dm-pre-reloc;
+		};
+
+		mmc0: mmc0@91580000 {
+			compatible = "snps,dwcmshc-sdhci-k230";
+			reg = <0x0 0x91580000 0x0 0x400>;
+			bus-width = <8>;
+			clocks = <&def_200mhz>;
+			max-frequency = <50000000>;
+			fifo-mode;
+			have-emmc-phy;
+			status = "disabled";
+			u-boot,dm-pre-reloc;
+		};
+
+		mmc1: mmc1@91581000 {
+			compatible = "snps,dwcmshc-sdhci";
+			reg = <0x0 0x91581000 0x0 0x400>;
+			bus-width = <4>;
+			clocks = <&def_200mhz>;
+			max-frequency = <50000000>;
+			fifo-mode;
+			status = "disabled";
+			u-boot,dm-pre-reloc;
+		};
+
+		spi0: spi@91584000 {
+			compatible = "snps,dwc-ssi-1.01a";
+			reg = <0x0 0x91584000 0x0 0x1000>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			num-cs = <1>;
+			clocks = <&def_800mhz>;
+			spi-max-frequency = <100000000>;
+			dtr-max-frequency = <100000000>;
+			status = "disabled";
+			u-boot,dm-pre-reloc;
+		};
+
+		spi1: spi@91582000 {
+			compatible = "snps,dwc-ssi-1.01a";
+			reg = <0x0 0x91582000 0x0 0x1000>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			num-cs = <5>;
+			clocks = <&def_200mhz>;
+			spi-max-frequency = <100000000>;
+			status = "disabled";
+			u-boot,dm-pre-reloc;
+		};
+
+		spi2: spi@91583000 {
+			compatible = "snps,dwc-ssi-1.01a";
+			reg = <0x0 0x91583000 0x0 0x1000>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			num-cs = <5>;
+			clocks = <&def_200mhz>;
+			spi-max-frequency = <100000000>;
+			status = "disabled";
+			u-boot,dm-pre-reloc;
+		};
+
+		usbotg0: usb-otg@91500000 {
+			compatible = "snps,dwc2";
+			reg = <0x0 0x91500000 0x0 0x10000>;
+			g-tx-fifo-size = <128 128 128 128 128 128>;
+			dr_mode = "otg";
+			otg-rev = <0x200>;
+			status = "disabled";
+		};
+
+		usbotg1: usb-otg@91540000 {
+			compatible = "snps,dwc2";
+			reg = <0x0 0x91540000 0x0 0x10000>;
+			g-tx-fifo-size = <128 128 128 128 128 128>;
+			dr_mode = "otg";
+			otg-rev = <0x200>;
+			status = "disabled";
+		};
+
+		iomux: iomux@91105000 {
+			compatible = "pinctrl-single";
+			reg = <0x0 0x91105000 0x0 0x10000>;
+			#pinctrl-cells = <1>;
+			pinctrl-single,register-width = <32>;
+			pinctrl-single,function-mask = <0xffffffff>;
+			u-boot,dm-pre-reloc;
+		};
+	};
+};

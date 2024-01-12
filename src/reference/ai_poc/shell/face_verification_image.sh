@@ -1,0 +1,1 @@
+./face_verification.elf face_detection_320.kmodel 0.6 0.2 face_recognition.kmodel 75 identification_card.png person.png 1

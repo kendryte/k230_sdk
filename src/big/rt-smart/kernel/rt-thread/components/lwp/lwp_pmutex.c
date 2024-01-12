@@ -169,7 +169,7 @@ static int _pthread_mutex_init(void *umutex)
     if (lock_ret != RT_EOK)
     {
         rt_set_errno(EAGAIN);
-        return -EINTR;
+        return -EAGAIN;
     }
 
     lwp = lwp_self();
@@ -235,7 +235,7 @@ static int _pthread_mutex_lock_timeout(void *umutex, struct timespec *timeout)
     lock_ret = rt_mutex_take_interruptible(&_pmutex_lock, RT_WAITING_FOREVER);
     if (lock_ret != RT_EOK)
     {
-        rt_set_errno(EAGAIN);
+        rt_set_errno(EINTR);
         return -EINTR;
     }
 
@@ -288,6 +288,11 @@ static int _pthread_mutex_lock_timeout(void *umutex, struct timespec *timeout)
                 return -ETIMEDOUT;
             }
         }
+        else if (lock_ret == -RT_EINTR)
+        {
+            rt_set_errno(EINTR);
+            return -EINTR;
+        }
         else
         {
             rt_set_errno(EAGAIN);
@@ -307,7 +312,7 @@ static int _pthread_mutex_unlock(void *umutex)
     if (lock_ret != RT_EOK)
     {
         rt_set_errno(EAGAIN);
-        return -EINTR;
+        return -EAGAIN;
     }
 
     lwp = lwp_self();
@@ -345,7 +350,7 @@ static int _pthread_mutex_unlock(void *umutex)
     if (lock_ret != RT_EOK)
     {
         rt_set_errno(EPERM);
-        return -EAGAIN;
+        return -EPERM;
     }
     return 0;
 }
@@ -360,7 +365,7 @@ static int _pthread_mutex_destroy(void *umutex)
     if (lock_ret != RT_EOK)
     {
         rt_set_errno(EAGAIN);
-        return -EINTR;
+        return -EAGAIN;
     }
 
     lwp = lwp_self();

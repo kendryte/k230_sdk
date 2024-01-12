@@ -83,7 +83,8 @@ static void dwcmshc_phy_pad_config(struct sdhci_host *host)
 	clk_ctrl &= ~SDHCI_CLOCK_CARD_EN;
 	sdhci_writew(host, clk_ctrl, SDHCI_CLOCK_CONTROL);
 
-	if (0) { //(host->otp_info.is_sd
+	if (!dev_read_bool(host->mmc->dev, "1-8-v"))
+	{
 		sdhci_writew(host, DWC_MSHC_PHY_PAD_SD_DAT, DWC_MSHC_CMDPAD_CNFG);
 		sdhci_writew(host, DWC_MSHC_PHY_PAD_SD_DAT, DWC_MSHC_DATPAD_CNFG);
 		sdhci_writew(host, DWC_MSHC_PHY_PAD_SD_CLK, DWC_MSHC_CLKPAD_CNFG);

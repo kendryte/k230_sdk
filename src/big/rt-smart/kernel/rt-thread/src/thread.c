@@ -747,6 +747,7 @@ rt_err_t rt_thread_control(rt_thread_t thread, int cmd, void *arg)
 
     switch (cmd)
     {
+    case RT_THREAD_CTRL_UPDATE_PRIORITY:
     case RT_THREAD_CTRL_CHANGE_PRIORITY:
         /* disable interrupt */
         temp = rt_hw_interrupt_disable();
@@ -756,9 +757,10 @@ rt_err_t rt_thread_control(rt_thread_t thread, int cmd, void *arg)
         {
             /* remove thread from schedule queue first */
             rt_schedule_remove_thread(thread);
-
             /* change thread priority */
             thread->current_priority = *(rt_uint8_t *)arg;
+            if (cmd == RT_THREAD_CTRL_CHANGE_PRIORITY)
+                thread->init_priority = thread->current_priority;
 
             /* recalculate priority attribute */
 #if RT_THREAD_PRIORITY_MAX > 32
@@ -775,6 +777,8 @@ rt_err_t rt_thread_control(rt_thread_t thread, int cmd, void *arg)
         else
         {
             thread->current_priority = *(rt_uint8_t *)arg;
+            if (cmd == RT_THREAD_CTRL_CHANGE_PRIORITY)
+                thread->init_priority = thread->current_priority;
 
             /* recalculate priority attribute */
 #if RT_THREAD_PRIORITY_MAX > 32

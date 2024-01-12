@@ -379,6 +379,11 @@ typedef struct {
     k_vicap_sensor_type sensor_type;
 } k_vicap_sensor_info;
 
+typedef struct {
+    const char *sensor_string;
+    k_vicap_sensor_type sensor_type;
+} k_vicap_sensor_type_map;
+
 /**
  * @brief Defines the attributes of a VICAP channel
  *

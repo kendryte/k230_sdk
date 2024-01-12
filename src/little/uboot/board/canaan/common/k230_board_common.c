@@ -65,7 +65,7 @@ enum env_location arch_env_get_location(enum env_operation op, int prio)
         return ENVL_SPI_FLASH;
     }
     if(g_bootmod ==  SYSCTL_BOOT_NANDFLASH){
-        return ENVL_NAND;
+        return ENVL_SPINAND;
     }
 	return ENVL_MMC;
 }

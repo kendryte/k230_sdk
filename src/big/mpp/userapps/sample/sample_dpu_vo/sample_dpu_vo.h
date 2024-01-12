@@ -98,6 +98,6 @@ int sample_dv_dma_init();
 int sample_dv_dma_delete();
 int sample_dv_dpu_init();
 int sample_dv_dpu_delete();
-int sample_dv_vo_init();
+int sample_dv_vo_init(k_bool mirror);
 
 #endif

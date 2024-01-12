@@ -45,37 +45,17 @@ using std::endl;
 using std::ifstream;
 using std::vector;
 
-/**
- * @brief 行人检测框信息
- */
-typedef struct BoxInfo
-{
-    float x1;   // 行人检测框左上顶点x坐标
-    float y1;   // 行人检测框左上顶点y坐标
-    float x2;   // 行人检测框右下顶点x坐标
-    float y2;   // 行人检测框右下顶点y坐标
-    float score;    // 行人检测框的得分
-    int label;  // 行人检测框的标签
-} BoxInfo;
 
 /**
- * @brief 人脸检测框
+ * @brief 剪切框
  */
 typedef struct Bbox
 {
-    float x; // 人脸检测框的左顶点x坐标
-    float y; // 人脸检测框的左顶点x坐标
+    float x; 
+    float y; 
     float w;
     float h;
 } Bbox;
-
-/**
- * @brief 人脸五官点
- */
-typedef struct SparseLandmarks
-{
-    float points[10]; // 人脸五官点,依次是图片的左眼（x,y）、右眼（x,y）,鼻子（x,y）,左嘴角（x,y）,右嘴角
-} SparseLandmarks;
 
 /**
  * @brief 单张/帧图片大小
@@ -315,8 +295,6 @@ public:
      * @return None
      */
     static void affine(float *affine_matrix, std::unique_ptr<ai2d_builder> &builder, runtime_tensor &ai2d_in_tensor, runtime_tensor &ai2d_out_tensor);
-
-   
 };
 
 #endif

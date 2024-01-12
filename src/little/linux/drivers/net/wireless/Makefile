@@ -22,6 +22,8 @@ obj-$(CONFIG_WLAN_VENDOR_TI) += ti/
 obj-$(CONFIG_WLAN_VENDOR_ZYDAS) += zydas/
 obj-$(CONFIG_WLAN_VENDOR_QUANTENNA) += quantenna/
 obj-$(CONFIG_BCMDHD) += bcmdhd/
+obj-$(CONFIG_RTL8821CS) += rtl8821cs/
+obj-$(CONFIG_RTL8189FS) += rtl8189fs/
 
 # 16-bit wireless PCMCIA client drivers
 obj-$(CONFIG_PCMCIA_RAYCS)	+= ray_cs.o

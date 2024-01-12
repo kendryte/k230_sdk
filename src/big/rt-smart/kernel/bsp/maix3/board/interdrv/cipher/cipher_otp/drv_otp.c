@@ -71,7 +71,7 @@ rt_size_t otp_device_read(rt_device_t dev, rt_off_t pos, void *buffer, rt_size_t
     if(RT_TRUE == otp_get_status(OTP_BYPASS_STATUS))
         return -1;
 
-    if((0xc00 <= pos) || (0xc00 < size) || (0x0 >= size) || (0xc00 < (pos + size)))
+    if((0x300 <= pos) || (0x300 < size) || (0x0 >= size) || (0x300 < (pos + size)))
         return -1;
 
     for(i=0; i<wlen; i++)
@@ -103,7 +103,7 @@ rt_size_t otp_device_write(rt_device_t dev, rt_off_t pos, const void *buffer, rt
     if(RT_TRUE == otp_get_status(OTP_BYPASS_STATUS))
         return -1;
 
-    if((0x200 <= pos) || (0x200 < size) || (0x0 >= size)|| (0x200 < (pos + size)))
+    if((0x300 <= pos) || (0x300 < size) || (0x0 >= size)|| (0x300 < (pos + size)))
         return -1;
 
     // 1. config pmp reg for writing OTP2

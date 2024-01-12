@@ -2,7 +2,7 @@
 
 <div align=left><img src="./resource/pics/canaan-v.png" style="zoom: 30%;" /></div>
 
-Document version ： V1.0  Release date ：2023-09-01
+Document version: V1.3 Release date: 2024-1-9
 
 ## 介绍
 
@@ -44,7 +44,7 @@ do
 wget https://ai.b-bug.org/k230/downloads/fancy_poc/meta_human/$file || wget https://kendryte-download.canaan-creative.com/k230/downloads/fancy_poc/meta_human/$file;  
 done  
 
-for file in onboard_v2.5.zip
+for file in onboard_v2.7.zip
 do
 wget https://ai.b-bug.org/k230/downloads/fancy_poc/meta_human/k230_board/$file || wget https://kendryte-download.canaan-creative.com/k230/downloads/fancy_poc/meta_human/k230_board/$file;  
 done
@@ -120,31 +120,6 @@ vi run1.sh
 ### run1.sh ###
 
 sh run1.sh
-
-
-cd /mnt
-
-vi run2.sh
-
-### run2.sh ###
-
-    if [ ! -d "/sharefs" ]; then
-      mkdir /sharefs
-    fi
-
-    insmod k_ipcm.ko
-
-    ./sharefs &
-
-    #mount /dev/mmcblk1p4 /sharefs
-
-    umount /dev/mmcblk1p4
-
-    mount /dev/mmcblk0p4 /sharefs
-
-### run2.sh ###
-
-sh run2.sh
 ```
 
 
@@ -161,23 +136,18 @@ sh run2.sh
 
 ```
 |--onboard
-|  |--http           （该文件通过编译 src/http 生成）
-|  |--meta_human.elf （该文件通过编译meta_human生成）
+|  |--http.sh 
 |  |--meta_human_256.kmodel
 |  |--meta_human_isp.sh  
 
 ## meta_human_isp.sh ##
 
-./meta_human.elf meta_human_256.kmodel None 0 30
+./meta_human.elf meta_human_256.kmodel None 0 6
 
-## 如果 meta_human.elf发生名称变化，需进行替换。
-## meta_human_isp.sh ##
+## http.sh ##
+./http 6 256
 
-## http和meta_human.elf文件执行
-
-     ./build_app.sh
-     
-## 即可在 k230_bin 中得到。
+## 在k230 docker环境中在src/reference/ai_poc目录下执行./build_app.sh，即可在 k230_bin得到编译后的 meta_human.elf以及http,将其拷贝到k230上onboard文件夹下。
 
 ```
 

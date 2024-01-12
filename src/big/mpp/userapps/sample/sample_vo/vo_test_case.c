@@ -463,7 +463,7 @@ int vo_creat_private_poll(void)
     memset(&config, 0, sizeof(config));
 
     config.max_pool_cnt = 10;
-    config.comm_pool[0].blk_cnt = 1;
+    config.comm_pool[0].blk_cnt = 20;
     config.comm_pool[0].blk_size = PRIVATE_POLL_SZE;          // osd0 - 3 argb 320 x 240
     config.comm_pool[0].mode = VB_REMAP_MODE_NOCACHE;//VB_REMAP_MODE_NOCACHE;
 
@@ -656,7 +656,7 @@ void vo_osd_filling_color(osd_info *osd, void *pic_vaddr)
 }
 
 // #define OSD_TEST_PICTURE        "disney_320x240_abgr8888.yuv"
-// #define OSD_TEST_PICTURE        "disney_320x240_argb8888.yuv"
+#define OSD_TEST_PICTURE        "disney_320x240_argb8888.yuv"
 // #define OSD_TEST_PICTURE       "disney_320x240_rgb565be.yuv"
 // #define OSD_TEST_PICTURE         "disney_320x240_bgr565be.yuv"
 // #define OSD_TEST_PICTURE2        "person_320x240_bgr565be.yuv"
@@ -666,7 +666,7 @@ void vo_osd_filling_color(osd_info *osd, void *pic_vaddr)
 // #define OSD_TEST_PICTURE        "disney_640x480_argb1555.yuv"
 //#define OSD_TEST_PICTURE        "disney_640x480_argb4444.yuv"
 //#define OSD_TEST_PICTURE        "640Wx480H_ARGB4444.argb4444"
-#define OSD_TEST_PICTURE        "640Wx480H_ARGB1555.argb1555"
+// #define OSD_TEST_PICTURE        "640Wx480H_ARGB1555.argb1555"
 
 k_s32 vo_osd_insert_frame_test(void)
 {
@@ -1380,6 +1380,145 @@ k_s32 sample_connector_init(k_connector_type type)
     return 0;
 }
 
+k_s32 sample_connector_wbc_dump_frame(k_connector_type type)
+{
+    
+    void *pic_vaddr = NULL;
+    
+    k_vb_blk_handle block;
+    k_video_frame_info vf_info;
+    k_vo_wbc_attr wb_attr;
+    k_video_frame_info dump_frame;
+
+    layer_info info;
+    k_vo_layer chn_id = K_VO_LAYER1;
+    // config lyaer
+    info.act_size.width = 640;
+    info.act_size.height = 480;
+    info.format = PIXEL_FORMAT_YVU_PLANAR_420;
+    info.func = 0;
+    info.global_alptha = 0xff;
+    info.offset.x = 0;
+    info.offset.y = 0;
+    // info.attr.out_size.width = 1080;//640;
+    // info.attr.out_size.height = 1920;//480;
+    vo_creat_layer_test(chn_id, &info);
+
+    sample_connector_init(type);
+
+    vo_creat_private_poll();
+    // config osd
+    // vo_creat_osd_test(osd_id, &osd);
+
+    // set frame 
+    vo_creat_layer_test(chn_id, &info);
+    memset(&vf_info, 0, sizeof(vf_info));
+
+    vf_info.v_frame.width = info.act_size.width;
+    vf_info.v_frame.height = info.act_size.height;
+    vf_info.v_frame.stride[0] = info.act_size.width;
+    vf_info.v_frame.pixel_format = info.format;
+    block = vo_insert_frame(&vf_info, &pic_vaddr);
+
+    wb_attr.pixel_format = PIXEL_FORMAT_YVU_PLANAR_420;
+    wb_attr.target_size.width = 1080;
+    wb_attr.target_size.height = 1920;
+    wb_attr.stride = wb_attr.target_size.width;
+    kd_mpi_vo_set_wbc_attr(&wb_attr);
+
+    printf("kd_mpi_vo_set_wbc_attr ------------------- \n");
+
+    void *read_addr = NULL;
+    k_u32 ret = 0;
+    FILE *fd;
+    k_u32 read_size = info.size;
+
+    read_addr = malloc(read_size);
+    if (!read_addr)
+    {
+        printf("alloc read addr failed\n");
+    }
+    // add picture
+    fd = fopen(YUV_TEST_PICTURE, "rb"); //  YUV_TEST_PICTURE  OSD_TEST_PICTURE
+    // get output image
+    ret = fread(read_addr, read_size, 1, fd);
+    if (ret <= 0)
+    {
+        printf("fread  picture_addr is failed ret is %d \n", ret);
+    }
+    memcpy(pic_vaddr, read_addr, read_size);
+
+    fclose(fd);
+
+    getchar();
+    // kd_mpi_vo_chn_insert_frame(osd_id + 3, &vf_info);  //K_VO_OSD0
+    kd_mpi_vo_chn_insert_frame(chn_id, &vf_info);
+
+    kd_mpi_vo_enable_wbc();
+
+    k_char select;
+    
+    k_u8 *virt_addr = NULL;
+    static k_u32 dump_count = 0;
+    k_char *suffix = "yuv420sp";
+    k_char filename[256];
+    k_u32 data_size = 1920 * 1080 * 3 / 2;
+    while(1)
+    {
+        select = (k_char)getchar();
+        if(select == 'd')
+        {
+            ret = kd_mpi_wbc_dump_frame(&dump_frame, 1000);
+            if(ret < 0)
+            {
+                printf("kd_mpi_wbc_dump_frame failed \n");
+                continue;
+            }
+
+            virt_addr = kd_mpi_sys_mmap(dump_frame.v_frame.phys_addr[0], data_size);
+            if (virt_addr) 
+            {
+                memset(filename, 0 , sizeof(filename));
+
+                snprintf(filename, sizeof(filename), "dev_%02d_chn_%02d_%dx%d_%04d.%s", \
+                    0, 0, dump_frame.v_frame.width, dump_frame.v_frame.height, dump_count, suffix);
+
+                printf("save dump data to file(%s) dump_frame.v_frame.phys_addr[0] is %lx \n", filename, dump_frame.v_frame.phys_addr[0]);
+                FILE *file = fopen(filename, "wb+");
+                if (file) 
+                {
+                    fwrite(virt_addr, 1, data_size, file);
+                } 
+                else {
+                    printf("sample_vicap, open dump file failed()\n");
+                }
+
+                fclose(file);
+                kd_mpi_sys_munmap(virt_addr, data_size);
+            } else 
+                printf("sample_vicap, map dump addr failed.\n");
+
+            ret = kd_mpi_wbc_dump_release(&dump_frame);
+
+            dump_count++;
+        }
+    }
+    printf("Press Enter to exit \n");
+
+    getchar();
+
+    // close plane
+    // kd_mpi_vo_osd_disable(osd_id);
+    kd_mpi_vo_disable_video_layer(chn_id);
+    vo_release_frame(block);
+    vo_release_private_poll();
+    // fclose(fd);
+    //exit ;
+    return 0;
+}
+
+#define CONNECTOR_OSD_TEST_PICTURE        "disney_320x240_argb8888.yuv"
+#define LOAD_PICTURE                       0
 
 k_s32 sample_connector_osd_install_frame(k_connector_type type)
 {
@@ -1389,8 +1528,8 @@ k_s32 sample_connector_osd_install_frame(k_connector_type type)
     k_vb_blk_handle block;
     k_video_frame_info vf_info;
 
-    osd.act_size.width = 640 ;
-    osd.act_size.height = 480;
+    osd.act_size.width = 320 ;
+    osd.act_size.height = 240;
     osd.offset.x = 10;
     osd.offset.y = 10;
     osd.global_alptha = 0xff;
@@ -1408,9 +1547,30 @@ k_s32 sample_connector_osd_install_frame(k_connector_type type)
     vf_info.v_frame.stride[0] = osd.act_size.width;
     vf_info.v_frame.pixel_format = osd.format;
     block = vo_insert_frame(&vf_info, &pic_vaddr);
+#if LOAD_PICTURE
+    void *read_addr = NULL;
+    FILE *fd;
+    int ret = 0;
+    k_u32 read_size = osd.size;
 
+    read_addr = malloc(read_size);
+    if (!read_addr)
+    {
+        printf("alloc read addr failed\n");
+    }
+    // add picture
+    fd = fopen(CONNECTOR_OSD_TEST_PICTURE, "rb");
+    // get output image
+    ret = fread(read_addr, read_size, 1, fd);
+    if (ret <= 0)
+    {
+        printf("fread  picture_addr is failed ret is %d \n", ret);
+    }
+    memcpy(pic_vaddr, read_addr, read_size);
+
+#else
     vo_osd_filling_color(&osd, pic_vaddr);
-
+#endif
     getchar();
     kd_mpi_vo_chn_insert_frame(osd_id + 3, &vf_info);  //K_VO_OSD0
 
@@ -1422,7 +1582,9 @@ k_s32 sample_connector_osd_install_frame(k_connector_type type)
     kd_mpi_vo_osd_disable(osd_id);
     vo_release_frame(block);
     vo_release_private_poll();
-    // fclose(fd);
+#if LOAD_PICTURE
+    fclose(fd);
+#endif
     //exit ;
     return 0;
 }

@@ -60,7 +60,7 @@ static k_u32 dv_vo_creat_osd_test(k_vo_osd osd, dv_osd_info *info)
     return 0;
 }
 
-static k_u32 sample_vicap_vo_init(void)
+static k_u32 sample_vicap_vo_init(k_bool mirror)
 {
     k_u32 ret = 0;
     k_s32 connector_fd;
@@ -84,13 +84,16 @@ static k_u32 sample_vicap_vo_init(void)
 
     // set connect power
     kd_mpi_connector_power_set(connector_fd, K_TRUE);
+
+    if(mirror)
+        kd_mpi_connector_set_mirror(connector_fd, K_CONNECTOR_MIRROR_VER);
     // connector init
     kd_mpi_connector_init(connector_fd, connector_info);
 
     return 0;
 }
 
-k_s32 sample_dv_vo_init()
+k_s32 sample_dv_vo_init(k_bool mirror)
 {
     k_video_frame_info vf_info;
     dv_osd_info osd;
@@ -99,12 +102,12 @@ k_s32 sample_dv_vo_init()
     memset(&vf_info, 0, sizeof(vf_info));
     memset(&osd, 0, sizeof(osd));
 
-    sample_vicap_vo_init();
+    sample_vicap_vo_init(mirror);
 
     osd.act_size.width = 720;// * 2 / 3 ;
     osd.act_size.height = 1280;
-    osd.offset.x = 0;
-    osd.offset.y = 0;
+    osd.offset.x = (1080-osd.act_size.width)/2;
+    osd.offset.y = (1920-osd.act_size.height)/2;
     osd.global_alptha = 0xff;
     osd.format = PIXEL_FORMAT_RGB_MONOCHROME_8BPP;//PIXEL_FORMAT_RGB_888;//PIXEL_FORMAT_ARGB_4444; //PIXEL_FORMAT_ARGB_1555;//PIXEL_FORMAT_ARGB_8888;
 

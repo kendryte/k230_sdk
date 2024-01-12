@@ -335,7 +335,7 @@
           ]
         },
         {
-          "class": "CWdrv41",
+          "class": "CWdrv4",
           "contrast": 512,
           "enable": false,
           "entropy": [
@@ -411,7 +411,7 @@
             1024, 1024, 1024, 1024, 1024, 1024, 1024
           ],
           "ca_en": true,
-          "ca_mode": 2,
+          "ca_mode": 1,
           "class": "CEEv1",
           "curve_en": true,
           "dci_curve": [

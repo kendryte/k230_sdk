@@ -1,0 +1,1 @@
+./tts_zh.elf zh_fastspeech_1.kmodel zh_fastspeech_2.kmodel hifigan.kmodel 0

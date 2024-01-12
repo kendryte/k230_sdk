@@ -69,8 +69,8 @@
 #define osd_height                          (1080)
 #else
 #define SENSOR_CHANNEL (3)     // isp通道数
-#define SENSOR_HEIGHT (1280)  // isp高度，ai输入，竖屏
-#define SENSOR_WIDTH (720)    // isp宽度，ai输入，竖屏
+#define SENSOR_HEIGHT (256)  // isp高度，ai输入，竖屏
+#define SENSOR_WIDTH (144)    // isp宽度，ai输入，竖屏
 #define ISP_CHN0_WIDTH  (1088)//(1920)
 #define ISP_CHN0_HEIGHT (1920)//(1080)
 #define vicap_install_osd                   (1)

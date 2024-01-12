@@ -51,7 +51,7 @@ int main(int argc, char* argv[])
 		exit(-1);
 	} else {
 		uint32_t buf[atoi(argv[1])];
-		if(0xc00 < sizeof(buf))
+		if(0x300 < sizeof(buf))
 		{
 			printf("Array length exceeds OTP readable range!\n");
 			exit(-1);

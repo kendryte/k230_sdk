@@ -118,6 +118,8 @@ static void *_lwp_map_user(struct rt_lwp *lwp, void *map_va, size_t map_size, in
     va = rt_hw_mmu_map_auto(m_info, map_va, map_size, MMU_MAP_U_RWCB);
     if (!va)
     {
+        rt_kprintf("Memory exhaustion!\r\n");
+        sys_exit(-1);
         return 0;
     }
 
@@ -496,7 +498,7 @@ int lwp_user_accessable(void *addr, size_t size)
     {
         return 0;
     }
-    if (!size || !addr)
+    if (!addr)
     {
         return 0;
     }

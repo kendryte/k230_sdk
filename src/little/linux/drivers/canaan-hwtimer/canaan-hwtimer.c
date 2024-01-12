@@ -200,7 +200,7 @@ static int k230_hwtimer_open(struct inode *inode, struct file *file)
 					      hw_timer_t, mdev);
 
     k230_hwtimer_start(timer, 1);
-	timer_setup(&timer->softtimer, &softtimer_func, 0);
+	//timer_setup(&timer->softtimer, &softtimer_func, 0);
     mod_timer(&timer->softtimer, jiffies + SOFT_TIMEOUT);
 	return 0;
 }
@@ -210,7 +210,7 @@ static int k230_hwtimer_release(struct inode *inode, struct file *file)
 	struct miscdevice *mdev = file->private_data;
 	hw_timer_t *timer = to_hwtimer(mdev);
 
-    del_timer(&timer->softtimer);
+    //del_timer(&timer->softtimer);
 
     k230_hwtimer_start(timer, 0);
     return 0;
@@ -322,16 +322,16 @@ static long k230_hwtimer_ioctl(struct file *file, unsigned int cmd, unsigned lon
                 old1 = new1 = 0;
                 break;
             case 2:
-                old1 = new1 = 0;
+                old2 = new2 = 0;
                 break;
             case 3:
-                old1 = new1 = 0;
+                old3 = new3 = 0;
                 break;
             case 4:
-                old1 = new1 = 0;
+                old4 = new4 = 0;
                 break;
             case 5:
-                old1 = new1 = 0;
+                old5 = new5 = 0;
                 break;
             default :
                 return -EINVAL;
@@ -399,6 +399,7 @@ static int k230_hwtimer_probe(struct platform_device *pdev)
 	}
 
     misc->this_device = dev;
+    timer_setup(&k230_timer->softtimer, &softtimer_func, 0);
 
     return 0;
 }

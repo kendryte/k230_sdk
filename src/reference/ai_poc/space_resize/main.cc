@@ -94,6 +94,9 @@ void video_proc(char *argv[])
     int rect_frame_x = 0;
     int rect_frame_y = 0;
 
+    int max_new_resize_w = 450;
+    int max_new_resize_h = 450;
+
     while (!isp_stop)
     {
         ScopedTiming st("total time", 1);
@@ -127,16 +130,28 @@ void video_proc(char *argv[])
         cv::Mat osd_frame(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
         cv::Mat osd_frame_vertical;
 
-        for (auto r: results)
+        float max_area_hand = 0;
+        int max_id_hand = -1;
+        for (int i = 0; i < results.size(); ++i)
         {
-            std::string text = hd.labels_[r.label] + ":" + std::to_string(round(r.score * 100) / 100.0);
+            float area_i = (results[i].x2 - results[i].x1) * (results[i].y2 - results[i].y1);
+            if (area_i > max_area_hand)
+            {
+                max_area_hand = area_i;
+                max_id_hand = i;
+            }
+        }
 
-            int w = r.x2 - r.x1 + 1;
-            int h = r.y2 - r.y1 + 1;
+        if (max_id_hand != -1)
+        {
+            std::string text = hd.labels_[results[max_id_hand].label] + ":" + std::to_string(round(results[max_id_hand].score * 100) / 100.0);
+
+            int w = results[max_id_hand].x2 - results[max_id_hand].x1 + 1;
+            int h = results[max_id_hand].y2 - results[max_id_hand].y1 + 1;
             
             int length = std::max(w,h)/2;
-            int cx = (r.x1+r.x2)/2;
-            int cy = (r.y1+r.y2)/2;
+            int cx = (results[max_id_hand].x1+results[max_id_hand].x2)/2;
+            int cy = (results[max_id_hand].y1+results[max_id_hand].y2)/2;
             int ratio_num = 1.26*length;
 
             int x1_1 = std::max(0,cx-ratio_num);
@@ -157,7 +172,7 @@ void video_proc(char *argv[])
             }
         }
 
-        if(results.size() == 1)
+        if(max_id_hand != -1)
         {
             if(first_start)
             {
@@ -181,6 +196,9 @@ void video_proc(char *argv[])
 
                     new_resize_w = two_point_crop_w * ori_new_ratio / SENSOR_WIDTH * osd_width;
                     new_resize_h = two_point_crop_h * ori_new_ratio / SENSOR_HEIGHT * osd_height;
+
+                    new_resize_w = new_resize_w < max_new_resize_w  ? new_resize_w : max_new_resize_w;
+                    new_resize_h = new_resize_h < max_new_resize_h ? new_resize_h : max_new_resize_h;
 
                     Bbox bbox_crop = {two_point_left_x,two_point_top_y,two_point_crop_w,two_point_crop_h};
 
@@ -225,11 +243,6 @@ void video_proc(char *argv[])
                     cv::rectangle(osd_frame, cv::Rect(rect_frame_x, rect_frame_y , new_resize_w, new_resize_h), cv::Scalar( 255,0, 255, 255), 2, 2, 0);
                 }
             }
-        }
-        else
-        {
-            cv::putText(osd_frame, "Must have one hand !", cv::Point(200,500),cv::FONT_HERSHEY_COMPLEX, 2, cv::Scalar(255, 255, 0, 0), 4);
-            first_start = true;
         }
 
         {

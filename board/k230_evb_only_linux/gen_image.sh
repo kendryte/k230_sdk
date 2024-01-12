@@ -25,6 +25,7 @@ rtapp_data_file="${BUILD_DIR}/images/big-core/fastboot_app.elf"
 
 copye_file_to_images;
 cp  ${K230_SDK_ROOT}/board/k230_evb_only_linux/rcS  ${BUILD_DIR}/images/little-core/rootfs/etc/init.d/rcS;
+cp  ${K230_SDK_ROOT}/board/k230_evb_only_linux/fw_env.config  ${BUILD_DIR}/images/little-core/rootfs/etc/fw_env.config;
 
 if [ "${CONFIG_SUPPORT_LINUX}" = "y" ]; then
 	gen_version;

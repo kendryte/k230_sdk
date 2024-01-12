@@ -33,6 +33,8 @@
 #define DELAY_MS_BACKLIGHT_DEFAULT     200
 #define DELAY_MS_BACKLIGHT_FIRST       1
 
+static k_u8 hx8399_y_mirror = 0;
+
 static k_s32 g_blacklight_delay_ms = DELAY_MS_BACKLIGHT_FIRST;
 
 static void hx8399_v2_init(k_u8 test_mode_en)
@@ -80,7 +82,10 @@ static void hx8399_v2_init(k_u8 test_mode_en)
     connecter_dsi_send_pkg(param12, sizeof(param12));
     connecter_dsi_send_pkg(param13, sizeof(param13));
     connecter_dsi_send_pkg(param14, sizeof(param14));
+    if(hx8399_y_mirror != 0)
+        param15[1] = hx8399_y_mirror;
     connecter_dsi_send_pkg(param15, sizeof(param15));
+
     connecter_dsi_send_pkg(param16, sizeof(param16));
     connecter_dsi_send_pkg(param22, sizeof(param22));
     connecter_dsi_send_pkg(param23, 1);
@@ -216,6 +221,9 @@ k_s32 hx8399_init(void *ctx, k_connector_info *info)
     k_s32 ret = 0;
     struct connector_driver_dev* dev = ctx;
 
+    if(info->pixclk_div != 0)
+        connector_set_pixclk(info->pixclk_div);
+
     ret |= hx8399_set_phy_freq(&info->phy_attr);
     ret |= hx8399_dsi_resolution_init(info);
     ret |= hx8399_vo_resolution_init(&info->resolution, info->bg_color, info->intr_line);
@@ -240,6 +248,30 @@ static k_s32 hx8399_conn_check(void* ctx, k_s32* conn)
     return ret;
 }
 
+
+static k_s32 hx8399_set_mirror(void* ctx, k_connector_mirror *mirror)
+{
+    k_connector_mirror hx8399_mirror;
+
+    hx8399_mirror = *mirror;
+
+    switch(hx8399_mirror)
+    {
+        case K_CONNECTOR_MIRROR_HOR:
+            break;
+        case K_CONNECTOR_MIRROR_VER: 
+            hx8399_y_mirror = 0x09;
+            break;
+        case K_CONNECTOR_MIRROR_BOTH: 
+            break;
+        default :
+            rt_kprintf("hx8399_mirror(%d) is not support \n", hx8399_mirror);
+            break;
+    }
+    return 0;
+}
+
+
 struct connector_driver_dev hx8399_connector_drv = {
     .connector_name = "hx8399",
     .connector_func = {
@@ -247,5 +279,6 @@ struct connector_driver_dev hx8399_connector_drv = {
         .connector_init = hx8399_init,
         .connector_get_chip_id = hx8399_get_chip_id,
         .connector_conn_check = hx8399_conn_check,
+        .connector_set_mirror = hx8399_set_mirror,
     },
 };

@@ -139,23 +139,35 @@ void video_proc(char *argv[])
         hd.inference();
         hd.post_process(results);
 
-        std::string gesture;
-        for (auto r: results)
+        float max_area_hand = 0;
+        int max_id_hand = -1;
+        for (int i = 0; i < results.size(); ++i)
         {
-            std::string text = hd.labels_[r.label] + ":" + std::to_string(round(r.score * 100) / 100.0);
+            float area_i = (results[i].x2 - results[i].x1) * (results[i].y2 - results[i].y1);
+            if (area_i > max_area_hand)
+            {
+                max_area_hand = area_i;
+                max_id_hand = i;
+            }
+        }
 
-            int w = r.x2 - r.x1 + 1;
-            int h = r.y2 - r.y1 + 1;
+        std::string gesture = "";
+        if (max_id_hand != -1)
+        {
+            std::string text = hd.labels_[results[max_id_hand].label] + ":" + std::to_string(round(results[max_id_hand].score * 100) / 100.0);
+
+            int w = results[max_id_hand].x2 - results[max_id_hand].x1 + 1;
+            int h = results[max_id_hand].y2 - results[max_id_hand].y1 + 1;
             
-            int rect_x = r.x1/ SENSOR_WIDTH * osd_width;
-            int rect_y = r.y1/ SENSOR_HEIGHT * osd_height;
+            int rect_x = results[max_id_hand].x1/ SENSOR_WIDTH * osd_width;
+            int rect_y = results[max_id_hand].y1/ SENSOR_HEIGHT * osd_height;
             int rect_w = (float)w / SENSOR_WIDTH * osd_width;
             int rect_h = (float)h / SENSOR_HEIGHT  * osd_height;
             // cv::rectangle(osd_frame, cv::Rect(rect_x, rect_y , rect_w, rect_h), cv::Scalar( 255,255, 255, 255), 2, 2, 0);
             
             int length = std::max(w,h)/2;
-            int cx = (r.x1+r.x2)/2;
-            int cy = (r.y1+r.y2)/2;
+            int cx = (results[max_id_hand].x1+results[max_id_hand].x2)/2;
+            int cy = (results[max_id_hand].y1+results[max_id_hand].y2)/2;
             int ratio_num = 1.26*length;
 
             int x1_1 = std::max(0,cx-ratio_num);
@@ -178,11 +190,8 @@ void video_proc(char *argv[])
             std::string text1 = "Gesture: " + gesture;
         }
 
-        if(results.size() >= 2)
-        {
-            cv::putText(osd_frame, "Must have one hand !", cv::Point(200,500),cv::FONT_HERSHEY_COMPLEX, 2, cv::Scalar(255, 255, 0, 0), 4);
-        }
-        else if(MODE == 0)
+
+        if(MODE == 0)
         {
             {
                 ScopedTiming st("osd draw", atoi(argv[6]));
@@ -234,7 +243,7 @@ void video_proc(char *argv[])
                 sleep_end = false;
             }
 
-            if(results.size() == 0)
+            if(max_id_hand == -1)
             {
                 set_stop_id = true;
             }
@@ -248,7 +257,7 @@ void video_proc(char *argv[])
             }
             else if(counts_guess == MODE)
             {
-                osd_frame = cv::Mat(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
+                // osd_frame = cv::Mat(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
                 if(k230_win > player_win)
                 {
                     cv::putText(osd_frame, "Y O U   L O S E", cv::Point(340,500),cv::FONT_HERSHEY_COMPLEX, 2, cv::Scalar(255, 255, 0, 0), 4);

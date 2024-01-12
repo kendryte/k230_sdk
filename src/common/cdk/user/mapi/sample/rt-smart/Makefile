@@ -8,6 +8,7 @@ CC=riscv64-unknown-linux-musl-gcc
 CFLAGS=-mcmodel=medany -march=rv64imafdcv -mabi=lp64d -Werror -Wall -O0 -g -gdwarf-2 -n --static
 CPP=riscv64-unknown-linux-musl-g++
 LINKFLAG=-T ./linker_scripts/riscv64/link.lds
+
 LIBS=-lipcmsg
 LIBS+=-lpthread
 LIBS+=-lmapi
@@ -21,6 +22,8 @@ LIBS+=-lai
 LIBS+=-lao
 LIBS+=-laenc
 LIBS+=-ladec
+LIBS+=-ldpu
+LIBS+=-ldma
 
 LIBS+=-lvicap
 LIBS+=-lcam_device
@@ -59,12 +62,14 @@ LIBS+=-lvo
 LIBS+=-lconnector
 #LIBS+=-lvin_drv
 
+LIBS+=-lrtthread
 
 
 LIBPATH=-L$(IPCMSG_ROOT)/slave/lib
 LIBPATH+=-L$(MPI_ROOT)/userapps/lib
 LIBPATH+=-L$(MAPI_ROOT)/mediaserver/lib
 LIBPATH+=-L$(DATAFIFO_ROOT)/host/lib
+LIBPATH+=-L$(RTSMART_SRC_DIR)/userapps/sdk/rt-thread/lib/risc-v/rv64
 
 #add common include
 INCS=-I$(IPCMSG_ROOT)/include

@@ -11,13 +11,19 @@ static volatile int loop_exit_flag;
 static void thread_buzz_entry(void *param)
 {
     // rt_kprintf("%s %d thread buzz start.\n", __FUNCTION__, __LINE__);
-    uassert_int_equal(loop_exit_flag, 1);
+    if (loop_exit_flag != 1)
+    {
+        uassert_int_equal(loop_exit_flag, 1);
+    }
     while (loop_exit_flag)
     {
         rt_thread_mdelay(1);
     }
     // rt_kprintf("%s %d thread buzz exit.\n", __FUNCTION__, __LINE__);
-    uassert_int_equal(loop_exit_flag, 0);
+    if (loop_exit_flag != 0)
+    {
+        uassert_int_equal(loop_exit_flag, 0);
+    }
 }
 
 static void thread_loop_entry(void *param)

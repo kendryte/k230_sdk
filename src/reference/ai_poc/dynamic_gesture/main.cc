@@ -44,7 +44,7 @@ void print_usage(const char *name)
          << "  nms_thresh       手掌检测非极大值抑制阈值\n"
 		 << "  kmodel_kp        手势关键点检测kmodel路径\n"
 		 << "  kmodel_gesture   动态手势识别kmodel路径\n"
-		 << "  debug_mode       是否需要调试，0、1、2分别表示不调试、简单调试、详细调试\n"
+		 << "  debug_mode       是否需要调试, 0、1、2分别表示不调试、简单调试、详细调试\n"
 		 << "\n"
 		 << endl;
 }
@@ -103,65 +103,6 @@ void video_proc(char *argv[])
     cv::Mat you_argb;
     Utils::bin_2_mat("you.bin", bin_height, bin_width, you_argb);
 
-    cv::Mat trigger_argb;
-    cv::Mat up_argb;
-    cv::Mat down_argb;
-    cv::Mat left_argb;
-    cv::Mat right_argb;
-    cv::Mat middle_argb;
-    #if defined(CONFIG_BOARD_K230_CANMV)
-        int show_x = 580;
-        int show_y = 90;
-        int show_width = 1160;
-        int show_height = 1000;
-        float ratio = 0.9;
-
-        cv::Mat trigger_argb_tmp;
-        cv::Mat up_argb_tmp;
-        cv::Mat down_argb_tmp;
-        cv::Mat left_argb_tmp;
-        cv::Mat right_argb_tmp;
-        cv::Mat middle_argb_tmp;
-
-        Utils::bin_2_mat("trigger.bin", show_height, show_width, trigger_argb_tmp);
-        transpose(trigger_argb_tmp, trigger_argb);
-        flip(trigger_argb, trigger_argb, 1);
-        cv::resize(trigger_argb, trigger_argb, cv::Size(int(show_width*ratio), int(show_height*ratio)));
-        Utils::bin_2_mat("up.bin", show_height, show_width, up_argb_tmp); 
-        transpose(up_argb_tmp, right_argb);
-        flip(right_argb, right_argb, 1); 
-        cv::resize(right_argb, right_argb, cv::Size(int(show_width*ratio), int(show_height*ratio)));
-        Utils::bin_2_mat("down.bin", show_height, show_width, down_argb_tmp);        
-        transpose(down_argb_tmp, left_argb);
-        flip(left_argb, left_argb, 1);
-        cv::resize(left_argb, left_argb, cv::Size(int(show_width*ratio), int(show_height*ratio)));
-        Utils::bin_2_mat("left.bin", show_height, show_width, left_argb_tmp);        
-        transpose(left_argb_tmp, up_argb);
-        flip(up_argb, up_argb, 1);
-        cv::resize(up_argb, up_argb, cv::Size(int(show_width*ratio), int(show_height*ratio)));
-        Utils::bin_2_mat("right.bin", show_height, show_width, right_argb_tmp);        
-        transpose(right_argb_tmp, down_argb);
-        flip(down_argb, down_argb, 1);
-        cv::resize(down_argb, down_argb, cv::Size(int(show_width*ratio), int(show_height*ratio)));
-        Utils::bin_2_mat("middle.bin", show_height, show_width, middle_argb_tmp);
-        transpose(middle_argb_tmp, middle_argb);
-        flip(middle_argb, middle_argb, 1);
-        cv::resize(middle_argb, middle_argb, cv::Size(int(show_width*ratio), int(show_height*ratio)));
-    #else
-        int show_x = 44;
-        int show_y = 500;
-        int show_width = 1000;
-        int show_height = 1160;
-        int ratio = 1;
-        
-        Utils::bin_2_mat("trigger.bin", show_width, show_height, trigger_argb);
-        Utils::bin_2_mat("up.bin", show_width, show_height, up_argb);        
-        Utils::bin_2_mat("down.bin", show_width, show_height, down_argb);        
-        Utils::bin_2_mat("left.bin", show_width, show_height, left_argb);        
-        Utils::bin_2_mat("right.bin", show_width, show_height, right_argb);        
-        Utils::bin_2_mat("middle.bin", show_width, show_height, middle_argb);
-    #endif
-
     while (!isp_stop)
     {
         ScopedTiming st("total time", 1);
@@ -184,7 +125,6 @@ void video_proc(char *argv[])
         }
 
         cv::Mat osd_frame(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-        cv::Mat show_image = osd_frame(cv::Rect(show_x, show_y, int(show_width*ratio), int(show_height*ratio)));
 
         if (cur_state_== TRIGGER)
         {
@@ -250,11 +190,6 @@ void video_proc(char *argv[])
                             cv::Mat copy_image = osd_frame(cv::Rect(0,0,bin_width,bin_height));
                             shang_argb.copyTo(copy_image); 
                             cur_state_ = UP;
-                            
-                            if (draw_state_ == TRIGGER)
-                            {
-                                trigger_argb.copyTo(show_image); 
-                            }
                         }
                     }
                     else if ((110.0<=angle) && (angle<225.0))
@@ -269,11 +204,6 @@ void video_proc(char *argv[])
                             cv::Mat copy_image = osd_frame(cv::Rect(0,0,bin_height,bin_width));
                             you_argb.copyTo(copy_image); 
                             cur_state_ = RIGHT;
-                            
-                            if (draw_state_ == TRIGGER)
-                            {
-                                trigger_argb.copyTo(show_image); 
-                            }
                         }
                     }
                     else if((225.0<=angle) && (angle<315.0))
@@ -287,11 +217,6 @@ void video_proc(char *argv[])
                             cv::Mat copy_image = osd_frame(cv::Rect(0,0,bin_width,bin_height));
                             xia_argb.copyTo(copy_image); 
                             cur_state_ = DOWN;
-                            
-                            if (draw_state_ == TRIGGER)
-                            {
-                                trigger_argb.copyTo(show_image); 
-                            }
                         }
                     }
                     else
@@ -305,11 +230,6 @@ void video_proc(char *argv[])
                             cv::Mat copy_image = osd_frame(cv::Rect(0,0,bin_height,bin_width));
                             zuo_argb.copyTo(copy_image);
                             cur_state_ = LEFT;
-                            
-                            if (draw_state_ == TRIGGER)
-                            {
-                                trigger_argb.copyTo(show_image); 
-                            }
                         }
                     }
                     m_start = std::chrono::steady_clock::now();
@@ -368,7 +288,6 @@ void video_proc(char *argv[])
                 {
                     cv::Mat copy_image = osd_frame(cv::Rect(0,0,bin_width,bin_height));
                     shang_argb.copyTo(copy_image); 
-                    trigger_argb.copyTo(show_image);
                     if ((idx==15) || (idx==10))
                     {
                         vec_flag.clear();
@@ -400,7 +319,6 @@ void video_proc(char *argv[])
                 {
                     cv::Mat copy_image = osd_frame(cv::Rect(0,0,bin_height,bin_width));
                     you_argb.copyTo(copy_image); 
-                    trigger_argb.copyTo(show_image);
                     if  ((idx==16)||(idx==11)) 
                     {
                         vec_flag.clear();
@@ -421,7 +339,6 @@ void video_proc(char *argv[])
                 {
                     cv::Mat copy_image = osd_frame(cv::Rect(0,0,bin_width,bin_height));
                     xia_argb.copyTo(copy_image); 
-                    trigger_argb.copyTo(show_image);
                     if  ((idx==18)||(idx==13))
                     {
                         vec_flag.clear();
@@ -442,7 +359,6 @@ void video_proc(char *argv[])
                 {
                     cv::Mat copy_image = osd_frame(cv::Rect(0,0,bin_height,bin_width));
                     zuo_argb.copyTo(copy_image);
-                    trigger_argb.copyTo(show_image);
                     if ((idx==17)||(idx==12))
                     {
                         vec_flag.clear();
@@ -477,19 +393,19 @@ void video_proc(char *argv[])
             
             if (draw_state_ == UP)
             {
-                up_argb.copyTo(show_image); 
+                cv::putText(osd_frame, "UP", cv::Point(osd_width*3/7,osd_height/2),cv::FONT_HERSHEY_COMPLEX, 5, cv::Scalar(255, 255, 195, 0), 2);
             } else if (draw_state_ == RIGHT)
             {
-                right_argb.copyTo(show_image);
+                cv::putText(osd_frame, "LEFT", cv::Point(osd_width*3/7,osd_height/2),cv::FONT_HERSHEY_COMPLEX, 5, cv::Scalar(255, 255, 195, 0), 2);
             }else if (draw_state_ == DOWN)
             {
-                down_argb.copyTo(show_image);
+                cv::putText(osd_frame, "DOWN", cv::Point(osd_width*3/7,osd_height/2),cv::FONT_HERSHEY_COMPLEX, 5, cv::Scalar(255, 255, 195, 0), 2);
             }else if (draw_state_ == LEFT)
             {
-                left_argb.copyTo(show_image);
+                cv::putText(osd_frame, "RIGHT", cv::Point(osd_width*3/7,osd_height/2),cv::FONT_HERSHEY_COMPLEX, 5, cv::Scalar(255, 255, 195, 0), 2);
             }else if (draw_state_ == MIDDLE)
             {
-                middle_argb.copyTo(show_image);
+                cv::putText(osd_frame, "MIDDLE", cv::Point(osd_width*3/7,osd_height/2),cv::FONT_HERSHEY_COMPLEX, 5, cv::Scalar(255, 255, 195, 0), 2);
             }
 
         }else

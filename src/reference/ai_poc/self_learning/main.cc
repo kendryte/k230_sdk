@@ -25,10 +25,12 @@
 
 #include <iostream>
 #include <thread>
-#include <vector>
-#include <fstream>
+#include <dirent.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <termios.h>
+#include <chrono>
 #include <sys/stat.h>
-#include "utils.h"
 #include "vi_vo.h"
 #include "self_learning.h"
 
@@ -36,31 +38,106 @@ using std::cerr;
 using std::cout;
 using std::endl;
 
+using namespace std;
+using namespace cv;
+
 std::atomic<bool> isp_stop(false);
+std::atomic<bool> reg_stop(false);
+int flags;
+
+void print_usage(const char *name)
+{
+    cout << "Usage: " << name << "<kmodel> <crop_w> <crop_h> <topk> <debug_mode> " << endl
+         << "For example: " << endl
+         << " [for isp]  ./self_learning.elf --------------" << endl
+         << "Options:" << endl
+         << " 1> kmodel         kmodel文件路径 \n"
+         << " 2> crop_w         剪切范围w \n"
+         << " 3> crop_h         剪切范围h \n"
+         << " 4> thres          判别阈值 \n"
+         << " 5> topk           识别范围 \n"
+         << " 6> debug_mode     是否需要调试，0、1、2分别表示不调试、简单调试、详细调试\n"
+         << "\n"
+         << endl;
+}
+
+void getFileNames(string path,vector<string>& filenames)
+{
+    DIR *pDir;
+    struct dirent* ptr;
+    if(!(pDir = opendir(path.c_str())))
+    {
+        cout <<"Folder doesn't Exist!"<< endl;
+        return;
+    }
+    while((ptr = readdir(pDir))!=0) 
+    {
+        if (strcmp(ptr->d_name, ".") != 0 && strcmp(ptr->d_name, "..") != 0)
+        {
+            filenames.push_back(ptr->d_name);
+            // filenames.push_back(path + "/" + ptr->d_name);
+        }
+    }
+    closedir(pDir);
+}
+
+bool createFolder(string folderPath) {
+    if (mkdir(folderPath.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0) 
+    {
+        return false;
+    }
+    return true;
+}
 
 bool isFolderExist(string folderPath) {
     struct stat info;
-    if (stat(folderPath.c_str(), &info) != 0) {
+    if (stat(folderPath.c_str(), &info) != 0) 
+    {
         return false;
     }
     return (info.st_mode & S_IFDIR);
 }
 
-void print_usage(const char *name)
+void dump_binary_file(const char *file_name, char *data, const size_t size)
 {
-    cout << "Usage: " << name << " <kmodel> <input_mode> <debug_mode> <topK> <mode>" << endl
-         << "For example: " << endl
-         << " [for isp] ./self_learning.elf recognition.kmodel None 0 3 work" << endl
-         << "Options:" << endl
-         << " 1> kmodel          kmodel文件路径 \n"
-         << " 2> input_mode      摄像头(None) \n"
-         << " 3> debug_mode      是否需要调试，0、1、2分别表示不调试、简单调试、详细调试\n"
-         << " 4> topK            返回topK结果\n"
-         << " 5> mode            操作模式，[work] or [label] \n" 
-         << "\n"
-         << endl;
+    std::ofstream outf;
+    outf.open(file_name, std::ofstream::binary);
+    outf.write(data, size);
+    outf.close();
 }
 
+//设置终端属性
+void set_terminal_mode(bool buffered) {
+    struct termios t;
+    tcgetattr(STDIN_FILENO, &t);
+
+    if (buffered) {
+        t.c_lflag |= ICANON | ECHO;  // 启用缓冲和回显
+    } else {
+        t.c_lflag &= ~(ICANON | ECHO);  // 禁用缓冲和回显
+    }
+
+    tcsetattr(STDIN_FILENO, TCSANOW, &t);
+}
+
+void set_read_block_mode(bool blocked)
+{
+    if (flags != -1)
+    {
+        if (blocked)
+        {   
+            // 设置为阻塞模式
+            flags &= ~O_NONBLOCK;
+            fcntl(STDIN_FILENO, F_SETFL, flags);
+        }
+        else
+        {
+            // 设置为非阻塞模式
+            flags |= O_NONBLOCK;
+            fcntl(STDIN_FILENO, F_SETFL, flags);
+        }
+    }
+}
 
 void video_proc(char *argv[])
 {
@@ -88,16 +165,46 @@ void video_proc(char *argv[])
         std::abort();
     }
 
-    bool sure_flag = true;
-    bool cate_flag = true;
+    FrameSize crop_wh;
+    crop_wh.width = atoi(argv[2]);
+    crop_wh.height = atoi(argv[3]);
 
-    SL sl(argv[1],{SENSOR_CHANNEL, SENSOR_HEIGHT, SENSOR_WIDTH}, reinterpret_cast<uintptr_t>(vaddr), reinterpret_cast<uintptr_t>(paddr), atoi(argv[3]));
+    Bbox crop_box_osd;
+    crop_box_osd.x = osd_width / 2.0 - float(crop_wh.width) / SENSOR_WIDTH * osd_width / 2.0;
+    crop_box_osd.y = osd_height / 2.0 - float(crop_wh.height) / SENSOR_HEIGHT * osd_height / 2.0;
+    crop_box_osd.w = float(crop_wh.width) / SENSOR_WIDTH * osd_width;
+    crop_box_osd.h = float(crop_wh.height) / SENSOR_HEIGHT * osd_height;
+
+    if (crop_wh.width < 0 || crop_wh.height < 0 || crop_wh.width > SENSOR_WIDTH - 5 || crop_wh.height > SENSOR_HEIGHT - 5)
+    {
+        std::cout << "**剪切范围超出图像范围**" << std::endl;
+        isp_stop = true;
+    }
+
+
+    if (!isFolderExist("features"))
+    {
+        createFolder("features");
+    }
+
+    //only for face reg
+    int flags = fcntl(STDIN_FILENO, F_GETFL, 0);
+    if (flags == -1)
+    {
+        cerr << "Failed to get flags for stdin." << endl;
+    }
+    set_terminal_mode(false);
+    set_read_block_mode(false);
+
+    float thres = atof(argv[4]);
+    SelfLearning self_learning(argv[1], crop_wh, thres, atoi(argv[5]),{SENSOR_CHANNEL, SENSOR_HEIGHT, SENSOR_WIDTH}, reinterpret_cast<uintptr_t>(vaddr), reinterpret_cast<uintptr_t>(paddr), atoi(argv[6]));
 
     while (!isp_stop)
     {
+        ScopedTiming st("total time", 1);
 
         {
-            ScopedTiming st("read capture", atoi(argv[3]));
+            ScopedTiming st("read capture", atoi(argv[6]));
             // VICAP_CHN_ID_1 out rgb888p
             memset(&dump_info, 0 , sizeof(k_video_frame_info));
             ret = kd_mpi_vicap_dump_frame(vicap_dev, VICAP_CHN_ID_1, VICAP_DUMP_YUV, &dump_info, 1000);
@@ -106,10 +213,10 @@ void video_proc(char *argv[])
                 continue;
             }
         }
-            
+        
 
         {
-            ScopedTiming st("isp copy", atoi(argv[3]));
+            ScopedTiming st("isp copy", atoi(argv[6]));
             // 从vivcap中读取一帧图像到dump_info
             auto vbvaddr = kd_mpi_sys_mmap_cached(dump_info.v_frame.phys_addr[0], size);
             memcpy(vaddr, (void *)vbvaddr, SENSOR_HEIGHT * SENSOR_WIDTH * 3);  // 这里以后可以去掉，不用copy
@@ -117,112 +224,88 @@ void video_proc(char *argv[])
         }
 
         cv::Mat osd_frame(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
+        cv::rectangle(osd_frame, cv::Rect(crop_box_osd.x, crop_box_osd.y , crop_box_osd.w, crop_box_osd.h), cv::Scalar(255, 255, 255), 2, 2, 0);
 
-        sl.pre_process();
-        sl.inference();
+        self_learning.pre_process();
+        self_learning.inference();
 
-        vector<Evec> results;
-        results.clear();
-        int topK = atoi( argv[4] );
-        std::string mode = argv[5];
-        
-        if(strcmp(mode.c_str(),"work")==0)
+        char ch;    
+        if (read(STDIN_FILENO, &ch, 1) > 0)
         {
-            sl.post_process(results,topK);
-
-            std::string text;
-            cv::Point origin;
-
-            int width = 100;
-            int i = 0;
-
-            for (auto r : results)
+            if (ch == 'i')      //for i key
             {
-                ScopedTiming st("add texts", atoi(argv[3]));
-                text = r.category + " : " + std::to_string(round( r.score * 100) / 100).substr(0,4);
+                set_terminal_mode(true);
+                set_read_block_mode(true);
 
-                int x1 = 1.0 / 2 * osd_width - 200 ;
-                int y1 = width;
+                std::cout << "<<< input: n -> create new category feature, d -> delete one category feature >>>" << std::endl;
+                std::string input_;
+                getline(std::cin, input_);
 
-                origin.x = x1;
-                origin.y = y1 + width * i;
-                i++;
-
-                cv::putText(osd_frame, text, origin, cv::FONT_HERSHEY_COMPLEX, 2, cv::Scalar(255,255, 0, 0), 4, 8, 0);
-                
-            }
-        }
-        else if( strcmp(mode.c_str(),"label")==0 )
-        { 
-            
-            std:string sure ;
-            float* output;
-            while(sure_flag)
-            {
-                std::cout << "Are you sure? \n" << "If sure, please s[sure] " << std::endl;
-                getline(std::cin, sure);
-
-                if( (strcmp(sure.c_str(),"s")==0) || (strcmp(sure.c_str(),"sure")==0))
+                std::vector<std::string> features;
+                getFileNames("features", features);
+                std::string features_out = "Already have : ";
+                for (int i = 0; i < features.size(); i++)
                 {
-                    sure_flag = false;
-                    cate_flag = true;
+                    features_out += " | " + std::to_string(i) + "->" + features[i];
                 }
-                output = sl.get_vecOutput();
-                
-            }
-            
-            std::string category ;
+                std::cout << features_out << std::endl;
 
-            while( cate_flag )  
-            {
-                std::cout << "Its label : " << std::endl;
-                getline(std::cin, category);
-                
-                std::cout << " category = " << category << std::endl;
-                sure_flag = true;
-                cate_flag = false;
-                
-                std::string cate_dir = "vectors/" + category;
-                if (!isFolderExist(cate_dir)) 
+                if (input_ == "n")
                 {
-                    std::cout <<  "Please create " << "'" << cate_dir << "'"  << " folder on the 'small core window'" << std::endl;
-                    continue;
-                } 
-                
+                    std::cout << "Please enter one filename. format : {category}_{index}.bin  eg: apple_0.bin" << std::endl;
+                    std::string input_feature;
+                    getline(std::cin, input_feature);
+                    int len_;
+                    float *output = self_learning.get_kpu_output(&len_);
+                    dump_binary_file(("features/" + input_feature).c_str(), (char *)output, (const size_t) len_ * sizeof(float));
+                    std::cout << "Successfully created " + input_feature + " feature." << std::endl;
+                }
+                else if (input_ == "d")
+                {
+                    std::cout << "Please enter one feature index." << std::endl;
+                    std::string str_index;
+                    getline(std::cin, str_index);
+                    int index = str_index[0] - 48;
+                    if (index < 0 || index >= features.size())
+                    {
+                        std::cout << "Fail to delete." << std::endl;
+                    }
+                    else
+                    {
+                        remove(("features/" + features[index]).c_str());
+                        std::cout << "Successfully deleted " + features[index] + "." << std::endl;
+                    }
+                }
 
-                int length = sl.get_len();
-                vector<float> vec(output, output + length);
-                
-
-                ifstream f;
-                f.open(  cate_dir + "/index.txt" ,std::ios::in);
-                std::string index;
-                f>>index;
-                std::cout<< "index = " << index <<endl; //显示读取内容 
-                f.close();
-
-                Utils::dump_binary_file( (cate_dir + "/" + index + ".bin").c_str(), (char *)output, length * sizeof(float));
-
-                int num = atoi( index.c_str() );
-                index = std::to_string((num+1));
-
-                std::ofstream fo;
-                fo.open((cate_dir +  "/index.txt" ),std::ios::out);
-                fo<<index;
-                fo.close();
-
+                set_read_block_mode(false);
+                set_terminal_mode(false);
             }
-
+            else if(ch == 27)         //for ESC key
+            {
+                reg_stop = true;
+            }
         }
         else
         {
-            std::cout << " Please input  the correct mode, [work] or [label]" << std::endl;
+            std::vector<Evec> results;
+            std::vector<std::string> features;
+            getFileNames("features", features);
+            self_learning.post_process(features, results);
+            cv::Point origin;
+            origin.x = 200;
+            origin.y = 100;
+            for (int i = 0; i < results.size(); i++)
+            {
 
+                origin.y += 50;
+                std::string text = results[i].category + " " + std::to_string(results[i].score);
+                cv::putText(osd_frame, text, origin, cv::FONT_HERSHEY_COMPLEX, 2, cv::Scalar(255,255, 0, 0), 4, 8, 0);
+            }
         }
 
-
         {
-            ScopedTiming st("osd copy", atoi(argv[3]));
+            ScopedTiming st("osd copy", atoi(argv[6]));
+            
             memcpy(pic_vaddr, osd_frame.data, osd_width * osd_height * 4);
             //显示通道插入帧
             kd_mpi_vo_chn_insert_frame(osd_id+3, &vf_info);  //K_VO_OSD0
@@ -232,8 +315,7 @@ void video_proc(char *argv[])
             if (ret) {
                 printf("sample_vicap...kd_mpi_vicap_dump_release failed.\n");
             }
-        }
-        
+        }    
     }
 
     vo_osd_release_block();
@@ -254,40 +336,26 @@ void video_proc(char *argv[])
 int main(int argc, char *argv[])
 {
     std::cout << "case " << argv[0] << " built at " << __DATE__ << " " << __TIME__ << std::endl;
-    if (argc != 6)
+    std::cout << "Press 'i' to register." << std::endl;
+    std::cout << "Press 'ESC' to exit." << std::endl;
+
+    if (argc != 7)
     {
         print_usage(argv[0]);
         return -1;
     }
 
-    if (strcmp(argv[2], "None") == 0)
     {
         std::thread thread_isp(video_proc, argv);
-
-        if( strcmp(argv[5], "work") == 0 )
+        while(!reg_stop)
         {
-            while (getchar() != 'q')
-            {
-                usleep(10000);
-            }
-
+            usleep(10000);
         }
-        else if( strcmp(argv[5], "label") == 0 )
-        {
-
-            while (1)
-            {
-                usleep(1000000);
-            }
-            
-        }
-        else
-        {
-            std::cout << " Please input the correct mode, 'work' or 'label' !!" << std::endl;
-        }
-
+        
         isp_stop = true;
         thread_isp.join();
+        set_read_block_mode(true);
+        set_terminal_mode(true);
     }
     
     return 0;

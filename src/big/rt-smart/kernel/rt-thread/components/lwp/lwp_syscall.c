@@ -451,11 +451,6 @@ ssize_t sys_read(int fd, void *buf, size_t nbyte)
     ssize_t ret = -1;
     ssize_t read_size = 0;
 
-    if (!nbyte)
-    {
-        return -EINVAL;
-    }
-
     if (!lwp_user_accessable((void *)buf, nbyte))
     {
         return -EFAULT;

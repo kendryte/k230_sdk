@@ -1,6 +1,6 @@
 # K230 手势渲染POC
 ![Alt text](resource/image.png)
-Document version: V1.0 Release date: 2023-9-1
+Document version: V1.3 Release date: 2024-1-9
 ## 介绍
 该项目为K230手势渲染POC开源工程，本工程基于K230融合了手部动作捕捉、手部3D mesh模型（MANO模型）等技术。本应用可以手部动作捕捉以及渲染，即K230作为client端摄取真人手部动作，通过在K230上的模型inference和post-process，再将结果传输给作为server端的PC，驱动MANO模型动起来。
 ## 主要特点
@@ -22,7 +22,7 @@ Document version: V1.0 Release date: 2023-9-1
     wget https://ai.b-bug.org/k230/downloads/fancy_poc/meta_hand/$file || wget https://kendryte-download.canaan-creative.com/k230/downloads/fancy_poc/meta_hand/$file;  
     done  
     
-    for file in onboard_v2.5.zip
+    for file in onboard_v2.7.zip
     do
     wget https://ai.b-bug.org/k230/downloads/fancy_poc/meta_hand/k230_board/$file || wget https://kendryte-download.canaan-creative.com/k230/downloads/fancy_poc/meta_hand/k230_board/$file;  
     done
@@ -39,14 +39,14 @@ Document version: V1.0 Release date: 2023-9-1
 
 ### 1. 源码编译
 
-在k230 docker中在src/reference/fancy_poc目录下执行./build_app.sh，得到编译后的 meta_hand.elf以及connect
+在k230 docker环境中在src/reference/fancy_poc目录下执行./build_app.sh，得到编译后的 meta_hand.elf以及connect
 
 ### 2.在k230上创建meta_hand工程
 
     运行download.sh下载gaussian.bin、对应的kmodel等文件
     cd /sharefs
     mkdir meta_hand
-    ##将需要的文件拷贝到meta_hand目录下，如编译的meta_hand.elf、connect、download.sh下载的gaussian.bin、对应的kmodel等文件
+    ##将需要的文件拷贝到meta_hand目录下，如编译的meta_hand.elf、connect以及download.sh下载的gaussian.bin、对应的kmodel等文件
 
 **注意：** sharefs下的文件结构可以参考download下载的onboard文件夹内文件
 

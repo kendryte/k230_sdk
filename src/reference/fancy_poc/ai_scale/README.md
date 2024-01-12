@@ -24,10 +24,31 @@ Document version: V1.0 Release date: 2023-10-26
     wget https://ai.b-bug.org/k230/downloads/fancy_poc/ai_scale/$file || wget https://kendryte-download.canaan-creative.com/k230/downloads/fancy_poc/ai_scale/$file;  
     done  
     
-    for file in onboard_v2.5.zip
+    for file in onboard_v2.7.zip
     do
     wget https://ai.b-bug.org/k230/downloads/fancy_poc/ai_scale/k230_board/$file || wget https://kendryte-download.canaan-creative.com/k230/downloads/fancy_poc/ai_scale/k230_board/$file;  
     done
+
+## 网络连接
+
+推荐使用有线连接，网线连接传输比较稳定。有线连接需要配置局域网，过程如下：
+
+PC端的网络配置：控制面板->网络和共享中心->更改适配器设置->以太网网卡->右键属性->选中(TCP/IPv4)->属性
+
+配置IP地址、掩码、网关，配置DNS服务器地址：
+
+![net_config_0](./resource/net_config_0.png)
+
+安装串口通信工具（推荐：[MobaXterm](https://mobaxterm.mobatek.net/download.html)）。开发板网络配置，进入小核串口命令行，执行：
+
+```Shell
+# 查看是否有eth0
+ifconfig
+# 配置开发板IP，和PC在同一网段下
+ifconfig eth0 192.168.1.22
+# 查看IP配置
+ifconfig
+```
 
 ## 数据准备
 
@@ -60,7 +81,7 @@ Document version: V1.0 Release date: 2023-10-26
 
 该数据集用于在商品识别之前创建底库。
 
-本项目提供了示例商品类别底库，请参照onboard_v2.5/gallery中的数据结构组织数据。
+本项目提供了示例商品类别底库，请参照onboard_v2.7/gallery中的数据结构组织数据。
 
 ## 可执行文件编译
 
@@ -71,7 +92,7 @@ chmod +x build_app.sh
 ./build_app.sh
 ```
 
-在reference/fancy_poc/k230_bin目录下，获取ai_scale.elf和client拷贝到开发板onboard_v2.5内。
+在reference/fancy_poc/k230_bin目录下，获取ai_scale.elf和client拷贝到开发板onboard_v2.7内。
 
 ## 服务端准备
 

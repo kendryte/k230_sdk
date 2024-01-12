@@ -1,0 +1,816 @@
+From 94f20341f38513d0528d391757b0d7bc969fc2e9 Mon Sep 17 00:00:00 2001
+From: "Chenggen.Wang" <wangchenggen@canaan-creative.com>
+Date: Mon, 6 Nov 2023 11:14:20 +0800
+Subject: [PATCH] adpter k230 camera.
+
+Signed-off-by: Chenggen.Wang <wangchenggen@canaan-creative.com>
+---
+ CMakeLists.txt                                |   7 +
+ build.sh                                      |  12 +-
+ modules/videoio/CMakeLists.txt                |   5 +
+ .../videoio/cmake/detect_k230_camera.cmake    |  13 +
+ modules/videoio/cmake/init.cmake              |   1 +
+ modules/videoio/include/opencv2/videoio.hpp   |   1 +
+ modules/videoio/src/cap_interface.hpp         |   2 +
+ modules/videoio/src/cap_k230_camera.cpp       | 640 ++++++++++++++++++
+ modules/videoio/src/videoio_registry.cpp      |   4 +
+ 9 files changed, 683 insertions(+), 2 deletions(-)
+ mode change 100644 => 100755 build.sh
+ create mode 100644 modules/videoio/cmake/detect_k230_camera.cmake
+ mode change 100644 => 100755 modules/videoio/include/opencv2/videoio.hpp
+ mode change 100644 => 100755 modules/videoio/src/cap_interface.hpp
+ create mode 100755 modules/videoio/src/cap_k230_camera.cpp
+ mode change 100644 => 100755 modules/videoio/src/videoio_registry.cpp
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 45e0b58fe5..03212b0afd 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -377,6 +377,9 @@ OCV_OPTION(WITH_UEYE "Include UEYE camera support" OFF
+ OCV_OPTION(WITH_XINE "Include Xine support (GPL)" OFF
+   VISIBLE_IF UNIX AND NOT APPLE AND NOT ANDROID
+   VERIFY HAVE_XINE)
++OCV_OPTION(WITH_K230_CAMERA "Include K230 cameras support" OFF
++  VISIBLE_IF NOT ANDROID AND NOT APPLE AND NOT WINRT
++  VERIFY HAVE_K230_CAMERA)
+ OCV_OPTION(WITH_CLP "Include Clp support (EPL)" OFF
+   VISIBLE_IF TRUE
+   VERIFY HAVE_CLP)
+@@ -1453,6 +1456,10 @@ if(WITH_XINE OR HAVE_XINE)
+   status("    Xine:"           HAVE_XINE           THEN "YES (ver ${XINE_VERSION})"     ELSE NO)
+ endif()
+ 
++if(WITH_K230_CAMERA OR HAVE_K230_CAMERA)
++  status("    K230_Camera:"   HAVE_K230_CAMERA THEN YES ELSE NO)
++endif()
++
+ if(WITH_LIBREALSENSE OR HAVE_LIBREALSENSE)
+   status("    Intel RealSense:" HAVE_LIBREALSENSE THEN "YES (${LIBREALSENSE_VERSION})" ELSE NO)
+ endif()
+diff --git a/build.sh b/build.sh
+old mode 100644
+new mode 100755
+index d81ce3bb72..81ec380736
+--- a/build.sh
++++ b/build.sh
+@@ -1,8 +1,16 @@
+-toolchain_path=~/.tools/gnu_gcc/riscv64-linux-musleabi_for_x86_64-pc-linux-gnu/bin
++toolchain_path=/opt/toolchain/riscv64-linux-musleabi_for_x86_64-pc-linux-gnu/bin
+ 
+ c_compiler=${toolchain_path}/riscv64-unknown-linux-musl-gcc
+ cxx_compiler=${toolchain_path}/riscv64-unknown-linux-musl-g++
+ 
+-cmake .. -G "Unix Makefiles" -DCMAKE_TOOLCHAIN_FILE="../platforms/rt_smart/riscv64-rvv-gcc.toolchain.cmake" \
++cmake -DCMAKE_BUILD_TYPE=Debug \
++    -DBUILD_TESTS=OFF \
++    -DBUILD_PERF_TESTS=OFF \
++    -DBUILD_EXAMPLES=OFF \
++    -DBUILD_opencv_apps=OFF \
++    -DWITH_K230_CAMERA=ON \
++    .. -G "Unix Makefiles" -DCMAKE_TOOLCHAIN_FILE="../platforms/rt_smart/riscv64-rvv-gcc.toolchain.cmake" \
++    -DCMAKE_BUILD_TYPE=Debug \
+     -DCMAKE_C_COMPILER=$c_compiler \
+     -DCMAKE_CXX_COMPILER=$cxx_compiler
++
+diff --git a/modules/videoio/CMakeLists.txt b/modules/videoio/CMakeLists.txt
+index 377029f45f..a29a3a578a 100644
+--- a/modules/videoio/CMakeLists.txt
++++ b/modules/videoio/CMakeLists.txt
+@@ -120,6 +120,11 @@ if(TARGET ocv.3rdparty.xine)
+   list(APPEND tgts ocv.3rdparty.xine)
+ endif()
+ 
++if(TARGET ocv.3rdparty.k230_camera)
++  list(APPEND videoio_srcs ${CMAKE_CURRENT_LIST_DIR}/src/cap_k230_camera.cpp)
++  list(APPEND tgts ocv.3rdparty.k230_camera)
++endif()
++
+ if(TARGET ocv.3rdparty.dc1394_2)
+   list(APPEND videoio_srcs ${CMAKE_CURRENT_LIST_DIR}/src/cap_dc1394_v2.cpp)
+   list(APPEND tgts ocv.3rdparty.dc1394_2)
+diff --git a/modules/videoio/cmake/detect_k230_camera.cmake b/modules/videoio/cmake/detect_k230_camera.cmake
+new file mode 100644
+index 0000000000..e8624abd79
+--- /dev/null
++++ b/modules/videoio/cmake/detect_k230_camera.cmake
+@@ -0,0 +1,13 @@
++if(NOT HAVE_K230_CAMERA)
++  set(HAVE_K230_CAMERA TRUE)
++  set(K230_SDK_ROOT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../..)
++  set(K230_MPP_SRC_DIR ${K230_SDK_ROOT_PATH}/src/big/mpp)
++  set(K230_CAM_INCLUDE_DIRS  
++      ${K230_MPP_SRC_DIR}/include 
++      ${K230_MPP_SRC_DIR}/include/comm  
++      ${K230_MPP_SRC_DIR}/include/ioctl  
++      ${K230_MPP_SRC_DIR}/userapps/api)
++  include_directories(${K230_CAM_INCLUDE_DIRS})
++
++  ocv_add_external_target(k230_camera "${K230_CAM_INCLUDE_DIRS}" "${K230_CAM_LIBRARIES}" "HAVE_K230_CAMERA")
++endif()
+diff --git a/modules/videoio/cmake/init.cmake b/modules/videoio/cmake/init.cmake
+index af664f94df..cd766ef137 100644
+--- a/modules/videoio/cmake/init.cmake
++++ b/modules/videoio/cmake/init.cmake
+@@ -22,6 +22,7 @@ add_backend("realsense" WITH_LIBREALSENSE)
+ add_backend("ueye" WITH_UEYE)
+ add_backend("ximea" WITH_XIMEA)
+ add_backend("xine" WITH_XINE)
++add_backend("k230_camera" WITH_K230_CAMERA)
+ 
+ add_backend("avfoundation" WITH_AVFOUNDATION)
+ add_backend("ios" WITH_CAP_IOS)
+diff --git a/modules/videoio/include/opencv2/videoio.hpp b/modules/videoio/include/opencv2/videoio.hpp
+old mode 100644
+new mode 100755
+index 35491a0b5e..e12d7ca042
+--- a/modules/videoio/include/opencv2/videoio.hpp
++++ b/modules/videoio/include/opencv2/videoio.hpp
+@@ -123,6 +123,7 @@ enum VideoCaptureAPIs {
+        CAP_INTEL_MFX    = 2300,         //!< Intel MediaSDK
+        CAP_XINE         = 2400,         //!< XINE engine (Linux)
+        CAP_UEYE         = 2500,         //!< uEye Camera API
++       CAP_K230_CAM     = 2600,         //!< kendryte K230 VICAP API
+      };
+ 
+ /** @brief cv::VideoCapture generic properties identifier.
+diff --git a/modules/videoio/src/cap_interface.hpp b/modules/videoio/src/cap_interface.hpp
+old mode 100644
+new mode 100755
+index eef515b2e3..f7a9d2c180
+--- a/modules/videoio/src/cap_interface.hpp
++++ b/modules/videoio/src/cap_interface.hpp
+@@ -411,6 +411,8 @@ Ptr<IVideoCapture> createXINECapture(const std::string &filename);
+ Ptr<IVideoCapture> createAndroidCapture_cam( int index );
+ Ptr<IVideoCapture> createAndroidCapture_file(const std::string &filename);
+ 
++Ptr<IVideoCapture> create_k230_camera_capture(const std::string &filename);
++
+ bool VideoCapture_V4L_waitAny(
+         const std::vector<VideoCapture>& streams,
+         CV_OUT std::vector<int>& ready,
+diff --git a/modules/videoio/src/cap_k230_camera.cpp b/modules/videoio/src/cap_k230_camera.cpp
+new file mode 100755
+index 0000000000..f2af6ddd68
+--- /dev/null
++++ b/modules/videoio/src/cap_k230_camera.cpp
+@@ -0,0 +1,640 @@
++
++#include "precomp.hpp"
++
++#ifdef HAVE_K230_CAMERA
++
++#include "k_vicap_comm.h"
++#include "k_video_comm.h"
++#include "k_sys_comm.h"
++#include "mpi_vb_api.h"
++#include "mpi_vicap_api.h"
++#include "mpi_sys_api.h"
++
++/* Defaults - If your board can do better, set it here.  Set for the most common type inputs. */
++#define DEFAULT_K230_CAM_WIDTH  640
++#define DEFAULT_K230_CAM_HEIGHT 480
++#define DEFAULT_K230_CAM_FPS 30
++
++#define MAX_K230_CAM_CAMERAS 3
++
++// default and maximum number of K230 vicap input & output buffers, not including last, 'special' buffer
++#define MAX_K230_CAM_BUFFERS 10
++#define DEFAULT_K230_CAM_IN_BUFFERS 4
++#define DEFAULT_K230_CAM_OUT_BUFFERS 4
++
++#define  K230_CAM_OPENCV_API
++
++#ifdef K230_CAM_OPENCV_API
++#include <pthread.h>
++
++static pthread_mutex_t cam_dev_mutex = PTHREAD_MUTEX_INITIALIZER;
++
++typedef struct {
++    int dev_num;
++    int chn_num;
++
++    int in_buffers;
++    int out_buffers;
++    int out_fps;
++
++    k_vicap_window in_win;
++    k_vicap_window out_win;
++    k_pixel_format out_fmt;
++    k_vicap_work_mode work_mode;
++} k230_camera_params;
++
++typedef struct {
++    k_bool dev_enable;
++    k_vicap_sensor_type sensor_type;
++    k_vicap_dev_attr dev_attr;
++    k_vicap_chn_attr chn_attr[VICAP_CHN_ID_MAX];
++} k230_cam_device_obj;
++
++static k230_cam_device_obj cam_dev[VICAP_DEV_ID_MAX];
++
++static int k230_camera_open(const char *name)
++{
++    int ret = 0;
++    int dev_num = -1;
++
++    pthread_mutex_lock(&cam_dev_mutex);
++
++    k_vicap_sensor_type type;
++
++    if (!name) {
++        printf("%s, device name is null.\n", __func__);
++        goto exit;
++    }
++
++    ret = kd_mpi_vicap_get_sensor_type(&type, name);
++    if (ret) {
++        printf("%s, unspported device name.\n", __func__);
++        goto exit;
++    }
++
++    for (int index = 0; index < VICAP_DEV_ID_MAX; index++) {
++        if (!cam_dev[index].dev_enable) {
++            dev_num = index;
++            break;
++        }
++    }
++
++    if (dev_num == -1) {
++        printf("%s, no available device, please check all inused camera device.\n", __func__);
++        goto exit;
++    }
++
++    memset(&cam_dev[dev_num], 0, sizeof(k230_cam_device_obj));
++
++    cam_dev[dev_num].dev_enable = K_TRUE;
++
++    //vicap get sensor info
++    ret = kd_mpi_vicap_get_sensor_info(type, &cam_dev[dev_num].dev_attr.sensor_info);
++    if (ret) {
++        printf("%s, the sensor type not supported!\n", __func__);
++        goto exit;
++    }
++
++    cam_dev[dev_num].dev_attr.acq_win.h_start = 0;
++    cam_dev[dev_num].dev_attr.acq_win.v_start = 0;
++    cam_dev[dev_num].dev_attr.acq_win.width = cam_dev[dev_num].dev_attr.sensor_info.width;
++    cam_dev[dev_num].dev_attr.acq_win.height = cam_dev[dev_num].dev_attr.sensor_info.height;
++
++    cam_dev[dev_num].dev_attr.mode = VICAP_WORK_ONLINE_MODE;
++    cam_dev[dev_num].dev_attr.input_type = VICAP_INPUT_TYPE_SENSOR;
++    cam_dev[dev_num].dev_attr.dev_enable = K_TRUE;
++
++exit:
++    pthread_mutex_unlock(&cam_dev_mutex);
++
++    return ret;
++}
++
++static int k230_camera_start_stream(int device)
++{
++    int ret = 0;
++    k_vicap_dev dev_num = (k_vicap_dev)device;
++
++    int k = 0;
++    k_vb_config config;
++    k_vb_supplement_config supplement_config;
++
++    //VB config
++    memset(&config, 0, sizeof(config));
++    config.max_pool_cnt = 64;
++
++    //config vb for offline mode
++    if (cam_dev[dev_num].dev_attr.mode == VICAP_WORK_OFFLINE_MODE) {
++        config.comm_pool[k].blk_cnt = cam_dev[dev_num].dev_attr.buffer_num;
++        config.comm_pool[k].mode = VB_REMAP_MODE_NOCACHE;
++        config.comm_pool[k].blk_size = cam_dev[dev_num].dev_attr.buffer_size;
++        k++;
++    }
++
++    ret = kd_mpi_vicap_set_dev_attr(dev_num, cam_dev[dev_num].dev_attr);
++    if (ret) {
++        printf("start_stream, kd_mpi_vicap_set_dev_attr failed.\n");
++        return ret;
++    }
++
++    //vicap channel attr set
++    for (int channel = 0; channel < VICAP_CHN_ID_MAX; channel++) {
++        k_vicap_chn chn_num = (k_vicap_chn)channel;
++        if (!cam_dev[dev_num].chn_attr[chn_num].chn_enable)
++            continue;
++
++        k_u32 buf_size = 0;
++
++        k_pixel_format pix_format = cam_dev[dev_num].chn_attr[chn_num].pix_format;
++
++        k_u16 out_width = cam_dev[dev_num].chn_attr[chn_num].out_win.width;
++        k_u16 out_height = cam_dev[dev_num].chn_attr[chn_num].out_win.height;
++
++        k_u16 in_width = cam_dev[dev_num].dev_attr.acq_win.width;
++        k_u16 in_height = cam_dev[dev_num].dev_attr.acq_win.height;
++
++        switch (pix_format) {
++        case PIXEL_FORMAT_YUV_SEMIPLANAR_420:
++            buf_size = VICAP_ALIGN_UP((out_width * out_height * 3 / 2), VICAP_ALIGN_1K);
++            break;
++        case PIXEL_FORMAT_RGB_888:
++        case PIXEL_FORMAT_BGR_888_PLANAR:
++            buf_size = VICAP_ALIGN_UP((out_width * out_height * 3), VICAP_ALIGN_1K);
++            break;
++        case PIXEL_FORMAT_RGB_BAYER_10BPP:
++        case PIXEL_FORMAT_RGB_BAYER_12BPP:
++        case PIXEL_FORMAT_RGB_BAYER_14BPP:
++        case PIXEL_FORMAT_RGB_BAYER_16BPP:
++            buf_size = VICAP_ALIGN_UP((in_width * in_height * 2), VICAP_ALIGN_1K);
++            cam_dev[dev_num].chn_attr[chn_num].out_win.width = in_width;
++            cam_dev[dev_num].chn_attr[chn_num].out_win.height = in_height;
++            break;
++        default:
++            printf("unspported format!\n");
++            return -1;
++        }
++        cam_dev[dev_num].chn_attr[chn_num].buffer_size = buf_size;
++
++        //config vb for output channel
++        config.comm_pool[k].blk_cnt = cam_dev[dev_num].chn_attr[chn_num].buffer_num;
++        config.comm_pool[k].mode = VB_REMAP_MODE_NOCACHE;
++        config.comm_pool[k].blk_size = cam_dev[dev_num].chn_attr[chn_num].buffer_size;
++
++        ret = kd_mpi_vicap_set_chn_attr(dev_num, chn_num, cam_dev[dev_num].chn_attr[chn_num]);
++        if (ret) {
++            printf("start_stream, kd_mpi_vicap_set_chn_attr failed.\n");
++            return -1;
++        }
++        k++;
++    }
++
++    ret = kd_mpi_vb_set_config(&config);
++    if (ret) {
++        printf("vb_set_config failed ret:%d\n", ret);
++        return ret;
++    }
++
++    memset(&supplement_config, 0, sizeof(supplement_config));
++    supplement_config.supplement_config |= VB_SUPPLEMENT_JPEG_MASK;
++
++    ret = kd_mpi_vb_set_supplement_config(&supplement_config);
++    if (ret) {
++        printf("vb_set_supplement_config failed ret:%d\n", ret);
++        return ret;
++    }
++
++    ret = kd_mpi_vb_init();
++    if (ret) {
++        printf("vb_init failed ret:%d\n", ret);
++        return ret;
++    }
++
++    ret = kd_mpi_vicap_init(dev_num);
++    if (ret) {
++        printf("start_stream, vicap dev(%d) init failed.\n", dev_num);
++        goto exit;
++    }
++
++    ret = kd_mpi_vicap_start_stream(dev_num);
++    if (ret) {
++        printf("start_stream, vicap dev(%d) start stream failed.\n", dev_num);
++        goto exit;
++    }
++
++    return 0;
++
++exit:
++    kd_mpi_vicap_stop_stream(dev_num);
++    kd_mpi_vicap_deinit(dev_num);
++    return -1;
++}
++
++static int k230_camera_stop_stream(int device)
++{
++    int ret = 0;
++    k_vicap_dev dev_num = (k_vicap_dev)device;
++
++    ret = kd_mpi_vicap_stop_stream(dev_num);
++    if (ret) {
++        printf("stop_stream, vicap dev(%d) start stream failed.\n", dev_num);
++        return -1;
++    }
++
++    ret = kd_mpi_vicap_deinit(dev_num);
++    if (ret) {
++        printf("stop_stream, vicap dev(%d) deinit failed.\n", dev_num);
++        return -1;
++    }
++
++    return 0;
++}
++
++
++static int k230_camera_set_params(k230_camera_params *params)
++{
++    k_vicap_dev dev_num = (k_vicap_dev)params->dev_num;
++    k_vicap_chn chn_num = (k_vicap_chn)params->chn_num;
++
++    pthread_mutex_lock(&cam_dev_mutex);
++
++    cam_dev[dev_num].dev_attr.mode = params->work_mode;
++
++    if (params->work_mode == VICAP_WORK_OFFLINE_MODE) {
++        cam_dev[dev_num].dev_attr.buffer_num = params->in_buffers;
++        cam_dev[dev_num].dev_attr.buffer_size = VICAP_ALIGN_UP((cam_dev[dev_num].dev_attr.acq_win.width * \
++                                                    cam_dev[dev_num].dev_attr.acq_win.height * 2), VICAP_ALIGN_1K);
++    }
++
++    cam_dev[dev_num].chn_attr[chn_num].chn_enable = K_TRUE;
++    cam_dev[dev_num].chn_attr[chn_num].buffer_num = params->out_buffers;;
++
++    cam_dev[dev_num].chn_attr[chn_num].chn_enable = K_TRUE;
++    cam_dev[dev_num].chn_attr[chn_num].out_win.h_start = params->out_win.h_start;
++    cam_dev[dev_num].chn_attr[chn_num].out_win.v_start = params->out_win.v_start;
++    cam_dev[dev_num].chn_attr[chn_num].out_win.width = VICAP_ALIGN_UP(params->out_win.width, 16);
++    cam_dev[dev_num].chn_attr[chn_num].out_win.height = params->out_win.height;
++
++    cam_dev[dev_num].chn_attr[chn_num].pix_format = params->out_fmt;
++    cam_dev[dev_num].chn_attr[chn_num].fps = params->out_fps;
++    cam_dev[dev_num].chn_attr[chn_num].chn_enable = K_TRUE;
++
++    pthread_mutex_unlock(&cam_dev_mutex);
++
++    return 0;
++}
++
++static int k230_camera_capture_image(int device, int channel, k_video_frame_info *frame_info)
++{
++    int ret = 0;
++    k_vicap_dev dev_num = (k_vicap_dev)device;
++    k_vicap_chn chn_num = (k_vicap_chn)channel;
++
++    void *virt_addr = NULL;
++    k_u32 image_size = 0;
++
++    ret = kd_mpi_vicap_dump_frame(dev_num, chn_num, VICAP_DUMP_YUV, frame_info, 1000);
++    if (ret) {
++        printf("capture_image, dev(%d) chn(%d) dump frame failed.\n", dev_num, chn_num);
++        return ret;
++    }
++
++    if (frame_info->v_frame.pixel_format == PIXEL_FORMAT_YUV_SEMIPLANAR_420) {
++        image_size = frame_info->v_frame.width * frame_info->v_frame.height * 3 / 2;
++    } else if ((frame_info->v_frame.pixel_format == PIXEL_FORMAT_RGB_888)
++       || (frame_info->v_frame.pixel_format == PIXEL_FORMAT_BGR_888_PLANAR)) {
++        image_size = frame_info->v_frame.width * frame_info->v_frame.height * 3;
++    } else if ((frame_info->v_frame.pixel_format == PIXEL_FORMAT_RGB_BAYER_10BPP)
++       || (frame_info->v_frame.pixel_format == PIXEL_FORMAT_RGB_BAYER_12BPP)
++       || (frame_info->v_frame.pixel_format == PIXEL_FORMAT_RGB_BAYER_14BPP)
++       || (frame_info->v_frame.pixel_format == PIXEL_FORMAT_RGB_BAYER_16BPP)) {
++        image_size = frame_info->v_frame.width * frame_info->v_frame.height * 2;
++    } else {
++        printf("capture_image, unkonwn format!!\n");
++        image_size = frame_info->v_frame.width * frame_info->v_frame.height;
++    }
++
++    virt_addr = kd_mpi_sys_mmap(frame_info->v_frame.phys_addr[0], image_size);
++    if (!virt_addr) {
++        printf("capture_image, map image addr failed.\n");
++    }
++    frame_info->v_frame.virt_addr[0] = (k_u64)virt_addr;
++
++    return ret;
++}
++
++static int k230_camera_release_image(int device, int channel, k_video_frame_info *frame_info)
++{
++    int ret = 0;
++    k_vicap_dev dev_num = (k_vicap_dev)device;
++    k_vicap_chn chn_num = (k_vicap_chn)channel;
++
++    void *virt_addr = (void *)frame_info->v_frame.virt_addr[0];
++    k_u32 image_size = 0;
++
++    if (frame_info->v_frame.pixel_format == PIXEL_FORMAT_YUV_SEMIPLANAR_420) {
++        image_size = frame_info->v_frame.width * frame_info->v_frame.height * 3 / 2;
++    } else if ((frame_info->v_frame.pixel_format == PIXEL_FORMAT_RGB_888)
++       || (frame_info->v_frame.pixel_format == PIXEL_FORMAT_BGR_888_PLANAR)) {
++        image_size = frame_info->v_frame.width * frame_info->v_frame.height * 3;
++    } else if ((frame_info->v_frame.pixel_format == PIXEL_FORMAT_RGB_BAYER_10BPP)
++       || (frame_info->v_frame.pixel_format == PIXEL_FORMAT_RGB_BAYER_12BPP)
++       || (frame_info->v_frame.pixel_format == PIXEL_FORMAT_RGB_BAYER_14BPP)
++       || (frame_info->v_frame.pixel_format == PIXEL_FORMAT_RGB_BAYER_16BPP)) {
++        image_size = frame_info->v_frame.width * frame_info->v_frame.height * 2;
++    } else {
++        printf("release_image, unkonwn format!!\n");
++        image_size = frame_info->v_frame.width * frame_info->v_frame.height;
++    }
++
++    ret = kd_mpi_sys_munmap(virt_addr, image_size);
++    if (ret) {
++        printf("release_image, dev(%d) chn(%d) munmap failed.\n", dev_num, chn_num);
++    }
++
++    ret = kd_mpi_vicap_dump_release(dev_num, chn_num, frame_info);
++    if (ret) {
++        printf("release_image, dev(%d) chn(%d) release dump frame failed.\n", dev_num, chn_num);
++    }
++
++    return ret;
++}
++
++static int k230_meida_buffer_deinit(void)
++{
++    return kd_mpi_vb_exit();
++}
++#endif
++
++
++namespace cv {
++
++class K230_Camera_Capture : public IVideoCapture
++{
++public:
++    K230_Camera_Capture();
++    virtual ~K230_Camera_Capture();
++
++    bool open(const char* deviceName);
++    bool initCapture();
++    bool setFrameSize(int _width, int _height);
++
++    virtual double getProperty(int property_id) const CV_OVERRIDE;
++    virtual bool setProperty( int property_id, double _value ) CV_OVERRIDE;
++
++    virtual bool grabFrame() CV_OVERRIDE;
++    virtual bool retrieveFrame(int, OutputArray out_frame) CV_OVERRIDE;
++    virtual int getCaptureDomain() CV_OVERRIDE;
++    virtual bool isOpened() const CV_OVERRIDE;
++    void closeDevice();
++
++protected:
++
++private:
++    bool first_capture;
++    bool open_flag;
++    int device_id;
++    int channel_id;
++    int in_buffers;
++    int out_buffers;
++    int width;
++    int height;
++    k_vicap_work_mode work_mode;
++    k_pixel_format pix_fmt;
++    uint32_t frame_number;
++    k_video_frame_info frame_info;
++};
++
++K230_Camera_Capture::K230_Camera_Capture():
++    first_capture(true),
++    open_flag(false),
++    device_id(-1),
++    channel_id(-1),
++    in_buffers(DEFAULT_K230_CAM_IN_BUFFERS),
++    out_buffers(DEFAULT_K230_CAM_OUT_BUFFERS),
++    width(DEFAULT_K230_CAM_WIDTH),
++    height(DEFAULT_K230_CAM_HEIGHT),
++    work_mode(VICAP_WORK_ONLINE_MODE),
++    pix_fmt(PIXEL_FORMAT_YUV_SEMIPLANAR_420),
++    frame_number(0)
++{
++    CV_LOG_DEBUG(NULL, "VIDEOIO(K230 CAM)\n");
++}
++
++K230_Camera_Capture::~K230_Camera_Capture()
++{
++    CV_LOG_DEBUG(NULL, "VIDEOIO(K230 CAM)\n");
++    closeDevice();
++}
++
++
++bool K230_Camera_Capture::initCapture()
++{
++    return false;
++}
++
++bool K230_Camera_Capture::open(const char* _deviceName)
++{
++    int ret = 0;
++
++    CV_Assert(_deviceName);
++    CV_LOG_DEBUG(NULL, "VIDEOIO(K230 CAM:" << _deviceName << "): opening...");
++
++    ret = k230_camera_open(_deviceName);
++    if (ret < 0) {
++        CV_LOG_ERROR(NULL, "VIDEOIO(K230 CAM:" << _deviceName << "): camera open failed.");
++        return false;
++    }
++
++    device_id = ret;
++    channel_id = 0;
++    open_flag = true;
++
++    return true;
++}
++
++double K230_Camera_Capture::getProperty(int property_id) const
++{
++    double propValue = 0.0;
++
++    switch (property_id) {
++        case cv::CAP_PROP_FRAME_WIDTH:
++            propValue = width;
++            break;
++        case cv::CAP_PROP_FRAME_HEIGHT:
++            propValue = height;
++            break;
++        case cv::CAP_PROP_FORMAT:
++            propValue = pix_fmt;
++            break;
++        case cv::CAP_PROP_MODE:
++            propValue = work_mode;
++            break;
++        case cv::CAP_PROP_CHANNEL:
++            propValue = channel_id;
++            break;
++
++        default:
++            break;
++    }
++
++    return propValue;
++}
++
++bool K230_Camera_Capture::setProperty( int property_id, double _value )
++{
++    int value = cvRound(_value);
++    CV_LOG_DEBUG(NULL, "VIDEOIO(K230 CAM property_id:" << property_id << "value:" << value << ")");
++
++    switch (property_id) {
++        case cv::CAP_PROP_FRAME_WIDTH:
++            width = value;
++            break;
++        case cv::CAP_PROP_FRAME_HEIGHT:
++            height = value;
++            break;
++        case cv::CAP_PROP_FPS:
++            return false;
++        case cv::CAP_PROP_FORMAT:
++            if ((value != PIXEL_FORMAT_YUV_SEMIPLANAR_420)
++                && (value != PIXEL_FORMAT_RGB_888)
++                && (value != PIXEL_FORMAT_BGR_888_PLANAR)
++                && (value != PIXEL_FORMAT_RGB_BAYER_10BPP)
++                && (value != PIXEL_FORMAT_RGB_BAYER_12BPP)
++                && (value != PIXEL_FORMAT_RGB_BAYER_14BPP)
++                && (value != PIXEL_FORMAT_RGB_BAYER_16BPP))
++            return false;
++            pix_fmt = (k_pixel_format)value;
++            break;
++        case cv::CAP_PROP_MODE:
++            if (value < VICAP_WORK_ONLINE_MODE || value > VICAP_WORK_OFFLINE_MODE)
++                return false;
++            work_mode = (k_vicap_work_mode)value;
++            break;
++        case cv::CAP_PROP_CHANNEL:
++            if (value < VICAP_CHN_ID_0 || value > VICAP_CHN_ID_2)
++                return false;
++            channel_id = value;
++            break;
++        default:
++            return false;
++    }
++    return true;
++}
++
++bool K230_Camera_Capture::grabFrame()
++{
++    if (!isOpened())
++        return false;
++
++    if (first_capture) {
++        int ret = 0;
++        k230_camera_params params;
++
++        memset(&frame_info, 0, sizeof(k_video_frame_info));
++        memset(&params, 0, sizeof(k230_camera_params));
++
++        params.dev_num = device_id;
++        params.chn_num = channel_id;
++        params.in_buffers = in_buffers;
++        params.out_buffers = out_buffers;
++        params.out_win.width = width;
++        params.out_win.height = height;
++        params.out_fmt = pix_fmt;
++        params.work_mode = work_mode;
++
++        ret = k230_camera_set_params(&params);
++        if (ret) {
++            CV_LOG_ERROR(NULL, "VIDEOIO(K230 CAM: set params failed.");
++            return false;
++        }
++
++        ret = k230_camera_start_stream(device_id);
++        if (ret) {
++            CV_LOG_ERROR(NULL, "VIDEOIO(K230 CAM: start stream failed.");
++            return false;
++        }
++
++        first_capture = false;
++    }
++
++    if (k230_camera_capture_image(device_id, channel_id, &frame_info)) {
++        CV_LOG_ERROR(NULL, "VIDEOIO(K230 CAM: grabFrame failed.");
++        return false;
++    }
++    frame_number++;
++
++    return true;
++}
++
++bool K230_Camera_Capture::retrieveFrame(int, cv::OutputArray out_frame)
++{
++    if (frame_info.v_frame.virt_addr[0] == 0) {
++        CV_LOG_ERROR(NULL, "VIDEOIO(K230 CAM: retrieveFrame failed, virt addr is null.");
++        return false;
++    }
++
++    switch (frame_info.v_frame.pixel_format) {
++        case PIXEL_FORMAT_YUV_SEMIPLANAR_420:
++            {
++                Mat in_frame(frame_info.v_frame.height * 3 / 2, frame_info.v_frame.width, CV_8U, (void*)frame_info.v_frame.virt_addr[0]);
++                cv::cvtColor(in_frame, out_frame, cv::COLOR_YUV2BGR_NV12);
++            }
++            break;
++        case PIXEL_FORMAT_RGB_888:
++            {
++                Mat in_frame(frame_info.v_frame.height, frame_info.v_frame.width, CV_8UC3, (void*)frame_info.v_frame.virt_addr[0]);
++                cv::cvtColor(in_frame, out_frame, cv::COLOR_RGB2BGR);
++            }
++            break;
++        case PIXEL_FORMAT_BGR_888_PLANAR:
++            break;
++        case PIXEL_FORMAT_RGB_BAYER_10BPP:
++        case PIXEL_FORMAT_RGB_BAYER_12BPP:
++        case PIXEL_FORMAT_RGB_BAYER_14BPP:
++        case PIXEL_FORMAT_RGB_BAYER_16BPP:
++            break;
++
++        default:
++            break;
++    }
++
++    if (k230_camera_release_image(device_id, channel_id, &frame_info)) {
++        CV_LOG_ERROR(NULL, "VIDEOIO(K230 CAM: grabFrame failed.");
++        return false;
++    }
++    memset(&frame_info, 0, sizeof(k_video_frame_info));
++
++    return true;
++}
++
++int K230_Camera_Capture::getCaptureDomain()
++{
++    return CAP_K230_CAM;
++}
++
++bool K230_Camera_Capture::isOpened() const
++{
++    return open_flag;
++}
++
++void K230_Camera_Capture::closeDevice()
++{
++    open_flag = false;
++
++    k230_camera_stop_stream(device_id);
++
++    k230_meida_buffer_deinit();
++}
++
++Ptr<IVideoCapture> create_k230_camera_capture(const std::string &filename)
++{
++    Ptr<K230_Camera_Capture> cap = makePtr<K230_Camera_Capture>();
++    if (cap && cap->open(filename.c_str()))
++        return cap;
++    return Ptr<IVideoCapture>();
++}
++
++} // cv::
++
++#endif
++
+diff --git a/modules/videoio/src/videoio_registry.cpp b/modules/videoio/src/videoio_registry.cpp
+old mode 100644
+new mode 100755
+index 6cd32edc27..b635b63109
+--- a/modules/videoio/src/videoio_registry.cpp
++++ b/modules/videoio/src/videoio_registry.cpp
+@@ -60,6 +60,10 @@ namespace {
+ */
+ static const struct VideoBackendInfo builtin_backends[] =
+ {
++#ifdef HAVE_K230_CAMERA
++    DECLARE_STATIC_BACKEND(CAP_K230_CAM, "K230_CAM", MODE_CAPTURE_BY_FILENAME, create_k230_camera_capture, 0, 0)
++#endif
++
+ #ifdef HAVE_FFMPEG
+     DECLARE_STATIC_BACKEND(CAP_FFMPEG, "FFMPEG", MODE_CAPTURE_BY_FILENAME | MODE_WRITER, cvCreateFileCapture_FFMPEG_proxy, 0, cvCreateVideoWriter_FFMPEG_proxy)
+ #elif defined(ENABLE_PLUGINS) || defined(HAVE_FFMPEG_WRAPPER)
+-- 
+2.25.1
+

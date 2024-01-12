@@ -22,6 +22,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include <locale.h>
 #include <stdio.h>
 #include "k_type.h"
 #include "k_ipcmsg.h"
@@ -30,6 +31,7 @@
 #include "msg_server_dispatch.h"
 #include "mapi_vicap_api.h"
 #include "mapi_vicap_comm.h"
+#include <time.h>
 
 k_s32 msg_vicap_get_sensor_fd(k_s32 id, k_ipcmsg_message_t *msg)
 {
@@ -285,6 +287,91 @@ k_s32 msg_vicap_set_mclk(k_s32 id, k_ipcmsg_message_t *msg)
     return K_SUCCESS;
 }
 
+#define pr(fmt,...) fprintf(stderr,"\033[0m[server] "fmt"\n",##__VA_ARGS__)
+#define DEBUG_MESSAGE 0
+
+k_s32 msg_vicap_tuning(k_s32 id, k_ipcmsg_message_t *msg)
+{
+    k_s32 ret;
+    k_ipcmsg_message_t *resp_msg;
+    // FIXME: full size cause data error
+    const k_u32 block_size = K_IPCMSG_MAX_CONTENT_LEN / 2;
+    #define TIMEOUT 2
+    static unsigned state = 0;
+    static k_u32 message_len = 0;
+    static k_u32 message_ptr = 0;
+    static char* message_buffer = NULL;
+    static char* response = NULL;
+    static k_u32 response_len = 0;
+    static k_u32 response_ptr = 0;
+    static time_t last_call = 0;
+    reprocess:
+    if (state == 0) {
+        // new call
+        if (msg->u32BodyLen == 4) {
+            message_len = *(k_u32*)msg->pBody;
+            message_ptr = 0;
+            message_buffer = malloc(message_len);
+            state = 1;
+            last_call = time(NULL);
+            pr("get message length %u", message_len);
+        }
+    } else if (state == 1) {
+        if (time(NULL) - last_call >= TIMEOUT) {
+            pr("timeout at state %u", state);
+            state = 0;
+            goto reprocess;
+        }
+        last_call = time(NULL);
+        // receiving message
+        memcpy(message_buffer + message_ptr, msg->pBody, msg->u32BodyLen);
+        message_ptr += msg->u32BodyLen;
+        pr("received %u/%u", message_ptr, message_len);
+        #if DEBUG_MESSAGE
+        fwrite(msg->pBody, 1, msg->u32BodyLen, stderr);
+        fprintf(stderr, "\n");
+        #endif
+        if (message_ptr >= message_len) {
+            // handle and return
+            ret = kd_mapi_vicap_tuning(message_buffer, message_len, &response, &response_len);
+            free(message_buffer);
+            static k_u32 response_buffer_size = 0;
+            static char* response_buffer_virt = NULL;
+            static k_u64 response_buffer_phys = 0;
+            pr("return %d, response length %u", ret, response_len);
+            if ((response_buffer_size < response_len) || (response_buffer_virt == NULL)) {
+                // reallocate buffer from mmz
+                if (response_buffer_virt != NULL) {
+                    kd_mpi_sys_mmz_free(response_buffer_phys, response_buffer_virt);
+                    response_buffer_virt = NULL;
+                }
+                int error = kd_mpi_sys_mmz_alloc_cached(&response_buffer_phys, (void**)&response_buffer_virt, "isp/tuning", "anonymous", response_len);
+                if (error != 0) {
+                    pr("kd_mpi_sys_mmz_alloc_cached error: %d", error);
+                    return K_FAILED;
+                }
+            }
+            pr("buffer phys: %08lx", response_buffer_phys);
+            memcpy(response_buffer_virt, response, response_len);
+            kd_mpi_sys_mmz_flush_cache(response_buffer_phys, response_buffer_virt, response_len);
+            k_u64 body = ((k_u64)response_len << 32UL) | (response_buffer_phys & 0xffffffffUL);
+            resp_msg = kd_ipcmsg_create_resp_message(msg, ret, &body, sizeof(body));
+            if (resp_msg == NULL) {
+                pr("kd_ipcmsg_create_resp_message failed at line %d", __LINE__);
+                return K_FAILED;
+            }
+            ret = kd_ipcmsg_send_async(id, resp_msg, NULL);
+            if (ret != K_SUCCESS) {
+                pr("kd_ipcmsg_send_async failed %x at line %d", ret, __LINE__);
+            }
+            // finish
+            kd_ipcmsg_destroy_message(resp_msg);
+            state = 0;
+        }
+    }
+    return K_SUCCESS;
+}
+
 static msg_module_cmd_t g_module_cmd_table[] = {
     {MSG_CMD_MEDIA_VICAP_GET_SENSOR_FD,   msg_vicap_get_sensor_fd},
     {MSG_CMD_MEDIA_VICAP_DUMP_FRAME,      msg_vicap_dump_frame},
@@ -296,6 +383,7 @@ static msg_module_cmd_t g_module_cmd_table[] = {
     {MSG_CMD_MEDIA_VICAP_STOP,            msg_vicap_stop},
     {MSG_CMD_MEDIA_VICAP_DROP_FRAME,      msg_vicap_set_vi_drop_frame},
     {MSG_CMD_MEDIA_VICAP_SET_MCLK,        msg_vicap_set_mclk},
+    {MSG_CMD_MEDIA_VICAP_TUNING,          msg_vicap_tuning},
 };
 
 msg_server_module_t g_module_vicap = {

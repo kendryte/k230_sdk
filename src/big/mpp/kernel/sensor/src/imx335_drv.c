@@ -82,7 +82,7 @@
 
 #define DOL2_RHS1 482
 #define DOL3_RHS1 986
-#define DOL3_RHS2 1072
+#define DOL3_RHS2 2608//1072
 
 
 static const k_sensor_reg imx335_mipi_2lane_raw10_1920x1080_30fps_regs[] = {
@@ -824,7 +824,6 @@ static k_sensor_mode imx335_mode_info[] = {
             .data_type = 0x2C,
         },
         .reg_list = imx335_mipi_2lane_raw12_1920x1080_30fps_mclk_24m_regs,
-        .mclk_setting = {{K_FALSE}, {K_FALSE}, {K_FALSE}},
     },
     {
         .index = 1,
@@ -847,7 +846,6 @@ static k_sensor_mode imx335_mode_info[] = {
             .data_type = 0x2C,
         },
         .reg_list = imx335_mipi_2lane_raw12_2592x1944_30fps_mclk_24m_regs,
-        .mclk_setting = {{K_FALSE}, {K_FALSE}, {K_FALSE}},
     },
     {
         .index = 2,
@@ -870,7 +868,6 @@ static k_sensor_mode imx335_mode_info[] = {
             .data_type = 0x2C,
         },
         .reg_list = imx335_mipi_4lane_raw12_2592x1944_30fps_mclk_24m_regs,
-        .mclk_setting = {{K_FALSE}, {K_FALSE}, {K_FALSE}},
     },
 
     {
@@ -894,16 +891,6 @@ static k_sensor_mode imx335_mode_info[] = {
             .data_type = 0x2C,
         },
         .reg_list = imx335_mipi_2lane_raw12_1920x1080_30fps_mclk_74_25_regs,
-        .mclk_setting = {
-            {
-                .mclk_setting_en = K_TRUE,
-                .setting.id = SENSOR_MCLK0,
-                .setting.mclk_sel = SENSOR_PLL1_CLK_DIV4,
-                .setting.mclk_div = 8,
-            },
-            {K_FALSE},
-            {K_FALSE},
-        },
     },
     {
         .index = 4,
@@ -926,16 +913,6 @@ static k_sensor_mode imx335_mode_info[] = {
             .data_type = 0x2C,
         },
         .reg_list = imx335_mipi_2lane_raw12_2592x1944_30fps_mclk_74_25_regs,
-        .mclk_setting = {
-            {
-                .mclk_setting_en = K_TRUE,
-                .setting.id = SENSOR_MCLK0,
-                .setting.mclk_sel = SENSOR_PLL1_CLK_DIV4,
-                .setting.mclk_div = 8,
-            },
-            {K_FALSE},
-            {K_FALSE},
-        },
     },
     {
         .index = 5,
@@ -958,16 +935,6 @@ static k_sensor_mode imx335_mode_info[] = {
             .data_type = 0x2C,
         },
         .reg_list = imx335_mipi_4lane_raw12_2592x1944_30fps_mclk_74_25_regs,
-        .mclk_setting = {
-            {
-                .mclk_setting_en = K_TRUE,
-                .setting.id = SENSOR_MCLK0,
-                .setting.mclk_sel = SENSOR_PLL1_CLK_DIV4,
-                .setting.mclk_div = 8,
-            },
-            {K_FALSE},
-            {K_FALSE},
-        },
     },
     {
         .index = 6,
@@ -991,7 +958,6 @@ static k_sensor_mode imx335_mode_info[] = {
             .data_type = 0x2B,
         },
         .reg_list = imx335_mipi_4lane_raw10_dol_2x_regs,
-        .mclk_setting = {{K_FALSE}, {K_FALSE}, {K_FALSE}},
     },
     {
         .index = 7,
@@ -1015,7 +981,6 @@ static k_sensor_mode imx335_mode_info[] = {
             .data_type = 0x2B,
         },
         .reg_list = imx335_mipi_4lane_raw10_3x_regs,
-        .mclk_setting = {{K_FALSE}, {K_FALSE}, {K_FALSE}},
     },
 };
 
@@ -1832,7 +1797,8 @@ struct sensor_driver_dev imx335_sensor_drv = {
         .i2c_bus = NULL,
         .i2c_name = "i2c0",
         .slave_addr = 0x1a,
-        .size = SENSOR_REG_VALUE_8BIT,
+        .reg_addr_size = SENSOR_REG_VALUE_16BIT,
+        .reg_val_size = SENSOR_REG_VALUE_8BIT,
     },
     .sensor_name = "imx335",
     .sensor_func = {

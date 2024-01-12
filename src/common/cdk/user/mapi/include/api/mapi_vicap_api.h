@@ -199,6 +199,8 @@ k_s32 kd_mapi_vicap_set_vi_drop_frame(k_vicap_csi_num csi, k_vicap_drop_frame *f
 
 k_s32 kd_mapi_vicap_set_mclk(k_vicap_mclk_id id, k_vicap_mclk_sel sel, k_u8 mclk_div, k_u8 mclk_en);
 
+k_s32 kd_mapi_vicap_tuning(char* string, k_u32 size, char** response, k_u32* response_len);
+
 /** @} */ /** <!-- ==== MAPI_VICAP End ==== */
 
 #ifdef __cplusplus

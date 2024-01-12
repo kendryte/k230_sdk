@@ -57,9 +57,18 @@
 #define DISPLAY_WITDH  1088
 #define DISPLAY_HEIGHT 1920
 
+#define	GPIO_DM_INPUT           _IOW('G', 1, int)
+#define GPIO_READ_VALUE       	_IOW('G', 12, int)
+
 #define IR_BUF_SIZE ((DMA_CHN0_WIDTH * DMA_CHN0_WIDTH *3/2 + 0x3ff) & ~0x3ff)//(5 * 1024 * 1024)
 
 extern k_dpu_dev_attr_t dpu_dev_attr;
+
+typedef struct kd_pin_mode
+{
+    unsigned short pin;     /* pin number, from 0 to 63 */
+    unsigned short mode;    /* pin level status, 0 low level, 1 high level */
+} pin_mode_t;
 
 typedef struct {
     k_vicap_dev dev_num;
@@ -117,10 +126,12 @@ typedef struct {
 static vicap_device_obj device_obj[VICAP_DEV_ID_MAX];
 static k_u32 dump_count = 0;
 static pthread_t output_tid = 0;
+static pthread_t gpio_tid = 0;
 static pthread_t adc_tid = 0;
 static k_bool exiting = K_FALSE;
 static k_bool dump_exited = K_FALSE;
 static k_bool adc_exited = K_FALSE;
+static k_bool gpio_exited = K_FALSE;
 static k_video_frame_info rgb_buf[VICAP_OUTPUT_BUF_NUM];
 // static k_video_frame_info ir_buf[VICAP_OUTPUT_BUF_NUM];
 static k_u32 rgb_wp=0;
@@ -130,11 +141,14 @@ static char OUT_PATH[50] = {"\0"};
 static int rgb_dev;
 static int rgb_chn;
 static k_vb_blk_handle ir_handle;
-static k_u64 ir_phys_addr; 
+static k_u64 ir_phys_addr;
 static k_u8 *ir_virt_addr;
 static k_bool gen_calibration = K_FALSE;
 static k_bool adc_en = K_FALSE;
-#if ENABLE_CDC
+static k_u32 delay_ms=3000;
+int gpio_fd = -1;
+pin_mode_t gpio;
+#if ENABLE_CDC   //USB in big core
 static int fd_usb = -1;
 #endif
 
@@ -357,7 +371,7 @@ static k_s32 sample_vicap_vb_init(vicap_device_obj *dev_obj)
     k_vb_blk_handle handle;
     k_s32 pool_id = 0;
     k_u64 phys_addr = 0;
-    
+
 
     handle = kd_mpi_vb_get_block(VB_INVALID_POOLID, config.comm_pool[k+3].blk_size, NULL);
     if (handle == VB_INVALID_HANDLE)
@@ -391,7 +405,7 @@ static k_s32 sample_vicap_vb_init(vicap_device_obj *dev_obj)
         return -1;
     }
     printf("%s>ir_virt_addr_Y %p\n", __func__, ir_virt_addr);
-    
+
     return 0;
 }
 
@@ -482,7 +496,18 @@ static void dpu_dump()
 
                 if(gen_calibration)
                 {
-#if 1
+                    ret = kd_mpi_dma_send_frame(dev_num, &dump_info, -1);
+                    if (ret != K_SUCCESS)
+                    {
+                        printf("send frame error\r\n");
+                    }
+
+                    ret = kd_mpi_dma_get_frame(dev_num, &dma_get_info, -1);
+                    if (ret != K_SUCCESS)
+                    {
+                        printf("get frame error\r\n");
+                    }
+
                     /* save vicap ir file */
                     // void *dpu_virt_addr = NULL;
                     k_char vicap_ir_filename[256];
@@ -490,11 +515,11 @@ static void dpu_dump()
                     memset(vicap_ir_filename, 0 , sizeof(vicap_ir_filename));
                     sprintf(vicap_ir_filename, "%svicap_ir_%04d.yuv", OUT_PATH, dump_count);
 
-                    dpu_virt_addr = kd_mpi_sys_mmap(dump_info.v_frame.phys_addr[0], dump_info.v_frame.width* dump_info.v_frame.height*3/2);
+                    dpu_virt_addr = kd_mpi_sys_mmap(dma_get_info.v_frame.phys_addr[0], dma_get_info.v_frame.width* dma_get_info.v_frame.height*3/2);
                     if (dpu_virt_addr) {
                         FILE *file = fopen(vicap_ir_filename, "wb+");
                         if (file) {
-                            fwrite(dpu_virt_addr, 1, dump_info.v_frame.width* dump_info.v_frame.height*3/2, file);
+                            fwrite(dpu_virt_addr, 1, dma_get_info.v_frame.width* dma_get_info.v_frame.height*3/2, file);
                             fclose(file);
                             printf("save %s success\n", vicap_ir_filename);
                         } else {
@@ -504,111 +529,26 @@ static void dpu_dump()
                         printf("save ir out failed\n");
                     }
 
-                    kd_mpi_sys_munmap(dpu_virt_addr, dump_info.v_frame.width* dump_info.v_frame.height*3/2);
-#endif
+                    kd_mpi_sys_munmap(dpu_virt_addr, dma_get_info.v_frame.width* dma_get_info.v_frame.height*3/2);
 
-                    ret = kd_mpi_dma_send_frame(DMA_CHN0, &dump_info, -1);
-                    if (ret != K_SUCCESS)
-                    {
-                        printf("send frame error\r\n");
-                    }
+                    kd_mpi_dma_release_frame(dev_num, &dma_get_info);
 
-                    ret = kd_mpi_dma_get_frame(DMA_CHN0, &dma_get_info, -1);
-                    if (ret != K_SUCCESS)
-                    {
-                        printf("get frame error\r\n");
-                    }
-
-
-                    ret = kd_mpi_dpu_send_frame(0, ir_phys_addr, 200);
-                    if (ret) {
-                        printf("kd_mpi_dpu_send_frame ir failed: %d\n", ret);
-                    }
-
-                    ret = kd_mpi_dpu_send_frame(1, dma_get_info.v_frame.phys_addr[0], 200);
-                    if (ret) {
-                        printf("kd_mpi_dpu_send_frame ir failed: %d\n", ret);
-                    }
-
-                    ret = kd_mpi_dpu_get_frame(0, &lcn_result, 200);
-                    if (ret) {
-                        printf("kd_mpi_dpu_get_frame failed: %d\n", ret);
-                    }
-
-                    ret = kd_mpi_dpu_get_frame(1, &ir_result, 200);
-                    if (ret) {
-                        printf("kd_mpi_dpu_get_frame failed: %d\n", ret);
-                    }
-#if 0
-                    /* save vicap ir file */
-                    // void *dpu_virt_addr = NULL;
-                    k_char ir_filename[256];
-
-                    memset(ir_filename, 0 , sizeof(ir_filename));
-                    sprintf(ir_filename, "%sir_%04d.ir", OUT_PATH, dump_count);
-
-                    dpu_virt_addr = kd_mpi_sys_mmap(ir_result.ir_result.ir_out.ir_phys_addr, ir_result.ir_result.ir_out.length);
-                    if (dpu_virt_addr) {
-                        FILE *file = fopen(ir_filename, "wb+");
-                        if (file) {
-                            fwrite(dpu_virt_addr, 1, ir_result.ir_result.ir_out.length, file);
-                            fclose(file);
-                            printf("save %s success, pts %ld\n", ir_filename, dump_info.v_frame.pts);
-                        } else {
-                            printf("can't create file\n");
-                        }
-                    } else {
-                        printf("save irout failed\n");
-                    }
-
-                    kd_mpi_sys_munmap(dpu_virt_addr, dump_info.v_frame.width* dump_info.v_frame.height*3/2);
-#endif
-                    kd_mpi_dma_release_frame(DMA_CHN0, &dma_get_info);
-                    //printf("depth addr:%lx\n", lcn_result.lcn_result.depth_out.depth_phys_addr);
-
-                    kd_mpi_dpu_release_frame();
                 }
-
                 else
                 {
-#if 0
-                    /* save vicap depth file */
-                    // void *dpu_virt_addr = NULL;
-                    k_char vicap_depth_filename[256];
-
-                    memset(vicap_depth_filename, 0 , sizeof(vicap_depth_filename));
-                    sprintf(vicap_depth_filename, "%svicap_depth_%04d.yuv", OUT_PATH, dump_count);
-
-                    dpu_virt_addr = kd_mpi_sys_mmap(dump_info.v_frame.phys_addr[0], dump_info.v_frame.width* dump_info.v_frame.height*3/2);
-                    if (dpu_virt_addr) {
-                        FILE *file = fopen(vicap_depth_filename, "wb+");
-                        if (file) {
-                            fwrite(dpu_virt_addr, 1, dump_info.v_frame.width* dump_info.v_frame.height*3/2, file);
-                            fclose(file);
-                            printf("save %s success\n", vicap_depth_filename);
-                        } else {
-                            printf("can't create file\n");
-                        }
-                    } else {
-                        printf("save ir out failed\n");
-                    }
-
-                    kd_mpi_sys_munmap(dpu_virt_addr, dump_info.v_frame.width* dump_info.v_frame.height*3/2);
-#endif
-
                     printf("lcn dma\n");
-                    ret = kd_mpi_dma_send_frame(DMA_CHN0, &dump_info, -1);
+                    ret = kd_mpi_dma_send_frame(dev_num, &dump_info, -1);
                     if (ret != K_SUCCESS)
                     {
                         printf("send frame error\r\n");
                     }
 
-                    ret = kd_mpi_dma_get_frame(DMA_CHN0, &dma_get_info, -1);
+                    ret = kd_mpi_dma_get_frame(dev_num, &dma_get_info, -1);
                     if (ret != K_SUCCESS)
                     {
                         printf("get frame error\r\n");
                     }
-                    //printf("dma addr:%lx\n", dma_get_info.v_frame.phys_addr[0]); 
+                    //printf("dma addr:%lx\n", dma_get_info.v_frame.phys_addr[0]);
 
                     printf("lcn dpu\n");
                     ret = kd_mpi_dpu_send_frame(0, dma_get_info.v_frame.phys_addr[0], 200);
@@ -632,7 +572,7 @@ static void dpu_dump()
                         printf("kd_mpi_dpu_get_frame failed: %d\n", ret);
                     }
 
-#if 0//ENABLE_CDC
+#if ENABLE_CDC
                     remain_size = lcn_result.lcn_result.depth_out.length;
                     dpu_virt_addr = kd_mpi_sys_mmap(lcn_result.lcn_result.depth_out.depth_phys_addr, lcn_result.lcn_result.depth_out.length);
                     wp = dpu_virt_addr;
@@ -677,7 +617,7 @@ static void dpu_dump()
                     kd_mpi_sys_munmap(dpu_virt_addr, lcn_result.lcn_result.depth_out.length);
 #endif
 
-                    kd_mpi_dma_release_frame(DMA_CHN0, &dma_get_info);
+                    kd_mpi_dma_release_frame(dev_num, &dma_get_info);
                     //printf("depth addr:%lx\n", lcn_result.lcn_result.depth_out.depth_phys_addr);
 
                     kd_mpi_dpu_release_frame();
@@ -687,10 +627,10 @@ static void dpu_dump()
                         ret = kd_mpi_dpu_get_frame(1, &ir_result, 200);
                         if (ret) {
                             printf("kd_mpi_dpu_get_frame ir failed: %d\n", ret);
-                        }                
+                        }
 
                         kd_mpi_dpu_release_frame();
-                        
+
 
                         get_ir = K_FALSE;
                     }
@@ -699,48 +639,23 @@ static void dpu_dump()
                 }
             }
 
-
             if(device_obj[dev_num].out_format[chn_num] == PIXEL_FORMAT_RGB_888 ||
                 device_obj[dev_num].out_format[chn_num] == PIXEL_FORMAT_BGR_888_PLANAR)
             {
                 k_u32 data_size = 0;
                 void *virt_addr = NULL;
-#if !ENABLE_CDC
-                k_char filename[256];
-#endif
 
+                kd_mpi_vicap_3d_mode_crtl(K_FALSE);
+                usleep(delay_ms);
                 memset(&dump_info, 0 , sizeof(k_video_frame_info));
                 ret = kd_mpi_vicap_dump_frame(dev_num, chn_num, VICAP_DUMP_RGB, &dump_info, 1000);
                 if (ret) {
                     printf("sample_vicap, dev(%d) chn(%d) dump frame failed.\n", dev_num, chn_num);
                 }
+                usleep(delay_ms);
+                kd_mpi_vicap_3d_mode_crtl(K_TRUE);
 
                 //printf("addr: [%lx, %lx, %lx]\n", dump_info.v_frame.phys_addr[0], dump_info.v_frame.phys_addr[1], dump_info.v_frame.phys_addr[2]);
-
-#if 0
-            /* save vicap depth file */
-            // void *dpu_virt_addr = NULL;
-            k_char vicap_rgb_filename[256];
-
-            memset(vicap_rgb_filename, 0 , sizeof(vicap_rgb_filename));
-            sprintf(vicap_rgb_filename, "%svicap_rgb_%04d.rgb", OUT_PATH, dump_count);
-
-            dpu_virt_addr = kd_mpi_sys_mmap(dump_info.v_frame.phys_addr[0], dump_info.v_frame.width* dump_info.v_frame.height*3);
-            if (dpu_virt_addr) {
-                FILE *file = fopen(vicap_rgb_filename, "wb+");
-                if (file) {
-                    fwrite(dpu_virt_addr, 1, dump_info.v_frame.width* dump_info.v_frame.height*3, file);
-                    fclose(file);
-                    printf("save %s success\n", vicap_rgb_filename);
-                } else {
-                    printf("can't create file\n");
-                }
-            } else {
-                printf("save ir out failed\n");
-            }
-            kd_mpi_sys_munmap(dpu_virt_addr, dump_info.v_frame.width* dump_info.v_frame.height*3);
-
-#endif
 
                 if (dump_info.v_frame.pixel_format == PIXEL_FORMAT_YUV_SEMIPLANAR_420) {
                     data_size = dump_info.v_frame.width * dump_info.v_frame.height * 3 /2;
@@ -753,13 +668,13 @@ static void dpu_dump()
                 } else {
                 }
 
-                ret = kd_mpi_dma_send_frame(DMA_CHN1, &dump_info, -1);
+                ret = kd_mpi_dma_send_frame(dev_num, &dump_info, -1);
                 if (ret != K_SUCCESS)
                 {
                     printf("send frame error\r\n");
                 }
 
-                ret = kd_mpi_dma_get_frame(DMA_CHN1, &dma_get_info, -1);
+                ret = kd_mpi_dma_get_frame(dev_num, &dma_get_info, -1);
                 if (ret != K_SUCCESS)
                 {
                     printf("get frame error\r\n");
@@ -789,6 +704,7 @@ static void dpu_dump()
                 }
                 kd_mpi_sys_munmap(virt_addr, data_size);
 #else
+                k_char filename[256];
                 virt_addr = kd_mpi_sys_mmap(dma_get_info.v_frame.phys_addr[0], data_size);
                 if (virt_addr) {
                     memset(filename, 0 , sizeof(filename));
@@ -809,7 +725,7 @@ static void dpu_dump()
 
                 kd_mpi_sys_munmap(virt_addr, data_size);
 #endif
-                kd_mpi_dma_release_frame(DMA_CHN1, &dma_get_info);
+                kd_mpi_dma_release_frame(dev_num, &dma_get_info);
             }
 
             //printf("sample_vicap, release dev(%d) chn(%d) dump frame.\n", dev_num, chn_num);
@@ -847,8 +763,12 @@ static void dpu_continue_dump()
             if(device_obj[dev_num].out_format[chn_num] == PIXEL_FORMAT_RGB_888 ||
                 device_obj[dev_num].out_format[chn_num] == PIXEL_FORMAT_BGR_888_PLANAR)
             {
+                kd_mpi_vicap_3d_mode_crtl(K_FALSE);
+                usleep(delay_ms);
                 memset(&rgb_buf[rgb_wp], 0 , sizeof(k_video_frame_info));
                 ret = kd_mpi_vicap_dump_frame(dev_num, chn_num, VICAP_DUMP_RGB, &rgb_buf[rgb_wp], 1000);
+                usleep(delay_ms);
+                kd_mpi_vicap_3d_mode_crtl(K_TRUE);
                 if (ret) {
                     printf("sample_vicap, dev(%d) chn(%d) dump frame failed.\n", dev_num, chn_num);
                 }
@@ -889,13 +809,13 @@ static void dpu_continue_dump()
 
                 //printf("addr: [%lx, %lx, %lx]\n", dump_info.v_frame.phys_addr[0], dump_info.v_frame.phys_addr[1], dump_info.v_frame.phys_addr[2]);
 
-                ret = kd_mpi_dma_send_frame(DMA_CHN0, &dump_info, -1);
+                ret = kd_mpi_dma_send_frame(dev_num, &dump_info, -1);
                 if (ret != K_SUCCESS)
                 {
                     printf("send frame error\r\n");
                 }
 
-                ret = kd_mpi_dma_get_frame(DMA_CHN0, &dma_get_info, -1);
+                ret = kd_mpi_dma_get_frame(dev_num, &dma_get_info, -1);
                 if (ret != K_SUCCESS)
                 {
                     printf("get frame error\r\n");
@@ -949,7 +869,7 @@ static void dpu_continue_dump()
                     printf("save depthout failed\n");
                 }
 
-                kd_mpi_dma_release_frame(DMA_CHN0, &dma_get_info);
+                kd_mpi_dma_release_frame(dev_num, &dma_get_info);
                 //printf("depth addr:%lx\n", lcn_result.lcn_result.depth_out.depth_phys_addr);
 
                 kd_mpi_dpu_release_frame();
@@ -980,13 +900,13 @@ static void dpu_continue_dump()
 
                         data_size = rgb_buf[rgb_rp].v_frame.width * rgb_buf[rgb_rp].v_frame.height * 3;
 
-                        ret = kd_mpi_dma_send_frame(DMA_CHN1, &rgb_buf[rgb_rp], -1);
+                        ret = kd_mpi_dma_send_frame(rgb_dev, &rgb_buf[rgb_rp], -1);
                         if (ret != K_SUCCESS)
                         {
                             printf("send frame error\r\n");
                         }
 
-                        ret = kd_mpi_dma_get_frame(DMA_CHN1, &dma_get_info, -1);
+                        ret = kd_mpi_dma_get_frame(rgb_dev, &dma_get_info, -1);
                         if (ret != K_SUCCESS)
                         {
                             printf("get frame error\r\n");
@@ -1052,7 +972,7 @@ static void *dump_thread(void *arg)
 }
 
 static void *adc_thread(void *arg)
-{    
+{
     printf("%s\n", __FUNCTION__);
     float temp = -300.0;//初始变量建议定义到正常范围之外，如果没有正常赋值，不会影响计算。
 	float old_temp = -300.0;
@@ -1084,7 +1004,7 @@ static void *adc_thread(void *arg)
 			perror("select()");
 		}
 		else if (retval > 0) {
-			FD_ISSET(0, &rfds);	
+			FD_ISSET(0, &rfds);
 		}
 		else {
 			printf("Timeout reached\n");
@@ -1099,6 +1019,22 @@ static void *adc_thread(void *arg)
     return arg;
 }
 
+static void *gpio_thread(void *arg)
+{
+    while(!exiting)
+    {
+        ioctl(gpio_fd, GPIO_READ_VALUE, &gpio);
+        if(gpio.mode == 0)
+        {
+            dpu_dump();
+            usleep(1000000);
+        }
+        usleep(30000);
+    }
+    gpio_exited = K_TRUE;
+    return arg;
+}
+
 #define VICAP_MIN_PARAMETERS (7)
 
 static void usage(void)
@@ -1107,8 +1043,11 @@ static void usage(void)
     printf("Options:\n");
     printf(" -o             output path, default is /sharefs/\n");
     printf(" -mode:         vicap work mode[0: online mode, 1: offline mode. only offline mode support multiple sensor input]\tdefault 0\n");
+    printf(" -cal:          1: for calibration, set it before -dev\n");
+    printf(" -gpio:         gpio number, set it before -dev\n");
+    printf(" -delay:        delay time ms, set it before -dev\n");
     printf(" -dev:          vicap device id[0,1,2]\tdefault 0\n");
-    printf(" -sensor:       sensor type[0: ov9732@1280x720, 1: ov9286_ir@1280x720], 2: ov9286_speckle@1280x720]\n");
+    printf(" -sensor:       sensor type[see K230_Camera_Sensor_Adaptation_Guide.md]\n");
     printf(" -ae:           ae status[0: disable AE, 1: enable AE]\tdefault enable\n");
     printf(" -awb:          awb status[0: disable AWB, 1: enable AWb]\tdefault enable\n");
     printf(" -chn:          vicap output channel id[0,1,2]\tdefault 0\n");
@@ -1119,27 +1058,19 @@ static void usage(void)
     printf(" -crop:         crop enable[0: disable, 1: enable]\n");
     printf(" -ofmt:         the output pixel format[0: yuv, 1: rgb888, 2: rgb888p, 3: raw], only channel 0 support raw data, default yuv\n");
     printf(" -preview:      the output preview enable[0: disable, 1: enable], only support 2 output channel preview\n");
-    printf(" -rotation:     display rotaion[0: degree 0, 1: degree 90, 2: degree 270, 3: degree 180, 4: unsupport rotaion]\n");
+    printf(" -rotation:     display rotaion[0: degree 0, 1: degree 90, 2: degree 180, 3: degree 270, 4: unsupport rotaion]\n");
+    printf(" -gdma:         gdma rotaion[0: degree 0, 1: degree 90, 2: degree 180, 3: degree 270, 4: unsupport rotaion]\n");
     printf(" -help:         print this help\n");
 
     exit(1);
 }
 
-static void _set_mod_log(k_mod_id mod_id,k_s32  level)
-{
-    k_log_level_conf level_conf;
-    level_conf.level = level;
-    level_conf.mod_id = mod_id;
-    kd_mpi_log_set_level_conf(&level_conf);
-}
-
 int main(int argc, char *argv[])
 {
-    // _set_mod_log(K_ID_VI, 6);
-    _set_mod_log(K_ID_DPU, 7);
     k_s32 ret = 0;
 
     k_u32 work_mode = VICAP_WORK_ONLINE_MODE;
+    k_gdma_rotation_e dma_rotation[2] = {DEGREE_0, DEGREE_0};
 
     strcpy(OUT_PATH, "/sharefs/");
 
@@ -1157,6 +1088,8 @@ int main(int argc, char *argv[])
 
     k_u32 pipe_ctrl = 0xFFFFFFFF;
     memset(&dev_attr, 0, sizeof(k_vicap_dev_attr));
+
+    gpio.pin = 30;
 
     if (argc < VICAP_MIN_PARAMETERS) {
         printf("sample_vicap requires some necessary parameters:\n");
@@ -1200,15 +1133,24 @@ int main(int argc, char *argv[])
         }
         else if (strcmp(argv[i], "-adc") == 0)
         {
-            if(argv[i+1]){
-                adc_en = K_TRUE;
-            }
+            adc_en = atoi(argv[i + 1]);
+            printf("set adc_en = %d\n", adc_en);
         }
         else if (strcmp(argv[i], "-cal") == 0)
         {
-            if(argv[i+1]){
-                gen_calibration = K_TRUE;
-            }
+            gen_calibration = atoi(argv[i + 1]);
+            printf("set gen_calibration = %d\n", gen_calibration);
+        }
+        else if (strcmp(argv[i], "-gpio") == 0)
+        {
+            gpio.pin = atoi(argv[i + 1]);
+            printf("set gpio = %d\n", gpio.pin);
+        }
+        else if (strcmp(argv[i], "-delay") == 0)
+        {
+            delay_ms = atoi(argv[i + 1]);
+            delay_ms *= 1000;
+            printf("set delay_ms = %d\n", delay_ms);
         }
         else if (strcmp(argv[i], "-dev") == 0)
         {
@@ -1298,6 +1240,11 @@ chn_parse:
                             k_u16 rotation = atoi(argv[i + 1]);
                             device_obj[cur_dev].rotation[cur_chn] = rotation;
                         }
+                        else if (strcmp(argv[i], "-gdma") == 0)
+                        {
+                            k_u16 rotation = atoi(argv[i + 1]);
+                            dma_rotation[cur_dev] = (k_gdma_rotation_e)rotation;
+                        }
                         else if (strcmp(argv[i], "-crop") == 0)
                         {
                             k_u16 crop = atoi(argv[i + 1]);
@@ -1375,153 +1322,7 @@ chn_parse:
                         printf("sensor parameters missing.\n");
                         return -1;
                     }
-                    k_u16 sensor = atoi(argv[i + 1]);
-                    switch (sensor) {
-                        case 0:
-                        {
-                            device_obj[cur_dev].sensor_type = OV_OV9732_MIPI_1280X720_30FPS_10BIT_LINEAR;
-                            break;
-                        }
-                        case 1:
-                        {
-                            device_obj[cur_dev].sensor_type = OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_IR;
-                            break;
-                        }
-                        case 2:
-                        {
-                            device_obj[cur_dev].sensor_type = OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_SPECKLE;
-                            break;
-                        }
-                        case 3:
-                        {
-                            device_obj[cur_dev].sensor_type = IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_LINEAR;
-                            break;
-                        }
-                        case 4:
-                        {
-                            device_obj[cur_dev].sensor_type = IMX335_MIPI_2LANE_RAW12_2592X1944_30FPS_LINEAR;
-                            break;
-                        }
-                        case 5:
-                        {
-                            device_obj[cur_dev].sensor_type = IMX335_MIPI_4LANE_RAW12_2592X1944_30FPS_LINEAR;
-                            break;
-                        }
-                        case 6:
-                        {
-                            device_obj[cur_dev].sensor_type = IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_MCLK_7425_LINEAR;
-                            // kd_mpi_vicap_set_mclk(VICAP_MCLK0, VICAP_PLL1_CLK_DIV4, 8, 1);
-                            break;
-                        }
-                        case 7:
-                        {
-                            device_obj[cur_dev].sensor_type = IMX335_MIPI_2LANE_RAW12_2592X1944_30FPS_MCLK_7425_LINEAR;
-                            // kd_mpi_vicap_set_mclk(VICAP_MCLK0, VICAP_PLL1_CLK_DIV4, 8, 1);
-                            break;
-                        }
-                        case 8:
-                        {
-                            device_obj[cur_dev].sensor_type = IMX335_MIPI_4LANE_RAW12_2592X1944_30FPS_MCLK_7425_LINEAR;
-                            // kd_mpi_vicap_set_mclk(VICAP_MCLK0, VICAP_PLL1_CLK_DIV4, 8, 1);
-                            break;
-                        }
-                        case 9:
-                        {
-                            device_obj[cur_dev].sensor_type = OV_OV9286_MIPI_1280X720_30FPS_10BIT_MCLK_25M_LINEAR_SPECKLE;
-                            // kd_mpi_vicap_set_mclk(VICAP_MCLK0, VICAP_PLL0_CLK_DIV4, 32, 1);
-                            break;
-                        }
-                        case 10:
-                        {
-                            device_obj[cur_dev].sensor_type =  OV_OV9732_MIPI_1280X720_30FPS_10BIT_MCLK_16M_LINEAR ;
-                            // kd_mpi_vicap_set_mclk(VICAP_MCLK1, VICAP_PLL0_CLK_DIV4, 25, 1);
-                            break;
-                        }
-                        case 11:
-                        {
-                            device_obj[cur_dev].sensor_type = OV_OV9286_MIPI_1280X720_30FPS_10BIT_MCLK_25M_LINEAR_IR;
-                            // kd_mpi_vicap_set_mclk(VICAP_MCLK0, VICAP_PLL0_CLK_DIV4, 32, 1);
-                            break;
-                        }
-                        case 12:
-                        {
-                            device_obj[cur_dev].sensor_type = SC_SC035HGS_MIPI_1LANE_RAW10_640X480_120FPS_LINEAR;
-                            break;
-                        }
-                        case 13:
-                        {
-                            device_obj[cur_dev].sensor_type = SC_SC035HGS_MIPI_1LANE_RAW10_640X480_60FPS_LINEAR;
-                            break;
-                        }
-                        case 14:
-                        {
-                            device_obj[cur_dev].sensor_type = SC_SC035HGS_MIPI_1LANE_RAW10_640X480_30FPS_LINEAR;
-                            break;
-                        }
-                        case 15:
-                        {
-                            device_obj[cur_dev].sensor_type = OV_OV9286_MIPI_1280X720_60FPS_10BIT_LINEAR_IR;
-                            break;
-                        }
-                        case 16:
-                        {
-                            device_obj[cur_dev].sensor_type = OV_OV9286_MIPI_1280X720_60FPS_10BIT_LINEAR_SPECKLE;
-                            break;
-                        }
-                        case 17:
-                        {
-                            device_obj[cur_dev].sensor_type = IMX335_MIPI_4LANE_RAW10_2XDOL;
-                            break;
-                        }
-                        case 18:
-                        {
-                            device_obj[cur_dev].sensor_type = IMX335_MIPI_4LANE_RAW10_3XDOL;
-                            break;
-                        }
-                        case 19:
-                        {
-                            device_obj[cur_dev].sensor_type = OV_OV5647_MIPI_1920X1080_30FPS_10BIT_LINEAR;
-                            break;
-                        }
-                        case 20:
-                        {
-                            device_obj[cur_dev].sensor_type = OV_OV5647_MIPI_2592x1944_10FPS_10BIT_LINEAR;
-                            break;
-                        }
-                        case 21:
-                        {
-                            k_vicap_drop_frame frame;
-                            frame.m = 1;
-                            frame.n = 1;
-                            frame.mode = VICAP_LINERA_MODE;
-
-                            kd_mpi_vicap_set_vi_drop_frame(VICAP_CSI2, &frame, 1);
-                            device_obj[cur_dev].sensor_type = OV_OV5647_MIPI_640x480_60FPS_10BIT_LINEAR;
-                            break;
-                        }
-                        case 22:
-                        {
-                            device_obj[cur_dev].sensor_type = SC_SC201CS_MIPI_1LANE_RAW10_1600X1200_30FPS_LINEAR;
-                            // kd_mpi_vicap_set_mclk(VICAP_MCLK0, VICAP_PLL1_CLK_DIV4, 22, 1);         // set mclk1 = 27 M = 2376 / 4 / 22
-                            break;
-                        }
-                        case 23:
-                        {
-                            device_obj[cur_dev].sensor_type = OV_OV5647_MIPI_CSI0_1920X1080_30FPS_10BIT_LINEAR;
-                            // kd_mpi_vicap_set_mclk(VICAP_MCLK0, VICAP_PLL0_CLK_DIV4, 16, 1);
-                            break;
-                        }
-                        case 24:
-                        {
-                            device_obj[cur_dev].sensor_type = OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_IR_SPECKLE;
-                            break;
-                        }
-                        default:
-                        {
-                            printf("unsupport sensor type.\n");
-                            return -1;
-                        }
-                    }
+                    device_obj[cur_dev].sensor_type = atoi(argv[i + 1]);
                 }
                 else if (strcmp(argv[i], "-pipe") == 0)
                 {
@@ -1701,7 +1502,7 @@ chn_parse:
         return -1;
     }
 
-    ret = sample_dv_dma_init();
+    ret = sample_dv_dma_init(dma_rotation, gen_calibration);
     if (ret) {
         printf("sample_dma_init failed\n");
         return -1;
@@ -1821,6 +1622,19 @@ chn_parse:
         pthread_create(&adc_tid, NULL, adc_thread, NULL);
     }
 
+    gpio_fd = open("/dev/gpio", O_RDWR);
+    if (gpio_fd < 0)
+    {
+        perror("open /dev/pin err\n");
+    }
+    ret = ioctl(gpio_fd, GPIO_DM_INPUT, &gpio);  //pin33 input
+    if (ret)
+    {
+        perror("ioctl /dev/pin err\n");
+    }
+
+    pthread_create(&gpio_tid, NULL, gpio_thread, NULL);
+
     while(K_TRUE)
     {
         if(select != '\n')
@@ -1891,10 +1705,12 @@ chn_parse:
             pthread_create(&output_tid, NULL, dump_thread, NULL);
             break;
         case 'q':
-            if(output_tid || adc_tid)
+            if(output_tid || adc_tid || gpio_tid)
             {
                 exiting = K_TRUE;
-                while((output_tid && !dump_exited) || (adc_tid && !adc_exited))
+                while((output_tid && !dump_exited) ||
+                      (adc_tid && !adc_exited) ||
+                      (gpio_tid && !gpio_exited) )
                 {
                     usleep(30000);
                 }
@@ -1966,8 +1782,20 @@ app_exit:
         pthread_cancel(output_tid);
         pthread_join(output_tid, NULL);
     }
+
+    if(gpio_tid)
+    {
+        pthread_cancel(gpio_tid);
+        pthread_join(gpio_tid, NULL);
+    }
+
     exiting = K_FALSE;
     printf("%d: exiting %d\n", __LINE__, exiting);
+
+    if (gpio_fd >= 0)
+    {
+        close(gpio_fd);
+    }
 
     ret = sample_dv_dma_delete();
     if (ret) {

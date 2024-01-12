@@ -79,12 +79,12 @@ static int c908_pmp_region_info(u32 index, ulong *prot, ulong *addr, ulong *log2
 	switch (index) {
 	case 0:
 		*prot	  = PMP_R | PMP_L;
-		*addr	  = 0x91213000;
+		*addr	  = 0x91214000;
 		*log2size = log2roundup(0x1000);
 		break;
 	case 1:
 		*prot	  = PMP_R;
-		*addr	  = 0x91214000;
+		*addr	  = 0x91213000;
 		*log2size = log2roundup(0x1000);
 		break;
 	case 2:

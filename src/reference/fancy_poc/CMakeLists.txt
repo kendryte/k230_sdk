@@ -28,5 +28,5 @@ add_subdirectory(./meta_hand/src/meta_hand)
 add_subdirectory(./housekeeper/src/housekeeper_client/housekeeper_ai/housekeeper)
 add_subdirectory(./housekeeper/src/housekeeper_client/housekeeper_ai/face_registration)
 add_subdirectory(./ai_scale/src/ai_scale_ai_code)
-
+add_subdirectory(./face_recognition/src/face_recognition)
 

@@ -568,6 +568,7 @@ enum
 #define RT_THREAD_CTRL_CHANGE_PRIORITY  0x02                /**< Change thread priority. */
 #define RT_THREAD_CTRL_INFO             0x03                /**< Get thread information. */
 #define RT_THREAD_CTRL_BIND_CPU         0x04                /**< Set thread bind cpu. */
+#define RT_THREAD_CTRL_UPDATE_PRIORITY  0x12                /**< Update thread priority. */
 
 #ifdef RT_USING_SMP
 

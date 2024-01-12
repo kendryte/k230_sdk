@@ -30,10 +30,12 @@
 
 extern struct connector_driver_dev hx8399_connector_drv;
 extern struct connector_driver_dev lt9611_connector_drv;
+extern struct connector_driver_dev st7701_connector_drv;
 
 struct connector_driver_dev *connector_drv_list[CONNECTOR_NUM_MAX] = {
     &hx8399_connector_drv,
     &lt9611_connector_drv,
+    &st7701_connector_drv,
 };
 
 
@@ -122,6 +124,22 @@ k_s32 connector_priv_ioctl(struct connector_driver_dev *dev, k_u32 cmd, void *ar
                 return -1;
             }
 			break;
+        }
+        case KD_IOC_CONNECTOR_S_MIRROR:
+        {
+            k_connector_mirror mirror;
+            if (dev->connector_func.connector_set_mirror == NULL) {
+                rt_kprintf("%s (%s)connector_set_mirror is null\n", __func__, dev->connector_name);
+				return -1;
+			}
+
+            if (sizeof(mirror) != lwp_get_from_user(&mirror, args, sizeof(mirror))){
+                rt_kprintf("%s:%d lwp_get_from_user err\n", __func__, __LINE__);
+                return -1;
+            }
+
+			ret = dev->connector_func.connector_set_mirror(dev, &mirror);
+            break;
         }
         default:
             break;
@@ -213,4 +231,9 @@ void connector_set_vo_enable(void)
 void connector_set_vtth_intr(k_bool status, k_u32 vpos)
 {
     kd_vo_set_vtth_intr(status, vpos);
+}
+
+void connector_set_pixclk(k_u32 div)
+{
+    k230_set_pixclk(div);
 }
