@@ -138,6 +138,7 @@ static k_u32 dpu_buf_cnt;
 static k_u32 dma_buf_cnt;
 static rt_device_t adc_dev=NULL;
 static k_dpu_temperature_t temperature;
+static float  g_cur_temperature = 0;
 static k_dpu_image_mode image_mode;
 static k_u32 delay_us=3000;
 
@@ -212,7 +213,7 @@ int sample_dv_dpu_update_temp(float temperature_obj)
 		return -1;
 	}
 
-	printf("start temperature rectify:ref_temp: %f, temperature:%f  \n", temperature.ref, temperature_obj);
+	//printf("start temperature rectify:ref_temp: %f, temperature:%f  \n", temperature.ref, temperature_obj);
 	float diff_temp = temperature_obj - temperature.ref;
 	//if (diff_temp < 3 && diff_temp > -3)
 	//{
@@ -569,12 +570,12 @@ static void dpu_release(void* pStream)
     k_s32 ret;
     if(pmsg->msg_type == MSG_KEY_TYPE)
     {
-        if(pmsg->result_type == DPU_RESULT_TYPE_IMG)
+        if(pmsg->dev_num == rgb_dev)
         {
             rgb_send_done = K_TRUE;
             // printf("%s>rgb time %ld ms\n", __func__, get_ticks()/27000);
         }
-        else if(pmsg->result_type == DPU_RESULT_TYPE_LCN)
+        else if(pmsg->dev_num == speckle_dev)
         {
             depth_send_done = K_TRUE;
             // printf("%s>depth time %ld ms\n", __func__, get_ticks()/27000);
@@ -776,7 +777,7 @@ static void speckle_dump()
         return;
     }
 
-    // printf("save speckle_wp %d, pts %ld, stc %ld\n", speckle_wp, speckle_buf[speckle_wp].v_frame.pts, get_ticks()/27000);
+    // printf("save speckle_wp %d, pts %ld, %p, stc %ld\n", speckle_wp, speckle_buf[speckle_wp].v_frame.pts, &speckle_buf[speckle_wp], get_ticks()/27000);
     speckle_wp++;
     speckle_wp %= VICAP_OUTPUT_BUF_NUM;
     if (speckle_wp == speckle_rp)
@@ -804,9 +805,9 @@ static void send_image(k_u64 depth_pts)
         delta = depth_pts - rgb_buf[rgb_rp].v_frame.pts;
         temp = (rgb_rp + 1) % VICAP_OUTPUT_BUF_NUM;
         // printf("rgb_rp %d, rgb pts %ld, depth pts %ld\n", rgb_rp, rgb_buf[rgb_rp].v_frame.pts, depth_pts);
-        if((rgb_buf[rgb_rp].v_frame.pts >= depth_pts) ||
-            (delta < 35000) || (delta > 1000000) ||
-            (temp == rgb_wp))
+        // if((rgb_buf[rgb_rp].v_frame.pts >= depth_pts) ||
+        //     (delta < 35000) || (delta > 1000000) ||
+        //     (temp == rgb_wp))
         {
             k_u32 data_size = 0;
             void *virt_addr = NULL;
@@ -836,8 +837,10 @@ static void send_image(k_u64 depth_pts)
 
             rgb_send_done = K_FALSE;
             memcpy(&pmsg->dpu_result.img_result, &dma_get_info, sizeof(k_video_frame));
+            pmsg->dpu_result.img_result.time_ref = dump_count;
             pmsg->dpu_result.img_result.pts = rgb_buf[rgb_rp].v_frame.pts;
             dataret = -1;
+            pmsg->temperature = g_cur_temperature;
             dataret = send_dpu_data_to_little(rgb_dev, image_send_buf);
             // printf("send depth and rgb: delta pts %6ld, time %6ld ms\n", delta, get_ticks()/27000);
             if(dataret){
@@ -864,11 +867,6 @@ static void send_image(k_u64 depth_pts)
 
         if(found)
         {
-            dump_count++;
-            if(dump_count % 30 == 0)
-            {
-                printf("dump_count %d, Average FrameRate = %ld Fps\n", dump_count, (dump_count*1000)/(get_ticks()/27000-dump_start_time));
-            }
             break;
         }
     }
@@ -916,7 +914,11 @@ static void dpu_unbind_dump()
         speckle_rp++;
         speckle_rp %= VICAP_OUTPUT_BUF_NUM;
 
-        if(image_mode == IMAGE_MODE_RGB_IR)
+        k_u64 start_time=get_ticks()/27000;
+
+        if(image_mode == IMAGE_MODE_RGB_IR ||
+           image_mode == IMAGE_MODE_NONE_SPECKLE ||
+           image_mode == IMAGE_MODE_NONE_IR)
         {
             datafifo_msg *pmsg = (datafifo_msg *)depth_send_buf;
             pmsg->msg_type = MSG_KEY_TYPE;
@@ -924,26 +926,30 @@ static void dpu_unbind_dump()
             pmsg->result_type = DPU_RESULT_TYPE_IMG;
             pmsg->upfunc = (k_u8 *)dpu_callback_attr[speckle_dev].pfn_data_cb;
             pmsg->puserdata = dpu_callback_attr[speckle_dev].p_private_data;
-            rgb_send_done = K_FALSE;
+            depth_send_done = K_FALSE;
             memcpy(&pmsg->dpu_result.img_result, &dma_get_info, sizeof(k_video_frame));
+            pmsg->dpu_result.img_result.time_ref = dump_count;
             pmsg->dpu_result.img_result.pts = depth_pts;
             dataret = -1;
+            pmsg->temperature = g_cur_temperature;
+
             dataret = send_dpu_data_to_little(speckle_dev, depth_send_buf);
 
             if(dataret){
-                printf("send depth error: %d\n", dataret);
+                printf("send IR error: %d\n", dataret);
             }
 
-            while(!rgb_send_done)
+            while(!depth_send_done)
             {
                 callwriteNULLtoflushdpu(speckle_dev);
                 usleep(1000);
             }
+
             kd_mpi_dma_release_frame(0, &dma_get_info);
+            // printf("send IR take time %6ld ms\n", (get_ticks()/27000-start_time));
         }
         else
         {
-            //printf("dma addr:%lx\n", dma_get_info.v_frame.phys_addr[0]);
             ret = kd_mpi_dpu_send_frame(0, dma_get_info.v_frame.phys_addr[0], 30);
             if (ret) {
                 printf("kd_mpi_dpu_send_frame failed, time %ld ms\n", get_ticks()/27000);
@@ -971,8 +977,6 @@ static void dpu_unbind_dump()
                 kd_mpi_dpu_release_frame();
             }
 
-            k_u64 start_time=get_ticks()/27000;
-
             datafifo_msg *pmsg = (datafifo_msg *)depth_send_buf;
             pmsg->msg_type = MSG_KEY_TYPE;
             pmsg->dev_num = speckle_dev;
@@ -981,8 +985,10 @@ static void dpu_unbind_dump()
             pmsg->puserdata = dpu_callback_attr[speckle_dev].p_private_data;
             depth_send_done = K_FALSE;
             memcpy(&pmsg->dpu_result.lcn_result, &lcn_result, sizeof(k_dpu_chn_result_u));
+            pmsg->dpu_result.lcn_result.time_ref = dump_count;
             pmsg->dpu_result.lcn_result.pts = depth_pts;
             dataret = -1;
+            pmsg->temperature = g_cur_temperature;
             dataret = send_dpu_data_to_little(speckle_dev, depth_send_buf);
 
             kd_mpi_dma_release_frame(0, &dma_get_info);
@@ -997,11 +1003,17 @@ static void dpu_unbind_dump()
                 callwriteNULLtoflushdpu(speckle_dev);
                 usleep(1000);
             }
-            // printf("send depth take time %6ld ms\n", (get_ticks()/27000-start_time));
             kd_mpi_dpu_release_frame();
+            // printf("send depth take time %6ld ms\n", (get_ticks()/27000-start_time));
         }
 
         send_image(depth_pts);
+
+        dump_count++;
+        if(dump_count % 30 == 0)
+        {
+            printf("dump_count %d, Average FrameRate = %ld Fps\n", dump_count, (dump_count*1000)/(get_ticks()/27000-dump_start_time));
+        }
     }
 }
 
@@ -1051,6 +1063,7 @@ static void dpu_bind_dump()
     depth_send_done = K_FALSE;
     memcpy(&pmsg->dpu_result.lcn_result, &lcn_result, sizeof(k_dpu_chn_result_u));
     dataret = -1;
+    pmsg->temperature = g_cur_temperature;
     dataret = send_dpu_data_to_little(speckle_dev, depth_send_buf);
 
     while(!depth_send_done)
@@ -1092,14 +1105,14 @@ static void *dump_image_thread(void *arg)
 
     while(!image_exiting)
     {
-        if(image_mode < IMAGE_MODE_NONE_SPECKLE)
-        {
-            image_dump();
-        }
-
         if(dpu_bind == DPU_UNBIND)
         {
             speckle_dump();
+        }
+
+        if(image_mode < IMAGE_MODE_NONE_SPECKLE)
+        {
+            image_dump();
         }
     }
 
@@ -1144,6 +1157,7 @@ static void *adc_thread(void *arg)
 				old_temp = temp;
 			}
 		}
+        g_cur_temperature = temp;
 
 		fd_set rfds;
 		struct timeval tv;
@@ -1152,8 +1166,13 @@ static void *adc_thread(void *arg)
 		FD_ZERO(&rfds);
 		FD_SET(0, &rfds); // 监视标准输入流
 
-		tv.tv_sec = 5; // 设置等待时间为5秒
+#if 0
+		tv.tv_sec = 1; // 设置等待时间为5秒
 		tv.tv_usec = 0;
+#else
+		tv.tv_sec = 0; // wait 500 ms
+		tv.tv_usec = 500*1000;
+#endif
 
 		retval = select(1, &rfds, NULL, NULL, &tv);
 		if (retval == -1) {
@@ -1359,6 +1378,10 @@ k_s32 kd_mapi_dpu_init(k_dpu_info_t *init)
 k_s32 kd_mapi_dpu_start_grab()
 {
     printf("%s\n", __FUNCTION__);
+
+    kd_mpi_vicap_set_dump_reserved(rgb_dev, rgb_chn, K_TRUE);
+    kd_mpi_vicap_set_dump_reserved(speckle_dev, speckle_chn, K_TRUE);
+
     pthread_create(&output_tid, NULL, dump_thread, NULL);
 
 	pthread_create(&image_tid, NULL, dump_image_thread, NULL);

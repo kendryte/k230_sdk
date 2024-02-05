@@ -1,5 +1,6 @@
 all:
 	@cd rtsp_demo; make
+	@cd yuv_sensor_demo; make
 	@cd rtsp_server; make
 	@cd backchannel_client; make
 	# @cd mp4_demuxer; make
@@ -15,6 +16,7 @@ all:
 
 clean:
 	@cd rtsp_demo; make clean
+	@cd yuv_sensor_demo; make clean
 	@cd rtsp_server; make clean
 	@cd backchannel_client; make clean
 	# @cd mp4_demuxer; make clean

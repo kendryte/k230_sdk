@@ -34918,7 +34918,7 @@ while((train_data&0x7) !=0x07) {
   case 0x00000004: K230_dbg("%08X: PMU Major Msg: End of write delay center optimization                        \n",train_data);break;
   case 0x00000005: K230_dbg("%08X: PMU Major Msg: End of 2D read delay/voltage center optimization              \n",train_data);break;
   case 0x00000006: K230_dbg("%08X: PMU Major Msg: End of 2D write delay /voltage center optimization            \n",train_data);break;
-  case 0x00000007: K230_dbg("%08X: PMU Major Msg: Firmware run has completed                                    \n",train_data);break;
+  case 0x00000007: K230_dbg("%08X: PMU Major Msg: Firmware run has completed 3200allodt                                    \n",train_data);break;
   case 0x00000008: K230_dbg("%08X: PMU Major Msg: Enter streaming message mode                                  \n",train_data);break;
   case 0x00000009: K230_dbg("%08X: PMU Major Msg: End of max read latency training                              \n",train_data);break;
   case 0x0000000a: K230_dbg("%08X: PMU Major Msg: End of read dq deskew training                                \n",train_data);break;
@@ -34927,7 +34927,7 @@ while((train_data&0x7) !=0x07) {
   case 0x0000000d: K230_dbg("%08X: PMU Major Msg: End of CA training                                            \n",train_data);break;
   case 0x000000fd: K230_dbg("%08X: PMU Major Msg: End of MPR read delay center optimization                     \n",train_data);break;
   case 0x000000fe: K230_dbg("%08X: PMU Major Msg: End of Write leveling coarse delay                            \n",train_data);break;
-  case 0x000000ff: K230_dbg("%08X: PMU Major Msg: FATAL ERROR.                                                  \n",train_data);break;
+  case 0x000000ff: K230_dbg("%08X: PMU Major Msg: FATAL ERROR 3200allodt.                                                  \n",train_data);break;
   default:         K230_dbg("%08X: PMU Major Msg: Un-recognized message... !                                    \n",train_data);break;
   } 
 

@@ -36,6 +36,7 @@
 #define __MSG_VENC_H__
 
 #include "k_venc_comm.h"
+#include "k_nonai_2d_comm.h"
 #include "mpi_venc_api.h"
 #include "mpi_sys_api.h"
 #include "mapi_venc_comm.h"
@@ -64,6 +65,10 @@ typedef enum
     MSG_CMD_MEDIA_VENC_DELETE_DATAFIFO,
     MSG_CMD_MEDIA_VENC_ENABLE_IDR,
     MSG_CMD_MEDIA_VENC_REQUEST_IDR,
+    MSG_CMD_MEDIA_VENC_2D_INIT,
+    MSG_CMD_MEDIA_VENC_2D_DEINIT,
+    MSG_CMD_MEDIA_VENC_2D_START,
+    MSG_CMD_MEDIA_VENC_2D_STOP,
 } msg_media_vvi_cmd_t;
 
 
@@ -116,6 +121,17 @@ typedef struct
     k_u32 venc_chn;
     k_bool idr_enable;
 } msg_venc_chn_idr_t;
+
+typedef struct
+{
+    k_u32 chn;
+    k_nonai_2d_chn_attr attr;
+} msg_nonai_2d_chn_attr_t;
+
+typedef struct
+{
+    k_u32 chn;
+} msg_nonai_2d_chn_t;
 
 /** @}*/  /** <!-- ==== COMM End ====*/
 #ifdef __cplusplus

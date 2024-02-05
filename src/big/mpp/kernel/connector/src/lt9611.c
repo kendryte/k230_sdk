@@ -575,6 +575,8 @@ static k_s32 k230_vo_resolution_init(k_connector_type type, k_vo_display_resolut
     pub_attr.intf_type = K_VO_INTF_MIPI;
     pub_attr.sync_info = resolution;
 
+    
+
     memset(&sync_attr, 0, sizeof(k_vo_sync_attr));
     if (type == LT9611_MIPI_4LAN_1920X1080_60FPS || type == LT9611_MIPI_4LAN_1920X1080_30FPS) {
         sync_attr.hsync_start = 2;
@@ -590,7 +592,7 @@ static k_s32 k230_vo_resolution_init(k_connector_type type, k_vo_display_resolut
         sync_attr.vsync2_start = 1;
         sync_attr.vsync2_stop = 1;
     } else {
-        rt_kprintf("Unsupported connector type \n");
+        rt_kprintf("Unsupported connector type %d \n", type);
     }
 
     connector_set_vo_init();

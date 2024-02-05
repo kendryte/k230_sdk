@@ -525,7 +525,87 @@ static const k_vicap_sensor_info sensor_info_list[] = {
         VICAP_VI_FIRST_FRAME_FS_TR0,         
         0,         
         OV_OV5647_MIPI_CSI1_1920X1080_30FPS_10BIT_LINEAR,     
-    }
+    },
+    {
+        "xs9922b",
+        1280,
+        720,
+        VICAP_CSI0,
+        VICAP_MIPI_2LANE,   //VICAP_MIPI_4LANE
+        VICAP_SOURCE_CSI0,
+        K_FALSE,
+        VICAP_MIPI_PHY_1200M,   //VICAP_MIPI_PHY_1200M
+        VICAP_CSI_DATA_TYPE_YUV422_8,
+        VICAP_LINERA_MODE,//VICAP_VCID_HDR_3FRAME,  VICAP_LINERA_MODE
+        VICAP_FLASH_DISABLE,
+        VICAP_VI_FIRST_FRAME_FS_TR0,
+        0,
+        XS9922B_MIPI_CSI0_1280X720_30FPS_YUV422_DOL3,
+    },
+    {
+        "xs9950_csi1",
+        1280,
+        720,
+        VICAP_CSI1,
+        VICAP_MIPI_2LANE,   //VICAP_MIPI_4LANE
+        VICAP_SOURCE_CSI1,
+        K_FALSE,
+        VICAP_MIPI_PHY_1200M,   //VICAP_MIPI_PHY_1200M
+        VICAP_CSI_DATA_TYPE_YUV422_8,
+        VICAP_LINERA_MODE,//VICAP_VCID_HDR_3FRAME,  VICAP_LINERA_MODE
+        VICAP_FLASH_DISABLE,
+        VICAP_VI_FIRST_FRAME_FS_TR0,
+        0,
+        XS9950_MIPI_CSI1_1280X720_30FPS_YUV422,
+    },
+    {
+        "xs9950_csi0",
+        1280,
+        720,
+        VICAP_CSI0,
+        VICAP_MIPI_2LANE,   //VICAP_MIPI_4LANE
+        VICAP_SOURCE_CSI0,
+        K_FALSE,
+        VICAP_MIPI_PHY_1200M,   //VICAP_MIPI_PHY_1200M
+        VICAP_CSI_DATA_TYPE_YUV422_8,
+        VICAP_LINERA_MODE,//VICAP_VCID_HDR_3FRAME,  VICAP_LINERA_MODE
+        VICAP_FLASH_DISABLE,
+        VICAP_VI_FIRST_FRAME_FS_TR0,
+        0,
+        XS9950_MIPI_CSI0_1280X720_30FPS_YUV422,
+    },
+    {
+        "xs9950_csi2",
+        1280,
+        720,
+        VICAP_CSI2,
+        VICAP_MIPI_2LANE,   //VICAP_MIPI_4LANE
+        VICAP_SOURCE_CSI2,
+        K_FALSE,
+        VICAP_MIPI_PHY_1200M,   //VICAP_MIPI_PHY_1200M
+        VICAP_CSI_DATA_TYPE_YUV422_8,
+        VICAP_LINERA_MODE,//VICAP_VCID_HDR_3FRAME,  VICAP_LINERA_MODE
+        VICAP_FLASH_DISABLE,
+        VICAP_VI_FIRST_FRAME_FS_TR0,
+        0,
+        XS9950_MIPI_CSI2_1280X720_30FPS_YUV422,
+    },
+    {
+        "xs9950_csi0",
+        1920,
+        1080,
+        VICAP_CSI0,
+        VICAP_MIPI_2LANE,   //VICAP_MIPI_4LANE
+        VICAP_SOURCE_CSI0,
+        K_FALSE,
+        VICAP_MIPI_PHY_1200M,   //VICAP_MIPI_PHY_1200M
+        VICAP_CSI_DATA_TYPE_YUV422_8,
+        VICAP_LINERA_MODE,//VICAP_VCID_HDR_3FRAME,  VICAP_LINERA_MODE
+        VICAP_FLASH_DISABLE,
+        VICAP_VI_FIRST_FRAME_FS_TR0,
+        0,
+        XS9950_MIPI_CSI0_1920X1080_30FPS_YUV422,
+    },
 };
 
 const char *kd_mpi_vicap_get_sensor_string(k_vicap_sensor_type sensor_type)
@@ -774,8 +854,6 @@ k_s32 kd_mpi_sensor_connection_check(k_s32 fd, k_s32 *connection)
 
     return ret;
 }
-
-
 
 k_s32 kd_mpi_sensor_stream_enable(k_s32 fd, k_s32 enable)
 {

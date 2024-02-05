@@ -442,6 +442,14 @@ static void vb_exit() {
     kd_mpi_vb_exit();
 }
 
+static uint64_t get_ticks()
+{
+    static volatile uint64_t time_elapsed = 0;
+    __asm__ __volatile__(
+        "rdtime %0"
+        : "=r"(time_elapsed));
+    return time_elapsed;
+}
 
 int main(int argc, char *argv[])
 {
@@ -1215,6 +1223,8 @@ chn_parse:
             if (!device_obj[dev_num].chn_enable[chn_num])
                 continue;
 
+            kd_mpi_vicap_set_dump_reserved(dev_num, chn_num, K_TRUE);
+
             memset(&chn_attr, 0, sizeof(k_vicap_chn_attr));
             if (device_obj[dev_num].out_format[chn_num] == PIXEL_FORMAT_RGB_BAYER_10BPP) {
                 chn_attr.out_win.width = device_obj[dev_num].in_width;
@@ -1378,11 +1388,14 @@ chn_parse:
                     printf("sample_vicap, dev(%d) chn(%d) dump frame.\n", dev_num, chn_num);
 
                     memset(&dump_info, 0 , sizeof(k_video_frame_info));
+                    uint64_t start = get_ticks();
                     ret = kd_mpi_vicap_dump_frame(dev_num, chn_num, VICAP_DUMP_YUV, &dump_info, 1000);
                     if (ret) {
                         printf("sample_vicap, dev(%d) chn(%d) dump frame failed.\n", dev_num, chn_num);
                         continue;
                     }
+                    uint64_t end = get_ticks();
+                    printf("dump cost %lu us\n", (end - start) / 27);
 
                     k_char *suffix;
                     k_u32 data_size = 0;

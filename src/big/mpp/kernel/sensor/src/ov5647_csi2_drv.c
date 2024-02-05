@@ -478,25 +478,25 @@ static k_sensor_mode *current_mode = NULL;
 
 static int ov5647_power_rest(k_s32 on)
 {
-    #define OV5647_CAM_PIN      (24)
+    #define OV5647_CAM_PIN_CSI2      (24)
 
-    rt_kprintf("ov5647_power_rest OV5647_CAM_PIN is %d \n", OV5647_CAM_PIN);
+    rt_kprintf("ov5647_power_rest OV5647_CAM_PIN_CSI2 is %d \n", OV5647_CAM_PIN_CSI2);
     // rst
-    kd_pin_mode(OV5647_CAM_PIN, GPIO_DM_OUTPUT);
+    kd_pin_mode(OV5647_CAM_PIN_CSI2, GPIO_DM_OUTPUT);
 
-    kd_pin_write(OV5647_CAM_PIN, GPIO_PV_HIGH);
+    kd_pin_write(OV5647_CAM_PIN_CSI2, GPIO_PV_HIGH);
 
     if (on)
     {
         rt_thread_mdelay(DELAY_MS_SENSOR_DEFAULT);
-        kd_pin_write(OV5647_CAM_PIN, GPIO_PV_LOW);  //GPIO_PV_LOW  GPIO_PV_HIGH
+        kd_pin_write(OV5647_CAM_PIN_CSI2, GPIO_PV_LOW);  //GPIO_PV_LOW  GPIO_PV_HIGH
         rt_thread_mdelay(DELAY_MS_SENSOR_DEFAULT);
-        kd_pin_write(OV5647_CAM_PIN, GPIO_PV_HIGH);
+        kd_pin_write(OV5647_CAM_PIN_CSI2, GPIO_PV_HIGH);
     }
     else
     {
         rt_thread_mdelay(DELAY_MS_SENSOR_DEFAULT);
-        kd_pin_write(OV5647_CAM_PIN, GPIO_PV_LOW);  //GPIO_PV_LOW  GPIO_PV_HIGH
+        kd_pin_write(OV5647_CAM_PIN_CSI2, GPIO_PV_LOW);  //GPIO_PV_LOW  GPIO_PV_HIGH
     }
     rt_thread_mdelay(DELAY_MS_SENSOR_DEFAULT);
 

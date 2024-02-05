@@ -25,6 +25,85 @@
 #ifndef __UVC_RECV_FILE_H__
 #define __UVC_RECV_FILE_H__
 
+#include <stdbool.h>
+typedef enum
+{
+	GRAB_IMAGE_MODE_RGB_DEPTH = 0,  /*sensor 0: RGB,  sensor 1: speckle*/
+	GRAB_IMAGE_MODE_RGB_IR,       /*sensor 0: RGB,  sensor 1: IR*/
+	GRAB_IMAGE_MODE_IR_DEPTH,     /*sensor 0: IR,   sensor 1: speckle*/
+	GRAB_IMAGE_MODE_NONE_SPECKLE, /*sensor 0: none, sensor 1: speckle*/
+	GRAB_IMAGE_MODE_NONE_IR,      /*sensor 0: none, sensor 1: IR*/
+	GRAB_IMAGE_MODE_NONE_DEPTH,   /*sensor 0: none, sensor 1: speckle*/
+	GRAB_IMAGE_MODE_RGB_SPECKLE,  /*sensor 0: RGB,  sensor 1: speckle*/
+	GRAB_IMAGE_MODE_BUTT,
+} k_grab_image_mode;
+
+typedef struct
+{
+	float temperature_ref;
+	float temperature_cx;
+	float temperature_cy;
+	float kxppt;
+	float kyppt;
+	float reserve[11];
+}k_dpu_temperature;
+
+//transfer cfg
+typedef struct tag_uvc_grab_init_parameters_ex
+{
+	//default
+	int camera_fps;
+	int depth_maximum_distance;
+	int camera_width;
+	int camera_height;
+
+	k_grab_image_mode grab_mode;
+	int sensor_type[2];
+	bool adc_enable;
+	bool overwrite_file;
+	int  reverse[11];
+	//from file
+	char serialNumber[64];
+	k_dpu_temperature temperature;
+}uvc_grab_init_parameters_ex;
+
+//transfer data
+typedef enum
+{
+    em_uvc_transfer_data_type_unknown = 0,
+	em_uvc_transfer_data_type_file,  //transfer file
+	em_uvc_transfer_data_type_cfg,   //transfer cfg
+    em_uvc_transfer_data_type_ctl,   //transfer control
+}UVC_TRANSFER_DATA_TYPE;
+
+typedef enum
+{
+	em_uvc_transfer_control_sync_clock = 0, //Synchronous clock
+	em_uvc_transfer_control_grab_data,      //start or stop k230 send data to pc
+	em_uvc_transfer_control_set_framerate,  //set frame rate
+}UVC_TRANSFER_CONTROL_TYPE;
+
+typedef union
+{
+	unsigned long long sync_clock;
+	bool          start_grab;
+	int           frame_rate;
+	unsigned long long reverse;
+}UVC_TRANSFER_CONTROL_INFO;
+
+typedef struct
+{
+	UVC_TRANSFER_CONTROL_TYPE type;
+	UVC_TRANSFER_CONTROL_INFO ctrl_info;
+}UVC_TRANSFER_CONTROL_CMD;
+
+//transfer file
+typedef struct
+{
+    int data_start_code;
+    UVC_TRANSFER_DATA_TYPE tranfer_type;
+}UVC_TRANSFER_DATA_HEAD_INFO;
+
 int  recv_uvc_data(unsigned char* pdata,int data_len);
 
 #endif //__UVC_RECV_FILE_H__

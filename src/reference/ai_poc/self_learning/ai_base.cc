@@ -26,7 +26,10 @@
 
 #include <iostream>
 #include <cassert>
+#include <fstream>
+#include <string>
 
+#include <nncase/runtime/debug.h>
 #include "utils.h"
 
 using std::cout;
@@ -38,10 +41,8 @@ AIBase::AIBase(const char *kmodel_file,const string model_name, const int debug_
 {
     if (debug_mode > 1)
         cout << "kmodel_file:" << kmodel_file << endl;
-    kmodel_vec_ = Utils::read_binary_file<unsigned char>(kmodel_file);
-
-    kmodel_interp_.load_model({(const gsl::byte *)kmodel_vec_.data(), kmodel_vec_.size()}).expect("cannot load kmodel.");
-
+    std::ifstream ifs(kmodel_file, std::ios::binary);
+    kmodel_interp_.load_model(ifs).expect("Invalid kmodel");
     set_input_init();
     set_output_init();
 }
@@ -61,63 +62,52 @@ void AIBase::set_input_init()
         auto shape = kmodel_interp_.input_shape(i);
         auto tensor = host_runtime_tensor::create(desc.datatype, shape, hrt::pool_shared).expect("cannot create input tensor");
         kmodel_interp_.input_tensor(i, tensor).expect("cannot set input tensor");
-        vector<int> in_shape = {shape[0], shape[1], shape[2], shape[3]};
-        input_shapes_.push_back(in_shape);
-        int dsize = shape[0] * shape[1] * shape[2] * shape[3];
+        vector<int> in_shape;
         if (debug_mode_ > 1)
-            cout << "input shape:" << shape[0] << " " << shape[1] << " " << shape[2] << " " << shape[3] << endl;
+            cout<<"input "<< std::to_string(i) <<" : "<<to_string(desc.datatype)<<",";
+        int dsize = 1;
+        for (int j = 0; j < shape.size(); ++j)
+        {
+            in_shape.push_back(shape[j]);
+            dsize *= shape[j];
+            if (debug_mode_ > 1)
+                cout << shape[j] << ",";
+        }
+        if (debug_mode_ > 1)
+            cout << endl;
+        input_shapes_.push_back(in_shape);
         // DEFINE_TYPECODE(uint8,      u8,     0x06)
         // DEFINE_TYPECODE(float32,    f32,    0x0B)
-        if (desc.datatype == 0x06)
+        if (desc.datatype == dt_int8 || desc.datatype == dt_uint8)
         {
             input_total_size += dsize;
-            each_input_size_by_byte_.push_back(input_total_size);
         }
-        else if (desc.datatype == 0x0B)
+        else if (desc.datatype == dt_int16 || desc.datatype == dt_uint16 || desc.datatype == dt_float16 || desc.datatype == dt_bfloat16)
+        {
+            input_total_size += (dsize * 2);
+        }
+        else if (desc.datatype == dt_int32 || desc.datatype == dt_uint32 || desc.datatype == dt_float32)
         {
             input_total_size += (dsize * 4);
-            each_input_size_by_byte_.push_back(input_total_size);
+        }
+        else if(desc.datatype == dt_int64 || desc.datatype == dt_uint64 || desc.datatype == dt_float64)
+        {
+            input_total_size += (dsize * 8);
         }
         else
-            assert(("kmodel input data type supports only uint8, float32", 0));
+        {
+            printf("input data type:%d",desc.datatype);
+            assert(("unsupported kmodel output data type", 0));
+        }
+        each_input_size_by_byte_.push_back(input_total_size);
+
     }
     each_input_size_by_byte_.push_back(input_total_size); // 最后一个保存总大小
-}
-
-void AIBase::set_input(const unsigned char *buf, size_t size)
-{
-    if (*each_input_size_by_byte_.rbegin() != size)
-        cout << "set_input:the actual input size{" + std::to_string(size) + "} is different from the model's required input size{" + std::to_string(*each_input_size_by_byte_.rbegin()) + "}" << endl;
-    assert((*each_input_size_by_byte_.rbegin() == size));
-
-    ScopedTiming st(model_name_ + " set_input", debug_mode_);
-    for (size_t i = 0; i < kmodel_interp_.inputs_size(); ++i)
-    {
-        auto desc = kmodel_interp_.input_desc(i);
-        auto shape = kmodel_interp_.input_shape(i);
-        auto tensor = host_runtime_tensor::create(desc.datatype, shape, hrt::pool_shared).expect("cannot create input tensor");
-        auto mapped_buf = std::move(hrt::map(tensor, map_access_::map_write).unwrap()); // mapped_buf实际是有缓存数据的
-        memcpy(reinterpret_cast<void *>(mapped_buf.buffer().data()), buf, each_input_size_by_byte_[i + 1] - each_input_size_by_byte_[i]);
-        auto ret = mapped_buf.unmap();
-        ret = hrt::sync(tensor, sync_op_t::sync_write_back, true);
-        if (!ret.is_ok())
-        {
-            std::cerr << "hrt::sync failed" << std::endl;
-            std::abort();
-        }
-        kmodel_interp_.input_tensor(i, tensor).expect("cannot set input tensor");
-    }
 }
 
 runtime_tensor AIBase::get_input_tensor(size_t idx)
 {
     return kmodel_interp_.input_tensor(idx).expect("cannot get input tensor");
-}
-
-void AIBase::set_input_tensor(size_t idx, runtime_tensor &tensor)
-{
-    ScopedTiming st(model_name_ + " set_input_tensor", debug_mode_);
-    kmodel_interp_.input_tensor(idx, tensor).expect("cannot set input tensor");
 }
 
 void AIBase::set_output_init()
@@ -131,6 +121,8 @@ void AIBase::set_output_init()
         auto desc = kmodel_interp_.output_desc(i);
         auto shape = kmodel_interp_.output_shape(i);
         vector<int> out_shape;
+        if (debug_mode_ > 1)
+            cout<<"output "<<std::to_string(i)<<" : "<<to_string(desc.datatype)<<",";
         int dsize = 1;
         for (int j = 0; j < shape.size(); ++j)
         {
@@ -142,26 +134,29 @@ void AIBase::set_output_init()
         if (debug_mode_ > 1)
             cout << endl;
         output_shapes_.push_back(out_shape);
-        // DEFINE_TYPECODE(float32,    f32,    0x0B)
-        if (desc.datatype == 0x0B)
+        if (desc.datatype == dt_int8 || desc.datatype == dt_uint8)
+        {
+            output_total_size += dsize;
+        }
+        else if (desc.datatype == dt_int16 || desc.datatype == dt_uint16 || desc.datatype == dt_float16 || desc.datatype == dt_bfloat16)
+        {
+            output_total_size += (dsize * 2);
+        }
+        else if (desc.datatype == dt_int32 || desc.datatype == dt_uint32 || desc.datatype == dt_float32)
         {
             output_total_size += (dsize * 4);
-            each_output_size_by_byte_.push_back(output_total_size);
+        }
+        else if(desc.datatype == dt_int64 || desc.datatype == dt_uint64 || desc.datatype == dt_float64)
+        {
+            output_total_size += (dsize * 8);
         }
         else
-            assert(("kmodel output data type supports only float32", 0));
-        auto tensor = host_runtime_tensor::create(desc.datatype, shape, hrt::pool_shared).expect("cannot create output tensor");
-        kmodel_interp_.output_tensor(i, tensor).expect("cannot set output tensor");
-    }
-}
+        {
+            printf("output data type:%d",desc.datatype);
+            assert(("unsupported kmodel output data type", 0));
+        }
 
-void AIBase::set_output()
-{
-    ScopedTiming st(model_name_ + " set_output", debug_mode_);
-    for (size_t i = 0; i < kmodel_interp_.outputs_size(); i++)
-    {
-        auto desc = kmodel_interp_.output_desc(i);
-        auto shape = kmodel_interp_.output_shape(i);
+        each_output_size_by_byte_.push_back(output_total_size);
         auto tensor = host_runtime_tensor::create(desc.datatype, shape, hrt::pool_shared).expect("cannot create output tensor");
         kmodel_interp_.output_tensor(i, tensor).expect("cannot set output tensor");
     }

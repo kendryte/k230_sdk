@@ -29,6 +29,7 @@
 #include <unistd.h>
 #include "camera.h"
 #include "frame_cache.h"
+#include "k_sensor_comm.h"
 
 unsigned int g_exit = 0;
 unsigned int g_bulk = 1;
@@ -36,7 +37,7 @@ unsigned int g_standalone = 0;
 unsigned int g_imagesize = 409600;
 unsigned int g_bulk_size = 409600;
 unsigned int g_cache_count = 20;
-unsigned int g_sensor = 3;
+unsigned int g_sensor = IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_LINEAR;
 
 static void sig_handler(int sig) {
     get_kcamera()->close();
@@ -52,16 +53,7 @@ void usage(const char *argv0)
     fprintf(stderr, " -c		Number of frame cache buffers\n");
     fprintf(stderr, " -m		Size of iso image\n");
     fprintf(stderr, " -u		Size of bulk image\n");
-    fprintf(stderr, " -t		sensor type num\n");
-    fprintf(stderr, "               0: ov9732\n");
-    fprintf(stderr, "               1: ov9286 ir\n");
-    fprintf(stderr, "               2: ov9286 speckle\n");
-    fprintf(stderr, "               3: imx335 2LANE 1920Wx1080H\n");
-    fprintf(stderr, "               4: imx335 2LANE 2592Wx1944H\n");
-    fprintf(stderr, "               5: imx335 4LANE 2592Wx1944H\n");
-    fprintf(stderr, "               6: imx335 2LANE MCLK 7425 1920Wx1080H\n");
-    fprintf(stderr, "               7: imx335 2LANE MCLK 7425 2592Wx1944H\n");
-    fprintf(stderr, "               8: imx335 4LANE MCLK 7425 2592Wx1944H\n");
+    fprintf(stderr, " -t		sensor type [see K230_Camera_Sensor_Adaptation_Guide.md]\n");
 }
 
 int main(int argc, char *argv[])

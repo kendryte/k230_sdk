@@ -32,7 +32,7 @@ K230芯片是嘉楠科技 Kendryte®系列AIoT芯片中的最新一代SoC产品�
 
 K230-USIP-LP3-EVB是针对AI芯片K230-USIP开发，以LPDDR3为内存而设计的测评板;意在通过全面的接口覆盖K230所支持的各项特色功能的同时，为客户提供参考设计以完成自主研发。
 
-![k230_board](https://kendryte-download.canaan-creative.com/k230/downloads/doc_images/k230_unsip_board.png)
+![k230_board](./.github/images/k230_unsip_board.png)
 
 | 序号 | 说明             |
 |------------|------------------|
@@ -56,7 +56,7 @@ K230-USIP-LP3-EVB是针对AI芯片K230-USIP开发，以LPDDR3为内存而设计�
 
 CanMV-K230针对AI芯片K230-USIP开发，以LPDDR3为内存而设计的测评板,集成了常规开发板所需的HDMI和网络、WIFI/BT等接口。
 
-![k230_Canmv-k230_board](https://kendryte-download.canaan-creative.com/k230/downloads/doc_images/k230_canmv/k230_unsip_canmv_board.png)
+![k230_Canmv-k230_board](./.github/images/k230_unsip_canmv_board.png)
 
 | 序号 | 说明             |
 |------------|------------------|
@@ -90,7 +90,7 @@ CanMV-K230针对AI芯片K230-USIP开发，以LPDDR3为内存而设计的测评�
 
 K230 SDK 是面向K230 开发板的软件开发包，包含了基于Linux&RT-smart 双核异构系统开发需要用到的源代码，工具链和其他相关资源。
 
-![k230_software_arch](https://kendryte-download.canaan-creative.com/k230/downloads/doc_images/software_arch.png)
+![k230_software_arch](./.github/images/software_arch.png)
 
 ### 配置软件开发环境
 
@@ -166,6 +166,15 @@ k230_evb_defconfig/images
 
 > TF卡和eMMC均可使用`sysimage-sdcard.img`镜像,或使用`sysimage-sdcard.img.gz`解压缩得到该文件。
 
+### 预编译镜像下载
+
+如果不希望自行编译镜像，可下载预编译镜像，直接烧录使用
+1. **[main branch](https://github.com/kendryte/k230_sdk/tree/main)**: Github默认分支，作为release分支，编译release镜像自动发布至[Release](https://github.com/kendryte/k230_sdk/releases)页面.(从`v1.4`版本开始支持)
+2. 预编译release镜像：请访问[嘉楠开发者社区](https://developer.canaan-creative.com/resource), 然后在`K230/Images`分类中，下载所需的镜像文件，`evb`设备下载`k230_evb*.img.gz`, `canmv`设备下载`k230_canmv*.img.gz`。
+
+> 下载的镜像默认为`.gz`压缩格式，需先解压缩，然后再烧录。
+> [K230 micropython](https://github.com/kendryte/k230_canmv/)镜像所支持的功能与K230 SDK并不相同
+
 ### 烧录镜像文件
 
 #### 烧录TF卡
@@ -176,7 +185,7 @@ k230_evb_defconfig/images
 sudo dd if=sysimage-sdcard.img of=/dev/sdx bs=1M oflag=sync
 ```
 
-如使用Windows烧录, 建议使用[the balena Etcher](https://etcher.balena.io/)工具.
+如使用Windows烧录, 建议使用[the balena Etcher](https://etcher.balena.io/)工具（**请在Etcher图标上点击右键，以管理员权限运行，进行烧录**）.
 
 ![Etcher](https://github.com/kendryte/k510_docs/raw/v1.5/zh/images/quick_start/balenaetcher.png)
 

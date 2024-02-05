@@ -1,0 +1,169 @@
+on:
+  release:
+    types: [released]
+
+env:
+  REGISTRY: ghcr.io
+  NAMESPACE: kendryte
+  IMAGE_NAME: k230_sdk
+
+jobs:
+  build_docker:
+    name: Build-Docker
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v4
+      -
+        name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.CR_USER }}
+          password: ${{ secrets.CR_PAT }}
+      -
+        name: Build docker and test
+        run: |
+          docker build -f tools/docker/Dockerfile -t ${{ env.IMAGE_NAME }} tools/docker --label "runnumber=${GITHUB_RUN_ID}"
+          docker run --rm ${{ env.IMAGE_NAME }}
+      -
+        name: release docker image
+        run: |
+          IMAGE_ID=${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ env.IMAGE_NAME }}
+          # Change all uppercase to lowercase
+          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+          # Strip git ref prefix from version
+          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+          # Strip "v" prefix from tag name
+          #[[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
+          # Use Docker `latest` tag convention
+          # [ "$VERSION" == "main" ] && VERSION=latest
+          echo IMAGE_ID=$IMAGE_ID
+          echo VERSION=$VERSION
+          echo "start to tag docker image with ver $VERSION"
+          docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
+          echo "start to tag docker image with latest tag"
+          docker tag $IMAGE_NAME $IMAGE_ID:latest
+          echo "start to push docker image with ver $VERSION"
+          docker push $IMAGE_ID:$VERSION
+          echo "start to push docker image with latest tag"
+          docker push $IMAGE_ID:latest
+          echo "finished to push docker image"
+
+  build_image:
+    name: Build-Image
+    needs: build_docker
+    runs-on: [ubuntu-latest]
+    timeout-minutes: 180
+    container:
+      image: ghcr.io/kendryte/k230_sdk:latest
+      env:
+        CONF: k230_${{ matrix.cfg }}_defconfig
+      options: --hostname release --user root
+    strategy:
+      matrix:
+        cfg: ["canmv", "evb"]
+    steps:
+      - name: Check for dockerenv
+        run: (ls /.dockerenv && echo Found dockerenv) || (echo No dockerenv)
+
+      - name: Install Nvm/Node for Actions Checkout Env
+        run: |
+          pwd
+          ls -alht
+          export NVM_DIR="$HOME/.nvm" && (
+            git clone https://github.com/nvm-sh/nvm.git "$NVM_DIR"
+            cd "$NVM_DIR"
+            git checkout `git describe --abbrev=0 --tags --match "v[0-9]*" $(git rev-list --tags --max-count=1)`
+          ) && \. "$NVM_DIR/nvm.sh"
+          nvm install node || exit 1
+          node --version || exit 1
+
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          clean: true
+          submodules: recursive
+
+      - name: Download Toolchain and Setup Build Env
+        run: |
+          hostname
+          uname -a
+          whoami
+          pwd
+          git config --global --add safe.directory $PWD
+          git config --global --list
+          ls -alht
+          echo "download toolchain and build env"
+          make prepare_sourcecode || exit 1
+          ls -alht
+          mkdir -p /opt/ || exit 1
+          rm -rf /opt/toolchain/
+          echo "show toolchain"
+          ls -alht $PWD/toolchain/ || exit 1
+          echo "link ./toolchain to /opt/toolchain"
+          ln -s $PWD/toolchain /opt/ || exit 1
+          echo "show /opt/toolchain/"
+          ls -alht /opt/toolchain/ || exit 1
+          ls -alht /opt/toolchain/Xuantie-900-gcc-linux* || exit 1
+          ls -alht /opt/toolchain/riscv64-linux* || exit 1
+
+      - name: Build image
+        run: |
+          pwd
+          ls -alht
+          echo "start to build k230 images"
+          make CONF=$CONF || exit 1
+          echo "---show output---"
+          ls -alht output/${CONF}/images || exit 1
+          pwd
+
+      - name: Show Output Directory For Debug Purpose
+        run: |
+          pwd
+          ls -alht
+          ls -alht output/${CONF}/images/
+          # Copy compiled files to /github/workspace/artifacts
+          mkdir -p /github/workspace/artifacts
+          cp output/${CONF}/images/k230_${{ matrix.cfg }}* /github/workspace/artifacts/
+          ls -alht /github/workspace/artifacts/
+        shell: bash
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts-${{ matrix.cfg }}
+          path: /github/workspace/artifacts
+
+  upload_release:
+    needs: build_image
+    name: Release
+    if: ${{ startsWith(github.ref, 'refs/tags/') }}
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          pattern: artifacts-*
+          merge-multiple: true
+
+      - name: Display Structure of Artifacts Files
+        run: ls -R
+
+      - name: Show Working Directory For Debug Purpose
+        run: |
+          pwd
+          ls -alht
+          ls -alht artifacts || exit 0
+        shell: bash
+
+      - name: Upload images to Release Asset
+        uses: softprops/action-gh-release@v1
+        with:
+          files: artifacts/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.CR_PAT }}

@@ -613,8 +613,6 @@ void Utils::nms_pose(std::vector<BoxInfo> &input_boxes, float NMS_THRESH,vector<
             else
             {
                 j++;
-                if(j== int(input_boxes.size()))
-                    nms_result.push_back(input_boxes[i].idx);
             }
         }
     }

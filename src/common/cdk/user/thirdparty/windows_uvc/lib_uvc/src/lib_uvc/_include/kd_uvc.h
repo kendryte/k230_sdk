@@ -1,5 +1,6 @@
 #ifndef __KD_UVC_H__
 #define __KD_UVC_H__
+#include <stdbool.h>
 #include "libuvc/libuvc.h"
 typedef void (*uvc_utils_device_cb)(uvc_frame_t *frame, void *ptr);
 typedef struct UVC_UTILS_DEVICE_t
@@ -24,7 +25,7 @@ int kd_free_uvc_camera_device(UVC_UTILS_DEVICE * dev);
 int kd_start_uvc_camera_device(UVC_UTILS_DEVICE * dev);
 int kd_stop_uvc_camera_device(UVC_UTILS_DEVICE* dev);
 
-int kd_uvc_transfer_init(int vid,int pid, char* serialNumber);
+int kd_uvc_transfer_init(int vid,int pid, char* serialNumber,bool usb_init);
 int kd_uvc_transfer_data(const unsigned char* data, int len);
-int kd_uvc_transfer_deinit();
+int kd_uvc_transfer_deinit(bool usb_init);
 #endif //__KD_UVC_H__   

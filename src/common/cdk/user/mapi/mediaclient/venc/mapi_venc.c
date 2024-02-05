@@ -28,6 +28,7 @@
 #include "msg_client_dispatch.h"
 #include "mapi_venc_comm.h"
 #include "mpi_venc_api.h"
+#include "mpi_nonai_2d_api.h"
 #include "msg_venc.h"
 #include "k_type.h"
 #include "read_venc_data.h"
@@ -289,6 +290,65 @@ k_s32 kd_mapi_venc_request_idr(k_s32 chn_num)
     if (ret != K_SUCCESS)
     {
         mapi_venc_error_trace("mapi_send_sync failed\n");
+    }
+    return ret;
+}
+
+k_s32 kd_mapi_nonai_2d_init(k_u32 chn_num, k_nonai_2d_chn_attr *attr)
+{
+    k_s32 ret;
+    msg_nonai_2d_chn_attr_t nonai_2d_chn_attr;
+
+    memset(&nonai_2d_chn_attr, 0, sizeof(nonai_2d_chn_attr));
+    nonai_2d_chn_attr.chn = chn_num;
+    memcpy(&nonai_2d_chn_attr.attr, attr, sizeof(k_nonai_2d_chn_attr));
+
+    ret = mapi_send_sync(MODFD(K_MAPI_MOD_VENC, 0, 0), MSG_CMD_MEDIA_VENC_2D_INIT,
+                         &nonai_2d_chn_attr, sizeof(nonai_2d_chn_attr), NULL);
+
+    if (ret != K_SUCCESS)
+    {
+        mapi_venc_error_trace("kd_mapi_nonai_2d_init failed\n");
+    }
+
+    return ret;
+}
+
+k_s32 kd_mapi_nonai_2d_deinit(k_s32 chn_num)
+{
+    k_s32 ret;
+    ret = mapi_send_sync(MODFD(K_MAPI_MOD_VENC, 0, 0), MSG_CMD_MEDIA_VENC_2D_DEINIT,
+                         &chn_num, sizeof(chn_num), NULL);
+
+    if (ret != K_SUCCESS)
+    {
+        mapi_venc_error_trace("kd_mapi_nonai_2d_deinit failed\n");
+    }
+    return ret;
+}
+
+k_s32 kd_mapi_nonai_2d_start(k_s32 chn_num)
+{
+    k_s32 ret;
+    ret = mapi_send_sync(MODFD(K_MAPI_MOD_VENC, 0, 0), MSG_CMD_MEDIA_VENC_2D_START,
+                         &chn_num, sizeof(chn_num), NULL);
+
+    if (ret != K_SUCCESS)
+    {
+        mapi_venc_error_trace("kd_mapi_nonai_2d_start failed\n");
+    }
+    return ret;
+}
+
+k_s32 kd_mapi_nonai_2d_stop(k_s32 chn_num)
+{
+    k_s32 ret;
+    ret = mapi_send_sync(MODFD(K_MAPI_MOD_VENC, 0, 0), MSG_CMD_MEDIA_VENC_2D_STOP,
+                         &chn_num, sizeof(chn_num), NULL);
+
+    if (ret != K_SUCCESS)
+    {
+        mapi_venc_error_trace("kd_mapi_nonai_2d_start failed\n");
     }
     return ret;
 }

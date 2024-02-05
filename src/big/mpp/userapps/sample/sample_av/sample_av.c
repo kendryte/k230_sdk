@@ -186,24 +186,13 @@ k_s32 av_sample_vb_init(k_bool enable_cache, k_u32 sample_rate)
     return ret;
 }
 
-static k_s32 _sample_vb_exit(void)
+static k_s32 sample_vb_exit(void)
 {
     k_s32 ret;
     ret = kd_mpi_vb_exit();
     if (ret)
         av_debug("vb_exit failed ret:%d\n", ret);
     return ret;
-}
-
-k_s32 av_sample_vb_destroy()
-{
-    if (!g_vb_init)
-    {
-        return K_FAILED;
-    }
-    g_vb_init = K_FALSE;
-
-    return _sample_vb_exit();
 }
 
 typedef struct
@@ -237,7 +226,7 @@ static inline void CHECK_RET(k_s32 ret, const char *func, const int line)
         av_debug("error ret %d, func %s line %d\n", ret, func, line);
 }
 
-static void sample_vicap_config(k_u32 ch)
+static void sample_vicap_config(k_u32 ch, k_vicap_sensor_type sensor_type)
 {
     sample_venc_conf_t *venc_conf;
     k_s32 ret;
@@ -253,7 +242,7 @@ static void sample_vicap_config(k_u32 ch)
     memset(&chn_attr, 0, sizeof(k_vicap_chn_attr));
     memset(&sensor_info, 0, sizeof(k_vicap_sensor_info));
 
-    sensor_info.sensor_type = IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_LINEAR;
+    sensor_info.sensor_type = sensor_type;
     ret = kd_mpi_vicap_get_sensor_info(sensor_info.sensor_type, &sensor_info);
     CHECK_RET(ret, __func__, __LINE__);
 
@@ -430,6 +419,8 @@ static void *_test_ai_aenc_file_sysbind(void *arg)
 #endif
 int main(int argc, char const *argv[])
 {
+    k_vicap_sensor_type sensor_type = IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_LINEAR;
+
 #ifdef ENABLE_MPI
     if (argc <= 1)
     {
@@ -449,7 +440,10 @@ int main(int argc, char const *argv[])
             k_time = atoi(argv[i + 1]);
             if(!k_time)g_av_test_start = K_FALSE;
         }
-
+        else if (strcmp(argv[i], "-sensor") == 0)
+        {
+            sensor_type = atoi(argv[i + 1]);
+        }
         else
         {
             av_debug("Error :Invalid arguments %s\n", argv[i]);
@@ -458,11 +452,9 @@ int main(int argc, char const *argv[])
         }
     }
 
-    k_s32 chnum = 1;
     k_s32 ch = 0;
     k_u32 bitrate = 1000;
     k_s32 ret;
-    k_s32 ch_done = 0;
     k_s32 k_payload = 3;
 
     memset(g_venc_conf, 0, sizeof(sample_venc_conf_t) * VENC_MAX_CHN_NUMS);
@@ -584,46 +576,42 @@ int main(int argc, char const *argv[])
     ret = kd_mpi_venc_start_chn(ch);
     CHECK_RET(ret, __func__, __LINE__);
 
-    sample_vicap_config(ch);
+    sample_vicap_config(ch, sensor_type);
     sample_vi_bind_venc(ch);
     sample_vicap_start(ch);
 
     pthread_create(&g_venc_conf[ch].output_tid, NULL, output_thread, &g_venc_conf[ch]);
     pthread_create(&g_pthread_handle, NULL, _test_ai_aenc_file_sysbind, NULL);
 
-    while (quit)
+    printf("press 'q' to exit application!!\n");
+
+    while (getchar() != 'q')
     {
         usleep(50000);
     }
 
-    sample_vicap_stop(ch);
-    sample_vi_unbind_venc(ch);
+    g_aenc_test_start = K_FALSE;
 
+    sample_vicap_stop(ch);
     kd_mpi_venc_stop_chn(ch);
     kd_mpi_venc_destroy_chn(ch);
-
-    kd_mpi_sys_unbind(&ai_mpp_chn, &aenc_mpp_chn);
 
     kd_mpi_ai_disable_chn(ai_dev, ai_chn);
     kd_mpi_ai_disable(ai_dev);
     kd_mpi_aenc_destroy_chn(aenc_chn);
 
-    if (g_venc_conf[ch].vb_handle)
-        free(g_venc_conf[ch].vb_handle);
+    sample_vi_unbind_venc(ch);
+    kd_mpi_sys_unbind(&ai_mpp_chn, &aenc_mpp_chn);
 
-    pthread_kill(g_venc_conf[ch].output_tid, SIGALRM);
+    pthread_cancel(g_venc_conf[ch].output_tid);
     pthread_join(g_venc_conf[ch].output_tid, NULL);
+    pthread_cancel(g_pthread_handle);
     pthread_join(g_pthread_handle, NULL);
-
-    g_venc_conf[ch].done = K_FALSE;
-    ch_done++;
-    av_debug("kill ch %d thread done! ch_done %d, chnum %d\n", ch, ch_done, chnum);
 
     ret = kd_mpi_venc_close_fd();
     CHECK_RET(ret, __func__, __LINE__);
 
-    g_aenc_test_start = K_FALSE;
-    av_sample_vb_destroy();
+    sample_vb_exit();
 
     av_debug("sample av done!\n");
 

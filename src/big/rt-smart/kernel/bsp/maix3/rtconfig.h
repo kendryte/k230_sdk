@@ -160,9 +160,9 @@
 #define RT_USING_DEV_BUS
 #define RT_USING_REGULATOR
 /* canaan uart driver for uart1 uart2 uart4 */
-#define RT_USING_CANAAN_UART
+// #define RT_USING_CANAAN_UART
 // #define RT_USING_UART1
-#define RT_USING_UART2
+// #define RT_USING_UART2
 // #define RT_USING_UART4
 #define UART_BUFFER_SIZE     (1024 * 1024)
 #define POLLIN_SIZE          (UART_BUFFER_SIZE / 2)

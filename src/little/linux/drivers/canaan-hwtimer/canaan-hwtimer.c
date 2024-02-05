@@ -49,8 +49,8 @@
 
 static void __iomem *addr;
 static unsigned int timeout = 1000; //ms
-static unsigned int new0, new1, new2, new3, new4, new5;
-static unsigned int old0, old1, old2, old3, old4, old5;
+// static unsigned int new0, new1, new2, new3, new4, new5;
+// static unsigned int old0, old1, old2, old3, old4, old5;
 
 #define	SOFT_TIMEOUT		msecs_to_jiffies(timeout)
 #define TMIOC_SET_TIMEOUT     _IOW('T', 0x20, int)
@@ -61,7 +61,8 @@ typedef struct _hwtimer_t {
     struct device *dev;
     struct miscdevice mdev;
     struct timer_list softtimer;
-    atomic_t timer_per;
+    struct timespec64 ts_old, ts_new;
+    unsigned int old, new;
     int index;
 } hw_timer_t;
 
@@ -153,44 +154,23 @@ static void softtimer_func(struct timer_list *soft_timer)
 {
 	unsigned int value;
 	hw_timer_t *timer = from_timer(timer, soft_timer, softtimer);
-    void __iomem *base = timer->base;
-    int id = timer->index;
+    void __iomem *reg = timer->base + (timer->index*0x14) + CURRENT_VALUE;
+    
+    struct timespec64 timetmp;
+    //printk("f=%s l=%d\n", __func__, __LINE__);
 
-    switch(id)
-    {
-        case 0:
-            value = readl(base + K230_TIMER0_CHANL + CURRENT_VALUE);
-            old0 = new0;
-            new0 = value;
-            break;
-        case 1:
-            value = readl(base + K230_TIMER1_CHANL + CURRENT_VALUE);
-            old1 = new1;
-            new1 = value;
-            break;
-        case 2:
-            value = readl(base + K230_TIMER2_CHANL + CURRENT_VALUE);
-            old2 = new2;
-            new2 = value;
-            break;
-        case 3:
-            value = readl(base + K230_TIMER3_CHANL + CURRENT_VALUE);
-            old3 = new3;
-            new3 = value;
-            break;
-        case 4:
-            value = readl(base + K230_TIMER4_CHANL + CURRENT_VALUE);
-            old4 = new4;
-            new4 = value;
-            break;
-        case 5:
-            value = readl(base + K230_TIMER5_CHANL + CURRENT_VALUE);
-            old5 = new5;
-            new5 = value;
-            break;
-        default:
-            break;
-    }
+    if(timer->index > 5)
+        return;
+    //local_irq_disable();
+    value = readl(reg);
+    ktime_get_boottime_ts64(&timetmp);
+    //local_irq_enable();
+    timer->old = timer->new;
+    timer->ts_old = timer->ts_new;
+    
+    timer->new = value;
+    timer->ts_new = timetmp;
+
     mod_timer(&timer->softtimer, jiffies + SOFT_TIMEOUT);
 }
 
@@ -212,7 +192,7 @@ static int k230_hwtimer_release(struct inode *inode, struct file *file)
 
     //del_timer(&timer->softtimer);
 
-    k230_hwtimer_start(timer, 0);
+    //k230_hwtimer_start(timer, 0);
     return 0;
 }
 
@@ -222,60 +202,32 @@ static ssize_t k230_hwtimer_read(struct file *file, char __user *buf, size_t len
     hw_timer_t *timer = container_of(file->private_data,
 					      hw_timer_t, mdev);
 
-    int id = timer->index;
+    
     int *data = (int*)buf;
-    unsigned int old = 0, new = 0;
+    u32 old = 0, new = 0;
     unsigned int freq = 0;
-
-    if (len < sizeof(freq))
+    
+    struct timespec64 ts_diff = timespec64_sub(timer->ts_new, timer->ts_old);
+    s64 time_diff = timespec64_to_ns(&ts_diff)/1000000; //ms;
+   
+    if ((len < sizeof(freq)) || (timer->index > 5))
         return -EINVAL;
-    switch(id)
-    {
-        case 0:
-            old = old0;
-            new = new0;
-            break;
-        case 1:
-            old = old1;
-            new = new1;
-            break;
-        case 2:
-            old = old2;
-            new = new2;
-            break;
-        case 3:
-            old = old3;
-            new = new3;
-            break;
-        case 4:
-            old = old4;
-            new = new4;
-            break;
-        case 5:
-            old = old5;
-            new = new5;
-            break;
-        default:
-            return -EINVAL;
-    }
 
-    if (new < old)
-    {
-        freq = (old - new) / (timeout / 1000);
+     
+    if( (time_diff > 0 ) && (time_diff < (timeout *2)  )){
+        
+        old = timer->old;
+        new = timer->new; 
+        if(new < old){
+            freq = (1000*( old - new)) / time_diff ;   
+        } else if (new > old ){
+            freq =  (1000*(0xffffffff - new + old ))/time_diff;       
+        }
+        
     }
-    else
-    if (old < new)
-    {
-        freq = (0xffffffff + old - new) / (timeout / 1000);
-    }
-    else
-    {
-        freq = 0;
-    }
-
-    if (freq < 0)
-        freq = 0;
-
+    // if(freq == 0) {
+    //     printk("diff %llx timeout %x , old %x new %x f=%d \n", time_diff, timeout, timer->old, timer->new, freq);
+    // }    
     if(copy_to_user(data, &freq, sizeof(freq)))
         return -EFAULT;
 
@@ -312,31 +264,8 @@ static long k230_hwtimer_ioctl(struct file *file, unsigned int cmd, unsigned lon
     if (cmd == TMIOC_SET_TIMEOUT)
     {
         k230_hwtimer_start(timer, 0);
-
-        switch (id)
-        {
-            case 0:
-                old0 = new0 = 0;
-                break;
-            case 1:
-                old1 = new1 = 0;
-                break;
-            case 2:
-                old2 = new2 = 0;
-                break;
-            case 3:
-                old3 = new3 = 0;
-                break;
-            case 4:
-                old4 = new4 = 0;
-                break;
-            case 5:
-                old5 = new5 = 0;
-                break;
-            default :
-                return -EINVAL;
-        }
-
+        timer->old = 0;
+        timer->new = 0;
         mod_timer(&timer->softtimer, jiffies + SOFT_TIMEOUT);
         k230_hwtimer_start(timer, 1);
     }

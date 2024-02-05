@@ -56,7 +56,7 @@ k_s32 get_venc_stream(k_u32 chn_num, kd_venc_data_s* p_vstream_data, k_u8 *p_pri
     int cut = p_vstream_data->status.cur_packs;
     int i = 0;
     k_char * pdata  = NULL;
-    
+
     if (!is_jpeg_type[chn_num]) {
         for(i = 0;i < cut;i++) {
             pdata =  p_vstream_data->astPack[i].vir_addr;
@@ -205,6 +205,19 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
+    if(0)  //sample for nonai_2d
+    {
+        #include "mapi_nonai_2d_api.h"
+
+        k_nonai_2d_chn_attr attr_2d;
+        attr_2d.mode = K_NONAI_2D_CALC_MODE_CSC;
+        attr_2d.dst_fmt = PIXEL_FORMAT_YUV_SEMIPLANAR_420;
+        kd_mapi_nonai_2d_init(0, &attr_2d);
+        kd_mapi_nonai_2d_start(0);
+        kd_mapi_nonai_2d_stop(0);
+        kd_mapi_nonai_2d_deinit(0);
+    }
+
     // vicap init
     k_vicap_sensor_info sensor_info;
     memset(&sensor_info, 0, sizeof(sensor_info));
@@ -338,6 +351,7 @@ int main(int argc, char *argv[]) {
         vi_chn_attr_info.pixel_format = PIXEL_FORMAT_YUV_SEMIPLANAR_420;
         vi_chn_attr_info.vicap_dev = VICAP_DEV_ID_0;
         vi_chn_attr_info.vicap_chn = (k_vicap_chn)vichn_idx;
+        vi_chn_attr_info.buffer_num = 6;
         vi_chn_attr_info.alignment = 12;
         if (!dev_attr_info.dw_en)
             vi_chn_attr_info.buf_size = VI_ALIGN_UP(pic_width[vichn_idx] * pic_height[vichn_idx] * 3 / 2, 0x400);

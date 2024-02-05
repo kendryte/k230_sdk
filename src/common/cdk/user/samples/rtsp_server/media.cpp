@@ -429,6 +429,7 @@ int KdMedia::CreateVcapVEnc(IOnVEncData *on_venc_data) {
     vi_chn_attr_info.out_height = config_.venc_height;
     vi_chn_attr_info.pixel_format = PIXEL_FORMAT_YUV_SEMIPLANAR_420;
     vi_chn_attr_info.vicap_dev = VICAP_DEV_ID_0;
+    vi_chn_attr_info.buffer_num = 6;
     vi_chn_attr_info.vicap_chn = (k_vicap_chn)venc_chn_id;
     if (!vcap_dev_info_.dw_en)
         vi_chn_attr_info.buf_size = VI_ALIGN_UP(config_.venc_width * config_.venc_height * 3 / 2, 0x400);

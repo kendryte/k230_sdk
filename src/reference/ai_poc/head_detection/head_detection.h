@@ -132,7 +132,7 @@ class HeadDetection: public AIBase
     FrameCHWSize isp_shape_;                     // isp对应的地址大小
 
     // 人头检测类别名字
-    std::vector<std::string> classes{"0", "0"};
+    std::vector<std::string> classes{"0", "1"};
 
     // 人头检测分数阈值
     float score_thres;

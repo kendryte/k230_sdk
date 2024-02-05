@@ -542,6 +542,7 @@ int main(int argc, char * const argv[])
             chn_attr_info.out_height = out_height;
             chn_attr_info.out_width = out_width;
             chn_attr_info.pixel_format = arg_pixel_format;
+            chn_attr_info.buffer_num = 6;
             chn_attr_info.vicap_dev = (k_vicap_dev)j;
             // chn_attr_info.vicap_dev = arg_dev;
             chn_attr_info.vicap_chn = (k_vicap_chn)i;

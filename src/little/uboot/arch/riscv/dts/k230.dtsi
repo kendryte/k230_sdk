@@ -72,6 +72,14 @@
 			u-boot,dm-pre-reloc;
 		};
 
+		def_100mhz: default_100mhz {
+			compatible = "fixed-clock";
+			clock-frequency = <100000000>;
+			clock-output-names = "fix-100mhz";
+			#clock-cells = <0>;
+			u-boot,dm-pre-reloc;
+		};
+
 		def_200mhz: default_200mhz {
 			compatible = "fixed-clock";
 			clock-frequency = <200000000>;
@@ -98,6 +106,46 @@
 			u-boot,dm-pre-reloc;
 		};
 
+        serial1: serial@91401000 {
+			compatible = "snps,dw-apb-uart";
+			reg = <0x0 0x91401000 0x0 0x400>;
+			clocks = <&def_50mhz>;
+			clock-names = "baudclk";
+			reg-shift = <2>;
+			reg-io-width = <4>;
+			u-boot,dm-pre-reloc;
+		};
+        
+        serial2: serial@91402000 {
+			compatible = "snps,dw-apb-uart";
+			reg = <0x0 0x91402000 0x0 0x400>;
+			clocks = <&def_50mhz>;
+			clock-names = "baudclk";
+			reg-shift = <2>;
+			reg-io-width = <4>;
+			u-boot,dm-pre-reloc;
+		};
+        
+        serial3: serial@91403000 {
+			compatible = "snps,dw-apb-uart";
+			reg = <0x0 0x91403000 0x0 0x400>;
+			clocks = <&def_50mhz>;
+			clock-names = "baudclk";
+			reg-shift = <2>;
+			reg-io-width = <4>;
+			u-boot,dm-pre-reloc;
+		};
+        
+        serial4: serial@91404000 {
+			compatible = "snps,dw-apb-uart";
+			reg = <0x0 0x91404000 0x0 0x400>;
+			clocks = <&def_50mhz>;
+			clock-names = "baudclk";
+			reg-shift = <2>;
+			reg-io-width = <4>;
+			u-boot,dm-pre-reloc;
+		};
+        
 		mmc0: mmc0@91580000 {
 			compatible = "snps,dwcmshc-sdhci-k230";
 			reg = <0x0 0x91580000 0x0 0x400>;
@@ -114,7 +162,7 @@
 			compatible = "snps,dwcmshc-sdhci";
 			reg = <0x0 0x91581000 0x0 0x400>;
 			bus-width = <4>;
-			clocks = <&def_200mhz>;
+			clocks = <&def_100mhz>;
 			max-frequency = <50000000>;
 			fifo-mode;
 			status = "disabled";

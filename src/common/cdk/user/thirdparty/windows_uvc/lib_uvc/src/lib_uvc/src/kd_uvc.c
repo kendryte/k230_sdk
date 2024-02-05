@@ -72,36 +72,7 @@ static const int K_UVC_VS_PROBE_CONTROL = 0x01;
 static const int K_UVC_REQUEST_TYPE = 0x21;
 static libusb_device_handle* g_uvc_send_data_hdev = NULL;
 static uint8_t g_interfaceNumber = 0x1;//0x1:video stream   0x00:video control
-#if 0
-int kd_uvc_transfer_data(UVC_UTILS_DEVICE* dev, const unsigned char* data, int len)
-{
-    int ret;
-    uint8_t interfaceNumber = 0x1;//0x1:video stream   0x00:video control
 
-    if (len > K_UVC_MAX_REQUEST_SIZE)
-    {
-        printf("kd_uvc_transfer_data error,buffer size not valid\n");
-        return -1;
-    }
-
-	/* do the transfer */
-	ret = libusb_control_transfer(
-        dev->devh,
-        K_UVC_REQUEST_TYPE,
-        K_UVC_SET_CUR,
-		K_UVC_VS_PROBE_CONTROL << 8,
-        interfaceNumber,
-        data, len, 0
-	);
-
-	if (ret != len)
-	{
-		printf("libusb_control_transfer error %s", libusb_strerror(ret));
-	}
-
-    return 0;
-}
-#else
 int kd_uvc_transfer_data(const unsigned char* data, int len)
 {
 	int ret;
@@ -129,24 +100,89 @@ int kd_uvc_transfer_data(const unsigned char* data, int len)
 
 	return 0;
 }
-#endif 
 
-int kd_uvc_transfer_init(int vid, int pid, char* serialNumber)
+static libusb_device_handle* _uvc_find_device_by_serialNumber(int vendor_id, int product_id, const unsigned char* sn)
+{
+	struct libusb_device** devs;
+	struct libusb_device* found = NULL;
+	struct libusb_device* dev;
+	struct libusb_device_handle* dev_handle = NULL;
+	size_t i = 0;
+	int r;
+	unsigned char buf[64];
+
+	if (libusb_get_device_list(NULL, &devs) < 0)
+		return NULL;
+
+	while ((dev = devs[i++]) != NULL) {
+		struct libusb_device_descriptor desc;
+		r = libusb_get_device_descriptor(dev, &desc);
+		if (r < 0)
+			goto out;
+
+		found = dev;
+
+		if (desc.idVendor == vendor_id && desc.idProduct == product_id) 
+		{
+			r = libusb_open(found, &dev_handle);
+			if (r < 0)
+				continue;
+
+			if (sn == NULL)
+			{
+				break;//get first uvc device
+			}
+
+			int bytes = libusb_get_string_descriptor_ascii(
+				dev_handle, desc.iSerialNumber, buf, sizeof(buf));
+
+			if (bytes > 0)
+			{
+				if (0 == strcmp(buf, sn))
+				{
+					break; // not close handle
+				}
+			}
+
+			libusb_close(dev_handle);
+		}
+	}
+	
+out:
+	libusb_free_device_list(devs, 1);
+	return dev_handle;
+
+}
+
+
+int kd_uvc_transfer_init(int vid, int pid, char* serialNumber,bool usb_init)
 {
     int status;
 	
-	/* open the device using libusb */
-	status = libusb_init_context(NULL, NULL, 0);
-	if (status < 0) {
-		printf("libusb_init() failed: %s\n", libusb_error_name(status));
-		return -1;
+	if (usb_init)
+	{
+		/* open the device using libusb */
+		status = libusb_init_context(NULL, NULL, 0);
+		if (status < 0) {
+			printf("libusb_init() failed: %s\n", libusb_error_name(status));
+			return -1;
+		}
 	}
 
+#if 0
 	g_uvc_send_data_hdev = libusb_open_device_with_vid_pid(NULL, vid, pid);
 	if (g_uvc_send_data_hdev == NULL) {
 		printf("libusb_open() failed\n");
 		return -1;
 	}
+#else
+
+	g_uvc_send_data_hdev = _uvc_find_device_by_serialNumber(vid, pid, serialNumber);
+	if (g_uvc_send_data_hdev == NULL) {
+		printf("libusb_open() failed\n");
+		return -1;
+	}
+#endif 
 
 	/* We need to claim the first interface */
 	libusb_set_auto_detach_kernel_driver(g_uvc_send_data_hdev, 1);
@@ -160,9 +196,13 @@ int kd_uvc_transfer_init(int vid, int pid, char* serialNumber)
 	return 0;
 }
 
-int kd_uvc_transfer_deinit()
+int kd_uvc_transfer_deinit(bool usb_init)
 {
-	libusb_release_interface(g_uvc_send_data_hdev, g_interfaceNumber);
+	if (usb_init)
+	{
+		libusb_release_interface(g_uvc_send_data_hdev, g_interfaceNumber);
+	}
+	
 	libusb_close(g_uvc_send_data_hdev);
 	libusb_exit(NULL);
 

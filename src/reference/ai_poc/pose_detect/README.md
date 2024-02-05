@@ -11,8 +11,8 @@
 ```
 Usage: ./pose_detect.elf<kmodel> <obj_thresh> <nms_thresh> <input_mode> <debug_mode>
 For example:
- [for img] ./pose_detect.elf yolov8n-pose.kmodel 0.5 0.45 bus.jpg 0
- [for isp] ./pose_detect.elf yolov8n-pose.kmodel 0.5 0.45 None 0
+ [for img] ./pose_detect.elf yolov8n-pose.kmodel 0.3 0.45 bus.jpg 0
+ [for isp] ./pose_detect.elf yolov8n-pose.kmodel 0.3 0.45 None 0
 Options:
  1> kmodel          pose检测kmodel文件路径
  2> obj_thresh      pose检测阈值

@@ -17,15 +17,7 @@ config BOARD_SPECIFIC_OPTIONS # dummy
 	def_bool y
 	select RISCV_THEAD
 
-choice
-	prompt "ddr typy freq"
-	default SIPLP4_3200_WALLODT
-
-    config SIPLP4_3200_WODT
-        bool  "sip ddr4 3200 with write odt"
-        
-    config SIPLP4_3200_WALLODT
-        bool  "sip ddr4 3200 with all odt"  
-endchoice 
+config SIPLP4_2667
+    def_bool y
 
 endif

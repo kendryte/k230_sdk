@@ -505,9 +505,50 @@ static rt_size_t chip_i2c_mst_xfer(struct rt_i2c_bus_device *bus,
     return designware_i2c_xfer((struct chip_i2c_bus *)bus, msgs, num);
 }
 
+static int dw_i2c_control(struct chip_i2c_bus *bus,                        
+                        rt_uint32_t               cmd,
+                        rt_uint32_t               arg)
+{
+    rt_uint32_t bus_clock;
+    rt_err_t ret;
+    
+    RT_ASSERT(bus != RT_NULL);
+
+    switch (cmd)
+    {
+    /* set 10-bit addr mode */
+    case RT_I2C_DEV_CTRL_10BIT:
+        // bus->flags |= RT_I2C_ADDR_10BIT;
+        break;
+    case RT_I2C_DEV_CTRL_TIMEOUT:
+        // bus->timeout = *(rt_uint32_t *)arg;
+        break;
+    case RT_I2C_DEV_CTRL_CLK:
+        bus_clock = arg;
+        ret = designware_i2c_set_bus_speed(bus, bus_clock);
+        if (ret < 0)
+        {
+            return -RT_EIO;
+        }
+        break;
+    default:
+        break;
+    }   
+    
+    return RT_EOK;
+}                               
+
+static rt_err_t chip_i2c_control(struct rt_i2c_bus_device *bus,
+                        rt_uint32_t               cmd,
+                        rt_uint32_t               arg)
+{
+    return dw_i2c_control((struct chip_i2c_bus *)bus, cmd, arg);
+}                    
+
 static const struct rt_i2c_bus_device_ops chip_i2c_ops =
 {
     .master_xfer = chip_i2c_mst_xfer,
+    .i2c_bus_control = chip_i2c_control,
 };
 
 rt_uint32_t i2c_dw_readl(struct i2c_regs *i2c_base, rt_uint32_t offset)

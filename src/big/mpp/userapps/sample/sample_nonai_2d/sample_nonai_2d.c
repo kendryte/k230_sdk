@@ -484,7 +484,10 @@ int main(int argc, char *argv[])
     pthread_create(&g_osd_conf.input_tid, NULL, input_thread, &g_osd_conf);
     pthread_create(&g_osd_conf.input_tid, NULL, output_thread, &g_osd_conf);
 
-    while (g_osd_conf.get_cnt != g_osd_conf.input_frames);
+    while (g_osd_conf.get_cnt != g_osd_conf.input_frames)
+    {
+        usleep(50000);
+    }
 
     kd_mpi_venc_stop_2d_chn(ch);
 

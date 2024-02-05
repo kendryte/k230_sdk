@@ -81,7 +81,8 @@ typedef enum
     VB_UID_V_VO = 11,   /** < virtual vo user id for vb*/
     VB_UID_DMA  = 12,
     VB_UID_DPU  = 13,
-    VB_UID_BUTT = 14,
+    VB_UID_NONAI_2D  = 14,
+    VB_UID_BUTT = 15,
 } k_vb_uid;
 
 #define POOL_OWNER_COMMON    (-1) /**< Generall common pool use this owner id, module common pool use VB_UID as owner id*/

@@ -435,7 +435,6 @@ function modify_big_code()
 		local RTT_UART_REG_BASDE="0x9140${CONFIG_RTT_CONSOLE_ID}000UL" #0x91403000UL
 		local RTT_UART_IRQ="0x1${CONFIG_RTT_CONSOLE_ID}" #"0x13"
 
-		if [ "${CONFIG_BOARD_K230D}" = "y" ]; then RTT_UART_REG_BASDE="0x91404000UL";  RTT_UART_IRQ="0x14"; fi;
 		sed -i "s/define *UART_ADDR.*$/define UART_ADDR ${RTT_UART_REG_BASDE}/g" ${OPENSBI_PLATFORM}
 		sed -i "s/define *UART_IRQ.*$/define UART_IRQ ${RTT_UART_IRQ}/g" ${OPENSBI_PLATFORM}
 	}
@@ -464,6 +463,7 @@ function modify_big_code()
 		if [ "${CONFIG_BOARD_K230D}" = "y" ]; then RT_HW_HEAP_END_SIZE="0x400000"; fi;
 		if [ "${CONFIG_BOARD_NAME}" = "k230_evb_doorlock" ]; then RT_HW_HEAP_END_SIZE="0x400000"; fi;       
 		if [ "${CONFIG_BOARD_NAME}" = "k230_evb_peephole_device" ]; then RT_HW_HEAP_END_SIZE="0x400000"; fi;       
+        if [ "${CONFIG_BOARD_K230D_CANMV}" = "y" ]; then RT_HW_HEAP_END_SIZE="0x400000"; fi;
 		sed -i "s/define *RT_HW_HEAP_END.*$/define RT_HW_HEAP_END \(\(void \*\)\(\(\(rt_size_t\)RT_HW_HEAP_BEGIN\) \+ ${RT_HW_HEAP_END_SIZE} \)\)/g" ${MEM_CFG_RTT_RAMEND}
 	}
 	{

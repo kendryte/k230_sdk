@@ -56,7 +56,9 @@ typedef enum {
     MSG_CMD_MEDIA_VICAP_STOP,
     MSG_CMD_MEDIA_VICAP_DROP_FRAME,
     MSG_CMD_MEDIA_VICAP_SET_MCLK,
-    MSG_CMD_MEDIA_VICAP_TUNING
+    MSG_CMD_MEDIA_VICAP_TUNING,
+    MSG_CMD_MEDIA_VICAP_INIT,
+    MSG_CMD_MEDIA_VICAP_START_STREAM,
 } msg_media_vicap_cmd_t;
 
 typedef struct
@@ -109,6 +111,7 @@ typedef struct {
     k_u32 crop_v_start;
     k_pixel_format pixel_format;
     k_u32 buf_size;
+    k_u32 buffer_num;
     k_u8 alignment;
     k_u8 fps;
 } msg_vicap_chn_set_info_t;

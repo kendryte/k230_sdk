@@ -22,6 +22,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+// ai_base.h
 #ifndef AI_BASE_H
 #define AI_BASE_H
 
@@ -58,27 +59,11 @@ public:
     ~AIBase();
 
     /**
-     * @brief 设置kmodel输入
-     * @param buf 输入数据指针
-     * @param size 输入数据大小
-     * @return None
-     */
-    void set_input(const unsigned char *buf, size_t size);
-
-    /**
      * @brief 根据索引获取kmodel输入tensor
      * @param idx 输入数据指针
      * @return None
      */
     runtime_tensor get_input_tensor(size_t idx);
-
-    void set_input_tensor(size_t idx, runtime_tensor &tensor);
-
-    /**
-     * @brief 初始化kmodel输出
-     * @return None
-     */
-    void set_output();
 
     /**
      * @brief 推理kmodel
@@ -91,8 +76,6 @@ public:
      * @return None
      */
     void get_output();
-
-
 
 protected:
     string model_name_;                    // 模型名字
@@ -115,8 +98,7 @@ private:
      */
     void set_output_init();
 
-           // kmodel解释器，从kmodel文件构建，负责模型的加载、输入输出设置和推理
+    interpreter kmodel_interp_;        // kmodel解释器，从kmodel文件构建，负责模型的加载、输入输出设置和推理
     vector<unsigned char> kmodel_vec_; // 通过读取kmodel文件得到整个kmodel数据，用于传给kmodel解释器加载kmodel
-    interpreter kmodel_interp_; 
 };
 #endif

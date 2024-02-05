@@ -1,6 +1,6 @@
 # K230 模拟AI电子秤
 ![Alt text](resource/image.png)
-Document version: V1.0 Release date: 2023-10-26
+Document version: V1.4 Release date: 2024-1-31
 
 ## 介绍
 该项目为K230 模拟AI电子秤开源工程。本工程基于K230应用了度量学习技术实现商品识别。本应用使用PC作为服务端控制上秤、下秤、采集新商品和展示称重商品；使用K230作为客户端建立对比向量库，然后捕捉图像进行向量相似度对比获得商品类别，结合商品单价和商品重量得到应付钱数；最后将商品类别和应付钱数在PC端展示给用户。
@@ -24,7 +24,7 @@ Document version: V1.0 Release date: 2023-10-26
     wget https://ai.b-bug.org/k230/downloads/fancy_poc/ai_scale/$file || wget https://kendryte-download.canaan-creative.com/k230/downloads/fancy_poc/ai_scale/$file;  
     done  
     
-    for file in onboard_v2.7.zip
+    for file in onboard_v2.8.zip
     do
     wget https://ai.b-bug.org/k230/downloads/fancy_poc/ai_scale/k230_board/$file || wget https://kendryte-download.canaan-creative.com/k230/downloads/fancy_poc/ai_scale/k230_board/$file;  
     done
@@ -81,7 +81,7 @@ ifconfig
 
 该数据集用于在商品识别之前创建底库。
 
-本项目提供了示例商品类别底库，请参照onboard_v2.7/gallery中的数据结构组织数据。
+本项目提供了示例商品类别底库，请参照onboard_v2.8/gallery中的数据结构组织数据。
 
 ## 可执行文件编译
 
@@ -92,7 +92,7 @@ chmod +x build_app.sh
 ./build_app.sh
 ```
 
-在reference/fancy_poc/k230_bin目录下，获取ai_scale.elf和client拷贝到开发板onboard_v2.7内。
+在reference/fancy_poc/k230_bin目录下，获取ai_scale.elf和client拷贝到开发板onboard_v2.8内。
 
 ## 服务端准备
 

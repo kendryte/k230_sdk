@@ -213,6 +213,56 @@ k_s32 msg_vicap_start(k_s32 id, k_ipcmsg_message_t *msg)
     return K_SUCCESS;
 }
 
+k_s32 msg_vicap_init(k_s32 id, k_ipcmsg_message_t *msg)
+{
+    k_s32 ret;
+    k_ipcmsg_message_t *resp_msg;
+    k_vicap_dev *vicap_dev = msg->pBody;
+    ret = kd_mapi_vicap_init(*vicap_dev);
+    if(ret != K_SUCCESS) {
+        mapi_vicap_error_trace("kd_mapi_vicap_dump_frame failed:0x%x\n", ret);
+    }
+
+    resp_msg = kd_ipcmsg_create_resp_message(msg, ret, NULL, 0);
+    if(resp_msg == NULL) {
+        mapi_vicap_error_trace("kd_ipcmsg_create_resp_message failed\n");
+        return K_FAILED;
+    }
+
+    ret = kd_ipcmsg_send_async(id, resp_msg, NULL);
+    if(ret != K_SUCCESS) {
+        mapi_vicap_error_trace(" kd_ipcmsg_send_async failed:%x\n", ret);
+    }
+    kd_ipcmsg_destroy_message(resp_msg);
+    return K_SUCCESS;
+}
+
+
+k_s32 msg_vicap_start_stream(k_s32 id, k_ipcmsg_message_t *msg)
+{
+    k_s32 ret;
+    k_ipcmsg_message_t *resp_msg;
+    k_vicap_dev *vicap_dev = msg->pBody;
+    ret = kd_mapi_vicap_start_stream(*vicap_dev);
+    if(ret != K_SUCCESS) {
+        mapi_vicap_error_trace("kd_mapi_vicap_dump_frame failed:0x%x\n", ret);
+    }
+
+    resp_msg = kd_ipcmsg_create_resp_message(msg, ret, NULL, 0);
+    if(resp_msg == NULL) {
+        mapi_vicap_error_trace("kd_ipcmsg_create_resp_message failed\n");
+        return K_FAILED;
+    }
+
+    ret = kd_ipcmsg_send_async(id, resp_msg, NULL);
+    if(ret != K_SUCCESS) {
+        mapi_vicap_error_trace(" kd_ipcmsg_send_async failed:%x\n", ret);
+    }
+    kd_ipcmsg_destroy_message(resp_msg);
+    return K_SUCCESS;
+}
+
+
 k_s32 msg_vicap_stop(k_s32 id, k_ipcmsg_message_t *msg)
 {
     k_s32 ret;
@@ -384,6 +434,8 @@ static msg_module_cmd_t g_module_cmd_table[] = {
     {MSG_CMD_MEDIA_VICAP_DROP_FRAME,      msg_vicap_set_vi_drop_frame},
     {MSG_CMD_MEDIA_VICAP_SET_MCLK,        msg_vicap_set_mclk},
     {MSG_CMD_MEDIA_VICAP_TUNING,          msg_vicap_tuning},
+    {MSG_CMD_MEDIA_VICAP_INIT,            msg_vicap_init},
+    {MSG_CMD_MEDIA_VICAP_START_STREAM,    msg_vicap_start_stream},
 };
 
 msg_server_module_t g_module_vicap = {

@@ -11,6 +11,15 @@ pushd out
 cmake -DCMAKE_BUILD_TYPE=Release                 \
       -DCMAKE_INSTALL_PREFIX=`pwd`               \
       -DCMAKE_TOOLCHAIN_FILE=cmake/Riscv64.cmake \
+      -DENABLE_SUB=ON                \
+      ..
+
+make -j && make install
+
+cmake -DCMAKE_BUILD_TYPE=Release                 \
+      -DCMAKE_INSTALL_PREFIX=`pwd`               \
+      -DCMAKE_TOOLCHAIN_FILE=cmake/Riscv64.cmake \
+      -DENABLE_SUB=OFF                \
       ..
 
 make -j && make install
@@ -239,5 +248,19 @@ fi
 if [ -f out/bin/demo_mix.elf ]; then
       cp out/bin/demo_mix.elf ${k230_bin}
 fi
+
+if [ -f out/bin/dec_enc.elf ]; then
+      cp out/bin/dec_enc.elf ${k230_bin}
+fi
+
+if [ -f out/bin/dec.elf ]; then
+      cp out/bin/dec.elf ${k230_bin}
+fi
+
+if [ -f out/bin/enc.elf ]; then
+      cp out/bin/enc.elf ${k230_bin}
+fi
+
+
 
 rm -rf out

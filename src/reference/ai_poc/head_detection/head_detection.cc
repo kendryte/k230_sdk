@@ -205,19 +205,29 @@ void HeadDetection::draw_result(cv::Mat& src_img,vector<Detection> &results, boo
     int src_h = src_img.rows;
     int max_src_size = std::max(src_w,src_h);
 
+    int head_count = 0;
     for (int i = 0; i < results.size(); ++i)
     {
         auto& bbox = results[i].box;
         if(pic_mode)
         {
-            cv::rectangle(src_img, cv::Rect(bbox.x, bbox.y , bbox.width, bbox.height), cv::Scalar(255, 255, 255), 2, 2, 0);
-            if(i==0)
+            if (debug_mode_ > 0)
             {
-                std::string str = "headcount : " + std::to_string(results.size());   
-                cv::Size textSize = cv::getTextSize(str, cv::FONT_HERSHEY_COMPLEX, 0.5, 1, 0);
-                cv::Rect textBox(0, 0, textSize.width, textSize.height+8);
-                cv::rectangle(src_img, textBox, cv::Scalar(0, 0, 0), cv::FILLED);
-                cv::putText(src_img, str , cv::Point(0, textSize.height - 1), cv::FONT_HERSHEY_COMPLEX, 0.5, cv::Scalar(255, 255, 255), 1, 8, 0);
+                cv::rectangle(src_img, cv::Rect(bbox.x, bbox.y , bbox.width, bbox.height), cv::Scalar(255, 255, 255), 2, 2, 0);
+                std::string label_name = results[i].className;
+                cv::putText(src_img, label_name , cv::Point(bbox.x,bbox.y), cv::FONT_HERSHEY_COMPLEX, 0.5, cv::Scalar(255, 255, 255), 1, 8, 0);
+                if(results[i].class_id==0)
+                {    
+                    head_count += 1;
+                }
+            }
+            else
+            {   
+                if(results[i].class_id==0)
+                {    
+                    cv::rectangle(src_img, cv::Rect(bbox.x, bbox.y , bbox.width, bbox.height), cv::Scalar(255, 255, 255), 2, 2, 0);
+                    head_count += 1;
+                }
             }
         }
         else
@@ -226,14 +236,40 @@ void HeadDetection::draw_result(cv::Mat& src_img,vector<Detection> &results, boo
             int y = std::max(0,int(float(bbox.y) / isp_shape_.height * src_h));
             int w = float(bbox.width) / isp_shape_.width * src_w;
             int h = float(bbox.height) / isp_shape_.height  * src_h;
-            cv::rectangle(src_img, cv::Rect(x, y , w, h), cv::Scalar(255,0, 0, 255), 3, 2, 0);
             
-            if(i==0)
+            if (debug_mode_ > 0)
             {
-                std::string str = "headcount : " + std::to_string(results.size()); 
-                cv::putText(src_img,str,cv::Point(10,50),cv::FONT_HERSHEY_COMPLEX,2,cv::Scalar(255,255, 0, 255), 1, 8, 0);
+                cv::rectangle(src_img, cv::Rect(x, y , w, h), cv::Scalar(255,0, 0, 255), 3, 2, 0);
+                std::string label_name = results[i].className; 
+                cv::putText(src_img,label_name,cv::Point(x,y),cv::FONT_HERSHEY_COMPLEX,2,cv::Scalar(255,255, 0, 255), 1, 8, 0);
+                if(results[i].class_id==0)
+                {    
+                    head_count += 1;
+                }
             }
-        }  
+            else
+            {
+                if(results[i].class_id==0)
+                {    
+                    cv::rectangle(src_img, cv::Rect(x, y , w, h), cv::Scalar(255,0, 0, 255), 3, 2, 0);
+                    head_count += 1;
+                }
+            }           
+        } 
+    }
+
+    if(pic_mode)
+    {
+        std::string str = "headcount : " + std::to_string(head_count);   
+        cv::Size textSize = cv::getTextSize(str, cv::FONT_HERSHEY_COMPLEX, 0.5, 1, 0);
+        cv::Rect textBox(0, 0, textSize.width, textSize.height+8);
+        cv::rectangle(src_img, textBox, cv::Scalar(0, 0, 0), cv::FILLED);
+        cv::putText(src_img, str , cv::Point(0, textSize.height - 1), cv::FONT_HERSHEY_COMPLEX, 0.5, cv::Scalar(255, 255, 255), 1, 8, 0);
+    }
+    else
+    {
+        std::string str = "headcount : " + std::to_string(head_count); 
+        cv::putText(src_img,str,cv::Point(10,50),cv::FONT_HERSHEY_COMPLEX,2,cv::Scalar(255,255, 0, 255), 1, 8, 0);
     }
 }
 

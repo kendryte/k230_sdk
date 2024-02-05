@@ -69,6 +69,7 @@ typedef enum
     K_ID_VICAP,                 /**< vicap device                               */
     K_ID_DW200,
     K_ID_PM,
+    K_ID_NONAI_2D,             /**< non ai 2d device                           */
     K_ID_BUTT,                  /**< Invalid                                    */
 } k_mod_id;
 

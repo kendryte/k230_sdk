@@ -1,25 +1,58 @@
 #pragma once
+#include <list>
+using namespace std;
+#include <functional>
+
 #ifdef LIBUVC_EXPORTS
 #define _DLL_API _declspec(dllexport)
 #else
 #define _DLL_API _declspec(dllimport)
 #endif
 
-enum uvc_data_type
+typedef enum
 {
-	KD_UVC_DEPTH_DATA_TYPE = 0,
-	KD_UVC_RGB_DATA_TYPE ,
-};
-enum uvc_frame_format_type
-{
-	KD_UVC_FRAME_FORMAT_YUYV = 3,
-	KD_UVC_FRAME_FORMAT_MJPEG = 7,
-	KD_UVC_FRAME_FORMAT_H264 = 8,
-	KD_UVC_FRAME_FORMAT_NV12 = 17,
-};
+	GRAB_IMAGE_MODE_RGB_DEPTH = 0,  /*sensor 0: RGB,  sensor 1: speckle*/
+	GRAB_IMAGE_MODE_RGB_IR,       /*sensor 0: RGB,  sensor 1: IR*/
+	GRAB_IMAGE_MODE_IR_DEPTH,     /*sensor 0: IR,   sensor 1: speckle*/
+	GRAB_IMAGE_MODE_NONE_SPECKLE, /*sensor 0: none, sensor 1: speckle*/
+	GRAB_IMAGE_MODE_NONE_IR,      /*sensor 0: none, sensor 1: IR*/
+	GRAB_IMAGE_MODE_NONE_DEPTH,   /*sensor 0: none, sensor 1: speckle*/
+	GRAB_IMAGE_MODE_RGB_SPECKLE,  /*sensor 0: RGB,  sensor 1: speckle*/
+	GRAB_IMAGE_MODE_BUTT,
+} k_grab_image_mode;
 
-typedef void* UVC_DEV_HANDLE;
-typedef void (*UVC_GRAB_DATA_CB)(uvc_data_type data_type, unsigned int frame_number,unsigned long pts, unsigned char*uvc_data, int data_len,void *pcontex);
+typedef struct
+{
+	float temperature_ref;
+	float temperature_cx;
+	float temperature_cy;
+	float kxppt;
+	float kyppt;
+	float reserve[11];
+}k_dpu_temperature;
+
+
+typedef struct tag_uvc_grab_frame_info
+{
+	unsigned int frame_number;
+	unsigned long long pts; 
+	unsigned char* uvc_data;
+	int data_len;
+	int width;
+	int height;
+}uvc_grab_frame_info;
+
+typedef struct tag_uvc_grab_all_frame_info
+{
+	char* serialNumber;
+	float temperature;
+	uvc_grab_frame_info* frame_rgb;
+	uvc_grab_frame_info* frame_depth;
+	uvc_grab_frame_info* frame_ir;
+	uvc_grab_frame_info* frame_speckle;
+	void* pcontex;
+}uvc_grab_all_frame_info;
+
 enum uvc_transfer_file_status
 {
 	em_uvc_transfer_file_start,   //start transfer
@@ -27,32 +60,64 @@ enum uvc_transfer_file_status
 	em_uvc_transfer_file_stop,    //stop transfer
 };
 typedef void (*UVC_TRANSFER_FILE_CB)(int cur_size,int total_size, uvc_transfer_file_status transfer_status);
+
+typedef struct tag_uvc_grab_init_parameters
+{
+	//default 
+	int camera_fps;
+	int depth_maximum_distance;
+	int camera_width;
+	int camera_height;
+
+	k_grab_image_mode grab_mode;
+	int sensor_type[2];
+	bool adc_enable;
+	bool overwrite_file;
+	char serialNumber[64];
+	char cfg_file_path_name[256];
+
+	tag_uvc_grab_init_parameters()
+	{
+		camera_fps = 30;
+		depth_maximum_distance = 40000;
+		camera_width = 1280;
+		camera_height = 720;
+
+		memset(cfg_file_path_name, 0, sizeof(cfg_file_path_name));
+		grab_mode = GRAB_IMAGE_MODE_RGB_DEPTH;
+		adc_enable = true;
+		overwrite_file = false;
+
+		sensor_type[0] = 20;
+		sensor_type[1] = 19;
+	}
+
+}uvc_grab_init_parameters;
+
+typedef struct tag_uvc_grab_callback_param
+{
+	std::function<void(uvc_grab_all_frame_info* pframe_info)> uvc_frame_func;
+	void* uvc_data_ptr;
+	tag_uvc_grab_callback_param()
+	{
+		uvc_frame_func = nullptr;
+		uvc_data_ptr = nullptr;
+	}
+}uvc_grab_callback_param;
+
 typedef struct tag_GrabberInitParam
 {
-	int uvc_device_pid;
-	int uvc_device_vid;
-	char* serialNumber;
-	uvc_frame_format_type format;
-	int frame_width;
-	int frame_height;
-	int fps;
-	UVC_GRAB_DATA_CB uvc_data_func;
-	void* uvc_data_ptr;
-
-	tag_GrabberInitParam()
-	{
-		uvc_data_func = nullptr;
-		uvc_data_ptr = nullptr;
-		uvc_device_pid = 0x0230;
-		uvc_device_vid = 0x29f1;
-		serialNumber = nullptr;
-		format = KD_UVC_FRAME_FORMAT_NV12;
-		frame_width = 1920;
-		frame_height = 1080;
-		fps = 30;
-	}
+	uvc_grab_init_parameters init_param;
+	uvc_grab_callback_param  callback_param;
 }grabber_init_param;
 
+typedef struct tag_uvc_dev_info
+{
+	int vid;
+	int pid;
+	char serialNumber[64];
+}kd_uvc_dev_info;
+typedef std::list<kd_uvc_dev_info>  UVC_DEV_INFO_LIST;
 
 class _DLL_API kd_uvc_dev
 {
@@ -62,11 +127,12 @@ public:
 	virtual bool      kd_uvc_close() = 0;
 	virtual bool      kd_uvc_start_grab() = 0;
 	virtual bool      kd_uvc_stop_grab() = 0;
-
 	virtual bool      kd_uvc_snap() = 0;
 
-	virtual bool      kd_uvc_transfer_file(char* serialNumber, const char* src_filepathname, const char* dst_filepathname, UVC_TRANSFER_FILE_CB uvc_transfer_cb) = 0;
 
+
+	virtual bool      kd_uvc_get_all_uvc_dev_info(bool bfilter_k230, UVC_DEV_INFO_LIST&lst_dev_uvc_info) = 0;
+	virtual bool      kd_uvc_transfer_file(char* serialNumber, const char* src_filepathname, const char* dst_filepathname, UVC_TRANSFER_FILE_CB uvc_transfer_cb) = 0;
 	virtual void      kd_uvc_test() = 0;
 };
 

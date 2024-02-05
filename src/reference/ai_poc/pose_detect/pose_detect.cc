@@ -174,13 +174,12 @@ bool poseDetect::BatchDetect(  float* all_data, std::vector<std::vector<OutputPo
         boxinfo_results.push_back(res);
     }
 
-
     Utils::nms_pose(boxinfo_results, nms_thresh_,nms_result);
 
     // 对一张图片：依据NMS处理得到的索引，得到类别id、confidence、box，并置于结构体OutputDet的容器中
     vector<OutputPose> temp_output;
-    for (size_t i=0; i<nms_result.size(); ++i){
-        int idx = nms_result[i];
+    for (size_t i=0; i<boxinfo_results.size(); ++i){
+        int idx = boxinfo_results[i].idx;
         OutputPose result;
  
         result.confidence = confidences[idx];
@@ -211,6 +210,7 @@ bool poseDetect::Detect(float* all_data, std::vector<OutputPose> &output,cv::Vec
 bool poseDetect::post_process( std::vector<OutputPose> &output,cv::Vec4d params)
 {
 
+    ScopedTiming st(model_name_ + " post_process video", debug_mode_);
     foutput_0 = p_outputs_[0];
     bool find_ = Detect(foutput_0,output,params);
 

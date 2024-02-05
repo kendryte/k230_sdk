@@ -286,6 +286,20 @@ k_s32 kd_mpi_vicap_load_image(k_vicap_dev dev_num, const void *image_data, k_u32
 k_s32 kd_mpi_vicap_dump_register(k_vicap_dev dev_num, const char *path);
 
 /**
+ * @brief vicap set dump reserved
+ *
+ * @param [in] dev_num device number
+ * @param [in] chn_num channel number
+ * @param [in] reserved enable reserved
+ * @return k_s32
+ * @retval 0 success
+ * @retval "not 0" see err code
+ * @see K_ERR_CODE_E
+ * @note
+ */
+void kd_mpi_vicap_set_dump_reserved(k_vicap_dev dev_num, k_vicap_chn chn_num, k_bool reserved);
+
+/**
  * @brief vicap set slave mode
  *
  * @param [in] id slave dev id
@@ -322,6 +336,7 @@ k_s32 kd_mpi_vicap_set_slave_attr(k_vicap_slave_id id, k_vicap_slave_info *info)
  * @note
  */
 k_s32 kd_mpi_vicap_3d_mode_crtl(k_bool enable);
+
 
 /** @} */ /** <!-- ==== VICAP End ==== */
 

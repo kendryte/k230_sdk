@@ -2,7 +2,7 @@
 
 <div align=left><img src="./resource/pics/canaan-v.png" style="zoom: 30%;" /></div>
 
-Document version: V1.3 Release date: 2024-1-9
+Document version: V1.4 Release date: 2024-1-31
 
 ## 介绍
 
@@ -44,7 +44,7 @@ do
 wget https://ai.b-bug.org/k230/downloads/fancy_poc/meta_human/$file || wget https://kendryte-download.canaan-creative.com/k230/downloads/fancy_poc/meta_human/$file;  
 done  
 
-for file in onboard_v2.7.zip
+for file in onboard_v2.8.zip
 do
 wget https://ai.b-bug.org/k230/downloads/fancy_poc/meta_human/k230_board/$file || wget https://kendryte-download.canaan-creative.com/k230/downloads/fancy_poc/meta_human/k230_board/$file;  
 done

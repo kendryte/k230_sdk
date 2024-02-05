@@ -59,27 +59,11 @@ public:
     ~AIBase();
 
     /**
-     * @brief 设置kmodel输入
-     * @param buf 输入数据指针
-     * @param size 输入数据大小
-     * @return None
-     */
-    void set_input(const unsigned char *buf, size_t size);
-
-    /**
      * @brief 根据索引获取kmodel输入tensor
      * @param idx 输入数据指针
      * @return None
      */
     runtime_tensor get_input_tensor(size_t idx);
-
-    void set_input_tensor(size_t idx, runtime_tensor &tensor);
-
-    /**
-     * @brief 初始化kmodel输出
-     * @return None
-     */
-    void set_output();
 
     /**
      * @brief 推理kmodel

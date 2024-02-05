@@ -1,0 +1,1 @@
+./dec_enc.elf -i test.h265 -o test_gen.h265

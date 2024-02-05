@@ -40,6 +40,9 @@ config TARGET_K230_EVB
 config TARGET_K230_CANMV
 	bool "Support k230_CANMV(K230PI)"
 
+config TARGET_K230D_CANMV
+	bool "Support k230D_CANMV(K230PI zero)"
+
 config TARGET_K230_UNSIPLP4
 	bool "Support usiplp4"
 
@@ -83,6 +86,7 @@ source "board/sipeed/maix/Kconfig"
 source "board/canaan/k230_fpga/Kconfig"
 source "board/canaan/k230_evb/Kconfig"
 source "board/canaan/k230_canmv/Kconfig"
+source "board/canaan/k230d_canmv/Kconfig"
 source "board/canaan/k230_unsiplp4/Kconfig"
 source "board/canaan/k230_siplp4/Kconfig"
 

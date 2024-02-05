@@ -132,7 +132,7 @@ k_s32 kd_mapi_vicap_set_dev_attr(k_vicap_dev_set_info dev_info)
     dev_attr.acq_win.width = sensor_info[dev_info.vicap_dev].width;
     dev_attr.acq_win.height = sensor_info[dev_info.vicap_dev].height;
     // vicap work mode process
-    if((dev_info.mode == VICAP_WORK_OFFLINE_MODE) || (dev_info.mode == VICAP_WORK_LOAD_IMAGE_MODE))
+    if((dev_info.mode == VICAP_WORK_OFFLINE_MODE) || (dev_info.mode == VICAP_WORK_LOAD_IMAGE_MODE) || (dev_info.mode == VICAP_WORK_ONLY_MCM_MODE))
     {
         dev_attr.mode = dev_info.mode;
         dev_attr.buffer_num = dev_info.buffer_num;
@@ -222,7 +222,7 @@ k_s32 kd_mapi_vicap_set_chn_attr(k_vicap_chn_set_info chn_info)
     chn_attr.scale_enable = chn_info.scale_en;
     chn_attr.chn_enable = chn_info.chn_en;
     chn_attr.pix_format = chn_info.pixel_format;
-    chn_attr.buffer_num = 6;
+    chn_attr.buffer_num = chn_info.buffer_num;
     chn_attr.buffer_size = chn_info.buf_size;
     chn_attr.alignment = chn_info.alignment;
     chn_attr.fps = chn_info.fps;
@@ -261,6 +261,47 @@ k_s32 kd_mapi_vicap_start(k_vicap_dev vicap_dev)
     }
     return K_SUCCESS;
 }
+
+k_s32 kd_mapi_vicap_init(k_vicap_dev vicap_dev)
+{
+    k_s32 ret = 0;
+    if(vicap_dev > VICAP_DEV_ID_MAX || vicap_dev < VICAP_DEV_ID_0)
+    {
+        mapi_vicap_error_trace("kd_mapi_vicap_init failed, dev_num %d out of range\n", vicap_dev);
+        return K_FAILED;
+    }
+    ret = kd_mpi_vicap_init(vicap_dev);
+    if(ret)
+    {
+        mapi_vicap_error_trace("kd_mpi_vicap_init, vicap dev(%d) init failed.\n", vicap_dev);
+        kd_mpi_vicap_deinit(vicap_dev);
+        return K_FAILED;
+    }
+    return K_SUCCESS;
+}
+
+
+k_s32 kd_mapi_vicap_start_stream(k_vicap_dev vicap_dev)
+{
+    k_s32 ret = 0;
+    if(vicap_dev > VICAP_DEV_ID_MAX || vicap_dev < VICAP_DEV_ID_0)
+    {
+        mapi_vicap_error_trace("kd_mapi_vicap_start_stream failed, dev_num %d out of range\n", vicap_dev);
+        return K_FAILED;
+    }
+    ret = kd_mpi_vicap_start_stream(vicap_dev);
+    if(ret)
+    {
+        mapi_vicap_error_trace("kd_mapi_vicap_start_stream, vicap dev(%d) start stream failed.\n", vicap_dev);
+        kd_mpi_vicap_deinit(vicap_dev);
+        kd_mpi_vicap_stop_stream(vicap_dev);
+        return K_FAILED;
+    }
+    return K_SUCCESS;
+}
+
+
+
 
 k_s32 kd_mapi_vicap_stop(k_vicap_dev vicap_dev)
 {

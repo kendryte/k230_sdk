@@ -6,5 +6,7 @@ move .\test_uvc.exe- test_uvc.exe 2>nul
 ::test_uvc.exe -m 2 -i "H1280W720_conf.zip" -o "/sharefs/H1280W720_conf.zip"
 ::test_uvc.exe -m 2 -i "H1280W720_ref.zip" -o "/sharefs/H1280W720_ref.zip"
 
-test_uvc.exe -m 0 -s 0
+test_uvc.exe -m 0 -s 0 -f "./bin/0702/H1280W720.bin"
+
+::test_uvc.exe -m 1 -s 1 -f "./bin/0702/H1280W720.bin"
 pause

@@ -444,12 +444,96 @@ static void nandflash_detect(void)
     LOG_W("read ID: [ 0x%X 0x%X 0x%X] \n", id_table[0], id_table[1], id_table[2]);
 }
 
+
+typedef struct mux_config {
+    rt_uint32_t st : 1;
+	/*!< Schmitt trigger. */
+	rt_uint32_t ds : 4;
+	/*!< Driving selector. */
+	rt_uint32_t pd : 1;
+	/*!< Pull down enable. 0 for nothing, 1 for pull down. */
+	rt_uint32_t pu : 1;
+	/*!< Pull up enable. 0 for nothing, 1 for pull up. */
+	rt_uint32_t oe_en : 1;
+	/*!< Static output enable. */
+	rt_uint32_t ie_en : 1;
+	/*!< Static output enable. */
+	rt_uint32_t msc : 1;
+	/*!< msc control bit. */
+	rt_uint32_t sl : 1;
+	/*!< Slew rate control enable. */
+	/*!< IO config setting. */
+	rt_uint32_t io_sel : 3;
+	/*!< set io function mode. */
+	rt_uint32_t resv0 : 17;
+	/*!< Reserved bits. */
+	rt_uint32_t pad_di : 1;
+	/*!< Read current IO's data input. */
+}mux_config_t;
+
+#define MUXPIN_NUM_IO    (64)
+typedef struct muxpin_ {
+	mux_config_t io[MUXPIN_NUM_IO];
+	/*!< FPIOA GPIO multiplexer io array */
+}muxpin_t;
+
+/* IOMUX */
+#define IOMUX_BASE_ADDR 0x91105000
+#define IOMUX_REG_SIZE 0x1000
+volatile muxpin_t *const muxpin = (volatile muxpin_t *)IOMUX_BASE_ADDR;
+
+/**
+ * @brief set io configuretion
+ * 
+ * @param io_num  0 ~ 63
+ * @param config  be careful
+ * @return int 
+ */
+static rt_base_t muxpin_set_config(rt_base_t io_num, mux_config_t config)
+{
+
+#if 1
+    muxpin->io[io_num].st       = config.st;
+    muxpin->io[io_num].ds       = config.ds;
+    muxpin->io[io_num].pd       = config.pd;
+    muxpin->io[io_num].pu       = config.pu;
+    muxpin->io[io_num].oe_en    = config.oe_en;
+    muxpin->io[io_num].ie_en    = config.ie_en;
+    muxpin->io[io_num].msc      = config.msc;
+    muxpin->io[io_num].sl       = config.sl;
+    muxpin->io[io_num].io_sel   = config.io_sel;
+    muxpin->io[io_num].pad_di   = config.pad_di;
+#else
+    muxpin->io[io_num] = config;
+#endif
+    return 0;
+}
+
+static void spi_set_gpio(void)
+{
+    mux_config_t cs_pin = {.st = 1, .ds = 0x7, .pd = 0, .pu = 1, .oe_en = 1,
+								 .ie_en = 0, .msc = 1, .sl = 0, .io_sel = 3};
+	mux_config_t clk_pin = {.st = 1, .ds = 0x7, .pd = 0, .pu = 0, .oe_en = 1, 
+								.ie_en = 0, .msc = 1, .sl = 0, .io_sel = 3};
+	mux_config_t data0_pin = {.st = 1, .ds = 0x7, .pd = 0, .pu = 0, .oe_en = 1, 
+								.ie_en = 1, .msc = 1, .sl = 0, .io_sel = 3};
+    mux_config_t data1_pin = {.st = 1, .ds = 0x7, .pd = 0, .pu = 0, .oe_en = 1, 
+								.ie_en = 1, .msc = 1, .sl = 0, .io_sel = 3};
+    muxpin_set_config(14,cs_pin);
+    muxpin_set_config(15,clk_pin);
+    muxpin_set_config(16,data0_pin);
+    muxpin_set_config(17,data1_pin);
+
+}
+
 static void nandflash_init(void)
 {
     int index = 1;
     int i;
     int ret;
     uint32_t addr = 0;
+
+    spi_set_gpio();
 
     rt_memcpy(current_flash_info, &default_nandflash_info, sizeof(flash_info_t));
 

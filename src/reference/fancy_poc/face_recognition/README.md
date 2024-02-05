@@ -21,7 +21,7 @@ Document version: V1.0 Release date: 2023-12-22
     wget https://ai.b-bug.org/k230/downloads/fancy_poc/face_recognition/$file || wget https://kendryte-download.canaan-creative.com/k230/downloads/fancy_poc/face_recognition/$file;  
     done 
     
-    for file in onboard_v2.7.zip
+    for file in onboard_v2.8.zip
     do
     wget https://ai.b-bug.org/k230/downloads/fancy_poc/face_recognition/k230_board/$file || wget https://kendryte-download.canaan-creative.com/k230/downloads/fancy_poc/face_recognition/k230_board/$file;  
     done
@@ -122,4 +122,4 @@ cd /sharefs/face_recognition
 
 **c.效果展示：**
 
-![image-20231222170147905](resource/20240105-175102.jpg)
+![image-20231222170147905](resource/20240131-101746.jpg)

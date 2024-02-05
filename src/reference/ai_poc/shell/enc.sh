@@ -1,0 +1,1 @@
+./enc.elf 0 -sensor 24 -o test.h265

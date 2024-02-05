@@ -291,6 +291,7 @@ int StreamingPlayer::CreateVideoEncode(const SessionAttr &session_attr) {
     vi_chn_attr_info.vicap_dev = VICAP_DEV_ID_0;
     vi_chn_attr_info.vicap_chn = (k_vicap_chn)session_attr.session_idx;
     vi_chn_attr_info.alignment = 12;
+    vi_chn_attr_info.buffer_num = 6;
     if (!dev_attr_info_.dw_en)
         vi_chn_attr_info.buf_size = VI_ALIGN_UP(session_attr.video_width * session_attr.video_height * 3 / 2, 0x400);
     else

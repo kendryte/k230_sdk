@@ -30,6 +30,7 @@
 #include <signal.h>
 #include <stdint.h>
 #include <sys/mman.h>
+#include <sys/time.h>
 
 #include "sample_dpu.h"
 #include "kstream.h"
@@ -45,6 +46,7 @@
 #include "mapi_dpu_api.h"
 #include "frame_cache.h"
 #include "vicap_vo_cfg.h"
+#include "uvc_recv_file.h"
 
 #include <linux/usb/ch9.h>
 #include <linux/usb/video.h>
@@ -89,6 +91,7 @@ unsigned int g_sensor1 = OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_SPECKLE;
 static FILE * fp = NULL;
 static k_mapi_media_attr_t media_attr = {0};
 int fd = -1;
+extern uvc_grab_init_parameters_ex g_grab_init_param;
 
 static k_u8 __started = 0;
 encoder_property __encoder_property;
@@ -161,9 +164,49 @@ typedef struct {
 
 
 static vicap_device_obj g_dev_obj[VICAP_DEV_ID_MAX];
+static k_dpu_info_t g_dpu_info;
+
+static unsigned int g_rgb_frame_number = 0;
+static unsigned int g_depth_frame_number = 0;
+static unsigned int g_ir_frame_number = 0;
+static unsigned int g_speckle_frame_number = 0;
+
+static int          g_frame_rate = -1;
+static unsigned int g_cur_frame_keep_time = 0;
+static unsigned long long g_origin_frame_rgb_time = 0;
+static unsigned long long g_origin_frame_depth_time = 0;
+static unsigned long long g_origin_frame_ir_time = 0;
+static unsigned long long g_origin_frame_speckle_time = 0;
+static unsigned int g_send_frame_rgb_cnt = 0;
+static unsigned int g_send_frame_depth_cnt = 0;
+static unsigned int g_send_frame_ir_cnt = 0;
+static unsigned int g_send_frame_speckle_cnt = 0;
+static unsigned int g_discard_rgb_frame = 0;
+
 static const int g_uvc_rgb_data_start_code = 0xaabbccdd;
 static const int g_uvc_depth_data_start_code = 0xddccbbaa;
-static k_dpu_info_t g_dpu_info;
+static const int g_uvc_ir_data_start_code = 0xddbbaacc;
+static const int g_uvc_speckle_data_start_code = 0xddaaccbb;
+
+typedef struct
+{
+    int                sync_timestamp;         //是否同步了时间戳
+    unsigned long long start_server_timestamp; //首帧pc时间戳
+    unsigned long long start_k230_timestamp;  //首帧k230时间戳
+    unsigned long long valid_frame_start_number;  //有效帧起始number
+}FRAME_SYNC_CLOCK_INFO;
+typedef enum
+{
+    em_sync_clock_rgb = 0,
+    em_sync_clock_depth,
+    em_sync_clock_ir,
+    em_sync_clock_speckle,
+    em_sync_clock_max,
+}SYNC_CLOCK_FRAME_TYPE;
+
+static unsigned long long g_sync_clock_server_timestamp = 0;
+static unsigned long long g_sync_clock_client_timestamp = 0;
+static FRAME_SYNC_CLOCK_INFO g_frame_sync_clock_info[em_sync_clock_max];
 
 typedef struct {
 	int data_start_code;
@@ -172,7 +215,10 @@ typedef struct {
 	int frame_size;
 	unsigned int frame_number;
 	unsigned int packet_number_of_frame;
-	int reserve[2];
+    float temperature;
+	int width;
+	int height;
+	int reserve[3];
 #ifdef __linux__
 	unsigned long pts;
 #elif defined(_WIN32)
@@ -220,6 +266,85 @@ static frame_node_t *fnode = NULL;
 static int count = 0;
 static k_s32 sample_dpu_startup(void);
 static k_s32 sample_dpu_shutdown(void);
+
+static unsigned long long get_system_time_microsecond()
+{
+    struct timeval timestamp;
+    if (0 == gettimeofday(&timestamp, NULL))
+        return (unsigned long long)timestamp.tv_sec * 1000000 + timestamp.tv_usec;
+
+    return 0;
+}
+
+static unsigned long long  _do_sync_frame_timestamp(SYNC_CLOCK_FRAME_TYPE frame_type,unsigned long long capture_timestatmp)
+{
+    //return capture_timestatmp;
+    if (0 == g_frame_sync_clock_info[frame_type].sync_timestamp)
+    {
+        //if (g_frame_sync_clock_info[frame_type].valid_frame_start_number++ > (g_frame_rate > 0)?g_frame_rate*5:50)
+        if(1)
+        {
+            //以k230时钟计算，从同步时间戳时刻算起，到当前共运行时间微妙
+            unsigned long long take_time_from_sync = get_system_time_microsecond()-g_sync_clock_client_timestamp;
+            //printf("=========take sync time:%llu\n",take_time_from_sync);
+
+            g_frame_sync_clock_info[frame_type].start_server_timestamp = g_sync_clock_server_timestamp +  take_time_from_sync;
+            g_frame_sync_clock_info[frame_type].start_k230_timestamp = capture_timestatmp;
+            g_frame_sync_clock_info[frame_type].sync_timestamp = 1;
+        }
+        else
+        {
+            return 0;
+        }
+    }
+
+    return g_frame_sync_clock_info[frame_type].start_server_timestamp + (capture_timestatmp - g_frame_sync_clock_info[frame_type].start_k230_timestamp);
+}
+
+int do_dpu_ctrol_cmd(UVC_TRANSFER_CONTROL_CMD cmd_ctrl)
+{
+    if(cmd_ctrl.type == em_uvc_transfer_control_sync_clock)
+    {
+        g_sync_clock_client_timestamp = get_system_time_microsecond();
+        g_sync_clock_server_timestamp = cmd_ctrl.ctrl_info.sync_clock;
+        printf("recv pc sync clock %llu,cur clock:%llu,differ(%lld)\n",g_sync_clock_server_timestamp,g_sync_clock_client_timestamp,g_sync_clock_server_timestamp-g_sync_clock_client_timestamp);
+        for (int i =0; i < em_sync_clock_max;i ++)
+        {
+            g_frame_sync_clock_info[i].sync_timestamp = 0;
+            g_frame_sync_clock_info[i].valid_frame_start_number = 0;
+        }
+    }
+    else if (cmd_ctrl.type == em_uvc_transfer_control_grab_data)
+    {
+        printf("recv uvc ctl cmd ctrl grab flag %d\n",cmd_ctrl.ctrl_info.start_grab);
+    }
+    else if (cmd_ctrl.type == em_uvc_transfer_control_set_framerate)
+    {
+        printf("recv uvc ctl cmd ctrl set framerate:%d\n",cmd_ctrl.ctrl_info.frame_rate);
+
+        g_frame_rate = cmd_ctrl.ctrl_info.frame_rate;
+        if (g_frame_rate > 0 && g_frame_rate <= 60)
+        {
+            g_cur_frame_keep_time = 1000000/g_frame_rate;
+            g_origin_frame_rgb_time = get_system_time_microsecond();
+            g_origin_frame_depth_time = g_origin_frame_rgb_time;
+            g_origin_frame_ir_time = g_origin_frame_rgb_time;
+            g_origin_frame_speckle_time = g_origin_frame_rgb_time;
+
+            g_send_frame_rgb_cnt = 0;
+            g_send_frame_depth_cnt = 0;
+            g_send_frame_ir_cnt = 0;
+            g_send_frame_speckle_cnt = 0;
+        }
+        else
+        {
+            g_cur_frame_keep_time = -1;
+        }
+
+    }
+
+    return 0;
+}
 
 static void *_sys_mmap(k_u64 phys_addr, k_u32 size)
 {
@@ -569,6 +694,7 @@ static k_s32 sample_dpu_vicap_init(vicap_device_obj *dev_obj)
             chn_attr_info.crop_v_start = 0;
             chn_attr_info.out_height = VICAP_HEIGHT;
             chn_attr_info.out_width = VICAP_WIDTH;
+            chn_attr_info.buffer_num = 6;
             chn_attr_info.pixel_format = dev_obj[dev_num].out_format[chn_num];
             chn_attr_info.vicap_dev = dev_obj[dev_num].dev_num;
             chn_attr_info.vicap_chn = (k_vicap_chn)dev_obj[dev_num].chn_num[chn_num];
@@ -657,7 +783,7 @@ static k_s32 sample_dpu_vicap_init(vicap_device_obj *dev_obj)
     return K_SUCCESS;
 }
 
-static void do_transfer_frame_data(unsigned char* pdata,int len,unsigned int frame_number, unsigned long pts,bool depth_pic,int frame_total_cnt,int frame_total_size,int cur_cnt)
+static void do_transfer_frame_data(unsigned char* pdata,int len,unsigned int frame_number, unsigned long pts,float temperature,int frame_start_code,int frame_total_cnt,int frame_total_size,int cur_cnt)
 {
     uvc_cache_t *uvc_cache = uvc_cache_get();
     UVC_PRIVATE_DATA_HEAD_INFO  private_head_info;
@@ -668,17 +794,33 @@ static void do_transfer_frame_data(unsigned char* pdata,int len,unsigned int fra
     int ncount = len/package_data_size + (len%package_data_size != 0);
     frame_node_t *fnode = NULL;
     //printf("=======do_transfer_frame_data package count:%d\n",ncount);
+    int try_cnt = 0;
     for (int i =0;i < ncount;i ++)
     {
         //get free queue node
         if (uvc_cache)
         {
-            get_node_from_queue(uvc_cache->free_queue, &fnode);
-            if (!fnode)
+            while(1)
             {
-                printf("img get_node_from_queue failed\n");
-                return ;
+                get_node_from_queue(uvc_cache->free_queue, &fnode);
+                if (!fnode)
+                {
+                    if (try_cnt ++ < 5)
+                    {
+                        usleep(1000);
+                        continue;
+                    }
+                    else
+                    {
+                        return;
+                    }
+                }
+                else
+                {
+                    break;
+                }
             }
+
             fnode->used = 0;
         }
 
@@ -704,11 +846,14 @@ static void do_transfer_frame_data(unsigned char* pdata,int len,unsigned int fra
             private_head_info.data_type = 2;
         }
         packet_number_of_frame ++;
-        private_head_info.data_start_code = depth_pic?g_uvc_depth_data_start_code:g_uvc_rgb_data_start_code;
+        private_head_info.data_start_code = frame_start_code;
         private_head_info.pts = pts;
         private_head_info.frame_size = frame_total_size;
         private_head_info.frame_number = frame_number;
         private_head_info.packet_number_of_frame = packet_number_of_frame;
+        private_head_info.width = g_grab_init_param.camera_width;
+        private_head_info.height = g_grab_init_param.camera_height;
+        private_head_info.temperature = temperature;
         //fill package head
         memcpy(fnode->mem + fnode->used, &private_head_info, sizeof(private_head_info));
         fnode->used += sizeof(private_head_info);
@@ -722,7 +867,7 @@ static void do_transfer_frame_data(unsigned char* pdata,int len,unsigned int fra
 
 }
 
-static void get_img(k_u32 frame_number, kd_dpu_data_s* p_dpu_data, k_u8 *p_private_data)
+static void get_img(k_u32 frame_number, unsigned  long long pts, kd_dpu_data_s* p_dpu_data,int frame_start_code, k_u8 *p_private_data)
 {
     void *virt_addr = NULL;
     k_u32 width, height, data_size;
@@ -745,7 +890,7 @@ static void get_img(k_u32 frame_number, kd_dpu_data_s* p_dpu_data, k_u8 *p_priva
                 virt_addr = (void*)p_dpu_data->dpu_result.img_result.virt_addr[i];
                 if(virt_addr)
                 {
-                    do_transfer_frame_data((unsigned char*)virt_addr, data_size,frame_number,p_dpu_data->dpu_result.img_result.pts,false,2,width * height*3/2,1);
+                    do_transfer_frame_data((unsigned char*)virt_addr, data_size,frame_number,pts,p_dpu_data->temperature, frame_start_code,2,width * height*3/2,1);
                 }
             }
             else if (1 == i)
@@ -754,28 +899,46 @@ static void get_img(k_u32 frame_number, kd_dpu_data_s* p_dpu_data, k_u8 *p_priva
                 virt_addr = (void*)p_dpu_data->dpu_result.img_result.virt_addr[i];
                 if(virt_addr)
                 {
-                    do_transfer_frame_data((unsigned char*)virt_addr, data_size,frame_number,p_dpu_data->dpu_result.img_result.pts,false,2,width * height*3/2,2);
+                    do_transfer_frame_data((unsigned char*)virt_addr, data_size,frame_number,pts,p_dpu_data->temperature,frame_start_code,2,width * height*3/2,2);
                 }
             }
         }
     }
 }
 
+static int _discard_frame(unsigned long long origin_frame_time,unsigned int* frame_send_cnt)
+{
+    unsigned int elapsed_time = get_system_time_microsecond()- origin_frame_time;
+    //printf("elapsed_time:%d,send frame time:%d,frame_keep_time:%d\n",elapsed_time,(*frame_send_cnt) * g_cur_frame_keep_time,g_cur_frame_keep_time);
+    if (elapsed_time - (*frame_send_cnt) * g_cur_frame_keep_time >= g_cur_frame_keep_time)
+    {
+        *frame_send_cnt  += 1;
+        return -1;
+    }
+
+    return 0;
+}
+
 k_s32 dpu_get_img(k_u32 dev_num, kd_dpu_data_s* p_dpu_data, k_u8 *p_private_data)
 {
-    static unsigned int frame_number = 0;
-    frame_number ++;
+    if (g_cur_frame_keep_time > 0)
+    {
+        if (1 == g_discard_rgb_frame)
+        {
+            g_discard_rgb_frame = 0;
+            return 0;
+        }
+    }
 
-    get_img(frame_number, p_dpu_data, p_private_data);
-
+    //p_dpu_data->dpu_result.img_result.pts = get_system_time_microsecond();
+    g_rgb_frame_number = p_dpu_data->dpu_result.img_result.time_ref;
+    get_img(g_rgb_frame_number,_do_sync_frame_timestamp(em_sync_clock_rgb,p_dpu_data->dpu_result.img_result.pts),p_dpu_data,g_uvc_rgb_data_start_code, p_private_data);
     return K_SUCCESS;
 }
 
 k_s32 dpu_get_depth(k_u32 dev_num, kd_dpu_data_s* p_dpu_data, k_u8 *p_private_data)
 {
-    static unsigned int frame_number = 0;
-    frame_number ++;
-
+    unsigned int elapsed_time = 0;
     if(g_dpu_info.mode == IMAGE_MODE_RGB_DEPTH ||
        g_dpu_info.mode == IMAGE_MODE_IR_DEPTH ||
        g_dpu_info.mode == IMAGE_MODE_NONE_DEPTH)
@@ -788,12 +951,98 @@ k_s32 dpu_get_depth(k_u32 dev_num, kd_dpu_data_s* p_dpu_data, k_u8 *p_private_da
         virt_addr = p_dpu_data->dpu_result.lcn_virt_addr;
         if (virt_addr)
         {
-            do_transfer_frame_data((unsigned char*)virt_addr, lcn_result.depth_out.length,frame_number,p_dpu_data->dpu_result.lcn_result.pts,true,1,lcn_result.depth_out.length,1);
+            if (g_cur_frame_keep_time > 0)
+            {
+                if (0 == _discard_frame(g_origin_frame_depth_time,&g_send_frame_depth_cnt))
+                {
+
+                    //discard pair rgb frame
+                    if (g_dpu_info.mode == IMAGE_MODE_RGB_DEPTH)
+                    {
+                        g_discard_rgb_frame = 1;
+                    }
+                    return 0;
+                }
+            }
+
+            /*
+            //p_dpu_data->dpu_result.lcn_result.pts = get_system_time_microsecond();
+            {
+                static int ncount = 0;
+                printf("[%d_%llu]========depth timestamp:%llu,diff(%llu)\n",ncount++,get_system_time_microsecond(),p_dpu_data->dpu_result.lcn_result.pts,get_system_time_microsecond() - p_dpu_data->dpu_result.lcn_result.pts);
+            }
+            */
+
+            g_depth_frame_number = p_dpu_data->dpu_result.lcn_result.time_ref;
+            do_transfer_frame_data((unsigned char*)virt_addr, lcn_result.depth_out.length,g_depth_frame_number,_do_sync_frame_timestamp(em_sync_clock_depth,p_dpu_data->dpu_result.lcn_result.pts),p_dpu_data->temperature,g_uvc_depth_data_start_code,1,lcn_result.depth_out.length,1);
         }
     }
     else
     {
-        get_img(frame_number, p_dpu_data, p_private_data);
+        if (g_dpu_info.mode == IMAGE_MODE_NONE_IR)
+        {
+            if (g_cur_frame_keep_time > 0)
+            {
+                if (0 == _discard_frame(g_origin_frame_ir_time,&g_send_frame_ir_cnt))
+                {
+                    return 0;
+                }
+            }
+
+            g_ir_frame_number = p_dpu_data->dpu_result.img_result.time_ref;
+            get_img(g_ir_frame_number,_do_sync_frame_timestamp(em_sync_clock_ir,p_dpu_data->dpu_result.img_result.pts), p_dpu_data,g_uvc_ir_data_start_code, p_private_data);
+        }
+        else if (g_dpu_info.mode == IMAGE_MODE_NONE_SPECKLE)
+        {
+            if (g_cur_frame_keep_time >= 0)
+            {
+                if (0 == _discard_frame(g_origin_frame_speckle_time,&g_send_frame_speckle_cnt))
+                {
+                    return 0;
+                }
+            }
+
+            g_speckle_frame_number = p_dpu_data->dpu_result.img_result.time_ref;
+            get_img(g_speckle_frame_number,_do_sync_frame_timestamp(em_sync_clock_speckle,p_dpu_data->dpu_result.img_result.pts), p_dpu_data, g_uvc_speckle_data_start_code,p_private_data);
+
+        }
+        else if (g_dpu_info.mode == IMAGE_MODE_RGB_IR)
+        {
+            if (GRAB_IMAGE_MODE_RGB_SPECKLE == g_grab_init_param.grab_mode)
+            {
+                if (g_cur_frame_keep_time > 0)
+                {
+                    if (0 == _discard_frame(g_origin_frame_speckle_time,&g_send_frame_speckle_cnt))
+                    {
+                        //discard pair rgb frame
+                        g_discard_rgb_frame = 1;
+
+                        return 0;
+                    }
+                }
+
+                g_speckle_frame_number = p_dpu_data->dpu_result.img_result.time_ref;
+                get_img(g_speckle_frame_number,_do_sync_frame_timestamp(em_sync_clock_speckle,p_dpu_data->dpu_result.img_result.pts), p_dpu_data, g_uvc_speckle_data_start_code,p_private_data);
+
+            }
+            else
+            {
+                if (g_cur_frame_keep_time > 0)
+                {
+                    if (0 == _discard_frame(g_origin_frame_ir_time,&g_send_frame_ir_cnt))
+                    {
+                        //discard pair rgb frame
+                        g_discard_rgb_frame = 1;
+                        return 0;
+                    }
+                }
+
+                g_ir_frame_number = p_dpu_data->dpu_result.img_result.time_ref;
+                get_img(g_ir_frame_number,_do_sync_frame_timestamp(em_sync_clock_ir,p_dpu_data->dpu_result.img_result.pts), p_dpu_data,g_uvc_ir_data_start_code, p_private_data);
+
+            }
+        }
+
     }
 
     return K_SUCCESS;
@@ -862,6 +1111,9 @@ static k_s32 sample_dpu_startup(void)
 
     memset(g_dev_obj, 0, sizeof(g_dev_obj));
 
+    g_sensor0 = g_grab_init_param.sensor_type[0];
+    g_sensor1 = g_grab_init_param.sensor_type[1];
+
     g_vicap_init.sensor_type[0] = g_sensor0;
     g_vicap_init.sensor_type[1] = g_sensor1;
 
@@ -897,17 +1149,37 @@ static k_s32 sample_dpu_startup(void)
     g_dpu_info.speckle_dev = 1;
     g_dpu_info.speckle_chn = 0;
     g_dpu_info.dpu_bind = DPU_UNBIND;
-    g_dpu_info.width = VICAP_WIDTH;
-    g_dpu_info.height = VICAP_HEIGHT;
+    //g_dpu_info.width = VICAP_WIDTH;
+    //g_dpu_info.height = VICAP_HEIGHT;
+    g_dpu_info.width = g_grab_init_param.camera_width;
+    g_dpu_info.height = g_grab_init_param.camera_height;
     g_dpu_info.dpu_buf_cnt = DPU_BUF_NUM;
     g_dpu_info.dma_buf_cnt = DPU_BUF_NUM;
-    g_dpu_info.adc_en = K_TRUE;
+    /*g_dpu_info.adc_en = K_TRUE;
     g_dpu_info.temperature.ref = 36.289;
     g_dpu_info.temperature.cx = 640;
     g_dpu_info.temperature.cy = 360;
     g_dpu_info.temperature.kx = 0.00015;
     g_dpu_info.temperature.ky = 0.00015;
-    g_dpu_info.mode = IMAGE_MODE_RGB_DEPTH;
+    g_dpu_info.mode = IMAGE_MODE_RGB_DEPTH;*/
+
+    g_dpu_info.adc_en = g_grab_init_param.adc_enable;
+    g_dpu_info.temperature.ref = g_grab_init_param.temperature.temperature_ref;
+    g_dpu_info.temperature.cx = g_grab_init_param.temperature.temperature_cx;
+    g_dpu_info.temperature.cy = g_grab_init_param.temperature.temperature_cy;
+    g_dpu_info.temperature.kx = g_grab_init_param.temperature.kxppt;
+    g_dpu_info.temperature.ky = g_grab_init_param.temperature.kyppt;
+
+    //rgb_speckle and rgb_ir is the same
+    if (GRAB_IMAGE_MODE_RGB_SPECKLE == g_grab_init_param.grab_mode)
+    {
+        g_dpu_info.mode = IMAGE_MODE_RGB_IR;
+    }
+    else
+    {
+        g_dpu_info.mode = (k_dpu_image_mode)g_grab_init_param.grab_mode;
+    }
+
     g_dpu_info.delay_ms = 5;
 
     ret = kd_mapi_dpu_init(&g_dpu_info);

@@ -196,4 +196,4 @@ _start:
   li   t0, __STACKSIZE__
   add  sp, sp, t0
   csrw sscratch, sp
-  j primary_cpu_entry
+  call primary_cpu_entry

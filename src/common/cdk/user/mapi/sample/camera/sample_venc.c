@@ -150,35 +150,6 @@ k_s32 get_venc_stream(k_u32 chn_num, kd_venc_data_s* p_vstream_data, k_u8 *p_pri
     }
 }
 
-static k_vicap_sensor_type get_sensor_type(k_u16 sensor)
-{
-    switch (sensor)
-    {
-    case 0:
-        return OV_OV9732_MIPI_1280X720_30FPS_10BIT_LINEAR;
-    case 1:
-        return OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_IR;
-    case 2:
-        return OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_SPECKLE;
-    case 3:
-        return IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_LINEAR;
-    case 4:
-        return IMX335_MIPI_2LANE_RAW12_2592X1944_30FPS_LINEAR;
-    case 5:
-        return IMX335_MIPI_4LANE_RAW12_2592X1944_30FPS_LINEAR;
-    case 6:
-        return IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_MCLK_7425_LINEAR;
-    case 7:
-        return IMX335_MIPI_2LANE_RAW12_2592X1944_30FPS_MCLK_7425_LINEAR;
-    case 8:
-        return IMX335_MIPI_4LANE_RAW12_2592X1944_30FPS_MCLK_7425_LINEAR;
-    default:
-        printf("unsupport sensor type %d, use default IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_LINEAR\n", sensor);
-        return IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_LINEAR;
-    }
-    return IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_LINEAR;
-}
-
 static k_s32 calc_buffer_size(k_pixel_format pix_fmt, k_u32 width, k_u32 height, buf_size_calc * size_calc)
 {
     switch (pix_fmt)
@@ -285,7 +256,7 @@ static k_s32 sample_venc_startup(void)
     k_s32 i = 0;
     __started = 1;
 
-    sample_context.sensor_type = get_sensor_type(g_sensor);
+    sample_context.sensor_type = (k_vicap_sensor_type)g_sensor;
     sample_context.chn_num = 1;
     switch (__encoder_property.format)
     {
@@ -431,6 +402,7 @@ static k_s32 sample_venc_startup(void)
             vi_chn_attr_info.vicap_dev = VICAP_DEV_ID_0;
             vi_chn_attr_info.vicap_chn = (k_vicap_chn)vichn_idx;
             vi_chn_attr_info.alignment = 12;
+            vi_chn_attr_info.buffer_num = 6;
             if (!dev_attr_info.dw_en)
                 vi_chn_attr_info.buf_size = VI_ALIGN_UP(pic_width[vichn_idx] * pic_height[vichn_idx] * 3 / 2, 0x400);
             else
@@ -524,7 +496,7 @@ static k_s32 sample_venc_startup(void)
             chn_attr_info.pixel_format = arg_pixel_format;
             chn_attr_info.vicap_dev = arg_dev;
             chn_attr_info.vicap_chn = (k_vicap_chn)i;
-
+            chn_attr_info.buffer_num = 6;
             if(arg_pixel_format != PIXEL_FORMAT_RGB_BAYER_10BPP && arg_pixel_format != PIXEL_FORMAT_RGB_BAYER_12BPP)
             {
                 // dewarp can enable in bayer pixel format

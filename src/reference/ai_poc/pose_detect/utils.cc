@@ -618,8 +618,6 @@ void Utils::nms_pose(std::vector<BoxInfo> &input_boxes, float NMS_THRESH,vector<
             else
             {
                 j++;
-                if(j== int(input_boxes.size()))
-                    nms_result.push_back(input_boxes[i].idx);
             }
         }
     }
@@ -642,7 +640,8 @@ void Utils::DrawPred(cv::Mat& img, std::vector<OutputPose>& results,
         int baseLine;
         cv::Size labelSize = cv::getTextSize(label, cv::FONT_HERSHEY_SIMPLEX, 0.5, 1, &baseLine);
         top = std::max(top, labelSize.height) -10 ;
-        putText(img, label, cv::Point(left, top), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,255), 2);
+        putText(img, label, cv::Point(left, top - 30), cv::FONT_HERSHEY_SIMPLEX, 3, cv::Scalar(0,0,255), 5);
+        cv::rectangle(img, cv::Point(left, top), cv::Point(left+width, top+height), cv::Scalar(0, 0, 255), 10);
  
         // 连线
         auto &kps = result.kps;
@@ -655,7 +654,7 @@ void Utils::DrawPred(cv::Mat& img, std::vector<OutputPose>& results,
  
                 if (kps_s > 0.0f){
                     cv::Scalar kps_color = cv::Scalar(KPS_COLORS[k][0],KPS_COLORS[k][1],KPS_COLORS[k][2]);
-                    cv::circle(img, {kps_x, kps_y}, 5, kps_color, -1);
+                    cv::circle(img, {kps_x, kps_y}, 5, kps_color, 15);
                 }
             }
  
@@ -671,49 +670,49 @@ void Utils::DrawPred(cv::Mat& img, std::vector<OutputPose>& results,
  
             if (pos1_s > 0.0f && pos2_s >0.0f){// 不要设置为>0.5f ,>0.0f显示效果比较好
                 cv::Scalar limb_color = cv::Scalar(LIMB_COLORS[k][0], LIMB_COLORS[k][1], LIMB_COLORS[k][3]);
-                cv::line(img, {pos1_x, pos1_y}, {pos2_x, pos2_y}, limb_color);
+                cv::line(img, {pos1_x, pos1_y}, {pos2_x, pos2_y}, limb_color, 10);
             }
  
         // 跌倒检测
-            float pt5_x = kps[5*3];
-            float pt5_y = kps[5*3 + 1];
-            float pt6_x = kps[6*3];
-            float pt6_y = kps[6*3+1];
-            float center_up_x = (pt5_x + pt6_x) /2.0f ;
-            float center_up_y = (pt5_y + pt6_y) / 2.0f;
-            cv::Point center_up = cv::Point((int)center_up_x, (int)center_up_y);
+            // float pt5_x = kps[5*3];
+            // float pt5_y = kps[5*3 + 1];
+            // float pt6_x = kps[6*3];
+            // float pt6_y = kps[6*3+1];
+            // float center_up_x = (pt5_x + pt6_x) /2.0f ;
+            // float center_up_y = (pt5_y + pt6_y) / 2.0f;
+            // cv::Point center_up = cv::Point((int)center_up_x, (int)center_up_y);
  
-            float pt11_x = kps[11*3];
-            float pt11_y = kps[11*3 + 1];
-            float pt12_x = kps[12*3];
-            float pt12_y = kps[12*3 + 1];
-            float center_down_x = (pt11_x + pt12_x) / 2.0f;
-            float center_down_y = (pt11_y + pt12_y) / 2.0f;
-            cv::Point center_down = cv::Point((int)center_down_x, (int)center_down_y);
- 
- 
-            float right_angle_point_x = center_down_x;
-            float righ_angle_point_y = center_up_y;
-            cv::Point right_angl_point = cv::Point((int)right_angle_point_x, (int)righ_angle_point_y);
+            // float pt11_x = kps[11*3];
+            // float pt11_y = kps[11*3 + 1];
+            // float pt12_x = kps[12*3];
+            // float pt12_y = kps[12*3 + 1];
+            // float center_down_x = (pt11_x + pt12_x) / 2.0f;
+            // float center_down_y = (pt11_y + pt12_y) / 2.0f;
+            // cv::Point center_down = cv::Point((int)center_down_x, (int)center_down_y);
  
  
-            float a = abs(right_angle_point_x - center_up_x);
-            float b = abs(center_down_y - righ_angle_point_y);
+            // float right_angle_point_x = center_down_x;
+            // float righ_angle_point_y = center_up_y;
+            // cv::Point right_angl_point = cv::Point((int)right_angle_point_x, (int)righ_angle_point_y);
  
-            float tan_value = a / b;
-            float Pi = acos(-1);
-            float angle = atan(tan_value) * 180.0f/ Pi;
-            //string angel_label = "angle: " + to_string(angle);
-            std::string angel_label = "";
-            putText(img, angel_label, cv::Point(left, top-40), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,255), 2);
  
-            if (angle > 60.0f || center_down_y <= center_up_y || (double)width/ height > 5.0f/3.0f) // 宽高比小于0.6为站立，大于5/3为跌倒
-            {
-                std::string fall_down_label = "person fall down!!!!";
-                putText(img, fall_down_label , cv::Point(left, top-20), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,255), 2);
+            // float a = abs(right_angle_point_x - center_up_x);
+            // float b = abs(center_down_y - righ_angle_point_y);
  
-                printf("angel:%f width/height:%f\n",angle, (double)width/ height );
-            }
+            // float tan_value = a / b;
+            // float Pi = acos(-1);
+            // float angle = atan(tan_value) * 180.0f/ Pi;
+            // //string angel_label = "angle: " + to_string(angle);
+            // std::string angel_label = "";
+            // putText(img, angel_label, cv::Point(left, top-40), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,255), 2);
+ 
+            // if (angle > 60.0f || center_down_y <= center_up_y || (double)width/ height > 5.0f/3.0f) // 宽高比小于0.6为站立，大于5/3为跌倒
+            // {
+            //     std::string fall_down_label = "person fall down!!!!";
+            //     putText(img, fall_down_label , cv::Point(left, top-20), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0,0,255), 2);
+ 
+            //     printf("angel:%f width/height:%f\n",angle, (double)width/ height );
+            // }
  
  
         }
@@ -743,7 +742,7 @@ void Utils::DrawPred_video(cv::Mat& img,FrameSize frame_size, std::vector<Output
         int baseLine;
         cv::Size labelSize = cv::getTextSize(label, cv::FONT_HERSHEY_SIMPLEX, 0.5, 1, &baseLine);
         top = std::max(top, labelSize.height) -10 ;
- 
+
         // 连线
         auto &kps = result.kps;
         for (int k=0; k<num_point+2; k++){// 不要设置为>0.5f ,>0.0f显示效果比较好
@@ -782,45 +781,54 @@ void Utils::DrawPred_video(cv::Mat& img,FrameSize frame_size, std::vector<Output
                 cv::Scalar limb_color = cv::Scalar(255,LIMB_COLORS[k][0], LIMB_COLORS[k][1], LIMB_COLORS[k][3]);
                 cv::line(img, {pos1_x_, pos1_y_}, {pos2_x_, pos2_y_}, limb_color,3);
             }
+
+        // // 跌倒检测
+        //     float pt5_x = kps[5*3];
+        //     float pt5_y = kps[5*3 + 1];
+        //     float pt6_x = kps[6*3];
+        //     float pt6_y = kps[6*3+1];
+        //     float center_up_x = (pt5_x + pt6_x) /2.0f ;
+        //     float center_up_y = (pt5_y + pt6_y) / 2.0f;
+        //     cv::Point center_up = cv::Point((int)center_up_x, (int)center_up_y);
  
-        // 跌倒检测
-            float pt5_x = kps[5*3];
-            float pt5_y = kps[5*3 + 1];
-            float pt6_x = kps[6*3];
-            float pt6_y = kps[6*3+1];
-            float center_up_x = (pt5_x + pt6_x) /2.0f ;
-            float center_up_y = (pt5_y + pt6_y) / 2.0f;
-            cv::Point center_up = cv::Point((int)center_up_x, (int)center_up_y);
- 
-            float pt11_x = kps[11*3];
-            float pt11_y = kps[11*3 + 1];
-            float pt12_x = kps[12*3];
-            float pt12_y = kps[12*3 + 1];
-            float center_down_x = (pt11_x + pt12_x) / 2.0f;
-            float center_down_y = (pt11_y + pt12_y) / 2.0f;
-            cv::Point center_down = cv::Point((int)center_down_x, (int)center_down_y);
- 
- 
-            float right_angle_point_x = center_down_x;
-            float righ_angle_point_y = center_up_y;
-            cv::Point right_angl_point = cv::Point((int)right_angle_point_x, (int)righ_angle_point_y);
+        //     float pt11_x = kps[11*3];
+        //     float pt11_y = kps[11*3 + 1];
+        //     float pt12_x = kps[12*3];
+        //     float pt12_y = kps[12*3 + 1];
+        //     float center_down_x = (pt11_x + pt12_x) / 2.0f;
+        //     float center_down_y = (pt11_y + pt12_y) / 2.0f;
+        //     cv::Point center_down = cv::Point((int)center_down_x, (int)center_down_y);
  
  
-            float a = abs(right_angle_point_x - center_up_x);
-            float b = abs(center_down_y - righ_angle_point_y);
+        //     float right_angle_point_x = center_down_x;
+        //     float righ_angle_point_y = center_up_y;
+        //     cv::Point right_angl_point = cv::Point((int)right_angle_point_x, (int)righ_angle_point_y);
  
-            float tan_value = a / b;
-            float Pi = acos(-1);
-            float angle = atan(tan_value) * 180.0f/ Pi;
-            std::string angel_label = "";
  
-            if (angle > 60.0f || center_down_y <= center_up_y || (double)width/ height > 5.0f/3.0f) // 宽高比小于0.6为站立，大于5/3为跌倒
-            {
-                std::string fall_down_label = "person fall down!!!!";
-            }
+        //     float a = abs(right_angle_point_x - center_up_x);
+        //     float b = abs(center_down_y - righ_angle_point_y);
+ 
+        //     float tan_value = a / b;
+        //     float Pi = acos(-1);
+        //     float angle = atan(tan_value) * 180.0f/ Pi;
+        //     std::string angel_label = "";
+ 
+        //     if (angle > 60.0f || center_down_y <= center_up_y || (double)width/ height > 5.0f/3.0f) // 宽高比小于0.6为站立，大于5/3为跌倒
+        //     {
+        //         std::string fall_down_label = "person fall down!!!!";
+        //     }
  
  
         }
+
+        int plot_x1 = int(left * 1.0 / SENSOR_WIDTH * osd_width);
+        int plot_y1 = int((top - 30) * 1.0 / SENSOR_HEIGHT  * osd_height);
+        int plot_x2 = int((left+width) * 1.0 / SENSOR_WIDTH * osd_width);
+        int plot_y2 = (top + height) > kps[kps.size() - 2] ? int((top+height) * 1.0 / SENSOR_HEIGHT  * osd_height) : int(kps[kps.size() - 2] * 1.0 / SENSOR_HEIGHT  * osd_height);
+
+        // std::cout << top + height << " " << kps[kps.size() - 2] << std::endl;
+        // putText(img, label, cv::Point(plot_x1, plot_y1), cv::FONT_HERSHEY_SIMPLEX, 2, cv::Scalar(255,255,0,0), 4);
+        cv::rectangle(img, cv::Point(plot_x1, plot_y1), cv::Point(plot_x2, plot_y2+20), cv::Scalar(255, 255, 0, 0), 4);
     }
 }
 

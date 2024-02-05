@@ -1,0 +1,54 @@
+/* Copyright (c) 2023, Canaan Bright Sight Co., Ltd
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+*/
+#include "k230.dtsi"
+#include "clock_provider.dtsi"          /* k230 soc clock tree */
+#include "clock_consumer.dtsi"          /* k230 soc clock consumer */
+#include "reset_provider.dtsi"          /* k230 soc reset provider */
+#include "reset_consumer.dtsi"          /* k230 soc reset consumer */
+#include "power_provider.dtsi"          /* k230 soc power provider */
+#include "power_consumer.dtsi"          /* k230 soc power consumer */
+#include "gpio_provider.dtsi"           /* k230 soc gpio provider */
+#include "gpio_consumer.dtsi"           /* k230 soc gpio consumer */
+
+
+/ {
+	aliases {
+		serial0 = &uart0;
+	};
+
+	chosen {
+		bootargs = "";
+		linux,initrd-start = <0x0 0xa100000>;
+		linux,initrd-end = <0x0 0x0>;
+		stdout-path = "serial0:115200";
+	};
+};
+
+&ddr {
+	reg = <0x0 0x1800000 0x0 0x45ff000>;  /*linux memory config*/
+};
+
+&mmc_sd0{
+    status = "okay";
+    rx_delay_line = <0x00>;
+    tx_delay_line = <0xc0>;
+};
+
+&mmc_sd1{
+    status = "okay";
+    no-1-8-v;
+    cap-sd-highspeed;
+    mshc_ctrl_r = <0x00>;
+};
+
+&uart0 {
+	status = "okay";
+};
+
+&usbotg0 {
+	status = "okay";
+};

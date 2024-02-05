@@ -28,10 +28,126 @@
 #include "msg_venc.h"
 #include "msg_server_dispatch.h"
 #include "mapi_venc_api.h"
+#include "mapi_nonai_2d_api.h"
 #include "mapi_venc_comm.h"
 #include "k_datafifo.h"
 #include "send_venc_data.h"
 #include <stdio.h>
+
+k_s32 msg_nonai_2d_init(k_s32 id, k_ipcmsg_message_t *msg)
+{
+    k_s32 ret;
+    k_ipcmsg_message_t *resp_msg;
+    msg_nonai_2d_chn_attr_t *nonai_2d_chn_attr = msg->pBody;
+
+    ret = kd_mapi_nonai_2d_init(nonai_2d_chn_attr->chn, &nonai_2d_chn_attr->attr);
+    if (ret != K_SUCCESS)
+    {
+        mapi_venc_error_trace("kd_mapi_nonai_2d_init failed:0x%x\n", ret);
+    }
+    resp_msg = kd_ipcmsg_create_resp_message(msg, ret, NULL, 0);
+    if (resp_msg == NULL)
+    {
+        mapi_venc_error_trace("kd_ipcmsg_create_resp_message failed\n");
+        return K_FAILED;
+    }
+
+    ret = kd_ipcmsg_send_async(id, resp_msg, NULL);
+    if (ret != K_SUCCESS)
+    {
+        mapi_venc_error_trace(" kd_ipcmsg_send_async failed:%x\n", ret);
+    }
+    kd_ipcmsg_destroy_message(resp_msg);
+
+    return ret;
+}
+
+k_s32 msg_nonai_2d_deinit(k_s32 id, k_ipcmsg_message_t *msg)
+{
+    k_s32 ret;
+    k_ipcmsg_message_t *resp_msg;
+    msg_nonai_2d_chn_t *nonai_2d_chn = msg->pBody;
+
+    ret = kd_mapi_nonai_2d_deinit(nonai_2d_chn->chn);
+    if (ret != K_SUCCESS)
+    {
+        mapi_venc_error_trace("kd_mapi_nonai_2d_deinit failed:0x%x\n", ret);
+    }
+
+    resp_msg = kd_ipcmsg_create_resp_message(msg, ret, NULL, 0);
+    if (resp_msg == NULL)
+    {
+        mapi_venc_error_trace("kd_ipcmsg_create_resp_message failed\n");
+        return K_FAILED;
+    }
+
+    ret = kd_ipcmsg_send_async(id, resp_msg, NULL);
+    if (ret != K_SUCCESS)
+    {
+        mapi_venc_error_trace(" kd_ipcmsg_send_async failed:%x\n", ret);
+    }
+    kd_ipcmsg_destroy_message(resp_msg);
+
+    return K_SUCCESS;
+}
+
+k_s32 msg_nonai_2d_start(k_s32 id, k_ipcmsg_message_t *msg)
+{
+    k_s32 ret;
+    k_ipcmsg_message_t *resp_msg;
+    msg_nonai_2d_chn_t *nonai_2d_chn = msg->pBody;
+
+    ret = kd_mapi_nonai_2d_start(nonai_2d_chn->chn);
+    if (ret != K_SUCCESS)
+    {
+        mapi_venc_error_trace("kd_mapi_nonai_2d_start failed:0x%x\n", ret);
+    }
+
+    resp_msg = kd_ipcmsg_create_resp_message(msg, ret, NULL, 0);
+    if (resp_msg == NULL)
+    {
+        mapi_venc_error_trace("kd_ipcmsg_create_resp_message failed\n");
+        return K_FAILED;
+    }
+
+    ret = kd_ipcmsg_send_async(id, resp_msg, NULL);
+    if (ret != K_SUCCESS)
+    {
+        mapi_venc_error_trace(" kd_ipcmsg_send_async failed:%x\n", ret);
+    }
+    kd_ipcmsg_destroy_message(resp_msg);
+
+    return K_SUCCESS;
+}
+
+k_s32 msg_nonai_2d_stop(k_s32 id, k_ipcmsg_message_t *msg)
+{
+    k_s32 ret;
+    k_ipcmsg_message_t *resp_msg;
+    msg_nonai_2d_chn_t *nonai_2d_chn = msg->pBody;
+
+    ret = kd_mapi_nonai_2d_stop(nonai_2d_chn->chn);
+    if (ret != K_SUCCESS)
+    {
+        mapi_venc_error_trace("kd_mapi_nonai_2d_stop failed:0x%x\n", ret);
+    }
+
+    resp_msg = kd_ipcmsg_create_resp_message(msg, ret, NULL, 0);
+    if (resp_msg == NULL)
+    {
+        mapi_venc_error_trace("kd_ipcmsg_create_resp_message failed\n");
+        return K_FAILED;
+    }
+
+    ret = kd_ipcmsg_send_async(id, resp_msg, NULL);
+    if (ret != K_SUCCESS)
+    {
+        mapi_venc_error_trace(" kd_ipcmsg_send_async failed:%x\n", ret);
+    }
+    kd_ipcmsg_destroy_message(resp_msg);
+
+    return K_SUCCESS;
+}
 
 k_s32 msg_venc_init(k_s32 id, k_ipcmsg_message_t *msg)
 {
@@ -401,6 +517,10 @@ static msg_module_cmd_t g_module_cmd_table[] =
     {MSG_CMD_MEDIA_VENC_DELETE_DATAFIFO,      msg_venc_delete_datafifo},
     {MSG_CMD_MEDIA_VENC_ENABLE_IDR,      msg_venc_enable_idr},
     {MSG_CMD_MEDIA_VENC_REQUEST_IDR,      msg_venc_request_idr},
+    {MSG_CMD_MEDIA_VENC_2D_INIT, msg_nonai_2d_init},
+    {MSG_CMD_MEDIA_VENC_2D_DEINIT, msg_nonai_2d_deinit},
+    {MSG_CMD_MEDIA_VENC_2D_START, msg_nonai_2d_start},
+    {MSG_CMD_MEDIA_VENC_2D_STOP, msg_nonai_2d_stop},
 };
 
 msg_server_module_t g_module_venc =

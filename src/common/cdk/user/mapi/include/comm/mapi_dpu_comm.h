@@ -122,6 +122,7 @@ typedef struct kd_datafifo_msg
     k_u8 *upfunc;
     k_u8 *puserdata;
     k_dpu_result_u dpu_result;
+    float temperature;
 }datafifo_msg;
 
 typedef struct
@@ -155,6 +156,7 @@ typedef struct
 typedef struct
 {
     k_dpu_result_u dpu_result;
+    float temperature;
 }kd_dpu_data_s;
 
 typedef k_s32 (*pfn_dpu_dataproc)(k_u32 dev_num, kd_dpu_data_s *p_dpu_data, k_u8 *p_private_data);

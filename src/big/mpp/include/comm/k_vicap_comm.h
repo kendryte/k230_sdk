@@ -128,6 +128,7 @@ typedef enum {
     VICAP_CSI_DATA_TYPE_RAW10 = 0x2B,
     VICAP_CSI_DATA_TYPE_RAW12 = 0x2C,
     VICAP_CSI_DATA_TYPE_RAW16 = 0x2E,
+    VICAP_CSI_DATA_TYPE_YUV422_8 = 0x1E,
 } k_vicap_csi_data_type;
 
 /**
@@ -241,6 +242,7 @@ typedef enum {
     VICAP_WORK_ONLINE_MODE,
     VICAP_WORK_OFFLINE_MODE,
     VICAP_WORK_LOAD_IMAGE_MODE,
+    VICAP_WORK_ONLY_MCM_MODE,
 } k_vicap_work_mode;
 
 /**
@@ -299,6 +301,7 @@ typedef enum {
     VICAP_DUMP_YUV = 0,
     VICAP_DUMP_RGB = 1,
     VICAP_DUMP_RAW = 2,
+    VICAP_DUMP_YUV444 = 3,
 } k_vicap_dump_format;
 
 /**
@@ -540,10 +543,62 @@ typedef struct {
     k_u32 crop_v_start;
     k_pixel_format pixel_format;
     k_u32 buf_size;
+    k_u32 buffer_num;
     k_u8 alignment;
     k_u8 fps;
 } k_vicap_chn_set_info;
 
+/**
+ * @brief Defines the VICAP set mcm
+ *
+ */
+typedef struct {
+    k_u32 width;
+    k_u32 height;
+    k_u32 format;
+    k_u32 stride;
+}k_vicap_mcm_cfg;
+
+/**
+ * @brief Defines the VICAP set mcm
+ *
+ */
+typedef struct {
+    k_vicap_chn vicap_chn;
+    k_vicap_mcm_cfg cfg;
+
+}k_vicap_mcm_chn_cfg;
+
+/**
+ * @brief Defines the VICAP set mcm
+ *
+ */
+typedef struct {
+    k_vicap_mcm_cfg cfg;
+    k_vicap_chn mcm_chn;
+    k_u32 buff_num;
+}k_vicap_mcm_chn_attr;
+
+/**
+ * @brief Defines the dump data format of VICAP
+ *
+ */
+typedef enum {
+    VICAP_MCM_RAW8 = 0,
+    VICAP_MCM_RAW10 = 1,
+    VICAP_MCM_RAW12 = 2,
+    VICAP_MCM_RAW14 = 3,
+    VICAP_MCM_RAW16 = 4,
+    VICAP_MCM_RAW24 = 5,
+} k_vicap_mcm_format;
+
+
+typedef struct
+{
+    k_u32 chn_num;
+    k_u32 timeout_ms;
+    k_video_frame_info info;
+} k_vicap_mcm_chn_vf_info;
 
 #define K_ERR_VICAP_INVALID_DEVID     K_DEF_ERR(K_ID_VICAP, K_ERR_LEVEL_ERROR, K_ERR_INVALID_DEVID)
 #define K_ERR_VICAP_INVALID_CHNID     K_DEF_ERR(K_ID_VICAP, K_ERR_LEVEL_ERROR, K_ERR_INVALID_CHNID)

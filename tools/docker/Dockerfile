@@ -45,7 +45,7 @@ RUN apt-get clean all && \
 
 # local build flag
 RUN echo "False" > /tmp/.flag
-RUN wget -P /tmp/ "https://ai.b-bug.org/k230/downloads/aitest/aitest-0.0.3.dev20230717-py3-none-any.whl" || echo "True" > /tmp/.flag
+RUN wget -P /tmp/ "https://ai.b-bug.org/k230/downloads/aitest/aitest-0.0.4.dev20240111-py3-none-any.whl" || echo "True" > /tmp/.flag
 
 # config pip local source
 RUN echo \

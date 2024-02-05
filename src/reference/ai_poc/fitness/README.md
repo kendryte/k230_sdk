@@ -11,7 +11,7 @@
 ```
 Usage: ./fitness.elf<kmodel> <obj_thresh> <nms_thresh> <input_mode> <debug_mode>
 For example:
- [for isp] ./fitness.elf yolov8n-pose.kmodel 0.1 0.45 None 0
+ [for isp] ./fitness.elf yolov8n-pose.kmodel 0.3 0.45 None 0
 Options:
  1> kmodel          pose检测kmodel文件路径
  2> obj_thresh      pose检测阈值

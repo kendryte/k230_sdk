@@ -33,7 +33,7 @@ void kd_uvc_cache_frame::cache_frame(uvc_cache_frame_type type, unsigned int fra
 	}
 }
 
-int kd_uvc_cache_frame::select_match_frames(CACHE_FRAME_YUV_INFO& yuv_frame_info, CACHE_FRAME_DEPTH_INFO& depth_frame_info)
+int kd_uvc_cache_frame::select_match_frames(CACHE_FRAME_UV_INFO& yuv_frame_info, CACHE_FRAME_UV_INFO& depth_frame_info)
 {
 	if (m_depth_cache_cnt == MAX_SNAP_CACHE_FRAME_SIZE && m_yuv_cache_cnt == MAX_SNAP_CACHE_FRAME_SIZE)
 	{

@@ -184,6 +184,32 @@ k_s32 kd_mapi_vicap_start(k_vicap_dev vicap_dev)
     return ret;
 }
 
+k_s32 kd_mapi_vicap_init(k_vicap_dev vicap_dev)
+{
+    k_s32 ret = 0;
+    k_vicap_dev dev_num = vicap_dev;
+    ret = mapi_send_sync(MODFD(K_MAPI_MOD_VICAP, 0, 0), MSG_CMD_MEDIA_VICAP_INIT,
+            &dev_num, sizeof(dev_num), NULL);
+
+    if(ret != K_SUCCESS) {
+        mapi_vicap_error_trace("mapi_send_sync failed\n");
+    }
+    return ret;
+}
+
+k_s32 kd_mapi_vicap_start_stream(k_vicap_dev vicap_dev)
+{
+    k_s32 ret = 0;
+    k_vicap_dev dev_num = vicap_dev;
+    ret = mapi_send_sync(MODFD(K_MAPI_MOD_VICAP, 0, 0), MSG_CMD_MEDIA_VICAP_START_STREAM,
+            &dev_num, sizeof(dev_num), NULL);
+
+    if(ret != K_SUCCESS) {
+        mapi_vicap_error_trace("mapi_send_sync failed\n");
+    }
+    return ret;
+}
+
 k_s32 kd_mapi_vicap_stop(k_vicap_dev vicap_dev)
 {
     k_s32 ret = 0;

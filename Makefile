@@ -112,8 +112,8 @@ prepare_sourcecode:prepare_toolchain
 #ai
 	@echo "download nncase sdk"
 	@rm -rf src/big/utils/; rm -rf src/big/ai;
-	@wget -q --show-progress $(DOWNLOAD_URL)/downloads/kmodel/kmodel_v2.7.0.tgz -O - | tar -xzC src/big/
-	@wget -q --show-progress $(DOWNLOAD_URL)/downloads/nncase/nncase_k230_v2.7.0.tgz -O - | tar -xzC src/big/
+	@wget -q --show-progress $(DOWNLOAD_URL)/downloads/kmodel/kmodel_v2.8.0.tgz -O - | tar -xzC src/big/
+	@wget -q --show-progress $(DOWNLOAD_URL)/downloads/nncase/nncase_k230_v2.8.0.tgz -O - | tar -xzC src/big/
 
 #big utils
 	@echo "download big utils"
@@ -142,8 +142,8 @@ prepare_sourcecode:prepare_toolchain
 #dictionary_pen
 	@if  [ "k230_evb_usiplpddr4_dictionary_pen_defconfig" == "$${CONF}" ] ; then \
 		echo "download dictionary_pen" ;  \
-		wget -q --show-progress $(DOWNLOAD_URL)/downloads/dictionary_pen/cidianbi_kmodel_v2.7.0.tar.gz -O - | tar -xzC src/reference/business_poc/dictionary_pen_poc/ ;  \
-		cp src/reference/business_poc/dictionary_pen_poc/cidianbi_kmodel_v2.7.0/include src/reference/business_poc/dictionary_pen_poc/ -rf ; \
+		wget -q --show-progress $(DOWNLOAD_URL)/downloads/dictionary_pen/cidianbi_kmodel_v2.8.0.tar.gz -O - | tar -xzC src/reference/business_poc/dictionary_pen_poc/ ;  \
+		cp src/reference/business_poc/dictionary_pen_poc/cidianbi_kmodel/include src/reference/business_poc/dictionary_pen_poc/ -rf ; \
 	fi;
 
 
@@ -220,7 +220,7 @@ mpp-apps:check_src
 	mkdir -p userapps/sample/fastboot_elf; \
 	make -C userapps/sample || exit $?; \
 	mkdir -p $(RTSMART_SRC_DIR)/userapps/root/bin/; \
-	source $(K230_SDK_ROOT)/.config; [ "$${CONFIG_BOARD_K230D}" != "y" ] && cp userapps/sample/fastboot_elf/* $(RTSMART_SRC_DIR)/userapps/root/bin/; \
+	source $(K230_SDK_ROOT)/.config; [ "$${CONFIG_BOARD_K230D_CANMV}" != "y" ] &&[ "$${CONFIG_BOARD_K230D}" != "y" ] && cp userapps/sample/fastboot_elf/* $(RTSMART_SRC_DIR)/userapps/root/bin/; \
 	cp $(RTSMART_SRC_DIR)/init.sh $(RTSMART_SRC_DIR)/userapps/root/bin/; \
 	cd -;
 

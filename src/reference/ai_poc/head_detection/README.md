@@ -16,7 +16,7 @@ Usage: ./head_detection.elf<kmodel_det> <score_thres> <nms_thres> <input_mode> <
   debug_mode      是否需要调试，0、1、2分别表示不调试、简单调试、详细调试
  
  #单图推理示例：（head_detect_image.sh）
-./head_detection.elf head_detection.kmodel 0.4 0.3 640x340.jpg 1
+./head_detection.elf head_detection.kmodel 0.4 0.3 640x340.jpg 0
 
  #视频流推理：（head_detect_isp.sh）
 ./head_detection.elf head_detection.kmodel 0.4 0.3 None 0

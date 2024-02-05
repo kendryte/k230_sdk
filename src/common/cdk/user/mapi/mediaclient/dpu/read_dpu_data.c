@@ -149,6 +149,7 @@ void* read_dpu_data_pth(void* arg)
                         height = pmsg->dpu_result.img_result.height;
                         kd_dpu_data_s *p_dpu_data = malloc(sizeof(kd_dpu_data_s));
                         memset(p_dpu_data, 0, sizeof(kd_dpu_data_s));
+                        p_dpu_data->temperature = pmsg->temperature;
 
                         memcpy(&p_dpu_data->dpu_result.img_result, &pmsg->dpu_result.img_result, sizeof(k_video_frame));
 
@@ -182,6 +183,7 @@ void* read_dpu_data_pth(void* arg)
                         kd_dpu_data_s *p_dpu_data = malloc(sizeof(kd_dpu_data_s));
 
                         memset(p_dpu_data, 0, sizeof(kd_dpu_data_s));
+                        p_dpu_data->temperature = pmsg->temperature;
 
                         memcpy(&p_dpu_data->dpu_result.lcn_result, &pmsg->dpu_result.lcn_result, sizeof(k_dpu_chn_lcn_result_t));
 

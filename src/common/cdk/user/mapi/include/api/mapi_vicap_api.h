@@ -201,6 +201,10 @@ k_s32 kd_mapi_vicap_set_mclk(k_vicap_mclk_id id, k_vicap_mclk_sel sel, k_u8 mclk
 
 k_s32 kd_mapi_vicap_tuning(char* string, k_u32 size, char** response, k_u32* response_len);
 
+k_s32 kd_mapi_vicap_start_stream(k_vicap_dev vicap_dev);
+
+k_s32 kd_mapi_vicap_init(k_vicap_dev vicap_dev);
+
 /** @} */ /** <!-- ==== MAPI_VICAP End ==== */
 
 #ifdef __cplusplus

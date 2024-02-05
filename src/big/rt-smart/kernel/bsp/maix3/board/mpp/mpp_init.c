@@ -276,6 +276,15 @@ int __attribute__((weak)) fft_device_init(void)
 extern int fft_device_init(void);
 /****************************************************/
 
+/*************nonai_2d device*************/
+int __attribute__((weak)) nonai_2d_init(void)
+{
+    rt_kprintf("no nonai_2d_init library!\n");
+    return -1;
+}
+extern int nonai_2d_init(void);
+/****************************************************/
+
 static int mpp_device_init(void)
 {
     media_freq_init();
@@ -297,6 +306,7 @@ static int mpp_device_init(void)
     dewarp_init();
     pm_core_init();
     fft_device_init();
+    nonai_2d_init();
     return 0;
 }
 

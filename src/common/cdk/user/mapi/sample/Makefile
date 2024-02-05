@@ -1,5 +1,6 @@
 all:
 	@cd rt-smart; make
+	@cd sample_mcm; make
 	@cd sample_venc; make
 	@cd sample_vdec; make
 	@cd sample_virtual_vio; make
@@ -11,8 +12,10 @@ all:
 	@cd sample_audio; make
 	@cd sample_vo; make
 	@cd sample_dpu_uvc; make
+	@cd sample_yuv_sensor; make
 clean:
 	@cd rt-smart; make clean
+	@cd sample_mcm; make clean
 	@cd sample_venc; make clean
 	@cd sample_vdec; make clean
 	@cd sample_virtual_vio; make clean
@@ -23,4 +26,5 @@ clean:
 	@cd sample_vicap; make clean
 	@cd sample_audio; make clean
 	@cd sample_vo; make clean
-	# @cd sample_dpu_uvc; make clean
+	@cd sample_dpu_uvc; make clean
+	@cd sample_yuv_sensor; make clean

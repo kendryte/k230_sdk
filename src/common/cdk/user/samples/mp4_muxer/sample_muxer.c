@@ -245,6 +245,7 @@ static k_s32 vicap_init(SampleCtx *psample_ctx) {
     vi_chn_attr_info.out_width = psample_ctx->video_pic_width;
     vi_chn_attr_info.out_height = psample_ctx->video_pic_height;
     vi_chn_attr_info.pixel_format = PIXEL_FORMAT_YUV_SEMIPLANAR_420;
+    vi_chn_attr_info.buffer_num = 6;
     vi_chn_attr_info.vicap_dev = VICAP_DEV_ID_0;
     vi_chn_attr_info.vicap_chn = 0;
     vi_chn_attr_info.buf_size = VI_ALIGN_UP(psample_ctx->sensor_width * psample_ctx->sensor_height * 3 / 2, 0x400);

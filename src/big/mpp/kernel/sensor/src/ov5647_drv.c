@@ -487,7 +487,7 @@ static k_sensor_mode *current_mode = NULL;
 
 int ov5647_power_rest(k_s32 on)
 {
-    #define OV5647_CAM_PIN      (0)
+    // #define OV5647_CAM_PIN      (0)
 
     rt_kprintf("ov5647_power_rest OV5647_CAM_PIN is %d \n", OV5647_CAM_PIN);
     // rst
