@@ -36,23 +36,38 @@
 #include <linux/delay.h>
 #include "platform.h"
 
-static inline void improving_cpu_performance(void)
+static void improving_cpu_performance(bool maee)
 {
 	/* Set cpu regs */
 	csr_write(CSR_MCOR, 0x70013);
 	csr_write(CSR_MCCR2, 0xe0000009);
 	csr_write(CSR_MHCR, 0x11ff); //Enable L1 Cache
-	csr_write(CSR_MXSTATUS, 0x638000);
+	csr_write(CSR_MXSTATUS, maee?0x638000:0x438000);
 	csr_write(CSR_MHINT, 0x6e30c);
 
 	csr_write(CSR_SMPEN, 0x1);
 }
 
+static void enforce_pmp(void)
+{
+    //start addr：0x24484c00<<2=0x91213000 len=1<<9 * 8 = 4KB
+    csr_write(pmpaddr0, 0x24484dff);
+    //start addr：0x24485000<<2=0x91214000 len=1<<9 * 8 = 4KB
+    csr_write(pmpaddr1, 0x244851ff);
+    // lock them as readonly
+    csr_write(pmpcfg0, 0x9999);
+}
+
+static void idle_wait(void){
+	while(1) {
+		asm volatile("wfi");
+	}
+}
+
 /*
  * cleanup_before_linux() is called just before we call linux
- * it prepares the processor for linux
+ * it prepares the processor with MAEE on and PMP set
  *
- * we disable interrupt and caches.
  */
 int cleanup_before_linux(void)
 {
@@ -65,9 +80,22 @@ int cleanup_before_linux(void)
     // csi_l2cache_flush_invalid();
 	asm volatile(".long 0x0170000b\n":::"memory");
 
-	improving_cpu_performance();
+	improving_cpu_performance(true); /* MAEE on */
 
+	enforce_pmp();
 	return 0;
+}
+
+/*
+ * cleanup_std_riscv() prepares CPU with MAEE off and PMP open
+ */
+void cleanup_std_riscv(void)
+{
+	cache_flush();
+	icache_disable();
+	dcache_disable();
+	asm volatile(".long 0x0170000b\n":::"memory");
+	improving_cpu_performance(false);	/* MAEE off */
 }
 
 void harts_early_init(void)
@@ -79,11 +107,7 @@ void harts_early_init(void)
 
 	writel(0x80199805, (void*)0x91100004);
 
-	csr_write(pmpaddr0, 0x24484dff);//start addr：0x24484c00<<2=0x91213000 len=1<<9 * 8 = 4KB
-	csr_write(pmpaddr1, 0x244851ff);//start addr：0x24485000<<2=0x91214000 len=1<<9 * 8 = 4KB
-	csr_write(pmpcfg0, 0x9999);
-
-	//improving_cpu_performance();
+	/* defer PMP until booting linux */
 }
 u32 spl_boot_device(void)
 {
@@ -114,9 +138,11 @@ static int k230_boot_baremetal(struct cmd_tbl *cmdtp, int flag, int argc,
 		writel(0x10001,(void*)0x9110100c);
 		udelay(100);
 		writel(0x10000,(void*)0x9110100c);
+		if (argc>4) idle_wait();
 	}
 	else
 	{
+		cleanup_std_riscv();
 		func_app_entry app_entry = (void *)(long)boot_address;
 		app_entry();
 	}
@@ -125,9 +151,9 @@ static int k230_boot_baremetal(struct cmd_tbl *cmdtp, int flag, int argc,
 }
 
 U_BOOT_CMD_COMPLETE(
-	boot_baremetal, 4, 1, k230_boot_baremetal,
+	boot_baremetal, 5, 1, k230_boot_baremetal,
 	"boot_baremetal",
-	"\n boot_baremetal cpu addr size\n", NULL
+	"\n boot_baremetal cpu addr size [wait]\n", NULL
 );
 
 
