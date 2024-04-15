@@ -614,11 +614,18 @@ cv::Mat nv12ToRGBHWC(const uint8_t* nv12Data, int width, int height, uint8_t* rg
 * AI计算后得到的RGB图像要转换成ARGB格式发送给编码器
 */
 cv::Mat convertToARGB(const cv::Mat& src) {
-    cv::Mat dst(src.rows, src.cols, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-    cv::Mat rgbChannels[3];
-    cv::split(src, rgbChannels);
-    cv::Mat argbChannels[4] = {cv::Mat(src.size(), CV_8UC1, cv::Scalar(0)),rgbChannels[0], rgbChannels[1], rgbChannels[2]};
-    cv::merge(argbChannels, 4, dst);
+    CV_Assert(src.channels() == 3); // 输入图像应该是 3 通道的 RGB 图像
+    cv::Mat dst(src.rows, src.cols, CV_8UC4);
+
+    for (int y = 0; y < src.rows; ++y) {
+        const cv::Vec3b* src_row = src.ptr<cv::Vec3b>(y);
+        cv::Vec4b* dst_row = dst.ptr<cv::Vec4b>(y);
+        for (int x = 0; x < src.cols; ++x) {
+            // RGB 到 ARGB 的通道转换
+            dst_row[x] = cv::Vec4b(255,src_row[x][0], src_row[x][1], src_row[x][2]);
+        }
+    }
+
     return dst;
 }
 

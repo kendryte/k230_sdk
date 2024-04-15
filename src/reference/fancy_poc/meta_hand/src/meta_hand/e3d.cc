@@ -47,7 +47,7 @@ E3d::~E3d()
 
 void E3d::pre_process(cv::Mat ori_img, std::vector<int> results)
 {
-    ScopedTiming st(model_name_ + " pre_process image", debug_mode_);
+    ScopedTiming st(model_name_ + " pre_process", debug_mode_);
 
     float ratio,dw,dh;
     cv::Mat image = Utils::letterbox(ori_img, {input_shapes_[0][2], input_shapes_[0][3]}, cv::Scalar(0,0,0),ratio,dw,dh);
@@ -84,23 +84,13 @@ void E3d::inference()
     this->get_output();
 }
 
-void E3d::post_process(int idx, int buffer_size)
+void E3d::post_process(vector<float> &result)
 {
     ScopedTiming st(model_name_ + " post process ", debug_mode_);
 
     float *output_0 = p_outputs_[0];
 
-    if(idx < buffer_size)
-    {
-        Utils::writeBin("ping/" +  std::to_string(idx) +  "_hand.bin",(char* )output_0,  sizeof(float)*(output_shapes_[0][0]*output_shapes_[0][1]));
-    }
-    else 
-    {
-        int idx_ = idx % buffer_size;
-        Utils::writeBin("pong/" +  std::to_string(idx_) +  "_hand.bin",(char* )output_0,  sizeof(float)*(output_shapes_[0][0]*output_shapes_[0][1]));
-    }
-
-    // Utils::writeBin( std::to_string(idx) +  "_hand.bin",(char* )output_0,  sizeof(float)*(output_shapes_[0][0]*output_shapes_[0][1]));
+    result.insert(result.end(), output_0, output_0 + 1  * input_shapes_[0][1] * input_shapes_[0][2]);
 }
 
 void E3d::draw_umich_gaussian(cv::Mat & heatmap, const int &center_x, const int &center_y, int radius, float &ratio, float &dw, float &dh) 

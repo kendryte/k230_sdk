@@ -23,7 +23,7 @@ SECTIONS
     {
         __text_start__ = .;
         *(.start);
-        *(.text)                        /* remaining code */
+        *(.text*)                        /* remaining code */
 
         KEEP(*(.init))
         KEEP(*(.fini))
@@ -42,7 +42,7 @@ SECTIONS
         *(SORT(.dtors.*))
         *(.dtors)
 
-        *(.rodata)                      /* read-only data (constants) */
+        *(.rodata*)                      /* read-only data (constants) */
         
         KEEP(*(.eh_frame*))
 

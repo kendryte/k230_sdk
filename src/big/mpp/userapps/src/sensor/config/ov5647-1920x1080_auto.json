@@ -35,7 +35,7 @@
       "classname": "Awbv2",
       "enable": true,
       "illuorder": "A, D50, D65, F11, F12",
-      "indoor": [0.3, 1, 1, 1, 1],
+      "indoor": [1, 1, 1, 1, 1],
       "outdoor": [0, 1, 1, 1, 0],
       "overExposureWeight": [
         0.5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.8, 0.6, 0.4, 0.2
@@ -457,7 +457,7 @@
         {
           "dmsc_denoise_strength": [0, 16, 31, 31, 31, 31],
           "dmsc_depurple_cbcr_mode": [3, 3, 3, 3, 3, 3],
-          "dmsc_depurple_enable": [1, 1, 1, 1, 1, 1],
+          "dmsc_depurple_enable": [0, 0, 0, 0, 0, 0],
           "dmsc_depurple_sat_shrink": [8, 8, 8, 8, 8, 8],
           "dmsc_depurple_thr": [20, 20, 20, 20, 20, 20],
           "dmsc_sharpen_clip_black": [200, 200, 200, 200, 200, 200],
@@ -479,7 +479,7 @@
         {
           "dmsc_denoise_strength": [0, 0, 0, 0, 0, 0],
           "dmsc_depurple_cbcr_mode": [3, 3, 3, 3, 3, 3],
-          "dmsc_depurple_enable": [1, 1, 1, 1, 1, 1],
+          "dmsc_depurple_enable": [0, 0, 0, 0, 0, 0],
           "dmsc_depurple_sat_shrink": [8, 8, 8, 8, 8, 8],
           "dmsc_depurple_thr": [20, 40, 60, 80, 100, 140],
           "dmsc_sharpen_clip_black": [500, 500, 500, 300, 300, 300],

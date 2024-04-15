@@ -32,9 +32,14 @@
 #include "k_connector_comm.h"
 #include "k_board_config_comm.h"
 
-#define LT9611_RESET_GPIO   42
-#define LT9611_SLAVE_ADDR   0x3b
-#define LT9611_I2C_BUS      "i2c4"
+#define DBG_TAG          "lt9611"
+#ifdef RT_DEBUG
+#define DBG_LVL          DBG_LOG
+#else
+#define DBG_LVL          DBG_WARNING
+#endif
+#define DBG_COLOR
+#include <rtdbg.h>
 
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof(array[0]))
@@ -66,13 +71,13 @@ struct lt9611_resolution {
     k_u32   connector_type;
 };
 
-#define LT9611_RESOLUTION_NUM   2
+#define LT9611_RESOLUTION_NUM   5
 struct lt9611_resolution lt9611_resolution[LT9611_RESOLUTION_NUM] = {
     {0xd1, 0xc0, 16,    LT9611_MIPI_4LAN_1920X1080_60FPS},
     {0x00, 0x00, 34,    LT9611_MIPI_4LAN_1920X1080_30FPS},
-    //{0x81, 0xc0, 4,     LT9611_MIPI_4LAN_1280X720_60FPS},
-    //{0x00, 0x00, 19,    LT9611_MIPI_4LAN_1280X720_50FPS},
-    //{0x00, 0x00, 1,    LT9611_MIPI_4LAN_640X480_60FPS},
+    {0x81, 0xc0, 4,     LT9611_MIPI_4LAN_1280X720_60FPS},
+    {0x00, 0x00, 19,    LT9611_MIPI_4LAN_1280X720_50FPS},
+    {0x00, 0x00, 1,    LT9611_MIPI_4LAN_640X480_60FPS},
 };
 
 static void connector_set_drvdata(struct connector_driver_dev *dev, void *data)
@@ -101,11 +106,7 @@ k_s32 lt9611_read_reg(k_i2c_info *i2c_info, k_u8 reg_addr, k_u8 *reg_val)
     msg[1].buf   = reg_val;
 
     if (rt_i2c_transfer(i2c_info->i2c_bus, msg, 2) != 2)
-    {
         return RT_ERROR;
-    }
-    // i2c debug info
-    //rt_kprintf("I2C READ slave_addr %02x reg_addr %02x reg_val %02x\n", i2c_info->slave_addr, reg_addr, *reg_val);
 
     return RT_EOK;
 }
@@ -124,11 +125,7 @@ k_s32 lt9611_write_reg(k_i2c_info *i2c_info, k_u8 reg_addr, k_u8 reg_val)
     msg.buf   = buf;
 
     if (rt_i2c_transfer(i2c_info->i2c_bus, &msg, 1) != 1)
-    {
         return RT_ERROR;
-    }
-    // i2c debug info
-    //rt_kprintf("I2C WRITE slave_addr %02x reg_addr %02x reg_val %02x\n", i2c_info->slave_addr, reg_addr, reg_val);
 
     return RT_EOK;
 }
@@ -138,13 +135,10 @@ k_s32 lt9611_write_multi_reg(k_i2c_info *i2c_info, const k_i2c_reg *reg_list, k_
     k_s32 ret = 0;
     k_u32 i;
 
-    for (i = 0; i < reg_num; i++)
-    {
+    for (i = 0; i < reg_num; i++) {
         ret = lt9611_write_reg(i2c_info, reg_list[i].addr, reg_list[i].val);
         if (ret)
-        {
             return RT_ERROR;
-        }
     }
 
     return ret;
@@ -221,15 +215,12 @@ static k_s32 lt9611_mipi_input_analog(struct lt9611_dev *lt9611_dev)
 
 static k_s32 lt9611_mipi_input_digital(struct lt9611_dev *lt9611_dev)
 {
-    if (lt9611_dev->input_port == LT9611_PORTA)
-    {
+    if (lt9611_dev->input_port == LT9611_PORTA) {
         lt9611_write_reg(&lt9611_dev->i2c_info, 0xff, 0x82);
         lt9611_write_reg(&lt9611_dev->i2c_info, 0x50, 0x10);
         lt9611_write_reg(&lt9611_dev->i2c_info, 0xff, 0x83);
         lt9611_write_reg(&lt9611_dev->i2c_info, 0x03, 0x00);
-        //rt_kprintf("LT9611_PORTA \n");
-    } else if (lt9611_dev->input_port == LT9611_PORTB)
-    {
+    } else if (lt9611_dev->input_port == LT9611_PORTB) {
         lt9611_write_reg(&lt9611_dev->i2c_info, 0xff, 0x82);
         lt9611_write_reg(&lt9611_dev->i2c_info, 0x50, 0x14);
         lt9611_write_reg(&lt9611_dev->i2c_info, 0xff, 0x83);
@@ -237,7 +228,6 @@ static k_s32 lt9611_mipi_input_digital(struct lt9611_dev *lt9611_dev)
         lt9611_write_reg(&lt9611_dev->i2c_info, 0x03, 0x4f);
         lt9611_write_reg(&lt9611_dev->i2c_info, 0x04, 0x00);
         lt9611_write_reg(&lt9611_dev->i2c_info, 0x07, 0x40);
-        //rt_kprintf("LT9611_PORTB \n");
     }
 
     lt9611_write_reg(&lt9611_dev->i2c_info, 0xff, 0x82);
@@ -269,7 +259,7 @@ static k_s32 lt9611_read_video(struct lt9611_dev *lt9611_dev)
     lt9611_read_reg(&lt9611_dev->i2c_info, 0x87, &low);
     htotal_sys = ((high << 8) | low);
 
-    rt_kprintf("vtotal %d vactive %d htotal_sys %d\n", vtotal, vactive, htotal_sys);
+    LOG_D("vtotal %d vactive %d htotal_sys %d\n", vtotal, vactive, htotal_sys);
 
     return 0;
 }
@@ -328,6 +318,8 @@ static k_s32 lt9611_setup_pll(struct lt9611_dev *lt9611_dev, k_u32 pclk)
     lt9611_write_reg(&lt9611_dev->i2c_info, 0x18, 0xdc);
     lt9611_write_reg(&lt9611_dev->i2c_info, 0x18, 0xfc);
     lt9611_write_reg(&lt9611_dev->i2c_info, 0x16, 0xf3);
+
+    return 0;
 }
 
 static k_s32 lt9611_setup_pcr(struct lt9611_dev *lt9611_dev)
@@ -401,6 +393,8 @@ static k_s32 lt9611_setup_timing(struct lt9611_dev *lt9611_dev, k_vo_display_res
     lt9611_write_reg(&lt9611_dev->i2c_info, 0x19, (k_u8)(hfront_porch % 256));
     lt9611_write_reg(&lt9611_dev->i2c_info, 0x1a, (k_u8)(((hfront_porch / 256) << 4) + (hsync_len + hback_porch) / 256));
     lt9611_write_reg(&lt9611_dev->i2c_info, 0x1b, (k_u8)((hsync_len + hback_porch) % 256));
+
+    return 0;
 }
 
 static k_s32 lt9611_hdmi_tx_digital(struct lt9611_dev *lt9611_dev)
@@ -414,6 +408,8 @@ static k_s32 lt9611_hdmi_tx_digital(struct lt9611_dev *lt9611_dev)
     lt9611_write_reg(&lt9611_dev->i2c_info, 0xff, 0x82);
     lt9611_write_reg(&lt9611_dev->i2c_info, 0xd6, 0x8e);
     lt9611_write_reg(&lt9611_dev->i2c_info, 0xd7, 0x04);
+
+    return 0;
 }
 
 static k_s32 lt9611_hdmi_tx_phy(struct lt9611_dev *lt9611_dev)
@@ -478,6 +474,8 @@ static k_s32 lt9611_enable_hdmi_out(struct lt9611_dev *lt9611_dev)
 
     lt9611_write_reg(&lt9611_dev->i2c_info, 0xff, 0x81);
     lt9611_write_reg(&lt9611_dev->i2c_info, 0x30, 0xea);
+
+    return 0;
 }
 
 static struct lt9611_dev *lt9611_dev_create(k_u32 input_port, k_u16 slave_addr, const char *i2c_name)
@@ -487,13 +485,11 @@ static struct lt9611_dev *lt9611_dev_create(k_u32 input_port, k_u16 slave_addr, 
 
     lt9611_dev = rt_malloc(sizeof(struct lt9611_dev));
     if (lt9611_dev == RT_NULL)
-    {
         return RT_NULL;
-    }
 
     i2c_bus = rt_i2c_bus_device_find(i2c_name);
     if (i2c_bus == RT_NULL) {
-        rt_kprintf("can't find %s deivce \n", i2c_name);
+        LOG_E("can't find %s deivce \n", i2c_name);
         return RT_NULL;
     }
 
@@ -514,9 +510,8 @@ static k_s32 lt9611_power_on(void* ctx, k_s32 on)
     k230_display_rst();
     lt9611_reset(LT9611_RESET_GPIO);
     lt9611_dev = lt9611_dev_create(LT9611_PORTB, LT9611_SLAVE_ADDR, LT9611_I2C_BUS);
-    if (lt9611_dev == RT_NULL)
-    {
-        rt_kprintf("lt9611_dev_create failed \n");
+    if (lt9611_dev == RT_NULL) {
+        LOG_E("lt9611_dev_create failed \n");
         return K_FAILED;
     }
     lt9611_set_interface(lt9611_dev);
@@ -575,25 +570,19 @@ static k_s32 k230_vo_resolution_init(k_connector_type type, k_vo_display_resolut
     pub_attr.intf_type = K_VO_INTF_MIPI;
     pub_attr.sync_info = resolution;
 
-    
-
     memset(&sync_attr, 0, sizeof(k_vo_sync_attr));
-    if (type == LT9611_MIPI_4LAN_1920X1080_60FPS || type == LT9611_MIPI_4LAN_1920X1080_30FPS) {
-        sync_attr.hsync_start = 2;
-        sync_attr.hsync_stop = 2;
+    sync_attr.hsync_start = 2;
+    sync_attr.hsync_stop = 5;
 
-        sync_attr.hsync1_start = 1;
-        sync_attr.hsync1_stop = 2;
-        sync_attr.hsync2_start = 1;
-        sync_attr.hsync2_stop = 2;
+    sync_attr.hsync1_start = 2;
+    sync_attr.hsync1_stop = 5;
+    sync_attr.hsync2_start = 2;
+    sync_attr.hsync2_stop = 5;
 
-        sync_attr.vsync1_start = 1;
-        sync_attr.vsync1_stop = 1;
-        sync_attr.vsync2_start = 1;
-        sync_attr.vsync2_stop = 1;
-    } else {
-        rt_kprintf("Unsupported connector type %d \n", type);
-    }
+    sync_attr.vsync1_start = 0;
+    sync_attr.vsync1_stop = 0;
+    sync_attr.vsync2_start = 0;
+    sync_attr.vsync2_stop = 0;
 
     connector_set_vo_init();
     connector_set_vtth_intr(1, intr_line);
@@ -613,8 +602,6 @@ k_s32 lt9611_init(void *ctx, k_connector_info *info)
     ret |= lt9611_init_system(lt9611_dev);
     ret |= lt9611_mipi_input_analog(lt9611_dev);
     ret |= lt9611_mipi_input_digital(lt9611_dev);
-    rt_thread_mdelay(100);
-    ret |= lt9611_read_video(lt9611_dev);
     ret |= lt9611_setup_pll(lt9611_dev, pclk);
     ret |= lt9611_setup_pcr(lt9611_dev);
     ret |= lt9611_setup_timing(lt9611_dev, &info->resolution);
@@ -622,12 +609,14 @@ k_s32 lt9611_init(void *ctx, k_connector_info *info)
     ret |= lt9611_hdmi_tx_phy(lt9611_dev);
     ret |= lt9611_irq_init(lt9611_dev);
     ret |= lt9611_enable_hpd_interrupts(lt9611_dev);
-    rt_thread_mdelay(50);
     ret |= lt9611_enable_hdmi_out(lt9611_dev);
-
+    if(info->pixclk_div != 0)
+        connector_set_pixclk(info->pixclk_div);
     ret |= k230_vo_resolution_init(info->type, &info->resolution, info->bg_color, info->intr_line);
     ret |= k230_set_phy_freq(&info->phy_attr);
     ret |= k230_dsi_resolution_init(info);
+    rt_thread_mdelay(50);
+    ret |= lt9611_read_video(lt9611_dev);
 
     return ret;
 }
@@ -644,7 +633,7 @@ static k_s32 lt9611_get_chip_id(void* ctx, k_u32* chip_id)
     ret |= lt9611_read_reg(&lt9611_dev->i2c_info, 0x01, &id_mid);
 
     chip_id = (id_high << 8) | id_mid;
-    //rt_kprintf("lt9611 chip_id %02x\n", chip_id);
+    LOG_D("lt9611 chip_id %02x\n", chip_id);
 
     return ret;
 }
@@ -664,7 +653,7 @@ static k_s32 lt9611_read_edid(struct lt9611_dev *lt9611_dev, k_u8 *edid_data, k_
     ret |= lt9611_read_reg(&lt9611_dev->i2c_info, 0x5e, &hpd_state);
     conn = !!(hpd_state & 0x04);
     if (conn == 0) {
-        rt_kprintf("HDMI monitor disconnected \n");
+        LOG_W("HDMI monitor disconnected \n");
         return 0;
     }
 
@@ -684,17 +673,16 @@ static k_s32 lt9611_read_edid(struct lt9611_dev *lt9611_dev, k_u8 *edid_data, k_
 
         ret |= lt9611_read_reg(&lt9611_dev->i2c_info, 0x40, &ddc_state);
         if (ddc_state & 0x02) {
-            //rt_kprintf("DDC answer success \n");
             for (j = 0; j < EDID_BLOCK_SIZE; j++) {
                 ret |= lt9611_read_reg(&lt9611_dev->i2c_info, 0x83, &reg_val);
                 edid_data[i * EDID_BLOCK_SIZE + j] = reg_val;
             }
         } else if (ddc_state & 0x50) {
-            rt_kprintf("HDMI read EDID failed: DDC no ack \n");
+            LOG_W("HDMI read EDID failed: DDC no ack \n");
             lt9611_write_reg(&lt9611_dev->i2c_info, 0x07, 0x1f);
             return -1;
         } else {
-            rt_kprintf("HDMI read EDID failed \n");
+            LOG_W("HDMI read EDID failed \n");
             lt9611_write_reg(&lt9611_dev->i2c_info, 0x07, 0x1f);
             return -1;
         }
@@ -803,7 +791,6 @@ static k_s32 lt9611_conn_check(void* ctx, k_s32* conn)
     ret |= lt9611_read_reg(&lt9611_dev->i2c_info, 0x5e, &hpd_state);
 
     *conn = !!(hpd_state & 0x04);
-    //rt_kprintf("lt9611 hpd_state %02x\n", (hpd_state & 0x04));
 
     return ret;
 }
@@ -818,4 +805,3 @@ struct connector_driver_dev lt9611_connector_drv = {
         .connector_conn_check = lt9611_conn_check,
     },
 };
-

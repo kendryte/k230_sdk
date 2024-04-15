@@ -156,7 +156,7 @@ static unsigned int __dw_i2c_set_bus_speed(struct i2c_regs *i2c_base,
     switch (i2c_spd)
     {
     case IC_SPEED_MODE_MAX:
-        cntl |= IC_CON_SPD_SS;
+        cntl |= IC_CON_SPD_HS;
         if (scl_sda_cfg)
         {
             hcnt = scl_sda_cfg->fs_hcnt;

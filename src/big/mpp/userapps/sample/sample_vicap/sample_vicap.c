@@ -521,6 +521,8 @@ int main(int argc, char *argv[])
                 connector_type = LT9611_MIPI_4LAN_1920X1080_60FPS;
             } else if (conn == 2) {
                 connector_type = LT9611_MIPI_4LAN_1920X1080_30FPS;
+            }else if (conn == 3) {
+                connector_type = ST7701_V1_MIPI_2LAN_480X800_30FPS;
             } else {
                 printf("unsupport connector deivce.\n");
                 return -1;
@@ -875,6 +877,48 @@ chn_parse:
                         case 27:
                         {
                             device_obj[cur_dev].sensor_type = OV_OV5647_MIPI_CSI2_1920X1080_30FPS_10BIT_LINEAR;
+                            // kd_mpi_vicap_set_mclk(VICAP_MCLK0, VICAP_PLL0_CLK_DIV4, 16, 1);
+                            break;
+                        }
+                        case 28:
+                        {
+                            device_obj[cur_dev].sensor_type = OV_OV9286_MIPI_1280X720_30FPS_10BIT_MCLK_25M_LINEAR_SPECKLE_V2;
+                            // kd_mpi_vicap_set_mclk(VICAP_MCLK0, VICAP_PLL0_CLK_DIV4, 16, 1);
+                            break;
+                        }
+                        case 29:
+                        {
+                            device_obj[cur_dev].sensor_type = OV_OV9286_MIPI_1280X720_30FPS_10BIT_MCLK_25M_LINEAR_IR_V2;
+                            // kd_mpi_vicap_set_mclk(VICAP_MCLK0, VICAP_PLL0_CLK_DIV4, 16, 1);
+                            break;
+                        }
+                        case 30:
+                        {
+                            device_obj[cur_dev].sensor_type = OV_OV9732_MIPI_1280X720_30FPS_10BIT_MCLK_16M_LINEAR_V2;
+                            // kd_mpi_vicap_set_mclk(VICAP_MCLK0, VICAP_PLL0_CLK_DIV4, 16, 1);
+                            break;
+                        }
+                        case 31:
+                        {
+                            device_obj[cur_dev].sensor_type = OV_OV5647_MIPI_CSI0_1920X1080_30FPS_10BIT_LINEAR_V2;
+                            // kd_mpi_vicap_set_mclk(VICAP_MCLK0, VICAP_PLL0_CLK_DIV4, 16, 1);
+                            break;
+                        }
+                        case 32:
+                        {
+                            device_obj[cur_dev].sensor_type = OV_OV5647_MIPI_CSI1_1920X1080_30FPS_10BIT_LINEAR_V2;
+                            // kd_mpi_vicap_set_mclk(VICAP_MCLK0, VICAP_PLL0_CLK_DIV4, 16, 1);
+                            break;
+                        }
+                        case 33:
+                        {
+                            device_obj[cur_dev].sensor_type =  OV_OV5647_MIPI_CSI2_1920X1080_30FPS_10BIT_LINEAR_V2;
+                            // kd_mpi_vicap_set_mclk(VICAP_MCLK0, VICAP_PLL0_CLK_DIV4, 16, 1);
+                            break;
+                        }
+                        case 34:
+                        {
+                            device_obj[cur_dev].sensor_type =  GC2053_MIPI_CSI0_1920X1080_30FPS_10BIT_LINEAR;
                             // kd_mpi_vicap_set_mclk(VICAP_MCLK0, VICAP_PLL0_CLK_DIV4, 16, 1);
                             break;
                         }

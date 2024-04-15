@@ -77,7 +77,7 @@ else  ifeq  ($(CONFIG_SUPPORT_RTSMART),y)
 all .DEFAULT: check_src prepare_memory  mpp  rt-smart-apps rt-smart-kernel big-core-opensbi   uboot build-image
 else  ifeq  ($(CONFIG_SUPPORT_LINUX),y)
 all .DEFAULT: check_src prepare_memory linux   little-core-opensbi buildroot uboot build-image
-endif 
+endif
 
 ifeq ($(NATIVE_BUILD),1)
 .PHONY: download_toolchain
@@ -112,8 +112,8 @@ prepare_sourcecode:prepare_toolchain
 #ai
 	@echo "download nncase sdk"
 	@rm -rf src/big/utils/; rm -rf src/big/ai;
-	@wget -q --show-progress $(DOWNLOAD_URL)/downloads/kmodel/kmodel_v2.8.0.tgz -O - | tar -xzC src/big/
-	@wget -q --show-progress $(DOWNLOAD_URL)/downloads/nncase/nncase_k230_v2.8.0.tgz -O - | tar -xzC src/big/
+	@wget -q --show-progress $(DOWNLOAD_URL)/downloads/kmodel/kmodel_v2.8.1.tgz -O - | tar -xzC src/big/
+	@wget -q --show-progress $(DOWNLOAD_URL)/downloads/nncase/nncase_k230_v2.8.1.tgz -O - | tar -xzC src/big/
 
 #big utils
 	@echo "download big utils"
@@ -142,7 +142,7 @@ prepare_sourcecode:prepare_toolchain
 #dictionary_pen
 	@if  [ "k230_evb_usiplpddr4_dictionary_pen_defconfig" == "$${CONF}" ] ; then \
 		echo "download dictionary_pen" ;  \
-		wget -q --show-progress $(DOWNLOAD_URL)/downloads/dictionary_pen/cidianbi_kmodel_v2.8.0.tar.gz -O - | tar -xzC src/reference/business_poc/dictionary_pen_poc/ ;  \
+		wget -q --show-progress $(DOWNLOAD_URL)/downloads/dictionary_pen/cidianbi_kmodel_v2.8.1.tar.gz -O - | tar -xzC src/reference/business_poc/dictionary_pen_poc/ ;  \
 		cp src/reference/business_poc/dictionary_pen_poc/cidianbi_kmodel/include src/reference/business_poc/dictionary_pen_poc/ -rf ; \
 	fi;
 
@@ -239,6 +239,22 @@ mpp: mpp-kernel mpp-apps
 .PHONY: mpp-clean
 mpp-clean: mpp-kernel-clean mpp-apps-clean
 
+.PHONY: mpp-middleware
+mpp-middleware:
+	@export PATH=$(RTT_EXEC_PATH):$(PATH); \
+	export RTSMART_SRC_DIR=$(K230_SDK_ROOT)/$(RT-SMART_SRC_PATH); \
+	cd $(MPP_SRC_DIR); \
+	make -C middleware || exit $?; \
+	cd -;
+
+.PHONY: mpp-middleware-clean
+mpp-middleware-clean:
+	@export PATH=$(RTT_EXEC_PATH):$(PATH); \
+	export RTSMART_SRC_DIR=$(K230_SDK_ROOT)/$(RT-SMART_SRC_PATH); \
+	cd $(MPP_SRC_DIR); \
+	make clean -C middleware; \
+	cd -;
+
 .PHONY: poc
 poc:check_src
 	@export PATH=$(RTT_EXEC_PATH):$(PATH); \
@@ -247,7 +263,7 @@ poc:check_src
 	mkdir -p build; cd build; cmake ../; \
 	make && make install; rm ./* -rf; \
 	cd -;
-	
+
 	@export PATH=$(RTT_EXEC_PATH):$(PATH); \
 	export RTSMART_SRC_DIR=$(K230_SDK_ROOT)/$(RT-SMART_SRC_PATH); \
 	cd $(K230_SDK_ROOT)/src/reference/business_poc/doorlock_ov9286/big; \
@@ -255,7 +271,7 @@ poc:check_src
 	make && make install; rm ./* -rf; \
 	cd -;
 
-.PHONY: peephole	
+.PHONY: peephole
 peephole:check_src
 	@export PATH=$(RTT_EXEC_PATH):$(PATH); \
 	export RTSMART_SRC_DIR=$(K230_SDK_ROOT)/$(RT-SMART_SRC_PATH); \
@@ -264,7 +280,7 @@ peephole:check_src
 	make && make install; rm ./* -rf; \
 	cd -;
 
-.PHONY: dictionary_pen	
+.PHONY: dictionary_pen
 dictionary_pen:check_src
 	@export PATH=$(RTT_EXEC_PATH):$(PATH); \
 	export RTSMART_SRC_DIR=$(K230_SDK_ROOT)/$(RT-SMART_SRC_PATH); \
@@ -374,6 +390,7 @@ linux-menuconfig:
 linux-savedefconfig:
 	cd $(LINUX_SRC_PATH); \
 	make O=$(LINUX_BUILD_DIR) CROSS_COMPILE=$(LINUX_EXEC_PATH)/$(LINUX_CC_PREFIX) ARCH=riscv savedefconfig; \
+	cp $(LINUX_BUILD_DIR)/defconfig  arch/riscv/configs/$(LINUX_KERNEL_DEFCONFIG);\
 	cd -
 
 .PHONY: linux
@@ -397,7 +414,7 @@ big-core-opensbi: rt-smart-kernel
 	export PLATFORM=kendryte/fpgac908; \
 	make FW_FDT_PATH=hw.dtb FW_PAYLOAD_PATH=rtthread.bin O=$(BIG_OPENSBI_BUILD_DIR) OPENSBI_QUIET=1 || exit $?; \
 	cd -
-rtt_update_romfs: 
+rtt_update_romfs:
 	@export RTT_CC=$(RTT_CC); \
 	export RTT_CC_PREFIX=$(RTT_CC_PREFIX); \
 	export RTT_EXEC_PATH=$(RTT_EXEC_PATH); \
@@ -414,7 +431,7 @@ rtt_update_romfs:
 	export PLATFORM=kendryte/fpgac908; \
 	$(MAKE) FW_FDT_PATH=hw.dtb FW_PAYLOAD_PATH=rtthread.bin O=$(BIG_OPENSBI_BUILD_DIR) OPENSBI_QUIET=1 || exit $?; \
 	cd -
-	
+
 .PHONY: big-core-opensbi-clean
 big-core-opensbi-clean:
 	rm -rf $(BIG_OPENSBI_BUILD_DIR); \

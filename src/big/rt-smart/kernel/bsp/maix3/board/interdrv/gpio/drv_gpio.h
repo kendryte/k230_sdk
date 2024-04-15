@@ -25,7 +25,7 @@
 
 #ifndef DRV_GPIO_H__
 #define DRV_GPIO_H__
-#define GPIO_MAX_NUM                64
+#define GPIO_MAX_NUM                (64+8)
 #define IRQN_GPIO0_INTERRUPT      32
 
 /* k230 gpio register table */
@@ -43,6 +43,10 @@
 #define DATA_INPUT          0x50
 #define VER_ID_CODE         0x64
 #define INT_BOTHEDGE        0x68
+
+#define DATA_INPUT_STRIDE	0x04 /* register stride 32 bits */
+#define DATA_OUTPUT_STRIDE	0x0c /* register stride 3*32 bits */
+#define DIRECTION_STRIDE	0x0c /* register stride 3*32 bits */
 
 #define KD_GPIO_HIGH                1
 #define KD_GPIO_LOW                 0

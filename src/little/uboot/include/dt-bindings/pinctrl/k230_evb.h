@@ -112,4 +112,16 @@
 #define IO62  (62*4)
 #define IO63  (63*4)
 
+#define IO64  (0*4)
+#define IO65  (1*4)
+#define IO66  (2*4)
+#define IO67  (3*4)
+#define IO68  (4*4)
+#define IO69  (5*4)
+#define IO70  (6*4)
+#define IO71  (7*4)
+
+#define PMU_IOSEL_INT   0x2
+#define PMU_IOSEL_GPIO  0x1
+
 #endif /* DT_K230_EVB_H */

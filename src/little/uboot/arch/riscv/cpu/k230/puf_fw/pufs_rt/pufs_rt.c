@@ -190,6 +190,16 @@ void rt_write_pdstb(bool off)
 {
     pufs_ptm_cfg_set(PTM_CFG_REG_PDSTB_MASK, off, (off ? true : false));
 }
+
+// Program protect为了保证已经烧录为1的cell不会再烧一次。
+// Program ignore为了保证跳过为0的cell，减少电路stress。
+// 不知道为什么ip厂商不把这两个功能配置为默认使能
+// 在进行编程之前务必确认已启用program protect (done at factory) 以及启用program ignore(enable config reg)
+void puf_pgm_ign_ctrl(bool on)
+{
+    pufs_ptm_cfg_set(PTM_CFG_REG_PGM_IGN_MASK, on);
+}
+//puf_pgm_ign_ctrl(true) to enable PGM_IGN
 /**
  * @brief Read mode control
  *
@@ -312,7 +322,7 @@ pufs_status_t pufs_program_otp(const uint8_t* inbuf, uint32_t len,
 
     if ((check = otp_range_check(addr, len)) != SUCCESS)
         return check;
-
+    puf_pgm_ign_ctrl(true);
     // program
     for (uint32_t i=0;i<len;i+=4)
     {
@@ -322,7 +332,11 @@ pufs_status_t pufs_program_otp(const uint8_t* inbuf, uint32_t len,
         } otp_word;
         for (int8_t j=3;j>=0;j--) // reserve, default 0xff
             otp_word.byte[j] = ((i+3-j) < len) ? inbuf[i+3-j] : 0xff;
-
+            
+        if(otp_word.word == 0x0) continue;
+        if(rt_regs->otp[start_index + (i/4)] == otp_word.word) continue;
+        
+        // printf("[%d]:0x%x \n", start_index + (i/4), otp_word.word);
         rt_regs->otp[start_index + (i/4)] = otp_word.word;
     }
 

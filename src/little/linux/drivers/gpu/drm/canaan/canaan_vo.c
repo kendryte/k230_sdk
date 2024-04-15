@@ -81,12 +81,12 @@ static void canaan_vo_update_video(struct canaan_vo *vo, struct canaan_plane *ca
     writel(reg_val, vo->reg_base + plane_offset + VO_LAYER2_3_ACT_SIZE_REG_OFFSET);
 
     offset_w = plane_state->crtc_x;
-    start_w = adj_mode->crtc_htotal - adj_mode->crtc_hsync_start + 5 + 1;
+    start_w = readl(vo->reg_base + VO_DISP_XZONE_CTL) & 0x1fff;
     reg_val = ((start_w + offset_w + actual_w -1) << 16) + (start_w + offset_w);
     writel(reg_val, vo->reg_base + xctl_reg_offset);
 
     offset_h = plane_state->crtc_y;
-    start_h = adj_mode->crtc_vtotal - adj_mode->crtc_vsync_end + 1;
+    start_h = readl(vo->reg_base + VO_DISP_YZONE_CTL) & 0x1fff;
     reg_val = ((start_h + offset_h + actual_h -1) << 16) + (start_h + offset_h);
     writel(reg_val, vo->reg_base + yctl_reg_offset);
 
@@ -162,12 +162,12 @@ static void canaan_vo_update_osd(struct canaan_vo *vo, struct canaan_plane *cana
     writel(reg_val, vo->reg_base + plane_offset + VO_OSD0_7_SIZE_REG_OFFSET);
 
     offset_w = plane_state->crtc_x;
-    start_w = adj_mode->crtc_htotal - adj_mode->crtc_hsync_start + 5 + 1;
+    start_w = readl(vo->reg_base + VO_DISP_XZONE_CTL) & 0x1fff;
     reg_val = ((start_w + offset_w + actual_w -1) << 16) + (start_w + offset_w);
     writel(reg_val, vo->reg_base + xctl_reg_offset);
 
     offset_h = plane_state->crtc_y;
-    start_h = adj_mode->crtc_vtotal - adj_mode->crtc_vsync_end + 1;
+    start_h = readl(vo->reg_base + VO_DISP_YZONE_CTL) & 0x1fff;
     reg_val = ((start_h + offset_h + actual_h -1) << 16) + (start_h + offset_h);
     writel(reg_val, vo->reg_base + yctl_reg_offset);
 

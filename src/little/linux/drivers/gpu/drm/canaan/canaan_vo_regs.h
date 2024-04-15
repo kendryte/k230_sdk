@@ -46,6 +46,8 @@
 #define VO_DISP_CTL                                 0x114
 #define VO_DISP_ENABLE                              0x118
 
+#define VO_DISP_XZONE_CTL                           0x0C0
+#define VO_DISP_YZONE_CTL                           0x0C4
 #define VO_DISP_LAYER0_XCTL                         0x0C8
 #define VO_DISP_LAYER0_YCTL                         0x0CC
 #define VO_DISP_LAYER1_XCTL                         0x0D0

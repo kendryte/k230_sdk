@@ -49,6 +49,7 @@ struct ipcm_transfer_handle {
     ipcm_atomic_t max_send_len;
     ipcm_atomic_t max_recv_len;
     struct ipcm_lock lock;
+    struct ipcm_event connect_event;
 };
 
 struct mem_region {

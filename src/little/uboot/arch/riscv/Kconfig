@@ -33,21 +33,31 @@ config TARGET_OPENPITON_RISCV64
 
 config TARGET_K230_FPGA
 	bool "Support k230_fpga"
+	select SYS_CACHE_SHIFT_6
 
 config TARGET_K230_EVB
 	bool "Support k230_evb"
+	select SYS_CACHE_SHIFT_6
 
 config TARGET_K230_CANMV
 	bool "Support k230_CANMV(K230PI)"
+	select SYS_CACHE_SHIFT_6
 
+config TARGET_K230_CANMV_01STUDIO
+	bool "Support k230_CANMV(01STUDIO)"
+	select SYS_CACHE_SHIFT_6
+    
 config TARGET_K230D_CANMV
 	bool "Support k230D_CANMV(K230PI zero)"
+	select SYS_CACHE_SHIFT_6
 
 config TARGET_K230_UNSIPLP4
 	bool "Support usiplp4"
+	select SYS_CACHE_SHIFT_6
 
 config TARGET_K230_SIPLP4
 	bool "Support sip lp4"
+	select SYS_CACHE_SHIFT_6
 
 endchoice
 
@@ -86,6 +96,7 @@ source "board/sipeed/maix/Kconfig"
 source "board/canaan/k230_fpga/Kconfig"
 source "board/canaan/k230_evb/Kconfig"
 source "board/canaan/k230_canmv/Kconfig"
+source "board/canaan/k230_canmv_01studio/Kconfig"
 source "board/canaan/k230d_canmv/Kconfig"
 source "board/canaan/k230_unsiplp4/Kconfig"
 source "board/canaan/k230_siplp4/Kconfig"

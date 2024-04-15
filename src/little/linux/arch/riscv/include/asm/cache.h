@@ -10,6 +10,7 @@
 #define L1_CACHE_SHIFT		6
 
 #define L1_CACHE_BYTES		(1 << L1_CACHE_SHIFT)
+#define ARCH_DMA_MINALIGN	L1_CACHE_BYTES
 
 /*
  * RISC-V requires the stack pointer to be 16-byte aligned, so ensure that

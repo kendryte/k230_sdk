@@ -22,6 +22,7 @@
 // #include "k230_board_common.h"
 #include <env_internal.h>
 #include <linux/delay.h>
+#include <dm.h>
 
 sysctl_boot_mode_e sysctl_boot_get_boot_mode(void)
 {
@@ -31,18 +32,37 @@ sysctl_boot_mode_e sysctl_boot_get_boot_mode(void)
 #ifdef CONFIG_BOARD_LATE_INIT
 int board_late_init(void)
 {
-    u32 wifi_regon_gpio1_dir = readl((void*)(GPIO_BASE_ADDR0 + 0x4));
-    wifi_regon_gpio1_dir |= 1 << 1;
-    writel(wifi_regon_gpio1_dir, (void*)(GPIO_BASE_ADDR0 + 0x4));
+    ofnode node;
 
-    // reset gpio1 -> WIFI REGON
-    u32 wifi_regon_gpio1_data = readl((void*)(GPIO_BASE_ADDR0 + 0x0));
-    wifi_regon_gpio1_data &= ~(1 << 1);
-    writel(wifi_regon_gpio1_data, (void*)(GPIO_BASE_ADDR0 + 0x0));
-    mdelay(10);
-    // reset gpio1 -> WIFI REGON
-    wifi_regon_gpio1_data |= 1 << 1;
-    writel(wifi_regon_gpio1_data, (void*)(GPIO_BASE_ADDR0 + 0x0));
+	node = ofnode_by_compatible(ofnode_null(), "kendryte,k230_canmv_v2");
+	if (ofnode_valid(node)) {
+#define SDHCI_EMMC_BASE     0x91580000
+#define SDHCI_EMMC_CTRL_R   0x52C
+#define EMMC_RST_N_OE       3
+#define EMMC_RST_N          2
+        u32 wifi_regon_ctrl = readl((void*)(SDHCI_EMMC_BASE + SDHCI_EMMC_CTRL_R));
+        wifi_regon_ctrl |= (1<<EMMC_RST_N_OE);
+        wifi_regon_ctrl &= ~(1<<EMMC_RST_N);
+        mdelay(10);
+        wifi_regon_ctrl |= (1<<EMMC_RST_N);
+    }
+    
+    node = ofnode_by_compatible(ofnode_null(), "kendryte,k230_canmv");
+	if (ofnode_valid(node)) {
+        u32 wifi_regon_gpio1_dir = readl((void*)(GPIO_BASE_ADDR0 + 0x4));
+        wifi_regon_gpio1_dir |= 1 << 1;
+        writel(wifi_regon_gpio1_dir, (void*)(GPIO_BASE_ADDR0 + 0x4));
+
+        // reset gpio1 -> WIFI REGON
+        u32 wifi_regon_gpio1_data = readl((void*)(GPIO_BASE_ADDR0 + 0x0));
+        wifi_regon_gpio1_data &= ~(1 << 1);
+        writel(wifi_regon_gpio1_data, (void*)(GPIO_BASE_ADDR0 + 0x0));
+        mdelay(10);
+        // reset gpio1 -> WIFI REGON
+        wifi_regon_gpio1_data |= 1 << 1;
+        writel(wifi_regon_gpio1_data, (void*)(GPIO_BASE_ADDR0 + 0x0));
+    }
+
     return 0;
 }
 #endif

@@ -43,6 +43,7 @@
 		reg = <
 				0x0 0x8000000 0x0 0x7fff000  /*MEM_LINUX_SYS*/
 				0x0 0x200000 0x0 0x7dff000  /*MEM_RTT_SYS*/
+				0x0 0x10000000 0x0 0x10000000
 			  >;
 	};
 };
@@ -88,9 +89,9 @@
 
 		// JP1-PIN12 PWM2/3/4
 		(IO7 ) ( 1<<SEL | 0<<SL | BANK_VOLTAGE_IO2_IO13 <<MSC | 1<<IE | 1<<OE | 0<<PU | 0<<PD | 7<<DS | 1<<ST )
-		// JP1-PIN13 
+		// JP1-PIN13
 		(IO8 ) ( 1<<SEL | 0<<SL | BANK_VOLTAGE_IO2_IO13 <<MSC | 1<<IE | 1<<OE | 0<<PU | 0<<PD | 7<<DS | 1<<ST )
-		// JP1-PIN14 
+		// JP1-PIN14
 		(IO9 ) ( 1<<SEL | 0<<SL | BANK_VOLTAGE_IO2_IO13 <<MSC | 1<<IE | 1<<OE | 0<<PU | 0<<PD | 7<<DS | 1<<ST )
 
 		// JP1-PIN15 3D_CTRL
@@ -132,10 +133,10 @@
 		(IO30) ( 0<<SEL | 0<<SL | BANK_VOLTAGE_IO26_IO37<<MSC | 1<<IE | 1<<OE | 0<<PU | 0<<PD | 7<<DS | 1<<ST )
 		(IO31) ( 0<<SEL | 0<<SL | BANK_VOLTAGE_IO26_IO37<<MSC | 1<<IE | 1<<OE | 0<<PU | 0<<PD | 7<<DS | 1<<ST )
 
-		(IO32) ( 2<<SEL | 0<<SL | BANK_VOLTAGE_IO26_IO37<<MSC | 0<<IE | 1<<OE | 0<<PU | 0<<PD | 7<<DS | 1<<ST )
-		(IO33) ( 2<<SEL | 0<<SL | BANK_VOLTAGE_IO26_IO37<<MSC | 0<<IE | 1<<OE | 0<<PU | 0<<PD | 7<<DS | 1<<ST )
-		(IO34) ( 0<<SEL | 0<<SL | BANK_VOLTAGE_IO26_IO37<<MSC |	1<<IE | 0<<OE | 0<<PU | 1<<PD | 7<<DS | 0<<ST )
-		(IO35) ( 2<<SEL | 0<<SL | BANK_VOLTAGE_IO26_IO37<<MSC | 1<<IE | 1<<OE | 0<<PU | 0<<PD | 7<<DS | 1<<ST )
+		(IO32) ( 2<<SEL | 0<<SL | BANK_VOLTAGE_IO26_IO37<<MSC | 0<<IE | 1<<OE | 0<<PU | 0<<PD | 4<<DS | 0<<ST )
+		(IO33) ( 2<<SEL | 0<<SL | BANK_VOLTAGE_IO26_IO37<<MSC | 0<<IE | 1<<OE | 0<<PU | 0<<PD | 4<<DS | 0<<ST )
+		(IO34) ( 2<<SEL | 0<<SL | BANK_VOLTAGE_IO26_IO37<<MSC | 1<<IE | 0<<OE | 0<<PU | 0<<PD | 4<<DS | 0<<ST )
+		(IO35) ( 2<<SEL | 0<<SL | BANK_VOLTAGE_IO26_IO37<<MSC | 0<<IE | 1<<OE | 0<<PU | 0<<PD | 4<<DS | 0<<ST )
 		// BT_UART_RXD
 		(IO36) ( 0<<SEL | 0<<SL | BANK_VOLTAGE_IO26_IO37<<MSC | 1<<IE | 0<<OE | 0<<PU | 0<<PD | 7<<DS | 1<<ST )
 		// BT_UART_TXD

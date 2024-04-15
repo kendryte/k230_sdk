@@ -29,6 +29,8 @@
 #include "io.h"
 #include "drv_gpio.h"
 
+#include "k_board_config_comm.h"
+
 #define pr_info(...) //rt_kprintf(__VA_ARGS__)
 #define pr_debug(...) //rt_kprintf(__VA_ARGS__)
 #define pr_warn(...)    //rt_kprintf(__VA_ARGS__)
@@ -444,13 +446,45 @@ static k_sensor_mode ov9732_mode_info[] = {
             {K_FALSE},
         },
     },
+    {
+        .index = 2,
+        .sensor_type = OV_OV9732_MIPI_1280X720_30FPS_10BIT_MCLK_16M_LINEAR_V2,
+        .size = {
+            .bounds_width = 1280,
+            .bounds_height = 720,
+            .top = 0,
+            .left = 0,
+            .width = 1280,
+            .height = 720,
+        },
+        .fps = 30000,
+        .hdr_mode = SENSOR_MODE_LINEAR,
+        .bit_width = 10,
+        .bayer_pattern = BAYER_PAT_BGGR,
+        .mipi_info = {
+            .csi_id = 0,
+            .mipi_lanes = 1,
+            .data_type = 0x2B, //RAW10
+        },
+        .reg_list = ov9732_mipi2lane_720p_30fps_mclk_16m_linear,
+        .mclk_setting = {
+            {
+                .mclk_setting_en = K_TRUE,
+                .setting.id = SENSOR_MCLK1,
+                .setting.mclk_sel = SENSOR_PLL0_CLK_DIV4,
+                .setting.mclk_div = 25,
+            },
+            {K_FALSE},
+            {K_FALSE},
+        },
+    },
 };
 
 static k_sensor_mode *current_mode = NULL;
 
 static int ov9732_power_rest(k_s32 on)
 {
-    #define OV9732_RST_PIN      (28)
+    // #define OV9732_RST_PIN    (24)//  (28)
 
     // rst
     kd_pin_mode(OV9732_RST_PIN, GPIO_DM_OUTPUT);
@@ -544,6 +578,7 @@ static k_s32 ov9732_sensor_init(void *ctx, k_sensor_mode mode)
     switch (current_mode->index) {
     case 0:
     case 1:
+    case 2:
         ret = sensor_reg_list_write(&dev->i2c_info, current_mode->reg_list);
 
 ///////////////////

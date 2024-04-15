@@ -217,7 +217,7 @@ void FaceRecognition::draw_result(cv::Mat &src_img, Bbox &bbox, FaceRecognitionI
 		int w = bbox.w / isp_shape_.width * src_w;
 		int h = bbox.h / isp_shape_.height * src_h;
 		cv::rectangle(src_img, cv::Rect(x, y , w, h), cv::Scalar(255,255, 255, 255), 6, 2, 0);
-		#if defined(CONFIG_BOARD_K230_CANMV)
+		#if defined(CONFIG_BOARD_K230_CANMV) || defined(CONFIG_BOARD_K230_CANMV_V2)
 			cv::putText(src_img, text, {x, std::max(int(y - 10), 0)}, cv::FONT_HERSHEY_COMPLEX, 1.0, cv::Scalar(255, 255, 0, 255), 1, 8, 0);
 		#else
 			cv::putText(src_img, text, {x, std::max(int(y - 10), 0)}, cv::FONT_HERSHEY_COMPLEX, 2.0, cv::Scalar(255, 255, 0, 255), 2, 8, 0);

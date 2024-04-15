@@ -212,7 +212,9 @@
 			g-tx-fifo-size = <128 128 128 128 128 128>;
 			dr_mode = "otg";
 			otg-rev = <0x200>;
+#ifndef CONFIG_CMD_DFU
 			status = "disabled";
+#endif
 		};
 
 		usbotg1: usb-otg@91540000 {
@@ -231,6 +233,46 @@
 			pinctrl-single,register-width = <32>;
 			pinctrl-single,function-mask = <0xffffffff>;
 			u-boot,dm-pre-reloc;
+		};
+
+		pmu_iomux: pmu_iomux@91000080 {
+			compatible = "pinctrl-single";
+			reg = <0x0 0x91000080 0x0 0x20>;
+			#pinctrl-cells = <1>;
+			pinctrl-single,register-width = <32>;
+			pinctrl-single,function-mask = <0xffffffff>;
+			status = "disabled";
+			u-boot,dm-pre-reloc;
+            
+            pinctrl-names = "default";
+            pinctrl-0 = <&pmu_pins>;
+            pmu_pins: pmu_pins {
+                u-boot,dm-pre-reloc;
+                pinctrl-single,pins = <
+                (IO64) ( PMU_IOSEL_INT<<SEL | 0<<SL | 1<<IE | 0<<OE | 0<<PU | 1<<PD | 2<<DS | 0<<ST )
+                (IO65) ( PMU_IOSEL_INT<<SEL | 0<<SL | 1<<IE | 0<<OE | 0<<PU | 1<<PD | 2<<DS | 0<<ST )
+                (IO66) ( PMU_IOSEL_INT<<SEL | 0<<SL | 1<<IE | 0<<OE | 0<<PU | 1<<PD | 2<<DS | 0<<ST )
+                (IO67) ( PMU_IOSEL_INT<<SEL | 0<<SL | 1<<IE | 0<<OE | 0<<PU | 1<<PD | 2<<DS | 0<<ST )
+                (IO68) ( PMU_IOSEL_INT<<SEL | 0<<SL | 1<<IE | 0<<OE | 0<<PU | 1<<PD | 2<<DS | 0<<ST )
+                (IO69) ( PMU_IOSEL_INT<<SEL | 0<<SL | 1<<IE | 0<<OE | 0<<PU | 1<<PD | 2<<DS | 0<<ST )
+                (IO70) ( PMU_IOSEL_INT<<SEL | 0<<SL | 0<<IE | 1<<OE | 0<<PU | 0<<PD | 2<<DS | 0<<ST )
+                (IO71) ( PMU_IOSEL_INT<<SEL | 0<<SL | 0<<IE | 1<<OE | 0<<PU | 0<<PD | 2<<DS | 0<<ST )
+                >;
+            };
+		};
+
+        pwm0: pwm@9140a000 {
+			compatible = "kendryte,pwm";
+			reg = <0x0 0x9140a000 0x0 0x40>;
+			clocks = <&def_100mhz>;
+			status = "disabled";
+		};
+        
+		pwm1: pwm@9140a040 {
+			compatible = "kendryte,pwm";
+			reg = <0x0 0x9140a040 0x0 0x40>;
+			clocks = <&def_100mhz>;
+			status = "disabled";
 		};
 	};
 };

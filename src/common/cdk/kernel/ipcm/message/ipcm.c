@@ -193,6 +193,7 @@ void *ipcm_vdd_open(int target, int port, int priority)
 	}
 
 	handle = __ipcm_mem_alloc__(sizeof(struct ipcm_transfer_handle));
+	__memset__(handle, 0, sizeof(struct ipcm_transfer_handle));
 	if (!handle) {
 		ipcm_err("handle alloc failed!");
 		return NULL;
@@ -215,7 +216,7 @@ void *ipcm_vdd_open(int target, int port, int priority)
 	__ipcm_atomic_set__(&handle->recv_count, 0);
 	__ipcm_atomic_set__(&handle->max_send_len, 0);
 	__ipcm_atomic_set__(&handle->max_recv_len, 0);
-
+	__ipcm_event_init__(&handle->connect_event);
 	g_ipcm_nodes[target].handlers[port] = handle;
 
 	return handle;
@@ -237,6 +238,8 @@ void ipcm_vdd_close(void *data)
 			return;
 		}
 		ipcm_trace(TRACE_DEV, "target [%d:%d]", target, port);
+		__ipcm_event_free__(&handle->connect_event);
+		__ipcm_lock_free__(&handle->lock);
 		__ipcm_mem_free__(handle);
 		if (g_ipcm_nodes[target].handlers) {
 			g_ipcm_nodes[target].handlers[port] = NULL;
@@ -374,7 +377,7 @@ int ipcm_vdd_connect(void *data, int is_block)
 	__ipcm_lock__(&handle->lock);
 
 	if (__HANDLE_CONNECTED == handle->state) {
-		ipcm_trace(TRACE_MSG, "handle is connected");
+		ipcm_err(TRACE_MSG, "handle is connected");
 		__ipcm_unlock__(&handle->lock);
 		__ipcm_irq_restore__(irq_save);
 		return 0;
@@ -416,18 +419,19 @@ int ipcm_vdd_connect(void *data, int is_block)
 		return 1;
 
 #ifndef NO_MULTITASKS
+	if (__HANDLE_DISCONNECTED == handle->state) {
+		ipcm_err("handle is disconnected\n");
+		return -1;
+	}
+
+	if(__HANDLE_CONNECTED == handle->state) {
+		ipcm_info("handle is CONNECTED \n");
+		return 0;
+	}
+
 	/* wait until the handle is connected */
-	do {
-		if (__HANDLE_DISCONNECTED == handle->state) {
-			ret = -1;
-			break;
-		}
+	__ipcm_wait_event__(&handle->connect_event);
 
-		if (__HANDLE_CONNECTED == handle->state)
-			break;
-
-		__ipcm_msleep__(1);
-	} while(1);
 #else
 	return 1;
 #endif

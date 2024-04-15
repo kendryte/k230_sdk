@@ -66,8 +66,8 @@ pthread_t dpu_startup_tid;
 #define MAX_DEV_CNT 2
 
 #define VICAP_OUTPUT_BUF_NUM 15
-#define VICAP_INPUT_BUF_NUM 6
-#define DPU_BUF_NUM    6
+#define VICAP_INPUT_BUF_NUM 4
+#define DPU_BUF_NUM    10
 #define DMA_BUF_NUM    3
 
 #define VICAP_WIDTH     1280
@@ -102,8 +102,8 @@ static k_s32 g_mmap_fd_tmp = 0;
 static k_vb_blk_handle ir_handle;
 static k_u64 ir_phys_addr;
 static k_u8 *ir_virt_addr;
-static k_u32 vicap_width;
-static k_u32 vicap_height;
+static k_u32 vicap_width = VICAP_WIDTH;
+static k_u32 vicap_height = VICAP_HEIGHT;
 static k_u32 ir_buf_size;
 
 extern char g_out_path[];
@@ -206,6 +206,7 @@ typedef enum
 
 static unsigned long long g_sync_clock_server_timestamp = 0;
 static unsigned long long g_sync_clock_client_timestamp = 0;
+static unsigned long long g_rev_first_frame_systime = 0;
 static FRAME_SYNC_CLOCK_INFO g_frame_sync_clock_info[em_sync_clock_max];
 
 typedef struct {
@@ -285,7 +286,11 @@ static unsigned long long  _do_sync_frame_timestamp(SYNC_CLOCK_FRAME_TYPE frame_
         if(1)
         {
             //以k230时钟计算，从同步时间戳时刻算起，到当前共运行时间微妙
-            unsigned long long take_time_from_sync = get_system_time_microsecond()-g_sync_clock_client_timestamp;
+            if (g_rev_first_frame_systime == 0)
+            {
+                g_rev_first_frame_systime = get_system_time_microsecond();
+            }
+            unsigned long long take_time_from_sync = /*get_system_time_microsecond()*/g_rev_first_frame_systime-g_sync_clock_client_timestamp;
             //printf("=========take sync time:%llu\n",take_time_from_sync);
 
             g_frame_sync_clock_info[frame_type].start_server_timestamp = g_sync_clock_server_timestamp +  take_time_from_sync;
@@ -305,6 +310,7 @@ int do_dpu_ctrol_cmd(UVC_TRANSFER_CONTROL_CMD cmd_ctrl)
 {
     if(cmd_ctrl.type == em_uvc_transfer_control_sync_clock)
     {
+        g_rev_first_frame_systime = 0;
         g_sync_clock_client_timestamp = get_system_time_microsecond();
         g_sync_clock_server_timestamp = cmd_ctrl.ctrl_info.sync_clock;
         printf("recv pc sync clock %llu,cur clock:%llu,differ(%lld)\n",g_sync_clock_server_timestamp,g_sync_clock_client_timestamp,g_sync_clock_server_timestamp-g_sync_clock_client_timestamp);
@@ -458,20 +464,20 @@ static k_s32 sample_dpu_vicap_vb_init(vicap_device_obj *dev_obj)
 
     /* dma vb init */
     config->comm_pool[k].blk_cnt = DMA_BUF_NUM;
-    config->comm_pool[k].blk_size = VICAP_WIDTH * VICAP_HEIGHT;
+    config->comm_pool[k].blk_size = VICAP_ALIGN_UP((vicap_width * vicap_height * 3 / 2), 0x1000);
     config->comm_pool[k].mode = VB_REMAP_MODE_NOCACHE;
 
     config->comm_pool[k+1].blk_cnt = DMA_BUF_NUM;
-    config->comm_pool[k+1].blk_size = VICAP_WIDTH * VICAP_HEIGHT * 3;
+    config->comm_pool[k+1].blk_size = VICAP_ALIGN_UP((vicap_width * vicap_height * 3 / 2), 0x1000);
     config->comm_pool[k+1].mode = VB_REMAP_MODE_NOCACHE;
 
     /* dpu vb init */
     config->comm_pool[k+2].blk_cnt = DPU_BUF_NUM;
-    config->comm_pool[k+2].blk_size = 5 * 1024 * 1024;
+    config->comm_pool[k+2].blk_size = 3 * 1024 * 1024;
     config->comm_pool[k+2].mode = VB_REMAP_MODE_NOCACHE;
 
     //ir
-    ir_buf_size = ((vicap_width * vicap_height *3/2 + 0x3ff) & ~0x3ff);
+    ir_buf_size =  VICAP_ALIGN_UP((vicap_width * vicap_height * 3 / 2), 0x1000);
     config->comm_pool[k+3].blk_cnt = 1;
     config->comm_pool[k+3].blk_size = ir_buf_size;
     config->comm_pool[k+3].mode = VB_REMAP_MODE_NOCACHE;
@@ -529,6 +535,11 @@ static k_s32 sample_dpu_get_sensor_info(vicap_device_obj *dev_obj)
         memset(&dev_attr_info, 0, sizeof(k_vicap_dev_set_info));
         dev_attr_info.dw_en = dev_obj[dev_num].dw_enable;
         dev_attr_info.pipe_ctrl.data = 0xFFFFFFFF;
+        dev_attr_info.pipe_ctrl.bits.af_enable = 0;
+        dev_attr_info.pipe_ctrl.bits.ae_enable = K_TRUE;
+        dev_attr_info.pipe_ctrl.bits.awb_enable = K_TRUE;
+        dev_attr_info.pipe_ctrl.bits.dnr3_enable = K_FALSE;
+        dev_attr_info.pipe_ctrl.bits.ahdr_enable = K_FALSE;
         dev_attr_info.sensor_type = dev_obj[dev_num].sensor_type;
         dev_attr_info.vicap_dev = (k_vicap_dev)dev_num;
         dev_attr_info.mode = dev_obj[dev_num].mode;
@@ -694,7 +705,7 @@ static k_s32 sample_dpu_vicap_init(vicap_device_obj *dev_obj)
             chn_attr_info.crop_v_start = 0;
             chn_attr_info.out_height = VICAP_HEIGHT;
             chn_attr_info.out_width = VICAP_WIDTH;
-            chn_attr_info.buffer_num = 6;
+            chn_attr_info.buffer_num = VICAP_OUTPUT_BUF_NUM;
             chn_attr_info.pixel_format = dev_obj[dev_num].out_format[chn_num];
             chn_attr_info.vicap_dev = dev_obj[dev_num].dev_num;
             chn_attr_info.vicap_chn = (k_vicap_chn)dev_obj[dev_num].chn_num[chn_num];
@@ -1055,9 +1066,6 @@ static k_s32 parse_pramas(vicap_init_info_t *init, vicap_device_obj *device_obj)
         device_obj[i].mode = VICAP_WORK_OFFLINE_MODE;
         device_obj[i].dev_num = i;
         device_obj[i].dev_enable = K_TRUE;
-        device_obj[i].ae_enable = K_TRUE;//default enable ae
-        device_obj[i].awb_enable = K_TRUE;//default enable awb
-        device_obj[i].dnr3_enable = K_FALSE;//default disable 3ndr
 
         device_obj[i].sensor_type = init->sensor_type[i];//OV_OV9732_MIPI_1280X720_30FPS_10BIT_LINEAR;
 
@@ -1145,16 +1153,16 @@ static k_s32 sample_dpu_startup(void)
     g_dpu_info.ir_phys_addr = ir_phys_addr;
     g_dpu_info.dev_cnt = 2;
     g_dpu_info.rgb_dev = 0;
-    g_dpu_info.rgb_chn = 1;
+    g_dpu_info.rgb_chn = g_vicap_init.chn_num[0];
     g_dpu_info.speckle_dev = 1;
-    g_dpu_info.speckle_chn = 0;
+    g_dpu_info.speckle_chn = g_vicap_init.chn_num[1];
     g_dpu_info.dpu_bind = DPU_UNBIND;
     //g_dpu_info.width = VICAP_WIDTH;
     //g_dpu_info.height = VICAP_HEIGHT;
     g_dpu_info.width = g_grab_init_param.camera_width;
     g_dpu_info.height = g_grab_init_param.camera_height;
     g_dpu_info.dpu_buf_cnt = DPU_BUF_NUM;
-    g_dpu_info.dma_buf_cnt = DPU_BUF_NUM;
+    g_dpu_info.dma_buf_cnt = DMA_BUF_NUM;
     /*g_dpu_info.adc_en = K_TRUE;
     g_dpu_info.temperature.ref = 36.289;
     g_dpu_info.temperature.cx = 640;

@@ -217,7 +217,7 @@ void vo_layer_init(k_u32 width,k_u32 height)
 
     memset(&info, 0, sizeof(info));
     // config layer
-    if (width > 1080 && g_connector_type == HX8377_V2_MIPI_4LAN_1080X1920_30FPS)
+    if (width > 1088 && g_connector_type == HX8377_V2_MIPI_4LAN_1080X1920_30FPS)
     {
         info.act_size.width = height;
         info.act_size.height = width;

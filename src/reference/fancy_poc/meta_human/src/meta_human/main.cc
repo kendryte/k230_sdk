@@ -35,6 +35,14 @@
 #include "vi_vo.h"
 #include "meta_human.h"
 
+#include <unistd.h>
+#include <stdio.h>
+#include <string.h>
+#include <pthread.h>
+#include "k_datafifo.h"
+
+#include <stdlib.h>
+#include <time.h>
 
 using std::cerr;
 using std::cout;
@@ -42,22 +50,96 @@ using std::endl;
 
 std::atomic<bool> isp_stop(false);
 
+#define READER_INDEX    0
+#define WRITER_INDEX    1
+
+static k_s32 g_s32Index = 0;
+static k_datafifo_handle hDataFifo[2] = {(k_datafifo_handle)K_DATAFIFO_INVALID_HANDLE, (k_datafifo_handle)K_DATAFIFO_INVALID_HANDLE};
+
+static void release(void* pStream)
+{
+}
+
+static int datafifo_init(k_s32 BLOCK_LEN)
+{
+    k_s32 s32Ret = K_SUCCESS;
+
+    k_datafifo_params_s writer_params = {10, BLOCK_LEN, K_TRUE, DATAFIFO_WRITER};
+
+    s32Ret = kd_datafifo_open(&hDataFifo[WRITER_INDEX], &writer_params);
+
+    if (K_SUCCESS != s32Ret)
+    {
+        printf("open datafifo error:%x\n", s32Ret);
+        return -1;
+    }
+
+    k_u64 phyAddr = 0;
+    s32Ret = kd_datafifo_cmd(hDataFifo[WRITER_INDEX], DATAFIFO_CMD_GET_PHY_ADDR, &phyAddr);
+
+    if (K_SUCCESS != s32Ret)
+    {
+        printf("get datafifo phy addr error:%x\n", s32Ret);
+        return -1;
+    }
+
+    printf("PhyAddr: %lx\n", phyAddr);
+
+    s32Ret = kd_datafifo_cmd(hDataFifo[WRITER_INDEX], DATAFIFO_CMD_SET_DATA_RELEASE_CALLBACK, (void *)release);
+
+    if (K_SUCCESS != s32Ret)
+    {
+        printf("set release func callback error:%x\n", s32Ret);
+        return -1;
+    }
+
+    printf("datafifo_init finish\n");
+
+    return 0;
+}
+
+void datafifo_deinit(void)
+{
+    k_s32 s32Ret = K_SUCCESS;
+    // call write NULL to flush and release stream buffer.
+    s32Ret = kd_datafifo_write(hDataFifo[WRITER_INDEX], NULL);
+    if (K_SUCCESS != s32Ret)
+    {
+        printf("write error:%x\n", s32Ret);
+    }
+    printf(" kd_datafifo_close %lx\n", hDataFifo[WRITER_INDEX]);
+    kd_datafifo_close(hDataFifo[WRITER_INDEX]);
+}
+
 void print_usage(const char *name)
 {
-    cout << "Usage: " << name << "<kmodel> <input_mode> <debug_mode> <num_storage>" << endl
+    cout << "Usage: " << name << "<kmodel> <input_size> <debug_mode> " << endl
          << "For example: " << endl
-         << " [for isp] ./meta_human.elf meta_human_256.kmodel None 0 30" << endl
+         << " [for isp] ./meta_human.elf meta_human_256.kmodel 256 0 " << endl
          << "Options:" << endl
          << " 1> kmodel          Meta_Human模型kmodel文件路径 \n"
-         << " 2> input_mode      本地图片(图片路径)/ 摄像头(None) \n"
-         << " 3> debug_mode      是否需要调试，0、1、2分别表示不调试、简单调试、详细调试\n"
-         << " 4> num_storage     每个文件夹（ping、pong）存储多少组bin文件\n"
+         << " 1> input_size      Meta_Human模型输入尺寸大小 \n"
+         << " 2> debug_mode      是否需要调试, 0、1、2分别表示不调试、简单调试、详细调试\n"
          << "\n"
          << endl;
 }
 
 void video_proc(char *argv[])
 {
+    //datafifo
+    k_char cmd[64];
+    k_s32 s32Ret = K_SUCCESS;
+    pthread_t sendThread;
+    pthread_t readThread;
+
+    int output_fms = atoi(argv[2])/8 ; 
+    k_s32 BLOCK_LEN = output_fms*output_fms*4*146;
+    s32Ret = datafifo_init(BLOCK_LEN);
+    if (0 != s32Ret)
+    {
+        return;
+    }
+
     vivcap_start();
 
     k_video_frame_info vf_info;
@@ -83,12 +165,29 @@ void video_proc(char *argv[])
     }
 
     Meta_Human mhuman(argv[1],  {SENSOR_CHANNEL, SENSOR_HEIGHT, SENSOR_WIDTH}, reinterpret_cast<uintptr_t>(vaddr), reinterpret_cast<uintptr_t>(paddr), atoi(argv[3]));
-    int idx = 0;
-    int num_storage = atoi(argv[4]);
 
+    vector<float> result;
     while (!isp_stop)
     {
-        ScopedTiming st("total time", atoi(argv[3]));
+        ScopedTiming st("total time", 1);
+
+        // datafifo
+        k_u32 availWriteLen = 0;
+
+        // call write NULL to flush
+        s32Ret = kd_datafifo_write(hDataFifo[WRITER_INDEX], NULL);
+        if (K_SUCCESS != s32Ret)
+        {
+            printf("write error:%x\n", s32Ret);
+        }
+
+        s32Ret = kd_datafifo_cmd(hDataFifo[WRITER_INDEX], DATAFIFO_CMD_GET_AVAIL_WRITE_LEN, &availWriteLen);
+        if (K_SUCCESS != s32Ret)
+        {
+            printf("get available write len error:%x\n", s32Ret);
+            break;
+        }
+
         {
             ScopedTiming st("read capture", atoi(argv[3]));
             // VICAP_CHN_ID_1 out rgb888p
@@ -108,21 +207,37 @@ void video_proc(char *argv[])
             kd_mpi_sys_munmap(vbvaddr, size);
         }
 
+        result.clear();
+
         mhuman.pre_process();
         mhuman.inference();
-        mhuman.post_process({SENSOR_WIDTH, SENSOR_HEIGHT},idx,num_storage);
+        mhuman.post_process(result);
 
-        idx++;
+        if (availWriteLen >= BLOCK_LEN)
+        {
+            ScopedTiming st("datafifo send ", atoi(argv[3]));
+            s32Ret = kd_datafifo_write(hDataFifo[WRITER_INDEX], (k_char*)result.data());
+            if (K_SUCCESS != s32Ret)
+            {
+                printf("write error:%x\n", s32Ret);
+                break;
+            }
 
-        if( idx == 2*num_storage )
-            idx = 0;
+            s32Ret = kd_datafifo_cmd(hDataFifo[WRITER_INDEX], DATAFIFO_CMD_WRITE_DONE, NULL);
+            if (K_SUCCESS != s32Ret)
+            {
+                printf("write done error:%x\n", s32Ret);
+                break;
+            }
+            g_s32Index++;
+        }
+        else
+        {
+            printf("no free space: %d\n", availWriteLen);
+        }
 
-        // cv::Mat osd_frame(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
         {
             ScopedTiming st("osd copy", atoi(argv[3]));
-            // memcpy(pic_vaddr, osd_frame.data, osd_width * osd_height * 4);
-            //显示通道插入帧
-            // kd_mpi_vo_chn_insert_frame(osd_id+3, &vf_info); 
 
             ret = kd_mpi_vicap_dump_release(vicap_dev, VICAP_CHN_ID_1, &dump_info);
             if (ret) {
@@ -141,39 +256,27 @@ void video_proc(char *argv[])
         std::cerr << "free failed: ret = " << ret << ", errno = " << strerror(errno) << std::endl;
         std::abort();
     }
+
+    datafifo_deinit();
 }
 
 int main(int argc, char *argv[])
 {
     std::cout << "case " << argv[0] << " built at " << __DATE__ << " " << __TIME__ << std::endl;
-    if (argc != 5)
+    if (argc != 4)
     {
         print_usage(argv[0]);
         return -1;
     }
 
-    if (strcmp(argv[2], "None") == 0)
+    std::thread thread_isp(video_proc, argv);
+    while (getchar() != 'q')
     {
-        std::thread thread_isp(video_proc, argv);
-        while (getchar() != 'q')
-        {
-            usleep(10000);
-        }
-
-        isp_stop = true;
-        thread_isp.join();
+        usleep(10000);
     }
-    else
-    {
-        cv::Mat ori_img = cv::imread(argv[2]);
-        int ori_w = ori_img.cols;
-        int ori_h = ori_img.rows;
 
-        Meta_Human mhuman(argv[1],atoi(argv[3]));
-        mhuman.pre_process(ori_img);
-        mhuman.inference();
-        mhuman.post_process({ori_w, ori_h},0,100);
-       
-    }
+    isp_stop = true;
+    thread_isp.join();
+
     return 0;
 }

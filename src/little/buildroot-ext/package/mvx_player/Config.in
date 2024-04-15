@@ -1,0 +1,5 @@
+
+config BR2_PACKAGE_MVX_PLAYER
+	bool "mvx player"
+	help
+	  k230 vpu demo

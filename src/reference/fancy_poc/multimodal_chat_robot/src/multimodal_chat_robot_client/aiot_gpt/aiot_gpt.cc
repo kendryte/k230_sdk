@@ -301,7 +301,7 @@ int main() {
             // 开启相应的线程函数
             std::cout << ANSI_COLOR_RED << "Image is updated." << ANSI_COLOR_RESET << std::endl;
             std::thread thread_isp(video_proc, image_file_path);
-			#if defined(CONFIG_BOARD_K230_CANMV)
+			#if defined(CONFIG_BOARD_K230_CANMV) || defined(CONFIG_BOARD_K230_CANMV_V2)
                 std::this_thread::sleep_for(std::chrono::seconds(30));
             #else
                 std::this_thread::sleep_for(std::chrono::seconds(10));

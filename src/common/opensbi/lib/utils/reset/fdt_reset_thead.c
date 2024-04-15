@@ -62,7 +62,7 @@ static int thead_reset_init(void *fdt, int nodeoff,
 	void *p;
 	const fdt64_t *val;
 	const fdt32_t *val_w;
-	int len, i, cnt;
+	int len, i, cnt=0;
 	u32 t, tmp = 0;
 
 	/* Prepare clone csrs */

@@ -1,0 +1,14 @@
+# RT-Thread building script for component
+
+from building import *
+
+cwd     = GetCurrentDir()
+src     = []
+CPPPATH = [cwd]
+
+if GetDepend(['RT_USING_FT5316']):
+    src += Glob('ft5316.c')
+
+group = DefineGroup('touch', src, depend = ['RT_USING_TOUCH'], CPPPATH = CPPPATH)
+
+Return('group')

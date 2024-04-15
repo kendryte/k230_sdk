@@ -62,12 +62,13 @@ Document version: V1.4 Release date: 2024-1-31
 ### 2. K230客户端
 
     cd /sharefs/meta_hand
-    #小核下执行（./connect.sh）
-    ./connect 192.168.1.2 8080 10000
     #大核下执行（./meta_hand_isp.sh）
-    ./meta_hand.elf hand_det.kmodel None 0.15 0.4 handkp_det.kmodel e3d.kmodel 10000 0
+    ./meta_hand.elf hand_det.kmodel 0.15 0.4 handkp_det.kmodel e3d.kmodel 0
+    #小核下执行（./connect.sh）
+    ./connect 192.168.1.2 8080 10000000
 
-**注意：** 使用./connect.sh命令时需要在connect.sh中配置相应的通讯端口及ip、buffer_size。buffer_size表示k230大核运行最多保存的bin文件个数。
+**注意：** 先启动大核命令，在大核命令启动后会打印大小核通信的地址。如下图。使用./connect.sh命令时需要在connect.sh中配置相应的通讯端口及ip,以及大小核通信地址。退出时，k230大核按'q'->'enter'退出，k230小核按'q'->'enter'退出，pc服务端直接关掉即可。
+![meta_hand](./resource/address.jpg)
 
 ## 结果展示
 ### 服务器端渲染效果

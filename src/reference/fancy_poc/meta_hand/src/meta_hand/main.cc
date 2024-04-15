@@ -33,26 +33,106 @@
 #include "hand_keypoint.h"
 #include "e3d.h"
 
+#include <unistd.h>
+#include <stdio.h>
+#include <string.h>
+#include <pthread.h>
+#include "k_datafifo.h"
+
+#include <stdlib.h>
+#include <time.h>
+
 std::atomic<bool> isp_stop(false);
+
+#define READER_INDEX    0
+#define WRITER_INDEX    1
+
+static k_s32 g_s32Index = 0;
+static k_datafifo_handle hDataFifo[2] = {(k_datafifo_handle)K_DATAFIFO_INVALID_HANDLE, (k_datafifo_handle)K_DATAFIFO_INVALID_HANDLE};
+static const k_s32 BLOCK_LEN = 252;  //输出内容大小
+
+static void release(void* pStream)
+{
+}
+
+static int datafifo_init()
+{
+    k_s32 s32Ret = K_SUCCESS;
+
+    k_datafifo_params_s writer_params = {10, BLOCK_LEN, K_TRUE, DATAFIFO_WRITER};
+
+    s32Ret = kd_datafifo_open(&hDataFifo[WRITER_INDEX], &writer_params);
+
+    if (K_SUCCESS != s32Ret)
+    {
+        printf("open datafifo error:%x\n", s32Ret);
+        return -1;
+    }
+
+    k_u64 phyAddr = 0;
+    s32Ret = kd_datafifo_cmd(hDataFifo[WRITER_INDEX], DATAFIFO_CMD_GET_PHY_ADDR, &phyAddr);
+
+    if (K_SUCCESS != s32Ret)
+    {
+        printf("get datafifo phy addr error:%x\n", s32Ret);
+        return -1;
+    }
+
+    printf("PhyAddr: %lx\n", phyAddr);
+
+    s32Ret = kd_datafifo_cmd(hDataFifo[WRITER_INDEX], DATAFIFO_CMD_SET_DATA_RELEASE_CALLBACK, (void *)release);
+
+    if (K_SUCCESS != s32Ret)
+    {
+        printf("set release func callback error:%x\n", s32Ret);
+        return -1;
+    }
+
+    printf("datafifo_init finish\n");
+
+    return 0;
+}
+
+void datafifo_deinit(void)
+{
+    k_s32 s32Ret = K_SUCCESS;
+    // call write NULL to flush and release stream buffer.
+    s32Ret = kd_datafifo_write(hDataFifo[WRITER_INDEX], NULL);
+    if (K_SUCCESS != s32Ret)
+    {
+        printf("write error:%x\n", s32Ret);
+    }
+    printf(" kd_datafifo_close %lx\n", hDataFifo[WRITER_INDEX]);
+    kd_datafifo_close(hDataFifo[WRITER_INDEX]);
+}
 
 void print_usage(const char *name)
 {
-	cout << "Usage: " << name << "<kmodel_det> <input_mode> <obj_thresh> <nms_thresh> <kmodel_kp> <kmodel_e3d> <buffer_size> <debug_mode>" << endl
+	cout << "Usage: " << name << "<kmodel_det> <obj_thresh> <nms_thresh> <kmodel_kp> <kmodel_e3d> <debug_mode>" << endl
 		 << "Options:" << endl
-		 << "  kmodel_det      手掌检测kmodel路径\n"
-		 << "  input_mode      本地图片(图片路径)/ 摄像头(None) \n"
-         << "  obj_thresh      手掌检测阈值\n"
-         << "  nms_thresh      手掌检测非极大值抑制阈值\n"
-		 << "  kmodel_kp       手势关键点检测kmodel路径\n"
-         << "  kmodel_e3d      e3d检测kmodel路径\n"
-         << "  buffer_size     ping pong buffer大小\n"
-		 << "  debug_mode      是否需要调试，0、1、2分别表示不调试、简单调试、详细调试\n"
+		 << " 1> kmodel_det      手掌检测kmodel路径\n"
+         << " 2> obj_thresh      手掌检测阈值\n"
+         << " 3> nms_thresh      手掌检测非极大值抑制阈值\n"
+		 << " 4> kmodel_kp       手势关键点检测kmodel路径\n"
+         << " 5> kmodel_e3d      e3d检测kmodel路径\n"
+		 << " 6> debug_mode      是否需要调试, 0、1、2分别表示不调试、简单调试、详细调试\n"
 		 << "\n"
 		 << endl;
 }
 
 void video_proc(char *argv[])
 {
+    k_char cmd[64];
+    k_s32 s32Ret = K_SUCCESS;
+    pthread_t sendThread;
+    pthread_t readThread;
+
+    s32Ret = datafifo_init();
+    if (0 != s32Ret)
+    {
+        return;
+    }
+
     vivcap_start();
     // 设置osd参数
     k_video_frame_info vf_info;
@@ -75,21 +155,39 @@ void video_proc(char *argv[])
         std::abort();
     }
 
-    HandDetection hd(argv[1], atof(argv[3]), atof(argv[4]), {SENSOR_WIDTH, SENSOR_HEIGHT}, {SENSOR_CHANNEL, SENSOR_HEIGHT, SENSOR_WIDTH}, reinterpret_cast<uintptr_t>(vaddr), reinterpret_cast<uintptr_t>(paddr), atoi(argv[8]));
+    HandDetection hd(argv[1], atof(argv[2]), atof(argv[3]), {SENSOR_WIDTH, SENSOR_HEIGHT}, {SENSOR_CHANNEL, SENSOR_HEIGHT, SENSOR_WIDTH}, reinterpret_cast<uintptr_t>(vaddr), reinterpret_cast<uintptr_t>(paddr), atoi(argv[6]));
 
-    HandKeypoint hk(argv[5], {SENSOR_CHANNEL, SENSOR_HEIGHT, SENSOR_WIDTH}, reinterpret_cast<uintptr_t>(vaddr), reinterpret_cast<uintptr_t>(paddr), atoi(argv[8]));
+    HandKeypoint hk(argv[4], {SENSOR_CHANNEL, SENSOR_HEIGHT, SENSOR_WIDTH}, reinterpret_cast<uintptr_t>(vaddr), reinterpret_cast<uintptr_t>(paddr), atoi(argv[6]));
 
-    E3d e3d(argv[6], atoi(argv[8]));
+    E3d e3d(argv[5], atoi(argv[6]));
 
     std::vector<BoxInfo> results;
-    int idx = 0;
-    int buffer_size = atoi(argv[7]);
+
+    vector<float> result_e3d;
+
     while (!isp_stop)
     {
         ScopedTiming st("total time", 1);
 
+        // datafifo
+        k_u32 availWriteLen = 0;
+
+        // call write NULL to flush
+        s32Ret = kd_datafifo_write(hDataFifo[WRITER_INDEX], NULL);
+        if (K_SUCCESS != s32Ret)
         {
-            ScopedTiming st("read capture", atoi(argv[8]));
+            printf("write error:%x\n", s32Ret);
+        }
+
+        s32Ret = kd_datafifo_cmd(hDataFifo[WRITER_INDEX], DATAFIFO_CMD_GET_AVAIL_WRITE_LEN, &availWriteLen);
+        if (K_SUCCESS != s32Ret)
+        {
+            printf("get available write len error:%x\n", s32Ret);
+            break;
+        }
+
+        {
+            ScopedTiming st("read capture", atoi(argv[6]));
             // 从vivcap中读取一帧图像到dump_info
             memset(&dump_info, 0, sizeof(k_video_frame_info));
             ret = kd_mpi_vicap_dump_frame(vicap_dev, VICAP_CHN_ID_1, VICAP_DUMP_YUV, &dump_info, 1000);
@@ -101,13 +199,14 @@ void video_proc(char *argv[])
         }
 
         {
-            ScopedTiming st("isp copy", atoi(argv[8]));
+            ScopedTiming st("isp copy", atoi(argv[6]));
             auto vbvaddr = kd_mpi_sys_mmap_cached(dump_info.v_frame.phys_addr[0], size);
             memcpy(vaddr, (void *)vbvaddr, SENSOR_HEIGHT * SENSOR_WIDTH * 3);  
             kd_mpi_sys_munmap(vbvaddr, size);
         }
 
         results.clear();
+        result_e3d.clear();
 
         hd.pre_process();
         hd.inference();
@@ -157,18 +256,35 @@ void video_proc(char *argv[])
 
                 e3d.pre_process(cropped_img, hk.results);
                 e3d.inference();
-                e3d.post_process(idx, buffer_size);
-                idx++;
-                if( idx == 2*buffer_size )
-                {
-                    idx = 0;
-                }
+                e3d.post_process(result_e3d);
 
+                if (availWriteLen >= BLOCK_LEN)
+                {
+                    ScopedTiming st("datafifo send ", atoi(argv[6]));
+                    s32Ret = kd_datafifo_write(hDataFifo[WRITER_INDEX], (k_char*)result_e3d.data());
+                    if (K_SUCCESS != s32Ret)
+                    {
+                        printf("write error:%x\n", s32Ret);
+                        break;
+                    }
+
+                    s32Ret = kd_datafifo_cmd(hDataFifo[WRITER_INDEX], DATAFIFO_CMD_WRITE_DONE, NULL);
+                    if (K_SUCCESS != s32Ret)
+                    {
+                        printf("write done error:%x\n", s32Ret);
+                        break;
+                    }
+                    g_s32Index++;
+                }
+                else
+                {
+                    printf("no free space: %d\n", availWriteLen);
+                }
             }
         }
 
         {
-            ScopedTiming st("osd copy", atoi(argv[8]));
+            ScopedTiming st("osd copy", atoi(argv[6]));
             memcpy(pic_vaddr, osd_frame.data, osd_width * osd_height * 4);
             // 显示通道插入帧
             kd_mpi_vo_chn_insert_frame(osd_id + 3, &vf_info); // K_VO_OSD0
@@ -197,73 +313,20 @@ void video_proc(char *argv[])
 int main(int argc, char *argv[])
 {
     std::cout << "case " << argv[0] << " built at " << __DATE__ << " " << __TIME__ << std::endl;
-    if (argc != 9)
+    if (argc != 7)
     {
         print_usage(argv[0]); 
         return -1;
     }
 
-    if (strcmp(argv[2], "None") == 0)
+    std::thread thread_isp(video_proc, argv);
+    while (getchar() != 'q')
     {
-        std::thread thread_isp(video_proc, argv);
-        while (getchar() != 'q')
-        {
-            usleep(10000);
-        }
-
-        isp_stop = true;
-        thread_isp.join();
+        usleep(10000);
     }
-    else
-    {
-        cv::Mat img = cv::imread(argv[2]);
 
-        int origin_w = img.cols;
-        int origin_h = img.rows;
-        FrameSize handimg_size = {origin_w, origin_h};
-
-        HandDetection hd(argv[1], atof(argv[3]), atof(argv[4]),  handimg_size, atoi(argv[8]));
-        HandKeypoint hk(argv[5], atoi(argv[8]));
-        E3d e3d(argv[6], atoi(argv[8]));
-
-        hd.pre_process(img);
-
-        hd.inference();
-
-        std::vector<BoxInfo> result_hd;
-        hd.post_process(result_hd);
-
-        cv::Mat cropped_img;
-        for (auto r : result_hd)
-        {
-            int w = r.x2 - r.x1 + 1;
-            int h = r.y2 - r.y1 + 1;
-            
-            int length = std::max(w,h)/2;
-            int cx = (r.x1+r.x2)/2;
-            int cy = (r.y1+r.y2)/2;
-            int ratio_num = 1.6*length;
-
-            int x1_1 = std::max(0,cx-ratio_num);
-            int y1_1 = std::max(0,cy-ratio_num);
-            int x2_1 = std::min(origin_w-1, cx+ratio_num);
-            int y2_1 = std::min(origin_h-1, cy+ratio_num);
-            int w_1 = x2_1 - x1_1+1;
-            int h_1 = y2_1 - y1_1+1;
-
-            struct Bbox bbox = {x:x1_1,y:y1_1,w:w_1,h:h_1};
-            hk.pre_process(img, bbox);
-
-            hk.inference();
-
-            hk.post_process(bbox);
-
-            cropped_img = Utils::crop(img, bbox);
-
-            e3d.pre_process(cropped_img, hk.results);
-            e3d.inference();
-            e3d.post_process(0, 30);
-        }
-    }
+    isp_stop = true;
+    thread_isp.join();
+    
     return 0;
 }

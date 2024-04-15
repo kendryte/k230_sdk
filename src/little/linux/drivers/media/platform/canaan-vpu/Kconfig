@@ -1,0 +1,26 @@
+config VPU_CANAAN
+	tristate "Linlon VPU support."
+	depends on VIDEO_DEV
+	depends on COMMON_CLK && HAS_DMA
+	select VIDEO_V4L2_SUBDEV_API
+	select VIDEOBUF2_DMA_CONTIG
+	select V4L_MEM2MEM_DRIVERS
+	select V4L2_FWNODE
+	select VIDEOBUF2_DMA_SG
+	default y
+	help
+	  This enables support for the Linlon VPU family.
+
+config VPU_CANAAN_FTRACE
+	depends on VPU_CANAAN
+	bool "Send kernel space logs to ftrace."
+	default n
+	help
+		Send kernel space logs to ftrace.
+
+config VPU_CANAAN_PRINT_FILE
+	depends on VPU_CANAAN
+	bool "Append file and line number to kernel space log messages."
+	default y
+	help
+		Append file and line number to kernel space log messages.

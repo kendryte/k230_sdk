@@ -187,12 +187,6 @@ static int k230_hwtimer_open(struct inode *inode, struct file *file)
 
 static int k230_hwtimer_release(struct inode *inode, struct file *file)
 {
-	struct miscdevice *mdev = file->private_data;
-	hw_timer_t *timer = to_hwtimer(mdev);
-
-    //del_timer(&timer->softtimer);
-
-    //k230_hwtimer_start(timer, 0);
     return 0;
 }
 
@@ -225,9 +219,7 @@ static ssize_t k230_hwtimer_read(struct file *file, char __user *buf, size_t len
         }
         
     }
-    // if(freq == 0) {
-    //     printk("diff %llx timeout %x , old %x new %x f=%d \n", time_diff, timeout, timer->old, timer->new, freq);
-    // }    
+
     if(copy_to_user(data, &freq, sizeof(freq)))
         return -EFAULT;
 

@@ -49,16 +49,13 @@
 #include "dwc2_udc_otg_priv.h"
 
 /***********************************************************/
-#pragma GCC push_options
-#pragma GCC optimize ("O0")
 #define OTG_DMA_MODE		1
 
-#define DEBUG_SETUP 1
-#define DEBUG_EP0 1
-#define DEBUG_ISR 1
-#define DEBUG_OUT_EP 1
-#define DEBUG_IN_EP 1
-#define DEBUG 1
+#define DEBUG_SETUP 0
+#define DEBUG_EP0 0
+#define DEBUG_ISR 0
+#define DEBUG_OUT_EP 0
+#define DEBUG_IN_EP 0
 
 #include <usb/dwc2_udc.h>
 
@@ -1214,4 +1211,3 @@ int dwc2_udc_B_session_valid(struct udevice *dev)
 	return readl(&usbotg_reg->gotgctl) & B_SESSION_VALID;
 }
 #endif /* CONFIG_IS_ENABLED(DM_USB_GADGET) */
-#pragma GCC pop_options

@@ -133,6 +133,7 @@ void pufs_ptr_ptc_ctrl(bool on);
  * @param[in] on  Turn on/off deep-standby mode when true/false is specified.
  */
 void rt_write_pdstb(bool on);
+void puf_pgm_ign_ctrl(bool on);
 /**
  * @brief Read mode control
  *

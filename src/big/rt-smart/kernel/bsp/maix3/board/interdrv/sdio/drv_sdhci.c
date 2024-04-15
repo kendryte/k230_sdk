@@ -744,8 +744,9 @@ static void kd_mmc_request(struct rt_mmcsd_host *host, struct rt_mmcsd_req *req)
     {
         mmcsd->sdhci_data = RT_NULL;
     }
-
+    rt_base_t flag = rt_hw_interrupt_disable();
     error = sdhci_transfer_blocking(mmcsd);
+    rt_hw_interrupt_enable(flag);
     if (error == 1)
     {
         sdhic_error_recovery(mmcsd);

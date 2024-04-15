@@ -45,6 +45,9 @@
 #include "sdk_autoconf.h"
 #include "k230_board_common.h"
 #include <env_internal.h>
+#include <malloc.h>
+#include <memalign.h>
+#include <u-boot/crc.h>
 
 //weak
 int mmc_get_env_dev(void)
@@ -60,7 +63,9 @@ enum env_location arch_env_get_location(enum env_operation op, int prio)
     if(0 != prio){
         return ENVL_UNKNOWN;
     }
-
+#ifdef CONFIG_ENV_IS_NOWHERE
+	return ENVL_NOWHERE;
+#endif
     if(g_bootmod ==  SYSCTL_BOOT_NORFLASH){
         return ENVL_SPI_FLASH;
     }
@@ -117,9 +122,9 @@ static int k230_boot_prepare_args(int argc, char *const argv[], ulong buff,
         }
         *sys = BOOT_SYS_ADDR;
         return 0;
-    }else  if (!strcmp(argv[1], "sd"))
+    }else  if (!strcmp(argv[1], "sdio1"))
         *bootmod=SYSCTL_BOOT_SDIO1;
-    else if (!strcmp(argv[1], "emmc"))
+    else if (!strcmp(argv[1], "sdio0"))
         *bootmod=SYSCTL_BOOT_SDIO0;
     else if (!strcmp(argv[1], "spinor"))
         *bootmod=SYSCTL_BOOT_NORFLASH;
@@ -184,7 +189,7 @@ static int do_k230_boot(struct cmd_tbl *cmdtp, int flag, int argc,
     return ret;
 }
 
-#define K230_BOOT_HELP  " <auto|sd|emmc|spinor|spinand|mem> <auto_boot|rtt|linux|qbc|fdb|sensor|ai|speckle|rtapp|uboot|addr> [len]\n" \
+#define K230_BOOT_HELP  " <auto|sdio1|sdio0|spinor|spinand|mem> <auto_boot|rtt|linux|qbc|fdb|sensor|ai|speckle|rtapp|uboot|addr> [len]\n" \
                         "qbc---quick boot cfg\n" \
                         "fdb---face database\n" \
                         "sensor---sensor cfg\n" \
@@ -194,7 +199,7 @@ static int do_k230_boot(struct cmd_tbl *cmdtp, int flag, int argc,
                         "auto_boot---auto boot\n" \
                         "uboot---boot uboot\n"
 /*
-boot sd/mmc/spinor/spinand/mem  add
+boot sdio1/sdio0/spinor/spinand/mem  add
 k230_boot auto rtt ;k230_boot auto linux;
 先实现从sd启动吧；
 */
@@ -205,6 +210,155 @@ U_BOOT_CMD_COMPLETE(
 );
 #endif
 
+#ifndef CONFIG_SPL_BUILD
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+typedef enum kburnUsbIspCommandTaget
+{
+	KBURN_USB_ISP_SDIO0 = 0x00,
+	KBURN_USB_ISP_SDIO1 = 0x01,
+	KBURN_USB_ISP_NAND = 0x02,
+	KBURN_USB_ISP_NOR = 0x03,
+} kburnUsbIspCommandTaget;
 
+struct BurnImageConfigItem {
+	uint32_t    address;
+	uint32_t    size;
+	char        altName[32];
+};
 
+struct BurnImageConfig {
+	uint32_t cfgMagic;
+	uint32_t cfgTarget;
+	uint32_t cfgCount;
+	uint32_t cfgCrc32;
+	struct BurnImageConfigItem cfgs[0];
+};
 
+static int do_k230_dfu(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+{
+    char alt_info[1024];
+    int alt_info_len = 0;
+
+    struct BurnImageConfig *cfg = NULL;
+    struct BurnImageConfig *cfgOrig = (struct BurnImageConfig *)0x80250000;
+
+    uint32_t cfgMagic   = readl((volatile void *)&cfgOrig->cfgMagic);
+	uint32_t cfgCount   = readl((volatile void *)&cfgOrig->cfgCount);
+
+    if(MAGIC_NUM == cfgMagic && (20 > cfgCount)) {
+        uint32_t size = sizeof(struct BurnImageConfig) + cfgCount * sizeof(struct BurnImageConfigItem);
+
+        cfg = (struct BurnImageConfig *)malloc(size);
+        if(NULL == cfg) {
+            free(cfg);
+            printf("malloc failed\n");
+            return -1;
+        }
+
+        uint32_t *pDst = (uint32_t *)cfg;
+        uint32_t *pSrc = (uint32_t *)0x80250000;
+
+        for(int i = 0; i < (size / 4); i++) {
+            pDst[i] = readl((volatile void *)(pSrc + i));
+        }
+
+        uint32_t crc = crc32(0, (const unsigned char *)&cfg->cfgs[0], cfg->cfgCount * sizeof(struct BurnImageConfigItem));
+        if(cfg->cfgCrc32 != crc) {
+            free(cfg);
+            printf("invaild cfg crc32 %x != %x\n", cfg->cfgCrc32, crc);
+            return -1;
+        }
+
+        /*
+        	"#dfu_alt_info=mmc raw 0 2097152 \0" \
+            "#bootcmd=dfu 0 mmc 0 \0" \
+            "#dfu_alt_info=sf raw 0 2000000 \0" \
+            "#bootcmd=dfu 0 sf 0:0 \0" \
+        */
+        int sector = 1;
+
+       char *pInfo = &alt_info[0];
+
+        switch (cfg->cfgTarget)
+        {
+        case KBURN_USB_ISP_SDIO0:
+            sector = 512;
+            alt_info_len = sprintf(pInfo, "%s", "mmc 0=");
+            pInfo += alt_info_len;
+            break;
+        case KBURN_USB_ISP_SDIO1:
+            sector = 512;
+            alt_info_len = sprintf(pInfo, "%s", "mmc 1=");
+            pInfo += alt_info_len;
+            break;
+        case KBURN_USB_ISP_NAND:
+            alt_info_len = sprintf(pInfo, "%s", "mtd spi-nand0=");
+            pInfo += alt_info_len;
+            break;
+        case KBURN_USB_ISP_NOR:
+            alt_info_len = sprintf(pInfo, "%s", "sf 0:0:50000000:0=");
+            pInfo += alt_info_len;
+            break;
+        default:
+            break;
+        }
+        bool has_firmware = false;
+        for(int i = 0; i < cfg->cfgCount; i++) {
+            struct BurnImageConfigItem *item = (struct BurnImageConfigItem *)&cfg->cfgs[i];
+
+            printf("item %d, address %x, size %x, altName %s\n", i, item->address, item->size, item->altName);
+            if(!strcmp(item->altName, "otp")) continue;
+            if(!strcmp(item->altName, "otp_lock")) continue;
+            if(!strcmp(item->altName, "cde")) continue;
+            if(!strcmp(item->altName, "cde_lock")) continue;
+            has_firmware = true;
+            alt_info_len = sprintf(pInfo, "%s raw 0x%x 0x%x", item->altName, item->address / sector, (item->size+sector-1) / sector);
+            pInfo += alt_info_len;
+            // if(i != (cfg->cfgCount - 1)) 
+            {
+                pInfo[0] = ';';
+                pInfo ++;
+            }
+        }
+        if(has_firmware)
+        {
+            pInfo[-1] = '&';
+        }
+        else {
+            pInfo = &alt_info[0];
+        }
+        sprintf(pInfo, "%s", "virt 0=otp&virt 1=otp_lock&virt 2=cde&virt 3=cde_lock");
+
+        printf("alt_info \'%s\'\n", alt_info);
+
+        env_set("dfu_alt_info", alt_info);
+
+        switch (cfg->cfgTarget)
+        {
+        case KBURN_USB_ISP_NAND:
+            run_command("mtd list;dfu 0", 0);
+            break;
+        case KBURN_USB_ISP_SDIO0:
+        case KBURN_USB_ISP_SDIO1:
+        case KBURN_USB_ISP_NOR:
+            run_command("dfu 0", 0);
+            break;
+        default:
+            break;
+        }
+    } else {
+        printf("invaild cfg maigc %x != %x, or cfgCount %d > 20\n", cfgMagic, MAGIC_NUM, cfgCount);
+        return -1;
+    }
+
+    return 0;
+}
+
+U_BOOT_CMD(
+	k230_dfu, CONFIG_SYS_MAXARGS, 0, do_k230_dfu,
+	"k230 burntool enter dfu",
+	"k230 burntool enter dfu"
+);
+#endif

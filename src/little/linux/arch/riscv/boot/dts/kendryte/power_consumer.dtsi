@@ -24,3 +24,8 @@
 &display {
    power-domains = <&sysctl_power K230_PM_DOMAIN_DISP>;
 };
+
+&vpu {
+   power-domains = <&sysctl_power K230_PM_DOMAIN_VPU>;
+};
+

@@ -108,7 +108,7 @@ k_aenc_chn aenc_chn = 0;
 static k_u64 K_audio_stamap = 0;
 static k_u32 audio_outframes = 0;
 
-static k_s32 k_time = 0;
+static k_s32 k_time = 1;
 
 static k_bool quit = K_TRUE;
 
@@ -303,6 +303,7 @@ static void *output_thread(void *arg)
     k_u32 total_len = 0;
     venc_conf = (sample_venc_conf_t *)arg;
     k_s64 delta = 0;
+    k_u64 prev_v_pts = 0LL;
 
     out_cnt = 0;
     out_frames = 0;
@@ -329,12 +330,31 @@ static void *output_thread(void *arg)
             if (output.pack[i].type != K_VENC_HEADER)
             {
                 out_frames++;
+
+                if(prev_v_pts != 0)
+                {
+                    if(output.pack[i].pts == prev_v_pts)
+                    {
+                        av_debug("v_pts error: %ld %ld frame number %d\n", output.pack[i].pts, prev_v_pts, out_frames);
+                    }
+                    else
+                    {
+                        delta = output.pack[i].pts - prev_v_pts;
+                        if(delta > 35000LL || delta < 30000LL)
+                            av_debug("v_pts error: %ld %ld frame number %d\n", output.pack[i].pts, prev_v_pts, out_frames);
+                    }
+                }
+                prev_v_pts = output.pack[i].pts;
+
+                if (g_av_test_start && out_frames % (venc_conf->output_frames * k_time ) == 0)
+                {
+                    delta = (output.pack[i].pts - K_audio_stamap);
+                    av_debug("v pts = %8ld a pts = %8ld av delta = %8ldms video frames = %d audio frames = %d\n", output.pack[i].pts, K_audio_stamap, delta / 1000, out_frames, audio_outframes);
+                    if(delta > 33000LL)
+                        av_debug("av sync error: %ld us\n", delta);
+                }
             }
-            if (g_av_test_start && out_frames % (venc_conf->output_frames * k_time ) == 0)
-            {
-                delta = (output.pack[i].pts - K_audio_stamap);
-                av_debug("v pts = %8ld a pts = %8ld av delta = %8ldms video frames = %d audio frames = %d\n", output.pack[i].pts, K_audio_stamap, delta / 1000, out_frames, audio_outframes);
-            }
+
             total_len += output.pack[i].len;
         }
 
@@ -392,9 +412,9 @@ static void *_test_ai_aenc_file_sysbind(void *arg)
 {
     k_audio_stream audio_stream;
     k_aenc_chn aenc_channel = aenc_chn;
-    k_u64 tmppts = 0;
-    k_u64 min = 38000;
-    k_u64 max = 40000;
+    k_u64 prev_a_pts = 0LL;
+    k_s32 delta;
+
     while (g_aenc_test_start)
     {
         if (0 != kd_mpi_aenc_get_stream(aenc_channel, &audio_stream, 1000))
@@ -404,9 +424,21 @@ static void *_test_ai_aenc_file_sysbind(void *arg)
         }
         else
         {
-            if ((audio_stream.time_stamp - tmppts) > max || (audio_stream.time_stamp - tmppts) < min)
-                av_debug("audio delta error %ld, frame %d\n", (audio_stream.time_stamp - tmppts), audio_outframes);
-            tmppts = audio_stream.time_stamp;
+            if(prev_a_pts != 0)
+            {
+                if(audio_stream.time_stamp == prev_a_pts)
+                {
+                    av_debug("a_pts error: %ld %ld frame number %d\n", audio_stream.time_stamp, prev_a_pts, audio_outframes);
+                }
+                else
+                {
+                    delta = audio_stream.time_stamp - prev_a_pts;
+                    if(delta > 42000LL || delta < 38000LL)
+                        av_debug("a_pts error: %ld %ld frame number %d\n", audio_stream.time_stamp, prev_a_pts, audio_outframes);
+                }
+            }
+
+            prev_a_pts = audio_stream.time_stamp;
             audio_outframes++;
             K_audio_stamap = audio_stream.time_stamp;
             kd_mpi_aenc_release_stream(aenc_channel, &audio_stream);
@@ -422,11 +454,6 @@ int main(int argc, char const *argv[])
     k_vicap_sensor_type sensor_type = IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_LINEAR;
 
 #ifdef ENABLE_MPI
-    if (argc <= 1)
-    {
-        _help();
-        return -1;
-    }
 
     for (int i = 1; i < argc; i += 2)
     {
@@ -438,7 +465,6 @@ int main(int argc, char const *argv[])
         else if (strcmp(argv[i], "-time") == 0)
         {
             k_time = atoi(argv[i + 1]);
-            if(!k_time)g_av_test_start = K_FALSE;
         }
         else if (strcmp(argv[i], "-sensor") == 0)
         {

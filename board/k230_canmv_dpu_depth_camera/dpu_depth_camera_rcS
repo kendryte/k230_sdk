@@ -1,0 +1,52 @@
+#!/bin/sh
+
+
+# Start all init scripts in /etc/init.d
+# executing them in numerical order.
+#
+for i in /etc/init.d/S??* ;do
+
+     # Ignore dangling symlinks (if any).
+     [ ! -f "$i" ] && continue
+
+     case "$i" in
+	*.sh)
+	    # Source shell script for speed.
+	    (
+		trap - INT QUIT TSTP
+		set start
+		. $i
+	    )
+	    ;;
+	*)
+	    # No sh extension, so fork subprocess.
+	    $i start
+	    ;;
+    esac
+done
+bootddev=$(cat /proc/cmdline  | sed  -n  "s#root=\(\/dev\/mmcblk[0-9]\).*#\1#p" )
+printf "fix\n" | parted ---pretend-input-tty ${bootddev} print  >/dev/null 2>&1
+
+cat /etc/version/release_version
+# if ! `grep mmc /proc/cmdline >/dev/null` ; then
+# 	if `grep mtd5 /proc/mtd >/dev/null`; then 
+# 		mount -t jffs2 /dev/mtdblock5 /mnt || (flash_erase /dev/mtd5 0 0; mount -t jffs2 /dev/mtdblock5 /mnt)
+# 	fi;
+# fi
+
+cd /mnt
+insmod k_ipcm.ko
+mkdir /sharefs -p
+if `grep mmcblk0p3 /proc/cmdline >/dev/null` ; then
+	mount /dev/mmcblk0p4 /sharefs
+elif `grep mmcblk1p3 /proc/cmdline >/dev/null` ; then
+	mount /dev/mmcblk1p4 /sharefs
+fi
+
+./sharefs &
+cd -
+
+cd /mnt
+./canaan-camera-dpu.sh start otg0
+./sample_dpu_uvc &
+cd -

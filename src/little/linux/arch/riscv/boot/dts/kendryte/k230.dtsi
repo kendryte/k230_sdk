@@ -226,6 +226,15 @@
 			status = "okay";
 		};
 
+		vpu: vpu@0x90400000 {
+			status              = "okay";
+			compatible          = "armChina,linlon-v5","armChina,linlon-v8";
+			reg                 = <0x0 0x90400000 0x0 0x10000>;
+			interrupt-parent    = <&intc>;
+			interrupts          = <132>;
+		};
+
+
 		pmu_thead: pmu_thead {
 			interrupt-parent = <&cpu0_intc>;
 			interrupts = <17>;

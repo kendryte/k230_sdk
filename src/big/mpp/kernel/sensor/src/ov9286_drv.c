@@ -818,6 +818,70 @@ static k_sensor_mode ov9286_mode_info[] = {
         .reg_list = ov9286_mipi2lane_720p_60fps_linear,
         .mclk_setting = {{K_FALSE}, {K_FALSE}, {K_FALSE}},
     },
+    {
+        .index = 8,
+        .sensor_type = OV_OV9286_MIPI_1280X720_30FPS_10BIT_MCLK_25M_LINEAR_SPECKLE_V2,
+        .size = {
+            .bounds_width = 1280,
+            .bounds_height = 720,
+            .top = 0,
+            .left = 0,
+            .width = 1280,
+            .height = 720,
+        },
+        .fps = 30000,
+        .hdr_mode = SENSOR_MODE_LINEAR,
+        .bit_width = 10,
+        .bayer_pattern = BAYER_PAT_BGGR,
+        .mipi_info = {
+            .csi_id = 0,
+            .mipi_lanes = 1,
+            .data_type = 0x2B, //RAW10
+        },
+        .reg_list = ov9286_mipi2lane_720p_30fps_mclk_25m_linear,
+        .mclk_setting = {
+            {
+                .mclk_setting_en = K_TRUE,
+                .setting.id = SENSOR_MCLK2,
+                .setting.mclk_sel = SENSOR_PLL0_CLK_DIV4,
+                .setting.mclk_div = 16, //32,
+            },
+            {K_FALSE},
+            {K_FALSE},
+        },
+    },
+    {
+        .index = 9,
+        .sensor_type = OV_OV9286_MIPI_1280X720_30FPS_10BIT_MCLK_25M_LINEAR_IR_V2,
+        .size = {
+            .bounds_width = 1280,
+            .bounds_height = 720,
+            .top = 0,
+            .left = 0,
+            .width = 1280,
+            .height = 720,
+        },
+        .fps = 30000,
+        .hdr_mode = SENSOR_MODE_LINEAR,
+        .bit_width = 10,
+        .bayer_pattern = BAYER_PAT_BGGR,
+        .mipi_info = {
+            .csi_id = 0,
+            .mipi_lanes = 1,
+            .data_type = 0x2B, //RAW10
+        },
+        .reg_list = ov9286_mipi2lane_720p_30fps_mclk_25m_linear,
+        .mclk_setting = {
+            {
+                .mclk_setting_en = K_TRUE,
+                .setting.id = SENSOR_MCLK2,
+                .setting.mclk_sel = SENSOR_PLL0_CLK_DIV4,
+                .setting.mclk_div = 16, //32,
+            },
+            {K_FALSE},
+            {K_FALSE},
+        },
+    },
 };
 
 static k_bool ov9286_init_flag = K_FALSE;
@@ -876,6 +940,8 @@ static int ov9286_i2c_init(k_sensor_i2c_info *i2c_info)
     return 0;
 }
 
+
+
 static k_s32 ov9286_sensor_power_on(void *ctx, k_s32 on)
 {
     k_s32 ret = 0;
@@ -924,6 +990,8 @@ static k_s32 ov9286_sensor_init(void *ctx, k_sensor_mode mode)
     case 2:
     case 3:
     case 6:
+    case 8:
+    case 9:
         if (!ov9286_init_flag) {
             ret = sensor_reg_list_write(&dev->i2c_info, current_mode->reg_list);
         }

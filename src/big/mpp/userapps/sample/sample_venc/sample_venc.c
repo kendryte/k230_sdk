@@ -76,6 +76,8 @@
 extern const unsigned int osd_data;
 extern const int osd_data_size;
 
+#define VI_ALIGN_UP(addr, size) (((addr)+((size)-1U))&(~((size)-1U)))
+
 typedef enum
 {
     VENC_SAMPLE_STATUS_IDLE = 0,
@@ -201,6 +203,7 @@ static void sample_vicap_config(k_u32 ch, k_u32 width, k_u32 height, k_vicap_sen
     ret = kd_mpi_vicap_set_dev_attr(vicap_dev, dev_attr);
     CHECK_RET(ret, __func__, __LINE__);
 
+    width = VI_ALIGN_UP(width,16);
     chn_attr.out_win.width = width;
     chn_attr.out_win.height = height;
 
@@ -344,6 +347,7 @@ static void *output_thread(void *arg)
             pData = (k_u8 *)kd_mpi_sys_mmap(output.pack[i].phys_addr, output.pack[i].len);
             if (output_file)
                 fwrite(pData, 1, output.pack[i].len, output_file);
+
             kd_mpi_sys_munmap(pData, output.pack[i].len);
 
             total_len += output.pack[i].len;
@@ -774,6 +778,7 @@ k_s32 sample_venc_osd_border_h265(k_vicap_sensor_type sensor_type)
     k_u32 bitrate   = 4000;   //kbps
     int width       = 1280;
     int height      = 720;
+
     k_venc_rc_mode rc_mode  = K_VENC_RC_MODE_CBR;
     k_payload_type type     = K_PT_H265;
     k_venc_profile profile  = VENC_PROFILE_H265_MAIN;

@@ -47,7 +47,7 @@ using namespace nncase::runtime::detail;
 
 #define CHANNEL 3
 
-#if defined(CONFIG_BOARD_K230_CANMV)
+#if defined(CONFIG_BOARD_K230_CANMV) || defined(CONFIG_BOARD_K230_CANMV_V2)
 #define ISP_CHN1_HEIGHT (720)
 #define ISP_CHN1_WIDTH  (1280)
 #define ISP_CHN0_WIDTH  (1920)
@@ -282,7 +282,7 @@ k_s32 sample_connector_init(void)
 {
     k_u32 ret = 0;
     k_s32 connector_fd;
-#if defined(CONFIG_BOARD_K230_CANMV)
+#if defined(CONFIG_BOARD_K230_CANMV) || defined(CONFIG_BOARD_K230_CANMV_V2)
 	k_connector_type connector_type = LT9611_MIPI_4LAN_1920X1080_30FPS;// HX8377_V2_MIPI_4LAN_1080X1920_30FPS;
 #else
     k_connector_type connector_type = HX8377_V2_MIPI_4LAN_1080X1920_30FPS;
@@ -424,14 +424,15 @@ int sample_vb_init(void)
     return ret;
 }
 
-#if defined(CONFIG_BOARD_K230_CANMV)
+#if defined(CONFIG_BOARD_K230_CANMV) || defined(CONFIG_BOARD_K230_CANMV_V2)
 int sample_vivcap_init( void )
 {
     k_s32 ret = 0;
-    // sensor_type =  IMX335_MIPI_2LANE_RAW12_2592X1944_30FPS_LINEAR;
+#if defined(CONFIG_BOARD_K230_CANMV)
     sensor_type = OV_OV5647_MIPI_CSI0_1920X1080_30FPS_10BIT_LINEAR;
-    // kd_mpi_vicap_set_mclk(VICAP_MCLK0, VICAP_PLL0_CLK_DIV4, 16, 1);
-    vicap_dev = VICAP_DEV_ID_0;
+#elif defined(CONFIG_BOARD_K230_CANMV_V2)
+    sensor_type = OV_OV5647_MIPI_CSI2_1920X1080_30FPS_10BIT_LINEAR_V2;
+#endif
 
     memset(&sensor_info, 0, sizeof(k_vicap_sensor_info));
     ret = kd_mpi_vicap_get_sensor_info(sensor_type, &sensor_info);
@@ -828,7 +829,7 @@ int main(int argc, char *argv[])
         face_count = boxes.size();
 
         k_isp_ae_roi user_roi;
-#if defined(CONFIG_BOARD_K230_CANMV)
+#if defined(CONFIG_BOARD_K230_CANMV) || defined(CONFIG_BOARD_K230_CANMV_V2)
         face_location_convert_roi(boxes, &user_roi, 0, 0, ISP_CHN1_WIDTH, ISP_CHN1_HEIGHT, 1920, 1080);
 #else
         face_location_convert_roi(boxes, &user_roi, 768, 16, ISP_CHN1_WIDTH, ISP_CHN1_HEIGHT, 1088, 1920);

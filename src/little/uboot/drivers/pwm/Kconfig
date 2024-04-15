@@ -118,3 +118,9 @@ config PWM_TI_EHRPWM
 	default y
 	help
 	  PWM driver support for the EHRPWM controller found on TI SOCs.
+      
+config PWM_KENDRYTE
+	bool "Enable support for Kendryte PWM"
+	depends on DM_PWM
+	help
+	  This PWM is found CANAAN's K230.

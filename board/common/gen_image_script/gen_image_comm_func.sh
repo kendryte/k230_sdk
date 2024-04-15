@@ -87,6 +87,11 @@ gen_version()
 
 	local ver_file="etc/version/release_version"
 	local post_copy_rootfs_dir="${K230_SDK_ROOT}/board/common/post_copy_rootfs"
+	local nncase_ver="0.0.0";
+	local nncase_ver_file="${K230_SDK_ROOT}/src/big/nncase/riscv64/nncase/include/nncase/version.h"
+
+	cat ${nncase_ver_file} | grep NNCASE_VERSION -w | cut -d\" -f 2 > /dev/null && \
+		 nncase_ver=$(cat ${nncase_ver_file} | grep NNCASE_VERSION -w | cut -d\" -f 2)
 	
 
 	cd  "${BUILD_DIR}/images/little-core/rootfs" ; 
@@ -94,7 +99,8 @@ gen_version()
 
 
 	set +e; commitid=$(awk -F- '/^[^#]/ { print $6}' ${post_copy_rootfs_dir}/${ver_file});set -e;
-	set +e; last_tag=$(awk -F- '/^[^#]/ { print $1}' ${post_copy_rootfs_dir}/${ver_file}) ;set -e;
+	set +e; last_tag=$(awk -F- '/^[^#]/ { print $1}' ${post_copy_rootfs_dir}/${ver_file} | head -1 ) ;set -e;
+	 
 	
 
 	[ "${commitid}" != "" ] || commitid="unkonwn"
@@ -107,6 +113,7 @@ gen_version()
 	ver="${last_tag}-$(date "+%Y%m%d-%H%M%S")-$(whoami)-$(hostname)-${commitid}"
 	echo -e "#############SDK VERSION######################################" >${ver_file}
 	echo -e ${ver} >> ${ver_file}
+	echo -e "nncase:${nncase_ver}" >> ${ver_file}
 	echo -e "##############################################################" >>${ver_file}
 	echo "build version: ${ver}"
 

@@ -225,7 +225,7 @@ int StreamingPlayer::CreateVideoEncode(const SessionAttr &session_attr) {
     chn_attr.rc_attr.rc_mode = K_VENC_RC_MODE_CBR;
     chn_attr.rc_attr.cbr.src_frame_rate = 30;
     chn_attr.rc_attr.cbr.dst_frame_rate = 30;
-    if (sensor_type_ == OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_IR || 
+    if (sensor_type_ == OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_IR ||
         sensor_type_ == OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_SPECKLE) {
             chn_attr.rc_attr.cbr.src_frame_rate = 15;
             chn_attr.rc_attr.cbr.dst_frame_rate = 15;
@@ -285,7 +285,7 @@ int StreamingPlayer::CreateVideoEncode(const SessionAttr &session_attr) {
     vi_chn_attr_info.chn_en = K_TRUE;
     vi_chn_attr_info.crop_h_start = 0;
     vi_chn_attr_info.crop_v_start = 0;
-    vi_chn_attr_info.out_width = session_attr.video_width;
+    vi_chn_attr_info.out_width = VI_ALIGN_UP(session_attr.video_width,16);
     vi_chn_attr_info.out_height = session_attr.video_height;
     vi_chn_attr_info.pixel_format = PIXEL_FORMAT_YUV_SEMIPLANAR_420;
     vi_chn_attr_info.vicap_dev = VICAP_DEV_ID_0;
@@ -293,9 +293,9 @@ int StreamingPlayer::CreateVideoEncode(const SessionAttr &session_attr) {
     vi_chn_attr_info.alignment = 12;
     vi_chn_attr_info.buffer_num = 6;
     if (!dev_attr_info_.dw_en)
-        vi_chn_attr_info.buf_size = VI_ALIGN_UP(session_attr.video_width * session_attr.video_height * 3 / 2, 0x400);
+        vi_chn_attr_info.buf_size = VI_ALIGN_UP(VI_ALIGN_UP(session_attr.video_width,16) * session_attr.video_height * 3 / 2, 0x400);
     else
-        vi_chn_attr_info.buf_size = VI_ALIGN_UP(sensor_info.width * sensor_info.height * 3 / 2, 0x400);
+        vi_chn_attr_info.buf_size = VI_ALIGN_UP(VI_ALIGN_UP(sensor_info.width,16) * sensor_info.height * 3 / 2, 0x400);
     ret = kd_mapi_vicap_set_chn_attr(vi_chn_attr_info);
     if (ret != K_SUCCESS) {
         printf("vicap chn %d set attr failed, %x.\n", session_attr.session_idx, ret);

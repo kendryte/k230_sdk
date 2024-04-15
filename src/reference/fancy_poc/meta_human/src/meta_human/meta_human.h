@@ -87,11 +87,10 @@ class Meta_Human: public AIBase
 
         /** 
         * @brief Meta_Human post_process 函数，对kmodel输出进行后处理操作
-        * @param frame_size 帧率
-        * @param idx  记录打印序次
+        * @param result  存放结果数组
         * @return None
         */
-        void post_process(FrameSize frame_size,int idx,int num_storage);
+        void post_process(vector<float> &result);
 
     private:
         

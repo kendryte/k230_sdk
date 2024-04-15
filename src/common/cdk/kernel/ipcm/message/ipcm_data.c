@@ -220,6 +220,7 @@ static void ack_connect_msg(struct ipcm_node *node,
 #endif
 			node->handlers_state[head->port] = CONNECT_ACKED;
 			handle->state = __HANDLE_CONNECTED;
+			__ipcm_wakeup_event__(&handle->connect_event);
 			__ipcm_unlock__(&handle->lock);
 		}
 		break;

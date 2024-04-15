@@ -199,14 +199,17 @@ int k230_pd_probe(struct platform_device *pdev,
 
     k230_pm_domains[K230_PM_DOMAIN_CPU1]->flags |= GENPD_FLAG_ALWAYS_ON;
     k230_pm_domains[K230_PM_DOMAIN_AI]->flags |= GENPD_FLAG_ALWAYS_ON;
-    k230_pm_domains[K230_PM_DOMAIN_VPU]->flags |= GENPD_FLAG_ALWAYS_ON;
+    // k230_pm_domains[K230_PM_DOMAIN_VPU]->flags |= GENPD_FLAG_ALWAYS_ON;
     k230_pm_domains[K230_PM_DOMAIN_DPU]->flags |= GENPD_FLAG_ALWAYS_ON;
 
     for (i = 0; i < domain_num; ++i) {
         k230_pm_domains[i]->power_on = k230_power_on;
         k230_pm_domains[i]->power_off = k230_power_off;
 
-        pm_genpd_init(k230_pm_domains[i], NULL, i != K230_PM_DOMAIN_DISP ? false : true);
+        if (i == K230_PM_DOMAIN_DISP || i == K230_PM_DOMAIN_VPU)
+            pm_genpd_init(k230_pm_domains[i], NULL, true);
+        else
+            pm_genpd_init(k230_pm_domains[i], NULL, false);
     }
 
     of_genpd_add_provider_onecell(pdev->dev.of_node, genpd_data);

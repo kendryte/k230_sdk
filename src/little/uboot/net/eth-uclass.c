@@ -599,9 +599,18 @@ static int eth_post_probe(struct udevice *dev)
 		eth_env_set_enetaddr_by_index("eth", dev_seq(dev),
 					      pdata->enetaddr);
 #else
-		printf("\nError: %s address not set.\n",
-		       dev->name);
-		return -EINVAL;
+        unsigned int *trng_addr = (unsigned int *)0x91213300;
+        unsigned int trng_data = *trng_addr;
+        pdata->enetaddr[0] = 0x00;
+        pdata->enetaddr[1] = 0xe0;
+        pdata->enetaddr[2] = 0x4c;
+        pdata->enetaddr[3] = trng_data & 0xff;
+        pdata->enetaddr[4] = (trng_data>>8) & 0xff;
+        pdata->enetaddr[5] = (trng_data>>16) & 0xff;
+        printf("\nWarning: %s (eth%d) using CANAAN MAC address - %pM\n",
+		       dev->name, dev_seq(dev), pdata->enetaddr);
+		eth_env_set_enetaddr_by_index("eth", dev_seq(dev),
+					      pdata->enetaddr);
 #endif
 	}
 

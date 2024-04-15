@@ -1,0 +1,30 @@
+if TARGET_K230_CANMV_01STUDIO
+
+config SYS_CPU
+	default "k230"
+    
+config SYS_VENDOR
+    default "canaan"
+
+config SYS_BOARD
+    default "k230_canmv_01studio"
+
+config SYS_CONFIG_NAME
+    default "k230_evb"
+
+
+config BOARD_SPECIFIC_OPTIONS # dummy
+	def_bool y
+	select RISCV_THEAD
+choice  
+	prompt "ddr typy freq"
+    default CANMV_01STUDIO_LPDDR3_2133
+
+config CANMV_01STUDIO_LPDDR3_2133
+	bool  2133
+config CANMV_01STUDIO_LPDDR3_1600
+	bool  1600
+config CANMV_01STUDIO_LPDDR3_800
+	bool 800
+endchoice
+endif

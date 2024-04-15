@@ -270,7 +270,12 @@ static int k230_boot_uboot_uimage(image_header_t *pUh)
         //do_timeinfo(0,0,0,0); 
         #if defined(CONFIG_LINUX_RUN_CORE_ID) && (CONFIG_LINUX_RUN_CORE_ID == 1)
         de_reset_big_core(image_get_load(pUh));
-        while(1) udelay(100);
+
+        while(1)
+        {
+            asm volatile("wfi");
+        }
+
         #endif 
         uboot(0, (void*)OPENSBI_DTB_ADDR);
     }
@@ -496,7 +501,7 @@ __weak ulong get_blk_start_by_boot_firmre_type(en_boot_sys_t sys)
 		blk_s = RTT_SYS_IN_IMG_OFF_SEC;
 		break;
     case BOOT_SYS_UBOOT:
-		blk_s = CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR;
+		blk_s = UBOOT_SYS_IN_IMG_OFF_SEC;
 		break;
     default:break;
 	} 
@@ -595,7 +600,7 @@ __weak ulong get_flash_offset_by_boot_firmre_type(en_boot_sys_t sys)
         #endif 
 		break;
     case BOOT_SYS_UBOOT:
-		offset = CONFIG_SYS_SPI_U_BOOT_OFFS;
+		offset = UBOOT_SYS_IN_SPI_NOR_OFF;
 		break;
     default:break;
 	} 
@@ -654,7 +659,7 @@ __weak ulong get_nand_start_by_boot_firmre_type(en_boot_sys_t sys)
 		blk_s = RTT_SYS_IN_SPI_NAND_OFF;
 		break;
     case BOOT_SYS_UBOOT:
-		blk_s = CONFIG_SYS_SPI_U_BOOT_OFFS;
+		blk_s = UBOOT_SYS_IN_SPI_NAND_OFF;
 		break;
     default:break;
 	} 
@@ -792,7 +797,12 @@ __weak int k230_img_load_boot_sys_auot_boot(en_boot_sys_t sys)
     
     #if  defined(CONFIG_SUPPORT_RTSMART) && !defined(CONFIG_SUPPORT_LINUX)
     if(ret == 0)
-        while(1) udelay(100);
+    {
+        while(1)
+        {
+            asm volatile("wfi");
+        }
+    }
     #endif 
 
 

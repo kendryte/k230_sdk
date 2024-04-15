@@ -119,7 +119,12 @@ static int kd_set_drive_mode(rt_base_t pin, rt_base_t mode)
         kd_gpio_reg_writel(kd_gpio[0] + DIRECTION, pin, dir);
     } else {
         pin -= 32;
-        kd_gpio_reg_writel(kd_gpio[1] + DIRECTION, pin, dir);
+        if(pin < 32)
+            kd_gpio_reg_writel(kd_gpio[1] + DIRECTION, pin, dir);
+        else {
+            pin -= 32;
+            kd_gpio_reg_writel(kd_gpio[1] + DIRECTION + DIRECTION_STRIDE, pin, dir);
+        }
     }
 
     return RT_EOK;
@@ -134,7 +139,12 @@ static rt_base_t kd_get_drive_mode(rt_base_t pin)
         return kd_gpio_reg_readl(kd_gpio[0] + DIRECTION, pin);
     else {
         pin -= 32;
-        return kd_gpio_reg_readl(kd_gpio[1] + DIRECTION, pin);
+        if(pin < 32)
+            return kd_gpio_reg_readl(kd_gpio[1] + DIRECTION, pin);
+        else {
+            pin -= 32;
+            return kd_gpio_reg_readl(kd_gpio[1] + DIRECTION + DIRECTION_STRIDE, pin);
+        }
     }
 }
 
@@ -161,7 +171,12 @@ void kd_pin_write(rt_base_t pin, rt_base_t value)
         kd_gpio_reg_writel(kd_gpio[0] + DATA_OUTPUT, pin, value == KD_GPIO_HIGH ? GPIO_PV_HIGH : GPIO_PV_LOW);
     else {
         pin -= 32;
-        kd_gpio_reg_writel(kd_gpio[1] + DATA_OUTPUT, pin, value == KD_GPIO_HIGH ? GPIO_PV_HIGH : GPIO_PV_LOW);
+        if(pin < 32)
+            kd_gpio_reg_writel(kd_gpio[1] + DATA_OUTPUT, pin, value == KD_GPIO_HIGH ? GPIO_PV_HIGH : GPIO_PV_LOW);
+        else {
+            pin -= 32;
+            kd_gpio_reg_writel(kd_gpio[1] + DATA_OUTPUT + DATA_OUTPUT_STRIDE, pin, value == KD_GPIO_HIGH ? GPIO_PV_HIGH : GPIO_PV_LOW);
+        }
     }
 }
 
@@ -177,7 +192,12 @@ int kd_pin_read(rt_base_t pin)
         return kd_gpio_reg_readl(kd_gpio[0] + DATA_INPUT, pin) == GPIO_PV_HIGH ? PIN_HIGH : PIN_LOW;
     else {
         pin -= 32;
-        return kd_gpio_reg_readl(kd_gpio[1] + DATA_INPUT, pin) == GPIO_PV_HIGH ? PIN_HIGH : PIN_LOW;
+        if(pin < 32)
+            return kd_gpio_reg_readl(kd_gpio[1] + DATA_INPUT, pin) == GPIO_PV_HIGH ? PIN_HIGH : PIN_LOW;
+        else {
+            pin -= 32;
+            return kd_gpio_reg_readl(kd_gpio[1] + DATA_INPUT + DATA_INPUT_STRIDE, pin) == GPIO_PV_HIGH ? PIN_HIGH : PIN_LOW;
+        }
     }
 }
 
@@ -189,7 +209,11 @@ static void kd_set_pin_edge(rt_int32_t pin, gpio_pin_edge_t edge)
         reg = kd_gpio[0];
     else {
         pin -= 32;
-        reg = kd_gpio[1];
+        if(pin < 32)
+            reg = kd_gpio[1];
+        else {
+            LOG_E("pin %d not support interrupt", pin+32);
+        }
     }
 
     switch (edge)
@@ -236,7 +260,11 @@ static void pin_irq(int vector, void *param)
         reg = kd_gpio[0];
     else {
         pin -= 32;
-        reg = kd_gpio[1];
+        if(pin < 32)
+            reg = kd_gpio[1];
+        else {
+            LOG_E("pin %d not support interrupt", pin+32);
+        }
     }
 
     switch (edge)
@@ -310,7 +338,11 @@ rt_err_t kd_pin_detach_irq(rt_int32_t pin)
         reg = kd_gpio[0];
     else {
         pin -= 32;
-        reg = kd_gpio[1];
+        if(pin < 32)
+            reg = kd_gpio[1];
+        else {
+            LOG_E("pin %d not support interrupt", pin+32);
+        }
     }
 
     irq_table[pin_id].hdr = RT_NULL;

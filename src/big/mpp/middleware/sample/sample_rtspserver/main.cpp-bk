@@ -1,0 +1,47 @@
+#include <iostream>
+#include <atomic>
+#include <chrono>
+#include <unistd.h>
+#include <signal.h>
+#include <thread>
+#include <stdio.h>
+#include "rtsp_server.h"
+#include "media.h"
+
+
+int main(int argc, char *argv[])
+{
+    KdMedia media;
+    KdMediaInputConfig meida_input_cfg;
+    meida_input_cfg.video_valid = true;
+    media.Init(meida_input_cfg);
+
+    media.CreateAiAEnc(nullptr);
+    media.StartAiAEnc();
+
+    media.CreateVcapVEnc(nullptr);
+    media.StartVcapVEnc();
+
+    sleep(10);
+    media.StopAiAEnc();
+    media.StopVcapVEnc();
+    media.DestroyAiAEnc();
+    media.DestroyVcapVEnc();
+
+    media.Deinit();
+
+
+#if 0
+    printf("=========begin\n");
+    KdRtspServer rtsp_server_;
+    rtsp_server_.Init(8080, nullptr);
+
+    k_audio_dev audio_dev = 0;
+    kd_mpi_ai_enable(audio_dev);
+
+    printf("=========end\n");
+#endif
+    getchar();
+
+    return 0;
+}

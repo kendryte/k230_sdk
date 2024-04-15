@@ -57,7 +57,7 @@
 #include "k_autoconf_comm.h"
 
 
-#if defined(CONFIG_BOARD_K230_CANMV)
+#if defined(CONFIG_BOARD_K230_CANMV) || defined(CONFIG_BOARD_K230_CANMV_V2)
 #define SENSOR_CHANNEL (3)     // isp通道数
 #define SENSOR_HEIGHT (720)  // isp高度，ai输入，竖屏
 #define SENSOR_WIDTH (1280)    // isp宽度，ai输入，竖屏
@@ -286,7 +286,7 @@ static k_s32 sample_connector_init(void)
 {
     k_u32 ret = 0;
     k_s32 connector_fd;
-#if defined(CONFIG_BOARD_K230_CANMV)
+#if defined(CONFIG_BOARD_K230_CANMV) || defined(CONFIG_BOARD_K230_CANMV_V2)
 	k_connector_type connector_type = LT9611_MIPI_4LAN_1920X1080_30FPS;// HX8377_V2_MIPI_4LAN_1080X1920_30FPS;
 #else
     k_connector_type connector_type = HX8377_V2_MIPI_4LAN_1080X1920_30FPS;
@@ -378,7 +378,8 @@ int vivcap_start()
 
 #if defined(CONFIG_BOARD_K230_CANMV)
     sensor_type = OV_OV5647_MIPI_CSI0_1920X1080_30FPS_10BIT_LINEAR;
-    kd_mpi_vicap_set_mclk(VICAP_MCLK0, VICAP_PLL0_CLK_DIV4, 16, 1);
+#elif defined(CONFIG_BOARD_K230_CANMV_V2)
+    sensor_type = OV_OV5647_MIPI_CSI2_1920X1080_30FPS_10BIT_LINEAR_V2;
 #else
     sensor_type = IMX335_MIPI_2LANE_RAW12_2592X1944_30FPS_LINEAR;
 #endif
@@ -444,7 +445,7 @@ int vivcap_start()
     memset(&dev_attr, 0, sizeof(k_vicap_dev_attr));
     dev_attr.acq_win.h_start = 0;
     dev_attr.acq_win.v_start = 0;
-#if defined (CONFIG_BOARD_K230_CANMV)
+#if defined (CONFIG_BOARD_K230_CANMV)  || defined(CONFIG_BOARD_K230_CANMV_V2)
     dev_attr.acq_win.width = ISP_CHN0_WIDTH;
     dev_attr.acq_win.height = ISP_CHN0_HEIGHT;
 #else
@@ -476,7 +477,7 @@ int vivcap_start()
     chn_attr.out_win.height = ISP_CHN0_HEIGHT;
 
 
-#if defined(CONFIG_BOARD_K230_CANMV)
+#if defined(CONFIG_BOARD_K230_CANMV)  || defined(CONFIG_BOARD_K230_CANMV_V2)
     chn_attr.crop_win = dev_attr.acq_win;
 #else
     // chn_attr.crop_win = dev_attr.acq_win;
@@ -522,7 +523,7 @@ int vivcap_start()
     chn_attr.out_win.height = SENSOR_HEIGHT;
     // chn_attr.crop_win = dev_attr.acq_win;
 
-#if defined(CONFIG_BOARD_K230_CANMV)
+#if defined(CONFIG_BOARD_K230_CANMV) 
     chn_attr.crop_win = dev_attr.acq_win;
 #else   
     chn_attr.crop_win.h_start = 768;

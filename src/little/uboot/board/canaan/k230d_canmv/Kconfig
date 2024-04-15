@@ -7,10 +7,10 @@ config SYS_VENDOR
     default "canaan"
 
 config SYS_BOARD
-    default "k230d_canmv"
+	default "k230d_canmv"
 
 config SYS_CONFIG_NAME
-    default "k230_evb"
+	default "k230_evb"
 
 
 config BOARD_SPECIFIC_OPTIONS # dummy
@@ -18,6 +18,6 @@ config BOARD_SPECIFIC_OPTIONS # dummy
 	select RISCV_THEAD
 
 config SIPLP4_2667
-    def_bool y
+	def_bool y
 
 endif

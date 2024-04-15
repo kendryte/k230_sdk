@@ -75,13 +75,21 @@ void harts_early_init(void)
 	/*enable mtimer clk*/
     writel(0x1, (volatile void __iomem *)0x91108020);//CPU0
 	writel(0x1, (volatile void __iomem *)0x91108030);//CPU1
+	// enable stc0 
+	writel(0x69, (volatile void __iomem *)0x91108000);
+
 	record_boot_time_info_to_sram("et");
 
 	writel(0x80199805, (void*)0x91100004);
+    
+    writel(0x0, (void*)SYSCTL_PWR_BASE_ADDR + 0x158);
 
+// This address space only allows write access by the k230_burntool.
+#ifndef CONFIG_CMD_DFU
 	csr_write(pmpaddr0, 0x24484dff);//start addr：0x24484c00<<2=0x91213000 len=1<<9 * 8 = 4KB
 	csr_write(pmpaddr1, 0x244851ff);//start addr：0x24485000<<2=0x91214000 len=1<<9 * 8 = 4KB
 	csr_write(pmpcfg0, 0x9999);
+#endif
 
 	//improving_cpu_performance();
 }

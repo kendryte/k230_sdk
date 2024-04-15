@@ -369,6 +369,106 @@ static const k_sensor_reg ov5647_640x480_10bpp[] = {
     {REG_NULL, 0x00},
 };
 
+
+static const k_sensor_reg ov5647_mipi2lane_1080p_30fps_flip_linear[] = {
+    //pixel_rate = 81666700
+    {0x0103, 0x01},
+    {0x0100, 0x00},
+    {0x3034, 0x1a},
+    {0x3035, 0x21},
+    {0x3036, 0x62},
+    {0x303c, 0x11},
+    {0x3106, 0xf5},
+    {0x3821, 0x00},
+    {0x3820, 0x02},  //0x00
+    {0x3827, 0xec},
+    {0x370c, 0x03},
+    {0x3612, 0x5b},
+    {0x3618, 0x04},
+    {0x5000, 0x06},
+    {0x5001, 0x00},         // set awb disble
+    {0x5002, 0x00},//41
+    {0x5003, 0x08},
+    {0x5a00, 0x08},
+    {0x3000, 0x00},
+    {0x3001, 0x00},
+    {0x3002, 0x00},
+    {0x3016, 0x08},
+    {0x3017, 0xe0},
+    {0x3018, 0x44},
+    {0x301c, 0xf8},
+    {0x301d, 0xf0},
+    {0x3a18, 0x03},//00
+    {0x3a19, 0xff},//f8
+    {0x3c01, 0x80},
+    {0x3b07, 0x0c},
+    {0x380c, 0x08},         // h totle  high
+    {0x380d, 0xdf},         // h totle low
+    {0x380e, 0x04},         // v totle high
+    {0x380f, 0xaf},         // v totle low
+    {0x3814, 0x11},
+    {0x3815, 0x11},
+    {0x3708, 0x64},
+    {0x3709, 0x12},
+    {0x3808, 0x07},
+    {0x3809, 0x80},
+    {0x380a, 0x04},
+    {0x380b, 0x38},
+    {0x3800, 0x01},
+    {0x3801, 0x5c},
+    {0x3802, 0x01},
+    {0x3803, 0xb2},
+    {0x3804, 0x08},
+    {0x3805, 0xe3},
+    {0x3806, 0x05},
+    {0x3807, 0xf1},
+    {0x3811, 0x04},
+    {0x3813, 0x02},
+    {0x3630, 0x2e},
+    {0x3632, 0xe2},
+    {0x3633, 0x23},
+    {0x3634, 0x44},
+    {0x3636, 0x06},
+    {0x3620, 0x64},
+    {0x3621, 0xe0},
+    {0x3600, 0x37},
+    {0x3704, 0xa0},
+    {0x3703, 0x5a},
+    {0x3715, 0x78},
+    {0x3717, 0x01},
+    {0x3731, 0x02},
+    {0x370b, 0x60},
+    {0x3705, 0x1a},
+    {0x3f05, 0x02},
+    {0x3f06, 0x10},
+    {0x3f01, 0x0a},
+    {0x3a00, 0x00},
+    {0x3a08, 0x01},
+    {0x3a09, 0x4b},
+    {0x3a0a, 0x01},
+    {0x3a0b, 0x13},
+    {0x3a0d, 0x04},
+    {0x3a0e, 0x03},
+    {0x3a0f, 0x58},
+    {0x3a10, 0x50},
+    {0x3a1b, 0x58},
+    {0x3a1e, 0x50},
+    {0x3a11, 0x60},
+    {0x3a1f, 0x28},
+    {0x4001, 0x02},
+    {0x4004, 0x04},
+    {0x4000, 0x09},
+    {0x4837, 0x19},
+    {0x4800, 0x34},
+    {0x3501, 0x02},	//ET = 42 lines
+    {0x3502, 0xa0},
+    {0x3503, 0x07},         //0x0f
+    {0x350b, 0x10},         // gain
+    // {0x0100, 0x01},
+    {REG_NULL, 0x00},
+};
+
+
 static k_sensor_mode ov5647_mode_info[] = {
     {
         .index = 0,
@@ -439,7 +539,6 @@ static k_sensor_mode ov5647_mode_info[] = {
         .reg_list = ov5647_640x480_10bpp,
         .mclk_setting = {{K_FALSE}, {K_FALSE}, {K_FALSE}},
     },
-
     {
         .index = 3,
         .sensor_type = OV_OV5647_MIPI_CSI1_1920X1080_30FPS_10BIT_LINEAR,
@@ -472,13 +571,37 @@ static k_sensor_mode ov5647_mode_info[] = {
             {K_FALSE},
         },
     },
+    {
+        .index = 4,
+        .sensor_type = OV_OV5647_MIPI_CSI1_1920X1080_30FPS_10BIT_LINEAR_V2,
+        .size = {
+            .bounds_width = 1920,
+            .bounds_height = 1080,
+            .top = 0,
+            .left = 0,
+            .width = 1920,
+            .height = 1080,
+        },
+        .fps = 30000,
+        .hdr_mode = SENSOR_MODE_LINEAR,
+        .bit_width = 10,
+        .bayer_pattern = BAYER_PAT_GRBG,
+        .mipi_info = {
+            .csi_id = 0,
+            .mipi_lanes = 2,
+            .data_type = 0x2B, //RAW10
+        },
+        .reg_list = ov5647_mipi2lane_1080p_30fps_flip_linear,
+        .mclk_setting = {{K_FALSE}, {K_FALSE}, {K_FALSE}},
+    },
+
 };
 
 static k_sensor_mode *current_mode = NULL;
 
 static int ov5647_power_rest(k_s32 on)
 {
-    #define OV5647_CAM_PIN_CSI1      (23)
+    
 
     rt_kprintf("ov5647_power_rest OV5647_CAM_PIN_CSI1 is %d \n", OV5647_CAM_PIN_CSI1);
     // rst
@@ -612,19 +735,20 @@ static k_s32 ov5647_sensor_init(void *ctx, k_sensor_mode mode)
     switch (current_mode->index) {
     case 0:
     case 3:
+    case 4:
 
         ret = sensor_reg_list_write(&dev->i2c_info, current_mode->reg_list);
 
     // default:
     //     ret = sensor_reg_list_write(&dev->i2c_info, current_mode->reg_list);
 
-        current_mode->ae_info.frame_length = 1126;
+        current_mode->ae_info.frame_length = 1199;
         current_mode->ae_info.cur_frame_length = current_mode->ae_info.frame_length;
-        current_mode->ae_info.one_line_exp_time = 0.00002958;//0.00003025
+        current_mode->ae_info.one_line_exp_time = 0.000027808;//0.00003025
         current_mode->ae_info.gain_accuracy = 1024;
 
         current_mode->ae_info.min_gain = 1.0;
-        current_mode->ae_info.max_gain = 63.9375;
+        current_mode->ae_info.max_gain = 8.0;//63.9375;
 
         current_mode->ae_info.int_time_delay_frame = 2;
         current_mode->ae_info.gain_delay_frame = 2;
@@ -633,14 +757,14 @@ static k_s32 ov5647_sensor_init(void *ctx, k_sensor_mode mode)
         current_mode->ae_info.integration_time_increment = current_mode->ae_info.one_line_exp_time;
         current_mode->ae_info.gain_increment = (1.0f/16.0f);
 
-        current_mode->ae_info.max_long_integraion_line = current_mode->ae_info.frame_length;
-        current_mode->ae_info.min_long_integraion_line =     current_mode->ae_info.frame_length - 1;
+        current_mode->ae_info.max_long_integraion_line = current_mode->ae_info.frame_length - 12;
+        current_mode->ae_info.min_long_integraion_line = 2;
 
-        current_mode->ae_info.max_integraion_line = current_mode->ae_info.frame_length;
-        current_mode->ae_info.min_integraion_line = 1;
+        current_mode->ae_info.max_integraion_line = current_mode->ae_info.frame_length - 12;
+        current_mode->ae_info.min_integraion_line = 2;
 
-        current_mode->ae_info.max_vs_integraion_line = current_mode->ae_info.frame_length;
-        current_mode->ae_info.min_vs_integraion_line =     current_mode->ae_info.frame_length - 1;
+        current_mode->ae_info.max_vs_integraion_line = current_mode->ae_info.frame_length - 12;
+        current_mode->ae_info.min_vs_integraion_line = 2;
 
         current_mode->ae_info.max_long_integraion_time = \
             current_mode->ae_info.integration_time_increment * \
@@ -680,15 +804,15 @@ static k_s32 ov5647_sensor_init(void *ctx, k_sensor_mode mode)
         current_mode->ae_info.cur_vs_dgain = 0.0;
 
         current_mode->ae_info.a_long_gain.min = 1.0;
-        current_mode->ae_info.a_long_gain.max = 63.9375;
+        current_mode->ae_info.a_long_gain.max = 8.0;
         current_mode->ae_info.a_long_gain.step = (1.0f/16.0f);
 
         current_mode->ae_info.a_gain.min = 1.0;
-        current_mode->ae_info.a_gain.max = 63.9375;
+        current_mode->ae_info.a_gain.max = 8.0;
         current_mode->ae_info.a_gain.step = (1.0f/16.0f);
 
         current_mode->ae_info.a_vs_gain.min = 1.0;
-        current_mode->ae_info.a_vs_gain.max = 63.9375;
+        current_mode->ae_info.a_vs_gain.max = 8.0;
         current_mode->ae_info.a_vs_gain.step = (1.0f/16.0f);
 
         current_mode->ae_info.d_long_gain.max = 1.0;
@@ -718,7 +842,7 @@ static k_s32 ov5647_sensor_init(void *ctx, k_sensor_mode mode)
          current_mode->ae_info.gain_accuracy = 1024;
 
         current_mode->ae_info.min_gain = 1.0;
-        current_mode->ae_info.max_gain = 63.9375;
+        current_mode->ae_info.max_gain = 8.0;//63.9375;
 
         current_mode->ae_info.int_time_delay_frame = 2;
         current_mode->ae_info.gain_delay_frame = 2;
@@ -727,14 +851,14 @@ static k_s32 ov5647_sensor_init(void *ctx, k_sensor_mode mode)
         current_mode->ae_info.integration_time_increment = current_mode->ae_info.one_line_exp_time;
         current_mode->ae_info.gain_increment = (1.0f/16.0f);
 
-        current_mode->ae_info.max_long_integraion_line = current_mode->ae_info.frame_length;
-        current_mode->ae_info.min_long_integraion_line =     current_mode->ae_info.frame_length - 1;
+        current_mode->ae_info.max_long_integraion_line = current_mode->ae_info.frame_length - 12;
+        current_mode->ae_info.min_long_integraion_line = 2;
 
-        current_mode->ae_info.max_integraion_line = current_mode->ae_info.frame_length;
-        current_mode->ae_info.min_integraion_line = 1;
+        current_mode->ae_info.max_integraion_line = current_mode->ae_info.frame_length - 12;
+        current_mode->ae_info.min_integraion_line = 2;
 
-        current_mode->ae_info.max_vs_integraion_line = current_mode->ae_info.frame_length;
-        current_mode->ae_info.min_vs_integraion_line =     current_mode->ae_info.frame_length - 1;
+        current_mode->ae_info.max_vs_integraion_line = current_mode->ae_info.frame_length - 12;
+        current_mode->ae_info.min_vs_integraion_line = 2;
 
         current_mode->ae_info.max_long_integraion_time = \
             current_mode->ae_info.integration_time_increment * \
@@ -774,15 +898,15 @@ static k_s32 ov5647_sensor_init(void *ctx, k_sensor_mode mode)
         current_mode->ae_info.cur_vs_dgain = 0.0;
 
         current_mode->ae_info.a_long_gain.min = 1.0;
-        current_mode->ae_info.a_long_gain.max = 63.9375;
+        current_mode->ae_info.a_long_gain.max = 8.0;
         current_mode->ae_info.a_long_gain.step = (1.0f/16.0f);
 
         current_mode->ae_info.a_gain.min = 1.0;
-        current_mode->ae_info.a_gain.max = 63.9375;
+        current_mode->ae_info.a_gain.max = 8.0;
         current_mode->ae_info.a_gain.step = (1.0f/16.0f);
 
         current_mode->ae_info.a_vs_gain.min = 1.0;
-        current_mode->ae_info.a_vs_gain.max = 63.9375;
+        current_mode->ae_info.a_vs_gain.max = 8.0;
         current_mode->ae_info.a_vs_gain.step = (1.0f/16.0f);
 
         current_mode->ae_info.d_long_gain.max = 1.0;
@@ -913,6 +1037,8 @@ static k_s32 ov5647_sensor_set_stream(void *ctx, k_s32 enable)
         // sensor_reg_list_write(&dev->i2c_info, sensor_oe_enable_regs);
 
         ret = sensor_reg_write(&dev->i2c_info, OV5647_SW_STANDBY, 0x01);
+        
+        
 
     } else {
         // val = MIPI_CTRL00_CLOCK_LANE_GATE | MIPI_CTRL00_BUS_IDLE | MIPI_CTRL00_CLOCK_LANE_DISABLE;
@@ -921,8 +1047,9 @@ static k_s32 ov5647_sensor_set_stream(void *ctx, k_s32 enable)
         // ret = sensor_reg_write(&dev->i2c_info, OV5647_REG_FRAME_OFF_NUMBER, 0x0f);
         // ret = sensor_reg_write(&dev->i2c_info, OV5647_REG_PAD_OUT, 0x01);
         // // sensor_reg_list_write(&dev->i2c_info, sensor_oe_disable_regs);
-
+        ret = sensor_reg_write(&dev->i2c_info, 0x3018, 0xff);
         ret = sensor_reg_write(&dev->i2c_info, OV5647_SW_STANDBY, 0x00);
+        
     }
     pr_info("%s exit, ret(%d)\n", __func__, ret);
 
@@ -1064,7 +1191,7 @@ static k_s32 ov5647_sensor_set_intg_time(void *ctx, k_sensor_intg_time time)
         //printf("int_time = %f, one_line_time = %f \n", integraion_time, current_mode->ae_info.one_line_exp_time);
 
         exp_line = integraion_time / current_mode->ae_info.one_line_exp_time;
-        exp_line = MIN(current_mode->ae_info.max_integraion_line, MAX(1, exp_line));
+        exp_line = MIN(current_mode->ae_info.max_integraion_line, MAX(current_mode->ae_info.min_integraion_line, exp_line));
         if (current_mode->et_line != exp_line)
         {
             ret |= sensor_reg_write(&dev->i2c_info, OV5647_REG_LONG_EXP_TIME_H, ( exp_line >> 4) & 0xff);
@@ -1075,13 +1202,13 @@ static k_s32 ov5647_sensor_set_intg_time(void *ctx, k_sensor_intg_time time)
     } else if (current_mode->hdr_mode == SENSOR_MODE_HDR_STITCH) {
         integraion_time = time.intg_time[SENSOR_DUAL_EXP_L_PARAS];
         exp_line = integraion_time / current_mode->ae_info.one_line_exp_time;
-        exp_line = MIN(current_mode->ae_info.max_integraion_line, MAX(1, exp_line));
+        exp_line = MIN(current_mode->ae_info.max_integraion_line, MAX(current_mode->ae_info.min_integraion_line, exp_line));
 
         current_mode->ae_info.cur_integration_time = (float)exp_line * current_mode->ae_info.one_line_exp_time;
 
         integraion_time = time.intg_time[SENSOR_DUAL_EXP_S_PARAS];
         exp_line = integraion_time / current_mode->ae_info.one_line_exp_time;
-        exp_line = MIN(current_mode->ae_info.max_integraion_line, MAX(1, exp_line));
+        exp_line = MIN(current_mode->ae_info.max_integraion_line, MAX(current_mode->ae_info.min_integraion_line, exp_line));
 
         current_mode->ae_info.cur_vs_integration_time = (float)exp_line * current_mode->ae_info.one_line_exp_time;
     } else {
@@ -1202,7 +1329,7 @@ static k_s32 ov5647_sensor_get_otp_data(void *ctx, void *data)
 struct sensor_driver_dev ov5647_sensor_csi1_drv = {
     .i2c_info = {
         .i2c_bus = NULL,
-        .i2c_name = "i2c0", // "i2c3",
+        .i2c_name = OV5647_CSI1_IIC, // "i2c3",
         .slave_addr = 0x36,
         .reg_addr_size = SENSOR_REG_VALUE_16BIT,
         .reg_val_size = SENSOR_REG_VALUE_8BIT,

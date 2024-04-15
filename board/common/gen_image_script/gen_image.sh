@@ -24,8 +24,8 @@ speckle_data_file="${GENIMAGE_CFG_DIR}/data/speckle.bin"
 rtapp_data_file="${BUILD_DIR}/images/big-core/fastboot_app.elf"
 
 copye_file_to_images;
-if [ "${CONFIG_SUPPORT_LINUX}" = "y" ]; then
-	gen_version;
+gen_version;
+if [ "${CONFIG_SUPPORT_LINUX}" = "y" ]; then	
 	add_dev_firmware;
 	gen_linux_bin;
 	gen_final_ext2;

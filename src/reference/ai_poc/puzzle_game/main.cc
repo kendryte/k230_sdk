@@ -78,7 +78,7 @@ void video_proc(char *argv[])
     int puzzle_height;
     int puzzle_ori_width;
     int puzzle_ori_height;
-    #if defined(CONFIG_BOARD_K230_CANMV)
+    #if defined(CONFIG_BOARD_K230_CANMV) || defined(CONFIG_BOARD_K230_CANMV_V2)
     puzzle_width = osd_height;
     puzzle_height = osd_height;
     puzzle_ori_width = osd_width-puzzle_height-5;
@@ -140,7 +140,7 @@ void video_proc(char *argv[])
     cv::Mat copy_ori_image_0 = osd_frame_tmp(cv::Rect(0,0,puzzle_width,puzzle_height));
     image_puzzle_argb.copyTo(copy_ori_image_0);
     cv::Mat copy_ori_image_1;
-    #if defined(CONFIG_BOARD_K230_CANMV)
+    #if defined(CONFIG_BOARD_K230_CANMV) || defined(CONFIG_BOARD_K230_CANMV_V2)
     copy_ori_image_1 = osd_frame_tmp(cv::Rect(puzzle_width+2,(1080-puzzle_ori_height)/2,puzzle_ori_width,puzzle_ori_height));
     image_puzzle_ori.copyTo(copy_ori_image_1);
     #else

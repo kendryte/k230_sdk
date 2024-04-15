@@ -121,8 +121,10 @@ void rt_hw_board_init(void)
     /* initialize memory system */
     rt_system_heap_init(RT_HW_HEAP_BEGIN, RT_HW_HEAP_END);
 #endif
+#if  MEM_IPCM_SIZE >  MEM_RESVERD_SIZE
     init_ipcm_mem();
     /* initalize interrupt */
+#endif 
     rt_hw_interrupt_init();
 
     /* initialize hardware interrupt */

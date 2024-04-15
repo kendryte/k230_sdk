@@ -56,7 +56,18 @@ static const k_vicap_sensor_type_map sensor_type_map_list[] = {
         "cam-imx335-mode2",
         IMX335_MIPI_4LANE_RAW12_2592X1944_30FPS_LINEAR
     },
-
+    {
+        "cam-ov5647-mode0",
+        OV_OV5647_MIPI_CSI0_1920X1080_30FPS_10BIT_LINEAR
+    },
+    {
+        "cam-ov5647-mode1",
+        OV_OV5647_MIPI_CSI1_1920X1080_30FPS_10BIT_LINEAR
+    },
+    {
+        "cam-ov5647-mode2",
+        OV_OV5647_MIPI_CSI2_1920X1080_30FPS_10BIT_LINEAR
+    }
 };
 
 static const k_vicap_sensor_info sensor_info_list[] = {
@@ -75,6 +86,22 @@ static const k_vicap_sensor_info sensor_info_list[] = {
         VICAP_VI_FIRST_FRAME_FS_TR0,
         0,
         OV_OV9732_MIPI_1280X720_30FPS_10BIT_MCLK_16M_LINEAR
+    },
+    {
+        "ov9732",
+        1280,
+        720,
+        VICAP_CSI2,
+        VICAP_MIPI_1LANE,
+        VICAP_SOURCE_CSI2,
+        K_FALSE,
+        VICAP_MIPI_PHY_800M,
+        VICAP_CSI_DATA_TYPE_RAW10,
+        VICAP_LINERA_MODE,
+        VICAP_FLASH_DISABLE,
+        VICAP_VI_FIRST_FRAME_FS_TR0,
+        0,
+        OV_OV9732_MIPI_1280X720_30FPS_10BIT_MCLK_16M_LINEAR_V2
     },
     {
         "ov9732",
@@ -123,6 +150,38 @@ static const k_vicap_sensor_info sensor_info_list[] = {
         VICAP_VI_FIRST_FRAME_FS_TR0,
         0,
         OV_OV9286_MIPI_1280X720_30FPS_10BIT_MCLK_25M_LINEAR_IR
+    },
+    {
+        "ov9286",
+        1280,
+        720,
+        VICAP_CSI1,
+        VICAP_MIPI_2LANE,
+        VICAP_SOURCE_CSI1_FS_TR1,
+        K_TRUE,
+        VICAP_MIPI_PHY_800M,
+        VICAP_CSI_DATA_TYPE_RAW10,
+        VICAP_LINERA_MODE,
+        VICAP_FLASH_FOLLOW_STROBE,
+        VICAP_VI_FIRST_FRAME_FS_TR0,
+        0,
+        OV_OV9286_MIPI_1280X720_30FPS_10BIT_MCLK_25M_LINEAR_SPECKLE_V2
+    },
+    {
+        "ov9286",
+        1280,
+        720,
+        VICAP_CSI1,
+        VICAP_MIPI_2LANE,
+        VICAP_SOURCE_CSI1_FS_TR0, //VICAP_SOURCE_CSI1_FS_TR0,
+        K_TRUE,
+        VICAP_MIPI_PHY_800M,
+        VICAP_CSI_DATA_TYPE_RAW10,
+        VICAP_LINERA_MODE,
+        VICAP_FLASH_FOLLOW_STROBE,
+        VICAP_VI_FIRST_FRAME_FS_TR0,
+        0,
+        OV_OV9286_MIPI_1280X720_30FPS_10BIT_MCLK_25M_LINEAR_IR_V2
     },
     {
         "ov9286",
@@ -236,7 +295,6 @@ static const k_vicap_sensor_info sensor_info_list[] = {
         0,
         IMX335_MIPI_4LANE_RAW12_2592X1944_30FPS_LINEAR,
     },
-
     {
         "imx335",
         1920,
@@ -527,6 +585,55 @@ static const k_vicap_sensor_info sensor_info_list[] = {
         OV_OV5647_MIPI_CSI1_1920X1080_30FPS_10BIT_LINEAR,     
     },
     {
+        "ov5647",
+        1920,
+        1080,
+        VICAP_CSI0,
+        VICAP_MIPI_2LANE,
+        VICAP_SOURCE_CSI0,
+        K_TRUE,
+        VICAP_MIPI_PHY_800M,
+        VICAP_CSI_DATA_TYPE_RAW10,
+        VICAP_LINERA_MODE,
+        VICAP_FLASH_DISABLE,
+        VICAP_VI_FIRST_FRAME_FS_TR0,
+        0,
+        OV_OV5647_MIPI_CSI0_1920X1080_30FPS_10BIT_LINEAR_V2,
+    },
+    {
+        "ov5647_csi1",
+        1920,
+        1080,
+        VICAP_CSI1,
+        VICAP_MIPI_2LANE,
+        VICAP_SOURCE_CSI1,
+        K_TRUE,
+        VICAP_MIPI_PHY_800M,
+        VICAP_CSI_DATA_TYPE_RAW10,
+        VICAP_LINERA_MODE,
+        VICAP_FLASH_DISABLE,
+        VICAP_VI_FIRST_FRAME_FS_TR0,
+        0,
+        OV_OV5647_MIPI_CSI1_1920X1080_30FPS_10BIT_LINEAR_V2,
+    },
+    {
+        "ov5647_csi2",
+        1920,
+        1080,
+        VICAP_CSI2,
+        VICAP_MIPI_2LANE,
+        VICAP_SOURCE_CSI2,
+        K_TRUE,
+        VICAP_MIPI_PHY_800M,
+        VICAP_CSI_DATA_TYPE_RAW10,
+        VICAP_LINERA_MODE,
+        VICAP_FLASH_DISABLE,
+        VICAP_VI_FIRST_FRAME_FS_TR0,
+        0,
+        OV_OV5647_MIPI_CSI2_1920X1080_30FPS_10BIT_LINEAR_V2,
+    },
+
+    {
         "xs9922b",
         1280,
         720,
@@ -605,6 +712,22 @@ static const k_vicap_sensor_info sensor_info_list[] = {
         VICAP_VI_FIRST_FRAME_FS_TR0,
         0,
         XS9950_MIPI_CSI0_1920X1080_30FPS_YUV422,
+    },
+    {
+        "gc2053",
+        1920,
+        1080,
+        VICAP_CSI0,
+        VICAP_MIPI_2LANE,
+        VICAP_SOURCE_CSI0,
+        K_FALSE,
+        VICAP_MIPI_PHY_1200M,
+        VICAP_CSI_DATA_TYPE_RAW10,
+        VICAP_LINERA_MODE,
+        VICAP_FLASH_DISABLE,
+        VICAP_VI_FIRST_FRAME_FS_TR0,
+        0,
+        GC2053_MIPI_CSI0_1920X1080_30FPS_10BIT_LINEAR,
     },
 };
 

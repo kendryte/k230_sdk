@@ -86,7 +86,7 @@ void video_proc(char *argv[])
     std::vector<Key> keys;
     std::string letters = "QWERTYUIOPASDFGHJKLZXCVBNM";
 
-    #if defined(CONFIG_BOARD_K230_CANMV)
+    #if defined(CONFIG_BOARD_K230_CANMV) || defined(CONFIG_BOARD_K230_CANMV_V2)
         int character_len = 39;
         int box_w = 140;
         int box_h = 100;

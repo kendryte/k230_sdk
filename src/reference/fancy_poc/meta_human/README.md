@@ -138,14 +138,16 @@ sh run1.sh
 |--onboard
 |  |--http.sh 
 |  |--meta_human_256.kmodel
+|  |--meta_human_320.kmodel
+|  |--meta_human_384.kmodel
 |  |--meta_human_isp.sh  
 
 ## meta_human_isp.sh ##
 
-./meta_human.elf meta_human_256.kmodel None 0 6
+./meta_human.elf meta_human_256.kmodel 256 0
 
 ## http.sh ##
-./http 6 256
+./http 256 10000000
 
 ## 在k230 docker环境中在src/reference/ai_poc目录下执行./build_app.sh，即可在 k230_bin得到编译后的 meta_human.elf以及http,将其拷贝到k230上onboard文件夹下。
 
@@ -164,6 +166,7 @@ sh run1.sh
 
 
 ## Step 3 Run
+应用实例支持不同输入分辨率的模型，以下以256为例。如需更改，运行时请在电脑服务端、k230的大小核分别指定输入尺寸。
 
 ```
 1) Enter central_control  >>  input "cmd" as follow >> click "Enter" on keyboard >> input the run script "central_control.exe --input_size 256"
@@ -175,8 +178,6 @@ sh run1.sh
 
 ![](./resource/pics/Image-5.png)
 
-
-
 ```
 2) Click on  the button "PLAY" in Blender.
 ```
@@ -184,43 +185,29 @@ sh run1.sh
 ![](./resource/pics/Image-7.png)
 
 
-
 ```
 3) run the scripts on k230
 
-[k230-small-core] ./http.sh 
-
 [k230-big-core]   ./meta_human_isp.sh
+[k230-small-core] ./http.sh 
 ```
-
-
-
-```
-####### vi http.sh #######
-
-./http 30 256 
-
-### the parameter '30' is the number of storage.
-### the parameter '256' is the shape of kmodel.6
-```
-
-
-
 ```
 ####### vi meta_human_isp.sh #######
 
-./meta_human.elf meta_human_256.kmodel None 0 30
+./meta_human.elf meta_human_256.kmodel 256 0
+```
+```
+####### vi http.sh #######
 
-  ### the parameter '30' is the number of storage in every dir.
+./http 256 10000000
 ```
 
 ![](./resource/pics/Image-9.png)
 
-
-
 ![](./resource/pics/Image-10.png)
 
-
+**注意：** 先启动大核命令，在大核命令启动后会打印大小核通信的地址。如下图。退出时，k230大核按'q'->'enter'退出，k230小核按'q'->'enter'退出，pc服务端按'ctrl'+'c'退出，blender按'esc'退出状态。
+![](./resource/pics/address.jpg)
 
 【Error Lists】
 

@@ -177,7 +177,7 @@ std::vector<BoxInfo> HandDetection::decode_infer(float *data, int stride, FrameS
                         box.x2 = std::max(0, std::min(int(frame_size.width), int(cx + w / 2.f)));
                         box.y2 = std::max(0, std::min(int(frame_size.height), int(cy + h / 2.f)));
                         
-                        #if defined(CONFIG_BOARD_K230_CANMV)
+                        #if defined(CONFIG_BOARD_K230_CANMV) || defined(CONFIG_BOARD_K230_CANMV_V2)
                             if (abs(box.y1-box.y2)< 0.1*frame_size.height)
                                 continue;
                             if ((abs(box.x1-box.x2)< 0.25*frame_size.width) && ((box.x1 < 0.03*frame_size.width) || (box.x2 > 0.97*frame_size.width))) 

@@ -91,6 +91,9 @@ void ddr_init_2667(void);
 void sip_ddr_init_3200_have_wodt(void);
 void sip_ddr_init_3200_have_all_odt(void);
 void pi_ddr_init_2133(void);
+void sip_ddr_init_1600(void);
+void sip_ddr_init_2667(void);
+void canmv_01studio_ddr_init_2133(void);
 
 __weak int ddr_init_training(void)
 {
@@ -127,6 +130,8 @@ __weak int ddr_init_training(void)
 		sip_ddr_init_3200_have_all_odt();	
 	#elif defined(CONFIG_CANMV_LPDDR3_2133)
 		pi_ddr_init_2133();
+    #elif defined(CONFIG_CANMV_01STUDIO_LPDDR3_2133)
+		canmv_01studio_ddr_init_2133();
     #elif defined(CONFIG_SIPLP4_1600)
 		sip_ddr_init_1600();
 	#elif defined(CONFIG_SIPLP4_2667)
@@ -139,7 +144,9 @@ __weak int ddr_init_training(void)
 
 int dram_init(void)
 {
-	//ddr_init_training();	
+#ifndef CONFIG_SPL
+	ddr_init_training();
+#endif
 	return fdtdec_setup_mem_size_base();
 }
 

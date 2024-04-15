@@ -24,46 +24,6 @@
  */
 #include "meta_human.h"
 
-
-void writeBin0(std::string path, char *buf, int size)
-{
-    std::ofstream outfile(path, std::ifstream::binary);
-    outfile.write((char *)(buf), size);
-    outfile.close();
-}
-
-void writeBinInt(std::string path, int num)
-{
-    std::ofstream file(path, std::ios::binary);
-    string str = std::to_string(num);
-    int len = str.length();
-    file.write((char*)&len, sizeof(len));
-    file.write(str.c_str(), len);
-    file.close();
-}
-
-std::string readBinInt(std::string path)
-{
-    ifstream file2(path, std::ios::binary);
-    int len2 = 0;
-    file2.read((char*)&len2, sizeof(len2));
-    char* buffer = new char[len2 + 1];
-    file2.read(buffer, len2);
-    buffer[len2] = '\0';
-    string str2 = buffer;
-    delete[] buffer;
-    file2.close();
-
-    return str2;
-}
-
-// for image
-Meta_Human::Meta_Human(const char *kmodel_file,const int debug_mode):AIBase(kmodel_file,"Meta_Human", debug_mode)
-{
-    model_name_ = "Meta_Human";
-    ai2d_out_tensor_ = get_input_tensor(0);
-}
-
 // for video
 Meta_Human::Meta_Human(const char *kmodel_file,  FrameCHWSize isp_shape, uintptr_t vaddr, uintptr_t paddr, const int debug_mode):AIBase(kmodel_file,"Meta_Human", debug_mode)
 {
@@ -119,7 +79,7 @@ void Meta_Human::inference()
     this->get_output();
 }
 
-void Meta_Human::post_process(FrameSize frame_size,int idx,int num_storage)
+void Meta_Human::post_process(vector<float> &result)
 {
     ScopedTiming st(model_name_ + " post process ", debug_mode_);
     int net_len = input_shapes_[0][2];
@@ -128,17 +88,8 @@ void Meta_Human::post_process(FrameSize frame_size,int idx,int num_storage)
         float *output_0 = p_outputs_[0];
         float *output_1 = p_outputs_[1];
 
-        if(idx < num_storage)
-        {
-            writeBin0(  "ping/" + std::to_string(idx) +  "_0.bin",(char* )output_0, 1  * net_len/8 * net_len/8  * 1 * 4);
-            writeBin0(  "ping/" + std::to_string(idx) +  "_1.bin",(char *)output_1, 1  * net_len/8 * net_len/8 * 145 * 4);
-        }
-        else 
-        {
-            int idx_ = idx % num_storage;
-            writeBin0(  "pong/" + std::to_string(idx_) +  "_0.bin",(char* )output_0, 1  * net_len/8 * net_len/8  * 1 * 4);
-            writeBin0(  "pong/" + std::to_string(idx_) +  "_1.bin",(char *)output_1, 1  * net_len/8 * net_len/8 * 145 * 4);
-        }
+        result.insert(result.end(), output_0, output_0 + 1  * net_len/8 * net_len/8  * 1);
+        result.insert(result.end(), output_1, output_1 + 1  * net_len/8 * net_len/8  * 145);
     }
 }
 

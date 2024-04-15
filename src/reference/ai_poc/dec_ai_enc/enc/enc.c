@@ -44,6 +44,7 @@
 #include "mpi_sys_api.h"
 #include "k_venc_comm.h"
 #include "mpi_vvi_api.h"
+#include "k_autoconf_comm.h"
 
 #define VENC_MAX_IN_FRAMES   30
 #define ENABLE_VENC_DEBUG    1
@@ -924,13 +925,16 @@ int main(int argc, char *argv[])
     }
 
     case_index = atoi(argv[1]);
+    #if defined(CONFIG_BOARD_K230_CANMV)
+        sensor_type = OV_OV5647_MIPI_CSI0_1920X1080_30FPS_10BIT_LINEAR;
+    #elif defined(CONFIG_BOARD_K230_CANMV_V2)
+        sensor_type = OV_OV5647_MIPI_CSI2_1920X1080_30FPS_10BIT_LINEAR_V2;
+    #else
+        sensor_type = IMX335_MIPI_2LANE_RAW12_2592X1944_30FPS_LINEAR;
+    #endif
     for (int i = 2; i < argc; i++)
     {
-        if (strcmp(argv[i], "-sensor") == 0)
-        {
-            sensor_type = (k_vicap_sensor_type)atoi(argv[i + 1]);
-        }
-        else if (strcmp(argv[i], "-o") == 0)
+        if (strcmp(argv[i], "-o") == 0)
         {
             strcpy(out_filename, argv[i + 1]);
             if ((output_file = fopen(out_filename, "wb")) == NULL)

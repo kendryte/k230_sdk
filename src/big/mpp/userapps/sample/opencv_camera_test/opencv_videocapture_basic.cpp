@@ -57,6 +57,8 @@ typedef struct {
     k_bool enable[MAX_VO_LAYER_NUM];
 } k230_display_layer_conf;
 
+k_connector_type connector_type = LT9611_MIPI_4LAN_1920X1080_60FPS;
+
 static int k230_vo_creat_layer(k_vo_layer chn_id, layer_info *info)
 {
     k_vo_video_layer_attr attr;
@@ -178,7 +180,6 @@ static int k230_display_connector_init()
     int ret = 0;
     int connector_fd;
 
-    k_connector_type connector_type = HX8377_V2_MIPI_4LAN_1080X1920_30FPS;
     k_connector_info connector_info;
 
     memset(&connector_info, 0, sizeof(k_connector_info));
@@ -301,18 +302,21 @@ static struct option long_options[] = {
 static void usage(char * const argv[])
 {
     printf("[sample_vicap]#\n");
-    printf("Usage: %s -m 0 -d 0 -s 0 -c 0 -f 0 -W 1088 -H 720 -P 30\n", argv[0]);
+    printf("Usage: %s -D 101 -m 0 -d 0 -s 24 -c 0 -f 0 -W 1920 -H 1080\n", argv[0]);
+    printf("          -D:  vo(Display) connector device [0: hx8399, 101: HDMI-lt9611-1920x1080p60\tdefault 101\n");
     printf("          -m or --mode work mode, 0: online, 1: offline, multiple sensor will use offline mode\n");
     printf("          -d or --dev device num, 0, 1, 2, set 1 will enter multiple sensor test\n");
+    printf("          -s\n");
     printf("               0: ov9732\n");
     printf("               1: ov9286 ir\n");
     printf("               2: ov9286 speckle\n");
-    printf("               3: imx335 2LANE 1920Wx1080H\n");
-    printf("               4: imx335 2LANE 2592Wx1944H\n");
-    printf("               5: imx335 4LANE 2592Wx1944H\n");
-    printf("               6: imx335 2LANE MCLK 7425 1920Wx1080H\n");
-    printf("               7: imx335 2LANE MCLK 7425 2592Wx1944H\n");
-    printf("               8: imx335 4LANE MCLK 7425 2592Wx1944H\n");
+    printf("               7: imx335 2LANE 1920Wx1080H\n");
+    printf("               8: imx335 2LANE 2592Wx1944H\n");
+    printf("               9: imx335 4LANE 2592Wx1944H\n");
+    printf("               10: imx335 2LANE MCLK 7425 1920Wx1080H\n");
+    printf("               11: imx335 2LANE MCLK 7425 2592Wx1944H\n");
+    printf("               12: imx335 4LANE MCLK 7425 2592Wx1944H\n");
+    printf("               24: OV5647 CSI0 1920X1080 30FPS\n");
     printf("          -c or --chn channel num, 0, 1, 2\n");
     printf("          -f or --ofmt out pixel format, 0: yuv420sp, 1: rgb888, 2: rgb888p, 3: raw\n");
     printf("          -w or --width output width\n");
@@ -341,10 +345,14 @@ int main(int argc, char *argv[])
 
     int c;
     int option_index = 0;
-    while ((c = getopt_long(argc, argv, "s:c:f:W:H:m:h", long_options, &option_index)) != -1)
+    while ((c = getopt_long(argc, argv, "D:s:c:f:W:H:m:h", long_options, &option_index)) != -1)
     {
         switch(c)
         {
+        case 'D':
+            connector_type =k_connector_type(atoi(optarg));
+            printf("[opencv_camera]# display: %d\n", connector_type);
+            break;
         case 's':
             cam_name = get_camera_name(atoi(optarg));
             printf("[opencv_camera]# device_name: %s\n", cam_name);

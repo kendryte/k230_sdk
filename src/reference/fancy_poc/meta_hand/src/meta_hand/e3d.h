@@ -85,11 +85,11 @@ public:
     void inference();
 
     /**
-     * @brief 将3D关键点坐标保存为bin文件
-     * @param idx 当前帧数
+     * @brief 将3D关键点坐标放在内存中
+     * @param result 结果存放数组
      * @return None
      */
-    void post_process(int idx, int buffer_size);
+    void post_process(vector<float> &result);
 
     /**
      * @brief 根据单个2D关键点位置坐标和高斯核生成单张heatmap

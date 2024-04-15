@@ -174,7 +174,7 @@ struct i2c_regs
 };
 
 #if !defined(IC_CLK)
-#define IC_CLK          166
+#define IC_CLK          100
 #endif
 #define NANO_TO_MICRO   1000
 

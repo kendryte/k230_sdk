@@ -247,7 +247,7 @@ int rt_hw_touch_register(rt_touch_t touch,
         return result;
     }
 
-    LOG_I("rt_touch init success");
+    LOG_D("rt_touch init success");
 
     return RT_EOK;
 }

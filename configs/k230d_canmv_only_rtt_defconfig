@@ -1,0 +1,60 @@
+#
+# Automatically generated file; DO NOT EDIT.
+# K230 SDK Configuration
+#
+
+#
+# board configuration
+#
+# CONFIG_BOARD_K230_EVB is not set
+# CONFIG_BOARD_K230_FPGA is not set
+# CONFIG_BOARD_K230D is not set
+# CONFIG_BOARD_K230_CANMV is not set
+CONFIG_BOARD_K230D_CANMV=y
+CONFIG_BOARD_NAME="k230d_canmv"
+# CONFIG_QUICK_BOOT is not set
+# CONFIG_GEN_SECURITY_IMG is not set
+CONFIG_UBOOT_DEFCONFIG="k230d_canmv"
+CONFIG_LINUX_DEFCONFIG="k230d_canmv"
+CONFIG_LINUX_DTB="k230d_canmv"
+# CONFIG_REMOTE_TEST_PLATFORM is not set
+CONFIG_GEN_IMG_SCRIPT="board/common/gen_image_script/gen_image.sh"
+CONFIG_RTT_CONSOLE_ID=0
+
+#
+# toolchain configurations
+#
+CONFIG_TOOLCHAIN_PREFIX_RTT="riscv64-unknown-linux-musl-"
+CONFIG_TOOLCHAIN_PATH_RTT="/opt/toolchain/riscv64-linux-musleabi_for_x86_64-pc-linux-gnu/bin"
+CONFIG_TOOLCHAIN_PREFIX_LINUX="riscv64-unknown-linux-gnu-"
+CONFIG_TOOLCHAIN_PATH_LINUX="/opt/toolchain/Xuantie-900-gcc-linux-5.10.4-glibc-x86_64-V2.6.0/bin"
+
+#
+# Memory configuration
+#
+CONFIG_MEM_TOTAL_SIZE=0x8000000
+CONFIG_MEM_IPCM_BASE=0x0
+CONFIG_MEM_IPCM_SIZE=0x0
+CONFIG_MEM_RTT_SYS_BASE=0x0
+CONFIG_MEM_RTT_SYS_SIZE=0x3000000
+CONFIG_MEM_MMZ_BASE=0x3000000
+CONFIG_MEM_MMZ_SIZE=0x5000000
+CONFIG_MEM_BOUNDARY_RESERVED_SIZE=0x8
+
+#
+# storage configurations
+#
+# CONFIG_SPI_NOR is not set
+# CONFIG_SPI_NAND is not set
+CONFIG_SDCAED=y
+
+#
+# wifi configurations
+#
+# CONFIG_AP6212A is not set
+# CONFIG_AP6256 is not set
+CONFIG_SUPPORT_RTSMART=y
+# CONFIG_SUPPORT_LINUX is not set
+CONFIG_BUILD_DEBUG_VER=y
+# CONFIG_BUILD_RELEASE_VER is not set
+CONFIG_DBGLV=8

@@ -1286,4 +1286,132 @@
 				id =<63>;
 			};
 		};
+        gpio64: gpio64@9140c000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port64: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <1>;
+				id =<64>;
+			};
+		};
+        gpio65: gpio65@9140c000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port65: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <1>;
+				id =<65>;
+			};
+		};
+        gpio66: gpio66@9140c000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port66: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <1>;
+				id =<66>;
+			};
+		};
+        gpio67: gpio67@9140c000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port67: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <1>;
+				id =<67>;
+			};
+		};
+        gpio68: gpio68@9140c000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port68: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <1>;
+				id =<68>;
+			};
+		};
+        gpio69: gpio69@9140c000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port69: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <1>;
+				id =<69>;
+			};
+		};
+        gpio70: gpio70@9140c000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port70: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <1>;
+				id =<70>;
+			};
+		};
+        gpio71: gpio71@9140c000 {
+			#address-cells = <0>;
+			#size-cells = <0>;
+			compatible = "canaan,k230-apb-gpio";
+			reg = <0x0 0x9140c000 0x0 0x1000>;
+			hardlock = <0>;
+			status = "disabled";
+
+			port71: gpio-controller@0 {
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <1>;
+				reg-bank = <1>;
+				id =<71>;
+			};
+		};
 };

@@ -29,6 +29,11 @@
     clock-names = "vglite";
 };
 
+&vpu {
+    clocks = <&vpu_src>;
+    clock-names = "vpu";
+};
+
 &mmc_sd0 {
     clocks = <&sd0_cclk_gate>,<&sd0_cclk_gate>;
     clock-names = "core", "bus";

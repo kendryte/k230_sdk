@@ -1497,6 +1497,25 @@ amacout:
 	return ret;
 }
 
+static unsigned char mac_addr_str[18] = {0};
+static char mac_addr_hex[6] = {0};
+static int __init param_mac_setup(char *val)
+{
+	if(!strcmp(val, "<NULL>") || (17 != strlen(val))) // xx:xx:xx:xx:xx:xx
+    {
+        pr_info("rtl8152 mac get failed\n");
+        return -EINVAL;
+    }
+    strncpy(mac_addr_str, val, 17);
+    sscanf(mac_addr_str, "%02x:%02x:%02x:%02x:%02x:%02x",
+                    (unsigned int *)&mac_addr_hex[0], (unsigned int *)&mac_addr_hex[1],
+                    (unsigned int *)&mac_addr_hex[2], (unsigned int *)&mac_addr_hex[3],
+                    (unsigned int *)&mac_addr_hex[4], (unsigned int *)&mac_addr_hex[5]);
+	return 1;
+}
+
+__setup("ethaddr=", param_mac_setup);
+
 static int determine_ethernet_addr(struct r8152 *tp, struct sockaddr *sa)
 {
 	struct net_device *dev = tp->netdev;
@@ -1512,23 +1531,37 @@ static int determine_ethernet_addr(struct r8152 *tp, struct sockaddr *sa)
 			/* if device doesn't support MAC pass through this will
 			 * be expected to be non-zero
 			 */
-			// ret = vendor_mac_passthru_addr_read(tp, sa);
-			// if (ret < 0)
-			// 	ret = pla_ocp_read(tp, PLA_BACKUP, 8,
-			// 			   sa->sa_data);
+			ret = vendor_mac_passthru_addr_read(tp, sa);
+			if (ret < 0)
+				ret = pla_ocp_read(tp, PLA_BACKUP, 8,
+						   sa->sa_data);
 			ret = 0;
 		}
 	}
 
 	if (ret < 0) {
 		netif_err(tp, probe, dev, "Get ether addr fail\n");
-	// } else if (!is_valid_ether_addr(sa->sa_data)) {
-	} else {
-		netif_err(tp, probe, dev, "Invalid ether addr %pM\n",
-			  sa->sa_data);
-		eth_hw_addr_random(dev);
-		ether_addr_copy(sa->sa_data, dev->dev_addr);
-		netif_info(tp, probe, dev, "Random ether addr %pM\n",
+	} else if (!is_valid_ether_addr(sa->sa_data)) {
+		// netif_err(tp, probe, dev, "Invalid ether addr %pM\n",
+		// 	  sa->sa_data);
+		// eth_hw_addr_random(dev);
+		// ether_addr_copy(sa->sa_data, dev->dev_addr);
+		// netif_info(tp, probe, dev, "Random ether addr %pM\n",
+		// 	   sa->sa_data);
+        if(!is_valid_ether_addr(mac_addr_hex))
+        {
+            void __iomem *trng_addr = ioremap(0x91213300, 0x100);
+            unsigned int trng_data = readl(trng_addr);
+            iounmap(trng_addr);
+            mac_addr_hex[0] = 0x00;
+            mac_addr_hex[1] = 0xe0;
+            mac_addr_hex[2] = 0x4c;
+            mac_addr_hex[3] = trng_data & 0xff;
+            mac_addr_hex[4] = (trng_data>>8) & 0xff;
+            mac_addr_hex[5] = (trng_data>>16) & 0xff;
+        }
+        ether_addr_copy(sa->sa_data, mac_addr_hex);
+        netif_info(tp, probe, dev, "rtl8152 ether addr %pM\n",
 			   sa->sa_data);
 		return 0;
 	}

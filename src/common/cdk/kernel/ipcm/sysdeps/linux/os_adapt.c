@@ -114,7 +114,7 @@ void __ipcm_io_unmapping__(void *addr)
 
 void __ipcm_msleep__(unsigned int ms)
 {
-	msleep(ms);
+	msleep_interruptible(ms);
 }
 
 struct ipcm_task *__ipcm_thread_create__(char *name,
@@ -209,7 +209,7 @@ void __ipcm_timer_restart__(struct ipcm_timer *itimer, int ms)
 int __ipcm_event_init__(struct ipcm_event *ievent)
 {
 	wait_queue_head_t *wait;
-	wait = kmalloc(sizeof(wait_queue_head_t), GFP_KERNEL);
+	wait = kzalloc(sizeof(wait_queue_head_t), GFP_KERNEL);
 	if (NULL == wait) {
 		printk(KERN_ERR "alloc event failed\n");
 		return -ENOMEM;

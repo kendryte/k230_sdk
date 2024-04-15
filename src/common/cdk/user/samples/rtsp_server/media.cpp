@@ -364,7 +364,7 @@ int KdMedia::CreateVcapVEnc(IOnVEncData *on_venc_data) {
     chn_attr.rc_attr.rc_mode = K_VENC_RC_MODE_CBR;
     chn_attr.rc_attr.cbr.src_frame_rate = 30;
     chn_attr.rc_attr.cbr.dst_frame_rate = 30;
-    if (config_.sensor_type == OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_IR || 
+    if (config_.sensor_type == OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_IR ||
         config_.sensor_type == OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_SPECKLE) {
             chn_attr.rc_attr.cbr.src_frame_rate = 15;
             chn_attr.rc_attr.cbr.dst_frame_rate = 15;
@@ -425,16 +425,16 @@ int KdMedia::CreateVcapVEnc(IOnVEncData *on_venc_data) {
     vi_chn_attr_info.chn_en = K_TRUE;
     vi_chn_attr_info.crop_h_start = 0;
     vi_chn_attr_info.crop_v_start = 0;
-    vi_chn_attr_info.out_width = config_.venc_width;
+    vi_chn_attr_info.out_width = VI_ALIGN_UP(config_.venc_width,16);
     vi_chn_attr_info.out_height = config_.venc_height;
     vi_chn_attr_info.pixel_format = PIXEL_FORMAT_YUV_SEMIPLANAR_420;
     vi_chn_attr_info.vicap_dev = VICAP_DEV_ID_0;
     vi_chn_attr_info.buffer_num = 6;
     vi_chn_attr_info.vicap_chn = (k_vicap_chn)venc_chn_id;
     if (!vcap_dev_info_.dw_en)
-        vi_chn_attr_info.buf_size = VI_ALIGN_UP(config_.venc_width * config_.venc_height * 3 / 2, 0x400);
+        vi_chn_attr_info.buf_size = VI_ALIGN_UP(VI_ALIGN_UP(config_.venc_width,16) * config_.venc_height * 3 / 2, 0x100);
     else
-        vi_chn_attr_info.buf_size = VI_ALIGN_UP(config_.venc_width * config_.venc_height * 3 / 2, 0x400);
+        vi_chn_attr_info.buf_size = VI_ALIGN_UP(VI_ALIGN_UP(config_.venc_width,16) * config_.venc_height * 3 / 2, 0x400);
     ret = kd_mapi_vicap_set_chn_attr(vi_chn_attr_info);
     if (ret != K_SUCCESS) {
         printf("vicap chn %d set attr failed, %x.\n", venc_chn_id, ret);

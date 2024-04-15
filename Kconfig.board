@@ -24,10 +24,20 @@ config BOARD_K230_CANMV
         help 
            "CANMV(K230PI)";
 
+config BOARD_K230_CANMV_V2
+	bool "K230 CANMV(K230PI) V2"
+        help 
+           "CANMV(K230PI) V2";
+
 config BOARD_K230D_CANMV
 	bool "K230D CANMV(K230PI zero)"
         help 
            "CANMV(K230D PI zero)";
+           
+config BOARD_K230_CANMV_01STUDIO
+       bool "K230 CANMV(01STUDIO)"
+        help 
+           "CANMV(01STUDIO)";
 endchoice
 
 config BOARD_NAME

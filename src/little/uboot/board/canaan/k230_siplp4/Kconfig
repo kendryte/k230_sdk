@@ -2,15 +2,15 @@ if TARGET_K230_SIPLP4
 
 config SYS_CPU
 	default "k230"
-    
+
 config SYS_VENDOR
-    default "canaan"
+	default "canaan"
 
 config SYS_BOARD
-    default "k230_siplp4"
+	default "k230_siplp4"
 
 config SYS_CONFIG_NAME
-    default "k230_evb"
+	default "k230_evb"
 
 
 config BOARD_SPECIFIC_OPTIONS # dummy
@@ -18,6 +18,6 @@ config BOARD_SPECIFIC_OPTIONS # dummy
 	select RISCV_THEAD
 
 config SIPLP4_2667
-    def_bool y
+	def_bool y
 
 endif

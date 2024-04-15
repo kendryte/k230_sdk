@@ -521,24 +521,24 @@ k_s32 kd_mapi_venc_request_idr(k_s32 chn_num)
 
 k_s32 kd_mapi_nonai_2d_init(k_u32 chn_num, k_nonai_2d_chn_attr *attr)
 {
-    printf("%s\n", __FUNCTION__);
+    printf("%s>ch %d\n", __FUNCTION__, chn_num);
     return kd_mpi_nonai_2d_create_chn(chn_num, attr);
 }
 
 k_s32 kd_mapi_nonai_2d_deinit(k_u32 chn_num)
 {
-    printf("%s\n", __FUNCTION__);
+    printf("%s>ch %d\n", __FUNCTION__, chn_num);
     return kd_mpi_nonai_2d_destroy_chn(chn_num);
 }
 
 k_s32 kd_mapi_nonai_2d_start(k_u32 chn_num)
 {
-    printf("%s\n", __FUNCTION__);
+    printf("%s>ch %d\n", __FUNCTION__, chn_num);
     return kd_mpi_nonai_2d_start_chn(chn_num);
 }
 
 k_s32 kd_mapi_nonai_2d_stop(k_u32 chn_num)
 {
-    printf("%s\n", __FUNCTION__);
+    printf("%s>ch %d\n", __FUNCTION__, chn_num);
     return kd_mpi_nonai_2d_stop_chn(chn_num);
 }

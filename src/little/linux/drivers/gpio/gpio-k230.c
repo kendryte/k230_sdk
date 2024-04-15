@@ -354,7 +354,7 @@ static int k230_gpio_set_debounce(struct gpio_chip *gc,
 	unsigned long mask;
 	offset = gc->base;
 	if (offset >= 32)
-		offset -= 32;
+		offset = offset % 32;
 	mask = BIT(offset);
 	spin_lock_irqsave(&gc->bgpio_lock, flags);
 	while(hardlock_lock(hardlock));
@@ -445,7 +445,7 @@ static int k230_gpio_get(struct gpio_chip *gc, unsigned int gpio)
 {
 	gpio = gc->base;
 	if (gpio >= 32)
-		gpio -= 32;
+		gpio = gpio % 32;
 
 	return !!(gc->read_reg(gc->reg_dat) & BIT(gpio));
 }
@@ -457,8 +457,9 @@ static void k230_gpio_set_set(struct gpio_chip *gc, unsigned int gpio, int val)
 	gpio = gc->base;
 
 	if (gpio >= 32)
-			gpio -= 32;
+			gpio = gpio % 32;
 	mask = BIT(gpio);
+
 	spin_lock_irqsave(&gc->bgpio_lock, flags);
 	while(hardlock_lock(hardlock));
 	if (val) {
@@ -486,7 +487,7 @@ static int k230_gpio_dir_in(struct gpio_chip *gc, unsigned int gpio)
 
 	gpio = gc->base;
 	if (gpio >= 32)
-		gpio -= 32;
+		gpio = gpio % 32;
 
 	dir = ~BIT(gpio);
 
@@ -508,7 +509,7 @@ static int k230_gpio_get_dir(struct gpio_chip *gc, unsigned int gpio)
 {
 	gpio = gc->base;
 	if (gpio >= 32)
-		gpio -= 32;
+		gpio = gpio % 32;
 	/* Return 0 if output, 1 if input */
 	if (gc->bgpio_dir_unreadable) {
 		if (gc->bgpio_dir & BIT(gpio))
@@ -538,7 +539,7 @@ static int k230_dir_out_val_first(struct gpio_chip *gc, unsigned int gpio,
 
 	gpio = gc->base;
 	if (gpio >= 32)
-		gpio -= 32;
+		gpio = gpio % 32;
 
 	spin_lock_irqsave(&gc->bgpio_lock, flags);
 
@@ -614,9 +615,8 @@ static int k230_gpio_add_port(struct platform_device *pdev, struct k230_gpio *gp
 	port->gc.base = pp->gpio_base;
 	port->gc.set_config = k230_gpio_set_config;
 
-	if (of_property_read_u32(pdev->dev.of_node, "interrupts", &pp->irq[0])) {
-		dev_err(gpio->dev, "get irq num failed!\n");
-		return -EINVAL;
+	if (!of_property_read_u32(pdev->dev.of_node, "interrupts", &pp->irq[0])) {
+        k230_configure_irqs(gpio, port, pp);
 	}
 
 	/* get gpio used hardlock num */
@@ -633,8 +633,6 @@ static int k230_gpio_add_port(struct platform_device *pdev, struct k230_gpio *gp
 		hardlock_requested = true;
 		dev_err(gpio->dev, "request hardlock %d success!\n", hardlock);
 	}
-
-	k230_configure_irqs(gpio, port, pp);
 
 	err = devm_gpiochip_add_data(gpio->dev, &port->gc, port);
 	if (err) {
@@ -799,14 +797,13 @@ static int k230_gpio_probe(struct platform_device *pdev)
 	gpio->irq_parent = of_irq_find_parent(gpio->node);
 	if (!gpio->irq_parent) {
 		dev_err(dev, "no IRQ parent node\n");
-		return -ENODEV;
-	}
-	gpio->parent = irq_find_host(gpio->irq_parent);
-	if (!gpio->parent) {
-		dev_err(dev, "no IRQ parent domain\n");
-		return -ENODEV;
-	}
-
+	} else {
+        gpio->parent = irq_find_host(gpio->irq_parent);
+        if (!gpio->parent) {
+            dev_err(dev, "no IRQ parent domain\n");
+            return -ENODEV;
+        }
+    }
 	err = k230_get_reset(gpio);
 	if (err)
 		return err;
@@ -824,10 +821,8 @@ static int k230_gpio_probe(struct platform_device *pdev)
 		if (r->start == K230_GPIOA_BASE_ADDR)
 		{
 			gpio->regs = iomem_gpio_a;
-			pdata->properties[0].idx = 0;
 		} else if (r->start == K230_GPIOB_BASE_ADDR) {
 			gpio->regs = iomem_gpio_b;
-			pdata->properties[0].idx = 0;
 		}
 	} else {
 		dev_err(dev, "get device register address failed!\n");

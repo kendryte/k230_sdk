@@ -185,9 +185,7 @@ k230_evb_defconfig/images
 sudo dd if=sysimage-sdcard.img of=/dev/sdx bs=1M oflag=sync
 ```
 
-如使用Windows烧录, 建议使用[the balena Etcher](https://etcher.balena.io/)工具（**请在Etcher图标上点击右键，以管理员权限运行，进行烧录**）.
-
-![Etcher](https://github.com/kendryte/k510_docs/raw/v1.5/zh/images/quick_start/balenaetcher.png)
+如使用Windows烧录, 建议使用[rufus](http://rufus.ie/downloads/)工具
 
 其它更详细的烧录方法，请参考K230 SDK文档
 

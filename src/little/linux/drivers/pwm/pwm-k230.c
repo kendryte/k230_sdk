@@ -170,7 +170,6 @@ static int k230_pwm_probe(struct platform_device *pdev)
 {
     struct k230_pwm_chip *k230_pwm;
     int ret;
-    k230_pwm_t *reg;
 
 	k230_pwm = devm_kzalloc(&pdev->dev, sizeof(*k230_pwm), GFP_KERNEL);
 	if (k230_pwm == NULL)
@@ -197,17 +196,6 @@ static int k230_pwm_probe(struct platform_device *pdev)
 	k230_pwm->chip.ops = &k230_pwm_ops;
 	k230_pwm->chip.base = -1;
 	k230_pwm->chip.npwm = 6;
-
-    reg = (k230_pwm_t*)k230_pwm->addr;
-    reg->pwmcmp0 = 0;
-    reg->pwmcmp1 = 0;
-    reg->pwmcmp2 = 0;
-    reg->pwmcmp3 = 0;
-    reg = (k230_pwm_t*)((void*)reg + 0x40);
-    reg->pwmcmp0 = 0;
-    reg->pwmcmp1 = 0;
-    reg->pwmcmp2 = 0;
-    reg->pwmcmp3 = 0;
 
 	ret = pwmchip_add(&k230_pwm->chip);
 	if (ret < 0)
