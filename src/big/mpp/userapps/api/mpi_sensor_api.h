@@ -35,7 +35,7 @@
 
 #include "k_type.h"
 #include "k_sensor_comm.h"
-
+#include "k_vicap_comm.h"
 #ifdef __cplusplus
 extern "C" {
 #endif /* End of #ifdef __cplusplus */
@@ -436,6 +436,23 @@ k_s32 kd_mpi_sensor_expand_curve_get(k_s32 fd, k_sensor_compand_curve *curve);
  */
 k_s32 kd_mpi_sensor_otpdata_get(k_s32 fd, void *ota_data);
 
+
+/**
+ * @brief Set the sensor otp data.
+ *
+ * @param [in] fd
+ * @param [out] ota_data
+ * @return k_s32
+ * @retval 0 success
+ * @retval "not 0" see err code
+ * @see K_ERR_CODE_E
+ * @note
+ *
+ */
+k_s32 kd_mpi_sensor_otpdata_set(k_s32 fd, void *ota_data);
+
+
+k_s32 kd_mpi_sensor_mirror_set(k_s32 fd, k_vicap_mirror_mode mirror);
 
 /** @} */ /** <!-- ==== SENSOR End ==== */
 

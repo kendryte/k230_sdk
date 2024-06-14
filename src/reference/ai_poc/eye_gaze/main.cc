@@ -114,7 +114,26 @@ void video_proc(char *argv[])
 
             EyeGazeInfo gaze_result;  
             eye_gaze.post_process(gaze_result); 
-            eye_gaze.draw_result(osd_frame,det_results[i].bbox,gaze_result,false);
+            #if defined(CONFIG_BOARD_K230D_CANMV)
+            {
+                ScopedTiming st("osd draw", atoi(argv[6]));
+                cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+                eye_gaze.draw_result(osd_frame,det_results[i].bbox,gaze_result,false);
+                cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+            }
+            #elif defined(CONFIG_BOARD_K230_CANMV_01STUDIO)
+            {
+                ScopedTiming st("osd draw", atoi(argv[6]));
+                cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+                eye_gaze.draw_result(osd_frame,det_results[i].bbox,gaze_result,false);
+                cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+            }
+            #else
+            {
+                ScopedTiming st("osd draw", atoi(argv[6]));
+                eye_gaze.draw_result(osd_frame,det_results[i].bbox,gaze_result,false);
+            }
+            #endif
         }
 
         {

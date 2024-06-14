@@ -38,8 +38,12 @@ int ddr_init_training(void)
 		canmv_01studio_ddr_init_2133();
     #elif defined(CONFIG_CANMV_01STUDIO_LPDDR3_1600)
 		canmv_01studio_ddr_init_1600();
-	#elif defined(CONFIG_CANMV_01STUDIO_LPDDR3_800)		
+	#elif defined(CONFIG_CANMV_01STUDIO_LPDDR3_800)
 		canmv_01studio_ddr_init_800();
+	#elif defined(CONFIG_CANMV_01STUDIO_LPDDR4_2667)
+		ddr_init_2667();
+	#elif defined(CONFIG_CANMV_01STUDIO_LPDDR4_3200)
+		ddr4_init_3200();
 	#endif 	
 	return 0;
 }

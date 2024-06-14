@@ -737,7 +737,67 @@ k_s32 sensor_priv_ioctl(struct sensor_driver_dev *dev, k_u32 cmd, void *args)
         }
         case KD_IOC_SENSOR_G_OTP_DATA:
         {
-            ret = 0;
+            k_sensor_otp_date otp_read_val;
+
+            if ((sizeof(k_sensor_otp_date)) != lwp_get_from_user(&otp_read_val, args, sizeof(k_sensor_otp_date))){
+                rt_kprintf("%s:%d lwp_get_from_user err\n", __func__, __LINE__);
+                return -1;
+            }
+
+            if (dev->sensor_func.sensor_get_otp_data == NULL) {
+                rt_kprintf("%s (%s)sensor_get_otp_data is null\n", __func__, dev->sensor_name);
+                return -1;
+            }
+            ret = dev->sensor_func.sensor_get_otp_data(dev, &otp_read_val);
+            if (ret) {
+                rt_kprintf("%s (%s)sensor_get_otp_data err\n", __func__, dev->sensor_name);
+                return -1;
+            }
+            if (sizeof(k_sensor_otp_date) != lwp_put_to_user(args, &otp_read_val, sizeof(k_sensor_otp_date))){
+                rt_kprintf("%s:%d lwp_put_to_user err\n", __func__, __LINE__);
+                return -1;
+            }
+            break;
+        }
+        case KD_IOC_SENSOR_S_OTP_DATA:
+        {
+            k_sensor_otp_date otp_write_val;
+
+            if ((sizeof(k_sensor_otp_date)) != lwp_get_from_user(&otp_write_val, args, sizeof(k_sensor_otp_date))){
+                rt_kprintf("%s:%d lwp_get_from_user err\n", __func__, __LINE__);
+                return -1;
+            }
+
+            if (dev->sensor_func.sensor_set_otp_data == NULL) {
+                rt_kprintf("%s (%s)sensor_set_otp_data is null\n", __func__, dev->sensor_name);
+                return -1;
+            }
+            ret = dev->sensor_func.sensor_set_otp_data(dev, &otp_write_val);
+            if (ret) {
+                rt_kprintf("%s (%s)sensor_set_otp_data err\n", __func__, dev->sensor_name);
+                return ret;
+            }
+            break;
+        }
+
+        case KD_IOC_SENSOR_S_MIRROR :
+        {
+            k_vicap_mirror_mode mirror;
+
+            if ((sizeof(k_vicap_mirror_mode)) != lwp_get_from_user(&mirror, args, sizeof(k_vicap_mirror_mode))){
+                rt_kprintf("%s:%d lwp_get_from_user err\n", __func__, __LINE__);
+                return -1;
+            }
+
+            if (dev->sensor_func.sensor_mirror_set == NULL) {
+                rt_kprintf("%s (%s)sensor_mirror_set is null\n", __func__, dev->sensor_name);
+                return -1;
+            }
+            ret = dev->sensor_func.sensor_mirror_set(dev, mirror);
+            if (ret) {
+                rt_kprintf("%s (%s)sensor_mirror_set err\n", __func__, dev->sensor_name);
+                return ret;
+            }
             break;
         }
     	default:

@@ -52,6 +52,7 @@ struct snps_sdhci_plat {
 #define DWC_MSHC_SDCLKDL_DC (DWC_MSHC_PTR_PHY_REGS + 0x1E)
 #define DWC_MSHC_SMPLDL_CNFG (DWC_MSHC_PTR_PHY_REGS + 0x20)
 #define DWC_MSHC_ATDL_CNFG (DWC_MSHC_PTR_PHY_REGS + 0x21)
+#define DWC_MSHC_DLL_CNFG2_R (DWC_MSHC_PTR_PHY_REGS + 0x26)
 
 #define DWC_MSHC_PHY_PAD_SD_CLK                                                \
 	((1 << TXSLEW_N_LSB) | (3 << TXSLEW_P_LSB) | (0 << WEAKPULL_EN_LSB) |  \
@@ -103,19 +104,42 @@ static void dwcmshc_phy_pad_config(struct sdhci_host *host)
 
 static void dwcmshc_phy_delay_config(struct sdhci_host *host)
 {
-	sdhci_writeb(host, 1, DWC_MSHC_COMMDL_CNFG);
-	sdhci_writeb(host, 0x1, DWC_MSHC_SDCLKDL_CNFG);
-	//sdhci_writeb(host, 0x30, DWC_MSHC_SDCLKDL_DC);
-	sdhci_writeb(host, 0x40, DWC_MSHC_SDCLKDL_DC);
+    u32 val;
+    int ret;
+    u32 tx_delay_line = 0x40;
+    u32 rx_delay_line = 0xd;
+    u32 extdly_en = 0;
+    u32 cckdl_dc = 0x40;
+    ret = dev_read_u32(host->mmc->dev, "tx_delay_line", &tx_delay_line);
 
-	//sdhci_writeb(host, 0xd, DWC_MSHC_SMPLDL_CNFG);
-	sdhci_writeb(host, 0x8, DWC_MSHC_SMPLDL_CNFG);
-	
+    if(tx_delay_line > 255) {
+        printf("tx_delay_line err\n");
+    }
+    else if (tx_delay_line >= 128) {
+        extdly_en = 1;
+        cckdl_dc = tx_delay_line - 128;
+    } else {
+        extdly_en = 0;
+        cckdl_dc = tx_delay_line;
+    }
+    /* disable delay line */
+	sdhci_writeb(host, 1<<4 | extdly_en, DWC_MSHC_SDCLKDL_CNFG);
+
+	/* set delay line */
+	sdhci_writeb(host, cckdl_dc, DWC_MSHC_SDCLKDL_DC);
+
+	/* enable delay lane */
+	val = sdhci_readb(host, DWC_MSHC_SDCLKDL_CNFG);
+	val &= ~(1<<4);
+	sdhci_writeb(host, val, DWC_MSHC_SDCLKDL_CNFG);
+    
+    dev_read_u32(host->mmc->dev, "rx_delay_line", &rx_delay_line);
+    sdhci_writeb(host, rx_delay_line, DWC_MSHC_SMPLDL_CNFG);
+
 	sdhci_writeb(host, 0xc, DWC_MSHC_ATDL_CNFG);
 	sdhci_writel(host, (sdhci_readl(host, SDHCI_VENDER_AT_CTRL_REG) | \
 	  BIT(16) | BIT(17) | BIT(19) | BIT(20)), SDHCI_VENDER_AT_CTRL_REG);
-	sdhci_writel(host,0x0,SDHCI_VENDER_AT_STAT_REG);
-
+    sdhci_writel(host,0x0,SDHCI_VENDER_AT_STAT_REG);
 	return;
 }
 
@@ -166,6 +190,7 @@ static int snps_sdhci_probe(struct udevice *dev)
 	struct mmc_uclass_priv *upriv = dev_get_uclass_priv(dev);
 	struct snps_sdhci_plat *plat = dev_get_plat(dev);
 	struct sdhci_host *host = dev_get_priv(dev);
+    struct mmc_config *cfg = &plat->cfg;
 	u32 max_clk;
 	struct clk clk;
 	int ret;
@@ -189,7 +214,7 @@ static int snps_sdhci_probe(struct udevice *dev)
 	host->mmc->priv = host;
 	upriv->mmc = host->mmc;
 
-	ret = sdhci_setup_cfg(&plat->cfg, host, 0, 0);
+	ret = sdhci_setup_cfg(cfg, host, cfg->f_max, 0);
 	if (ret)
 		goto err;
 	

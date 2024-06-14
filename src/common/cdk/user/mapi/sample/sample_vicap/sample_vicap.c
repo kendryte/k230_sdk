@@ -179,6 +179,8 @@ static k_vicap_sensor_type get_sensor_type(k_u16 sensor)
         return IMX335_MIPI_2LANE_RAW12_2592X1944_30FPS_MCLK_7425_LINEAR;
     case 8:
         return IMX335_MIPI_4LANE_RAW12_2592X1944_30FPS_MCLK_7425_LINEAR;
+    case 9:
+        return OV_OV9286_MIPI_1280X720_30FPS_10BIT_MCLK_25M_LINEAR_SPECKLE_V2;
     default:
         printf("unsupport sensor type %d, use default IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_LINEAR\n", sensor);
         return IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_LINEAR;
@@ -627,6 +629,12 @@ int main(int argc, char * const argv[])
             printf("vicap start isp %d...\n", i);
         }
     }
+    // get optdate 
+    // k_sensor_otp_date otp_date;
+
+    //  memset(&otp_date, 0, sizeof(otp_date));
+    // kd_mapi_sensor_otpdata_get(OV_OV9286_MIPI_1280X720_30FPS_10BIT_MCLK_25M_LINEAR_SPECKLE_V2, &otp_date);
+    // printf("otp date  is %s \n", otp_date.otp_date);
 
     // dump test
     k_video_frame dump_vf_info;

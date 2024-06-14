@@ -47,6 +47,10 @@ config TARGET_K230_CANMV_01STUDIO
 	bool "Support k230_CANMV(01STUDIO)"
 	select SYS_CACHE_SHIFT_6
     
+config TARGET_K230_CANMV_DONGSHANPI
+	bool "Support k230_CANMV(DONGSHANPI)"
+    select SYS_CACHE_SHIFT_6
+    
 config TARGET_K230D_CANMV
 	bool "Support k230D_CANMV(K230PI zero)"
 	select SYS_CACHE_SHIFT_6
@@ -97,6 +101,7 @@ source "board/canaan/k230_fpga/Kconfig"
 source "board/canaan/k230_evb/Kconfig"
 source "board/canaan/k230_canmv/Kconfig"
 source "board/canaan/k230_canmv_01studio/Kconfig"
+source "board/canaan/k230_canmv_dongshanpi/Kconfig"
 source "board/canaan/k230d_canmv/Kconfig"
 source "board/canaan/k230_unsiplp4/Kconfig"
 source "board/canaan/k230_siplp4/Kconfig"

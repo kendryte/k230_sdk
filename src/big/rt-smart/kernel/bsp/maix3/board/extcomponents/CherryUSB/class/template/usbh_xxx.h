@@ -5,10 +5,16 @@
 
 struct usbh_xxx {
     struct usbh_hubport *hport;
+    struct usb_endpoint_descriptor *xxxin;
+    struct usb_endpoint_descriptor *xxxout;
+    struct usbh_urb xxxin_urb;
+    struct usbh_urb xxxout_urb;
 
     uint8_t intf; /* interface number */
-    usbh_pipe_t intin;  /* INTR IN endpoint */
-    usbh_pipe_t intout; /* INTR OUT endpoint */
+    uint8_t minor;
 };
+
+void usbh_xxx_run(struct usbh_xxx *xxx_class);
+void usbh_xxx_stop(struct usbh_xxx *xxx_class);
 
 #endif

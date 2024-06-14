@@ -117,11 +117,36 @@ void video_proc(char *argv[])
             face_align.pre_process(det_results[i].bbox);
             face_align.inference();
             vector<float> vertices;
-            face_align.post_process({osd_width, osd_height},vertices); 
-            if(output_mode == "depth")
-                face_align.get_depth(osd_frame, vertices);
-            else if(output_mode == "pncc")
-                face_align.get_pncc(osd_frame, vertices);
+            face_align.post_process({osd_width, osd_height},vertices,false); 
+            #if defined(CONFIG_BOARD_K230D_CANMV)
+            {
+                ScopedTiming st("osd draw", atoi(argv[8]));
+                cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+                if(output_mode == "depth")
+                    face_align.get_depth(osd_frame, vertices);
+                else if(output_mode == "pncc")
+                    face_align.get_pncc(osd_frame, vertices);
+                cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+            }
+            #elif defined(CONFIG_BOARD_K230_CANMV_01STUDIO)
+            {
+                ScopedTiming st("osd draw", atoi(argv[8]));
+                cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+                if(output_mode == "depth")
+                    face_align.get_depth(osd_frame, vertices);
+                else if(output_mode == "pncc")
+                    face_align.get_pncc(osd_frame, vertices);
+                cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+            }
+            #else
+            {
+                ScopedTiming st("osd draw", atoi(argv[8]));
+                if(output_mode == "depth")
+                    face_align.get_depth(osd_frame, vertices);
+                else if(output_mode == "pncc")
+                    face_align.get_pncc(osd_frame, vertices);
+            }
+            #endif
         }
 
         {
@@ -188,7 +213,7 @@ int main(int argc, char *argv[])
             face_align.pre_process(ori_img, det_results[i].bbox);
             face_align.inference();
             vector<float> vertices;
-            face_align.post_process({ori_w, ori_h},vertices); 
+            face_align.post_process({ori_w, ori_h},vertices,true); 
             if(output_mode == "depth")
                 face_align.get_depth(ori_img, vertices);
             else if(output_mode == "pncc")

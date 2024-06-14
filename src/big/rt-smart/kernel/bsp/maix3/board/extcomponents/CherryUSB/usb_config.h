@@ -8,8 +8,8 @@
 
 #include <stdint.h>
 #include "rtthread.h"
-
-#define CHERRYUSB_VERSION 0x000800
+#define CHERRYUSB_VERSION     0x010200
+#define CHERRYUSB_VERSION_STR "v1.2.0"
 
 /* ================ USB common Configuration ================ */
 
@@ -17,16 +17,11 @@
 
 #define usb_malloc(size) malloc(size)
 #define usb_free(ptr)    free(ptr)
-
-// #define usb_memcpy(dst, src, size) myMemcpy(dst, src, size)
-// #define usb_memset(ptr, c, size) myMemset(ptr, c, size)
-
 #define usb_memcpy(dst, src, size) rt_memcpy(dst, src, size)
 #define usb_memset(ptr, c, size) rt_memset(ptr, c, size)
 
 #ifndef CONFIG_USB_DBG_LEVEL
 #define CONFIG_USB_DBG_LEVEL USB_DBG_WARNING
-// #define CONFIG_USB_DBG_LEVEL USB_DBG_LOG
 #endif
 
 #define CONFIG_USB_ERROR_USE_SYSTEM
@@ -36,18 +31,15 @@
 
 /* data align size when use dma */
 #ifndef CONFIG_USB_ALIGN_SIZE
-#define CONFIG_USB_ALIGN_SIZE 8
+#define CONFIG_USB_ALIGN_SIZE 64
 #endif
 
 /* attribute data into no cache ram */
-#define CONFIG_ENABLE_SUPPORT_NONCACHE   (0)
-#if CONFIG_ENABLE_SUPPORT_NONCACHE
-#define USB_NOCACHE_RAM_SECTION __attribute__((section(".cherryusb_nocache")))
-#else
-#define USB_NOCACHE_RAM_SECTION
-#endif
+#define USB_NOCACHE_RAM_SECTION //__attribute__((section(".noncacheable")))
 
 /* ================= USB Device Stack Configuration ================ */
+
+#define CONFIG_USBDEV_MAX_BUS 1 // for now, bus num must be 1 except hpm ip
 
 /* Ep0 max transfer buffer, specially for receiving data from ep0 out */
 #define CONFIG_USBDEV_REQUEST_BUFFER_LEN 256
@@ -61,29 +53,12 @@
 /* Enable test mode */
 // #define CONFIG_USBDEV_TEST_MODE
 
-#define CONFIG_USBDEV_TX_THREAD
-#define CONFIG_USBDEV_RX_THREAD
-
-#ifdef CONFIG_USBDEV_TX_THREAD
-#ifndef CONFIG_USBDEV_TX_PRIO
-#define CONFIG_USBDEV_TX_PRIO 4
-#endif
-#ifndef CONFIG_USBDEV_TX_STACKSIZE
-#define CONFIG_USBDEV_TX_STACKSIZE 2048
-#endif
+#ifndef CONFIG_USBDEV_MSC_MAX_LUN
+#define CONFIG_USBDEV_MSC_MAX_LUN 1
 #endif
 
-#ifdef CONFIG_USBDEV_RX_THREAD
-#ifndef CONFIG_USBDEV_RX_PRIO
-#define CONFIG_USBDEV_RX_PRIO 4
-#endif
-#ifndef CONFIG_USBDEV_RX_STACKSIZE
-#define CONFIG_USBDEV_RX_STACKSIZE 2048
-#endif
-#endif
-
-#ifndef CONFIG_USBDEV_MSC_BLOCK_SIZE
-#define CONFIG_USBDEV_MSC_BLOCK_SIZE 512
+#ifndef CONFIG_USBDEV_MSC_MAX_BUFSIZE
+#define CONFIG_USBDEV_MSC_MAX_BUFSIZE 512
 #endif
 
 #ifndef CONFIG_USBDEV_MSC_MANUFACTURER_STRING
@@ -98,16 +73,18 @@
 #define CONFIG_USBDEV_MSC_VERSION_STRING "0.01"
 #endif
 
-#ifndef CONFIG_USBDEV_AUDIO_VERSION
-#define CONFIG_USBDEV_AUDIO_VERSION 0x0100
+// #define CONFIG_USBDEV_MSC_THREAD
+
+#ifndef CONFIG_USBDEV_MSC_PRIO
+#define CONFIG_USBDEV_MSC_PRIO 4
 #endif
 
-#ifndef CONFIG_USBDEV_AUDIO_MAX_CHANNEL
-#define CONFIG_USBDEV_AUDIO_MAX_CHANNEL 8
+#ifndef CONFIG_USBDEV_MSC_STACKSIZE
+#define CONFIG_USBDEV_MSC_STACKSIZE 2048
 #endif
 
 #ifndef CONFIG_USBDEV_RNDIS_RESP_BUFFER_SIZE
-#define CONFIG_USBDEV_RNDIS_RESP_BUFFER_SIZE 128
+#define CONFIG_USBDEV_RNDIS_RESP_BUFFER_SIZE 156
 #endif
 
 #ifndef CONFIG_USBDEV_RNDIS_ETH_MAX_FRAME_SIZE
@@ -129,20 +106,29 @@
 #define CONFIG_USBHOST_MAX_RHPORTS          1
 #define CONFIG_USBHOST_MAX_EXTHUBS          1
 #define CONFIG_USBHOST_MAX_EHPORTS          4
-#define CONFIG_USBHOST_MAX_INTERFACES       6
-#define CONFIG_USBHOST_MAX_INTF_ALTSETTINGS 1
+#define CONFIG_USBHOST_MAX_INTERFACES       8
+#define CONFIG_USBHOST_MAX_INTF_ALTSETTINGS 8
 #define CONFIG_USBHOST_MAX_ENDPOINTS        4
+
+#define CONFIG_USBHOST_MAX_CDC_ACM_CLASS 4
+#define CONFIG_USBHOST_MAX_HID_CLASS     4
+#define CONFIG_USBHOST_MAX_MSC_CLASS     2
+#define CONFIG_USBHOST_MAX_AUDIO_CLASS   1
+#define CONFIG_USBHOST_MAX_VIDEO_CLASS   1
 
 #define CONFIG_USBHOST_DEV_NAMELEN 16
 
 #ifndef CONFIG_USBHOST_PSC_PRIO
-#define CONFIG_USBHOST_PSC_PRIO 4
+#define CONFIG_USBHOST_PSC_PRIO 0
 #endif
 #ifndef CONFIG_USBHOST_PSC_STACKSIZE
-#define CONFIG_USBHOST_PSC_STACKSIZE 2048
+#define CONFIG_USBHOST_PSC_STACKSIZE 4096
 #endif
 
-#define CONFIG_USBHOST_GET_STRING_DESC
+//#define CONFIG_USBHOST_GET_STRING_DESC
+
+// #define CONFIG_USBHOST_MSOS_ENABLE
+#define CONFIG_USBHOST_MSOS_VENDOR_CODE 0x00
 
 /* Ep0 max transfer buffer */
 #define CONFIG_USBHOST_REQUEST_BUFFER_LEN 512
@@ -155,54 +141,38 @@
 #define CONFIG_USBHOST_MSC_TIMEOUT 5000
 #endif
 
-/* ================ USB Device Port Configuration ================*/
-extern uintptr_t g_usb_otg_base;
+#define CONFIG_USBHOST_BLUETOOTH_HCI_H4
+// #define CONFIG_USBHOST_BLUETOOTH_HCI_LOG
 
-#define CONFIG_USB_HS
-#define CONFIG_USB_DWC2_PORT            HS_PORT
-#define CONFIG_USB_DWC2_DMA_ENABLE      (0)
-#define USBD_IRQHandler                 usbd_irq_handler
-#define USBH_IRQHandler                 usbh_irq_handler
-#define USB_BASE                        (g_usb_otg_base)
-#define USB_NUM_BIDIR_ENDPOINTS         (6)
+#ifndef CONFIG_USBHOST_BLUETOOTH_TX_SIZE
+#define CONFIG_USBHOST_BLUETOOTH_TX_SIZE 2048
+#endif
+#ifndef CONFIG_USBHOST_BLUETOOTH_RX_SIZE
+#define CONFIG_USBHOST_BLUETOOTH_RX_SIZE 2048
+#endif
+
+/* ================ USB Device Port Configuration ================*/
+
+#ifndef CONFIG_USBDEV_EP_NUM
+#define CONFIG_USBDEV_EP_NUM 6
+#endif
 
 /* ================ USB Host Port Configuration ==================*/
 
-#define CONFIG_USBHOST_PIPE_NUM         12
+#define CONFIG_USBHOST_MAX_BUS 1
+#define CONFIG_USBHOST_PIPE_NUM 6
 
 /* ================ EHCI Configuration ================ */
 
-#define CONFIG_USB_EHCI_HCCR_BASE       (0x20072000)
-#define CONFIG_USB_EHCI_HCOR_BASE       (0x20072000 + 0x10)
+#define CONFIG_USB_EHCI_HCCR_OFFSET     (0x0)
+#define CONFIG_USB_OHCI_HCOR_OFFSET     (0x400)
 #define CONFIG_USB_EHCI_FRAME_LIST_SIZE 1024
-// #define CONFIG_USB_EHCI_INFO_ENABLE
-// #define CONFIG_USB_ECHI_HCOR_RESERVED_DISABLE
+#define CONFIG_USB_EHCI_QH_NUM          CONFIG_USBHOST_PIPE_NUM
+#define CONFIG_USB_EHCI_QTD_NUM         3
+#define CONFIG_USB_EHCI_ITD_NUM         20
+// #define CONFIG_USB_EHCI_HCOR_RESERVED_DISABLE
 // #define CONFIG_USB_EHCI_CONFIGFLAG
-// #define CONFIG_USB_EHCI_PORT_POWER
-
-
-static inline void * myMemcpy(void *dst, void *src, size_t n)
-{
-    uint8_t *_src = (uint8_t *)src;
-    uint8_t *_dst = (uint8_t *)dst;
-    size_t size = n;
-
-    for(size_t i = 0; i < size; i++) {
-        _dst[i] = _src[i];
-    }
-    return _dst;
-}
-
-static inline void *myMemset(void *p, int c, size_t n)
-{
-    uint8_t *_dst = (uint8_t *)p;
-    size_t size = n;
-    uint8_t ch = (uint8_t)c;
-
-    for(size_t i = 0; i < size; i++) {
-        _dst[i] = ch;
-    }
-    return _dst;
-}
+// #define CONFIG_USB_EHCI_ISO
+// #define CONFIG_USB_EHCI_WITH_OHCI
 
 #endif

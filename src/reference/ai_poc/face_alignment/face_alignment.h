@@ -109,9 +109,10 @@ public:
      * @brief kmodel推理结果后处理
      * @param frame_size            原始图像/帧宽高，用于将结果放到原始图像大小
      * @param vertices              后处理后3d点
+     * @param pic_mode              ture(原图片)，false(osd)
      * @return None
      */
-    void post_process(FrameSize frame_size, vector<float>& vertices);
+    void post_process(FrameSize frame_size, vector<float>& vertices, bool pic_mode);
 
     /**
      * @brief 获取深度图

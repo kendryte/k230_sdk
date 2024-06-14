@@ -1,0 +1,11 @@
+config SND_SOC_CANAAN_K230_INNO
+	tristate "ASoC support for CANAAN boards using a inno codec"
+	help
+	  Say Y or M here if you want to add support for SoC audio on CANAAN K230
+	  boards using the INNO codec.
+
+config SND_SOC_CANAAN_K230_AUDIO
+	tristate "CANAAN K230 AUDIO interface support"
+	help
+	  Say Y or M here if you want to enable audio for canaan soc.
+

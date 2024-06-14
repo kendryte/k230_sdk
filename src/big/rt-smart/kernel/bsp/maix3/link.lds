@@ -70,6 +70,11 @@ SECTIONS
         __rt_utest_tc_tab_end = .;
 
         . = ALIGN(8);
+        __usbh_class_info_start__ = .;
+        KEEP(*(.usbh_class_info))
+        __usbh_class_info_end__ = .;
+
+        . = ALIGN(8);
         _etext = .;
     } > SRAM
 

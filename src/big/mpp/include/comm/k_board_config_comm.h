@@ -188,6 +188,33 @@ extern "C" {
 #define LT9611_SLAVE_ADDR   0x3b
 #define LT9611_I2C_BUS      "i2c3"//"i2c4"
 
+#elif defined(CONFIG_BOARD_K230_CANMV_DONGSHANPI)
+// usip evb gpio config
+// display gpio
+#define DISPLAY_LCD_RST_GPIO                            22
+#define DISPLAY_LCD_BACKLIGHT_EN                        25
+
+// imx335 gpio config
+#define VICAP_IMX335_RST_GPIO                           46
+#define VICAP_IMX335_MASTER_GPIO                        28
+//OV9286 gpio cinfig
+#define VICAP_OV9286_RST_GPIO                           20
+
+#define OV5647_IIC "i2c0"
+#define OV5647_CAM_PIN                                  61
+
+#define OV5647_CSI1_IIC  "i2c1"
+#define OV5647_CSI2_IIC "i2c4"
+
+#define OV5647_CAM_PIN_CSI2                             (21)
+#define OV5647_CAM_PIN_CSI1                             (60)
+
+#define OV9732_RST_PIN                                  (28)
+
+#define LT9611_RESET_GPIO   24 //42
+#define LT9611_SLAVE_ADDR   0x3b
+#define LT9611_I2C_BUS      "i2c3"//"i2c4"
+
 #else
 
 #define DISPLAY_LCD_RST_GPIO                            9

@@ -57,6 +57,8 @@ static char sccsid[] = "@(#)xdr_mem.c 1.19 87/08/11 Copyr 1984 Sun Micro";
 
 static bool_t xdrmem_getlong (XDR *, long *);
 static bool_t xdrmem_putlong (XDR *, const long *);
+static bool_t xdrmem_getint32 (XDR *, unsigned int *);
+static bool_t xdrmem_putint32 (XDR *, const unsigned int *);
 static bool_t xdrmem_getbytes (XDR *, char *, unsigned int);
 static bool_t xdrmem_putbytes (XDR *, const char *, unsigned int);
 static unsigned int xdrmem_getpos (const XDR *);
@@ -73,8 +75,8 @@ static struct xdr_ops xdrmem_ops = {
 	xdrmem_setpos,
 	xdrmem_inline,
 	xdrmem_destroy,
-	NULL,
-	NULL
+	xdrmem_getint32,
+	xdrmem_putint32
 };
 
 
@@ -115,6 +117,28 @@ xdrmem_putlong (XDR *xdrs, const long *lp)
 
   *(int32_t *) xdrs->x_private = htonl(*lp);
   xdrs->x_private += 4;
+  return (TRUE);
+}
+
+static bool_t
+xdrmem_getint32 (XDR *xdrs, unsigned int *lp)
+{
+  if (xdrs->x_handy < sizeof(unsigned int)) return FALSE;
+  xdrs->x_handy -= sizeof(unsigned int);
+
+  *lp = (unsigned int) ntohl((*((int32_t *) (xdrs->x_private))));
+  xdrs->x_private += sizeof(unsigned int);
+  return TRUE;
+}
+
+static bool_t
+xdrmem_putint32 (XDR *xdrs, const unsigned int *lp)
+{
+  if (xdrs->x_handy < sizeof(unsigned int)) return FALSE;
+  xdrs->x_handy -= sizeof(unsigned int);
+
+  *(int32_t *) xdrs->x_private = htonl(*lp);
+  xdrs->x_private += sizeof(unsigned int);
   return (TRUE);
 }
 

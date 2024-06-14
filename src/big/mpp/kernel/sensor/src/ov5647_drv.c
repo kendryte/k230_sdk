@@ -26,6 +26,8 @@
 #include "sensor_dev.h"
 #include "k_board_config_comm.h"
 
+#include "k_vicap_comm.h"
+
 //#include <riscv_io.h>
 #include "io.h"
 #include "drv_gpio.h"
@@ -61,6 +63,9 @@
 #define MIPI_CTRL00_BUS_IDLE                                (1 << 1)
 #define MIPI_CTRL00_CLOCK_LANE_DISABLE                      (1 << 0)
 
+
+static k_bool mirror_flag = 0;
+
 static const k_sensor_reg sensor_oe_disable_regs[] = {
     {0x3000, 0x00},
     {0x3001, 0x00},
@@ -74,6 +79,13 @@ static const k_sensor_reg sensor_oe_enable_regs[] = {
     {0x3002, 0xe4},
     {REG_NULL, 0x00},
 };
+
+static k_sensor_reg sensor_mirror_reg[] = {
+    {0x3820, 0x00},
+    {0x3821, 0x00},
+    {REG_NULL, 0x00},
+};
+
 
 
 static const k_sensor_reg ov5647_mipi2lane_1080p_30fps_linear[] = {
@@ -767,6 +779,7 @@ static k_s32 ov5647_sensor_init(void *ctx, k_sensor_mode mode)
     // }
 
     k_u16 channel_id;
+    k_u16 mirror_reg = 0;
     sensor_reg_read(&dev->i2c_info, OV5647_REG_MIPI_CTRL14, &channel_id);
     pr_info("ov5647_sensor_init OV5647_REG_MIPI_CTRL14 is %d \n", channel_id);
 
@@ -781,6 +794,11 @@ static k_s32 ov5647_sensor_init(void *ctx, k_sensor_mode mode)
     case 4:
     case 5:
         ret = sensor_reg_list_write(&dev->i2c_info, current_mode->reg_list);
+
+        if(mirror_flag == 1)
+        {
+            ret = sensor_reg_list_write(&dev->i2c_info, sensor_mirror_reg);
+        }
 
     // default:
     //     ret = sensor_reg_list_write(&dev->i2c_info, current_mode->reg_list);
@@ -878,6 +896,11 @@ static k_s32 ov5647_sensor_init(void *ctx, k_sensor_mode mode)
     case 1:
 
         ret = sensor_reg_list_write(&dev->i2c_info, current_mode->reg_list);
+
+        if(mirror_flag == 1)
+        {
+            ret = sensor_reg_list_write(&dev->i2c_info, sensor_mirror_reg);
+        }
 
          current_mode->ae_info.frame_length = 2051;
          current_mode->ae_info.cur_frame_length = current_mode->ae_info.frame_length;
@@ -1366,6 +1389,91 @@ static k_s32 ov5647_sensor_get_otp_data(void *ctx, void *data)
     return ret;
 }
 
+
+static k_s32 ov5647_sensor_mirror_set(void *ctx, k_vicap_mirror_mode mirror)
+{
+    k_s32 ret = 0;
+    struct sensor_driver_dev *dev = ctx;
+
+    rt_kprintf("mirror mirror is %d , sensor tpye is %d \n", mirror.mirror, mirror.sensor_type);
+
+    // get current sensor type
+    for (k_s32 i = 0; i < sizeof(ov5647_mode_info) / sizeof(k_sensor_mode); i++) {
+        if (ov5647_mode_info[i].sensor_type == mirror.sensor_type) {
+            if(mirror.sensor_type == OV_OV5647_MIPI_CSI0_1920X1080_30FPS_10BIT_LINEAR_V2)
+            {
+                // default flip (3820) = 0x2
+                switch(mirror.mirror)
+                {
+                    case VICAP_MIRROR_NONE :
+                        ov5647_mode_info[i].bayer_pattern = BAYER_PAT_GRBG;
+                        mirror_flag = 0;
+                        return 0;
+                    case VICAP_MIRROR_HOR :
+                        // set mirror
+                        sensor_mirror_reg[0].val = 0x2;
+                        sensor_mirror_reg[1].val = 0x2;
+                        // set sensor info bayer pattern 
+                        ov5647_mode_info[i].bayer_pattern = BAYER_PAT_RGGB;
+                        break;
+                    case VICAP_MIRROR_VER :
+                        // set mirror
+                        sensor_mirror_reg[0].val = 0x0;
+                        sensor_mirror_reg[1].val = 0x0;
+                        // set sensor info bayer pattern 
+                        ov5647_mode_info[i].bayer_pattern = BAYER_PAT_BGGR;
+                        break;
+                    case VICAP_MIRROR_BOTH :
+                        // set mirror
+                        sensor_mirror_reg[0].val = 0x0;
+                        sensor_mirror_reg[1].val = 0x2;
+                        // set sensor info bayer pattern 
+                        ov5647_mode_info[i].bayer_pattern = BAYER_PAT_GBRG;
+                        break;
+                }
+            }
+            else
+            {
+                // default mirror(3821) = 0x2
+                switch(mirror.mirror)
+                {
+                    case VICAP_MIRROR_NONE :
+                        ov5647_mode_info[i].bayer_pattern = BAYER_PAT_GBRG;
+                        mirror_flag = 0;
+                        return 0;
+                    case VICAP_MIRROR_HOR :
+                        // set mirror
+                        sensor_mirror_reg[0].val = 0x0;
+                        sensor_mirror_reg[1].val = 0x0;
+                        // set sensor info bayer pattern 
+                        ov5647_mode_info[i].bayer_pattern = BAYER_PAT_BGGR;
+                        break;
+                    case VICAP_MIRROR_VER :
+                        // set mirror
+                        sensor_mirror_reg[0].val = 0x2;
+                        sensor_mirror_reg[1].val = 0x2;
+                        // set sensor info bayer pattern 
+                        ov5647_mode_info[i].bayer_pattern = BAYER_PAT_RGGB;
+                        break;
+                    case VICAP_MIRROR_BOTH :
+                        // set mirror
+                        sensor_mirror_reg[0].val = 0x2;
+                        sensor_mirror_reg[1].val = 0x0;
+                        // set sensor info bayer pattern 
+                        ov5647_mode_info[i].bayer_pattern = BAYER_PAT_GRBG;
+                        break;
+                }
+            }
+            
+            // set mirror flag
+            mirror_flag = 1;
+            return 0;
+        }
+    }
+    rt_kprintf("ov5647 sensor mirror set failed , sensor type is err \n");
+    return -1;
+}
+
 struct sensor_driver_dev ov5647_sensor_drv = {
     .i2c_info = {
         .i2c_bus = NULL,
@@ -1402,5 +1510,6 @@ struct sensor_driver_dev ov5647_sensor_drv = {
         .sensor_set_tpg = ov5647_sensor_set_tpg,
         .sensor_get_expand_curve = ov5647_sensor_get_expand_curve,
         .sensor_get_otp_data = ov5647_sensor_get_otp_data,
+        .sensor_mirror_set = ov5647_sensor_mirror_set,
     },
 };

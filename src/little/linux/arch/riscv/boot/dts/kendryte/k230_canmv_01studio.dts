@@ -44,7 +44,7 @@
     status = "okay";
     no-1-8-v;
     cap-sd-highspeed;
-    rx_delay_line = <0x00>;
+    rx_delay_line = <0x0d>;
     tx_delay_line = <0xb0>;
 };
 
@@ -66,7 +66,7 @@
 &gpio23 {
     status = "okay";
 };
-
+/* // conflict with HDMI
 &i2c3 {
 	status = "okay";
 	touchscreen@38 {
@@ -77,3 +77,4 @@
 		reset-gpios = <&port22 0 GPIO_ACTIVE_LOW>;
 	};
 };
+*/

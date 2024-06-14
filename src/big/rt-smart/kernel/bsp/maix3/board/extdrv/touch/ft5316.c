@@ -115,8 +115,14 @@ static rt_size_t ft5316_read_point(struct rt_touch_device *touch, void *buf, rt_
     return sizeof(struct rt_touch_data) * read_point;
 }
 
+static rt_err_t ft5316_control(struct rt_touch_device *touch, int cmd, void *arg)
+{
+    return -RT_ENOSYS;
+}
+
 static struct rt_touch_ops touch_ops = {
     .touch_readpoint = ft5316_read_point,
+    .touch_control = ft5316_control,
 };
 
 static struct ft5316_dev ft5316_dev0 = {

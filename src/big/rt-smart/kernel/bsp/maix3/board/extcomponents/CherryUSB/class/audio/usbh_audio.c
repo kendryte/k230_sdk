@@ -6,6 +6,10 @@
 #include "usbh_core.h"
 #include "usbh_audio.h"
 
+#undef USB_DBG_TAG
+#define USB_DBG_TAG "usbh_audio"
+#include "usb_log.h"
+
 #define DEV_FORMAT "/dev/audio%d"
 
 /* general descriptor field offsets */
@@ -17,33 +21,38 @@
 #define INTF_DESC_bInterfaceNumber  2 /** Interface number offset */
 #define INTF_DESC_bAlternateSetting 3 /** Alternate setting offset */
 
-static uint32_t g_devinuse = 0;
+#ifndef CONFIG_USBHOST_MAX_AUDIO_CLASS
+#define CONFIG_USBHOST_MAX_AUDIO_CLASS 4
+#endif
 
 USB_NOCACHE_RAM_SECTION USB_MEM_ALIGNX uint8_t g_audio_buf[128];
 
-static int usbh_audio_devno_alloc(struct usbh_audio *audio_class)
+static struct usbh_audio g_audio_class[CONFIG_USBHOST_MAX_AUDIO_CLASS];
+static uint32_t g_devinuse = 0;
+
+static struct usbh_audio *usbh_audio_class_alloc(void)
 {
     int devno;
 
-    for (devno = 0; devno < 32; devno++) {
-        uint32_t bitno = 1 << devno;
-        if ((g_devinuse & bitno) == 0) {
-            g_devinuse |= bitno;
-            audio_class->minor = devno;
-            return 0;
+    for (devno = 0; devno < CONFIG_USBHOST_MAX_AUDIO_CLASS; devno++) {
+        if ((g_devinuse & (1 << devno)) == 0) {
+            g_devinuse |= (1 << devno);
+            usb_memset(&g_audio_class[devno], 0, sizeof(struct usbh_audio));
+            g_audio_class[devno].minor = devno;
+            return &g_audio_class[devno];
         }
     }
-
-    return -EMFILE;
+    return NULL;
 }
 
-static void usbh_audio_devno_free(struct usbh_audio *audio_class)
+static void usbh_audio_class_free(struct usbh_audio *audio_class)
 {
     int devno = audio_class->minor;
 
     if (devno >= 0 && devno < 32) {
         g_devinuse &= ~(1 << devno);
     }
+    usb_memset(audio_class, 0, sizeof(struct usbh_audio));
 }
 
 int usbh_audio_open(struct usbh_audio *audio_class, const char *name, uint32_t samp_freq)
@@ -57,7 +66,7 @@ int usbh_audio_open(struct usbh_audio *audio_class, const char *name, uint32_t s
     uint8_t altsetting = 1;
 
     if (audio_class->is_opened) {
-        return -EMFILE;
+        return 0;
     }
 
     for (uint8_t i = 0; i < audio_class->module_num; i++) {
@@ -74,7 +83,7 @@ int usbh_audio_open(struct usbh_audio *audio_class, const char *name, uint32_t s
         }
     }
 
-    return -ENODEV;
+    return -USB_ERR_NODEV;
 
 freq_found:
 
@@ -84,7 +93,7 @@ freq_found:
     setup->wIndex = intf;
     setup->wLength = 0;
 
-    ret = usbh_control_transfer(audio_class->hport->ep0, setup, NULL);
+    ret = usbh_control_transfer(audio_class->hport, setup, NULL);
     if (ret < 0) {
         return ret;
     }
@@ -98,7 +107,7 @@ freq_found:
     setup->wLength = 3;
 
     usb_memcpy(g_audio_buf, &samp_freq, 3);
-    ret = usbh_control_transfer(audio_class->hport->ep0, setup, g_audio_buf);
+    ret = usbh_control_transfer(audio_class->hport, setup, g_audio_buf);
     if (ret < 0) {
         return ret;
     }
@@ -107,10 +116,10 @@ freq_found:
     mps = ep_desc->wMaxPacketSize & USB_MAXPACKETSIZE_MASK;
     if (ep_desc->bEndpointAddress & 0x80) {
         audio_class->isoin_mps = mps * (mult + 1);
-        usbh_hport_activate_epx(&audio_class->isoin, audio_class->hport, ep_desc);
+        USBH_EP_INIT(audio_class->isoin, ep_desc);
     } else {
         audio_class->isoout_mps = mps * (mult + 1);
-        usbh_hport_activate_epx(&audio_class->isoout, audio_class->hport, ep_desc);
+        USBH_EP_INIT(audio_class->isoout, ep_desc);
     }
 
     USB_LOG_INFO("Open audio module :%s, altsetting: %u\r\n", name, altsetting);
@@ -133,7 +142,7 @@ int usbh_audio_close(struct usbh_audio *audio_class, const char *name)
     }
 
     if (intf == 0xff) {
-        return -ENODEV;
+        return -USB_ERR_NODEV;
     }
 
     USB_LOG_INFO("Close audio module :%s\r\n", name);
@@ -142,12 +151,10 @@ int usbh_audio_close(struct usbh_audio *audio_class, const char *name)
     ep_desc = &audio_class->hport->config.intf[intf].altsetting[altsetting].ep[0].ep_desc;
     if (ep_desc->bEndpointAddress & 0x80) {
         if (audio_class->isoin) {
-            usbh_pipe_free(audio_class->isoin);
             audio_class->isoin = NULL;
         }
     } else {
         if (audio_class->isoout) {
-            usbh_pipe_free(audio_class->isoout);
             audio_class->isoout = NULL;
         }
     }
@@ -158,7 +165,7 @@ int usbh_audio_close(struct usbh_audio *audio_class, const char *name)
     setup->wIndex = intf;
     setup->wLength = 0;
 
-    ret = usbh_control_transfer(audio_class->hport->ep0, setup, NULL);
+    ret = usbh_control_transfer(audio_class->hport, setup, NULL);
 
     return ret;
 }
@@ -179,7 +186,7 @@ int usbh_audio_set_volume(struct usbh_audio *audio_class, const char *name, uint
     }
 
     if (intf == 0xff) {
-        return -ENODEV;
+        return -USB_ERR_NODEV;
     }
 
     setup->bmRequestType = USB_REQUEST_DIR_OUT | USB_REQUEST_CLASS | USB_REQUEST_RECIPIENT_INTERFACE;
@@ -191,7 +198,7 @@ int usbh_audio_set_volume(struct usbh_audio *audio_class, const char *name, uint
     volume_hex = -0xDB00 / 100 * volume + 0xdb00;
 
     usb_memcpy(g_audio_buf, &volume_hex, 2);
-    ret = usbh_control_transfer(audio_class->hport->ep0, setup, NULL);
+    ret = usbh_control_transfer(audio_class->hport, setup, NULL);
 
     return ret;
 }
@@ -211,7 +218,7 @@ int usbh_audio_set_mute(struct usbh_audio *audio_class, const char *name, uint8_
     }
 
     if (intf == 0xff) {
-        return -ENODEV;
+        return -USB_ERR_NODEV;
     }
 
     setup->bmRequestType = USB_REQUEST_DIR_OUT | USB_REQUEST_CLASS | USB_REQUEST_RECIPIENT_INTERFACE;
@@ -221,35 +228,35 @@ int usbh_audio_set_mute(struct usbh_audio *audio_class, const char *name, uint8_
     setup->wLength = 1;
 
     usb_memcpy(g_audio_buf, &mute, 1);
-    ret = usbh_control_transfer(audio_class->hport->ep0, setup, g_audio_buf);
-    
+    ret = usbh_control_transfer(audio_class->hport, setup, g_audio_buf);
+
     return ret;
 }
 
 void usbh_audio_list_module(struct usbh_audio *audio_class)
 {
     USB_LOG_INFO("============= Audio module information ===================\r\n");
-    USB_LOG_INFO("bcdADC :%04x\r\n", audio_class->bcdADC);
-    USB_LOG_INFO("Num of modules :%u\r\n", audio_class->module_num);
-    USB_LOG_INFO("Num of altsettings:%u\r\n", audio_class->num_of_intf_altsettings);
+    USB_LOG_RAW("bcdADC :%04x\r\n", audio_class->bcdADC);
+    USB_LOG_RAW("Num of modules :%u\r\n", audio_class->module_num);
+    USB_LOG_RAW("Num of altsettings:%u\r\n", audio_class->num_of_intf_altsettings);
 
     for (uint8_t i = 0; i < audio_class->module_num; i++) {
-        USB_LOG_INFO("  module name :%s\r\n", audio_class->module[i].name);
-        USB_LOG_INFO("  module feature unit id :%d\r\n", audio_class->module[i].feature_unit_id);
+        USB_LOG_RAW("  module name :%s\r\n", audio_class->module[i].name);
+        USB_LOG_RAW("  module feature unit id :%d\r\n", audio_class->module[i].feature_unit_id);
 
         for (uint8_t j = 0; j < audio_class->num_of_intf_altsettings; j++) {
             if (j == 0) {
-                USB_LOG_INFO("      Ingore altsetting 0\r\n");
+                USB_LOG_RAW("      Ingore altsetting 0\r\n");
                 continue;
             }
-            USB_LOG_INFO("      Altsetting %u\r\n", j);
-            USB_LOG_INFO("          module channels :%u\r\n", audio_class->module[i].altsetting[j].channels);
-            //USB_LOG_INFO("        module format_type :%u\r\n",audio_class->module[i].altsetting[j].format_type);
-            USB_LOG_INFO("          module bitresolution :%u\r\n", audio_class->module[i].altsetting[j].bitresolution);
-            USB_LOG_INFO("          module sampfreq num :%u\r\n", audio_class->module[i].altsetting[j].sampfreq_num);
+            USB_LOG_RAW("      Altsetting %u\r\n", j);
+            USB_LOG_RAW("          module channels :%u\r\n", audio_class->module[i].altsetting[j].channels);
+            //USB_LOG_RAW("        module format_type :%u\r\n",audio_class->module[i].altsetting[j].format_type);
+            USB_LOG_RAW("          module bitresolution :%u\r\n", audio_class->module[i].altsetting[j].bitresolution);
+            USB_LOG_RAW("          module sampfreq num :%u\r\n", audio_class->module[i].altsetting[j].sampfreq_num);
 
             for (uint8_t k = 0; k < audio_class->module[i].altsetting[j].sampfreq_num; k++) {
-                USB_LOG_INFO("              module sampfreq :%d hz\r\n", audio_class->module[i].altsetting[j].sampfreq[k]);
+                USB_LOG_RAW("              module sampfreq :%d hz\r\n", audio_class->module[i].altsetting[j].sampfreq[k]);
             }
         }
     }
@@ -269,14 +276,12 @@ static int usbh_audio_ctrl_connect(struct usbh_hubport *hport, uint8_t intf)
     uint8_t format_offset = 0;
     uint8_t *p;
 
-    struct usbh_audio *audio_class = usb_malloc(sizeof(struct usbh_audio));
+    struct usbh_audio *audio_class = usbh_audio_class_alloc();
     if (audio_class == NULL) {
         USB_LOG_ERR("Fail to alloc audio_class\r\n");
-        return -ENOMEM;
+        return -USB_ERR_NOMEM;
     }
 
-    usb_memset(audio_class, 0, sizeof(struct usbh_audio));
-    usbh_audio_devno_alloc(audio_class);
     audio_class->hport = hport;
     audio_class->ctrl_intf = intf;
     audio_class->num_of_intf_altsettings = hport->config.intf[intf + 1].altsetting_num;
@@ -383,7 +388,7 @@ static int usbh_audio_ctrl_connect(struct usbh_hubport *hport, uint8_t intf)
     }
 
     if ((input_offset != output_offset) && (input_offset != feature_unit_offset) && (input_offset != format_offset)) {
-        return -EINVAL;
+        return -USB_ERR_INVAL;
     }
 
     audio_class->module_num = input_offset;
@@ -412,22 +417,18 @@ static int usbh_audio_ctrl_disconnect(struct usbh_hubport *hport, uint8_t intf)
     struct usbh_audio *audio_class = (struct usbh_audio *)hport->config.intf[intf].priv;
 
     if (audio_class) {
-        usbh_audio_devno_free(audio_class);
-
         if (audio_class->isoin) {
-            usbh_pipe_free(audio_class->isoin);
         }
 
         if (audio_class->isoout) {
-            usbh_pipe_free(audio_class->isoout);
         }
 
-        usbh_audio_stop(audio_class);
-        usb_memset(audio_class, 0, sizeof(struct usbh_audio));
-        usb_free(audio_class);
-
-        if (hport->config.intf[intf].devname[0] != '\0')
+        if (hport->config.intf[intf].devname[0] != '\0') {
             USB_LOG_INFO("Unregister Audio Class:%s\r\n", hport->config.intf[intf].devname);
+            usbh_audio_stop(audio_class);
+        }
+
+        usbh_audio_class_free(audio_class);
     }
 
     return ret;

@@ -510,16 +510,14 @@ function modify_big_code()
 
     {
         RT_SMART_CONFIG="${RTSMART_SRC_DIR}/kernel/bsp/maix3/rtconfig.h"
-        sed -i "/#define *RT_USING_SDIO */D" ${RT_SMART_CONFIG}
-        sed -i "/#define *RT_USING_SDIO1 */D" ${RT_SMART_CONFIG}
+        cp ${RTSMART_SRC_DIR}/kernel/bsp/maix3/configs/common_rttlinux.config ${RT_SMART_CONFIG}
         if [  "$CONFIG_SUPPORT_LINUX" != "y"  -a   "$CONFIG_SDCAED"  = "y" ] ;then 
-            #rt-smart/kernel/bsp/maix3/rtconfig.h
-            sed -i "/#endif/i #define RT_USING_SDIO" ${RT_SMART_CONFIG}
-            sed -i "/#endif/i #define RT_USING_SDIO1" ${RT_SMART_CONFIG}
+            cp ${RTSMART_SRC_DIR}/kernel/bsp/maix3/configs/common_rttonly.config ${RT_SMART_CONFIG}
+            if [ "${CONFIG_BOARD_K230D_CANMV}" = "y" ]; then 
+                cp ${RTSMART_SRC_DIR}/kernel/bsp/maix3/configs/k230d_canmv_only_rtt.config ${RT_SMART_CONFIG} 
+            fi;
         fi
     }
-
-
 }
 function modify_cdk_code()
 {

@@ -35,7 +35,14 @@
 #include <dfs_posix.h>
 #include <dfs_poll.h>
 #endif
-
+#define DBG_TAG "uart"
+#ifdef RT_DEBUG
+#define DBG_LVL DBG_LOG
+#else
+#define DBG_LVL DBG_WARNING
+#endif
+#define DBG_COLOR
+#include <rtdbg.h>
 
 #define UART_RBR (0x00)       /* receive buffer register */
 #define UART_THR (0x00)       /* transmit holding register */
@@ -254,37 +261,26 @@ const static struct dfs_file_ops _uart_fops =
 
 static void kd_uart_init(volatile void *uart_base, int index)
 {
-    uint32_t value = 0;
-    uint32_t bdiv;
-    uint32_t dlf;
-    uint32_t dlh;
-    uint32_t dll;
+    float calc_baudrate;
+    float fdiv;
+    uint8_t frac;
+    uint16_t dl;
     uint32_t uart_clock;
 
-    switch (index)
-    {
-        case 1:
-            uart_clock = sysctl_clk_get_leaf_freq(SYSCTL_CLK_UART_1_CLK);
-            break;
-        case 2:
-            uart_clock = sysctl_clk_get_leaf_freq(SYSCTL_CLK_UART_2_CLK);
-            break;
-        case 4:
-            uart_clock = sysctl_clk_get_leaf_freq(SYSCTL_CLK_UART_4_CLK);
-            break;
-        default:
-            return;
+    sysctl_clk_set_leaf_div(SYSCTL_CLK_UART_0_CLK + index, 1, 1);
+    uart_clock = sysctl_clk_get_leaf_freq(SYSCTL_CLK_UART_0_CLK + index);
+
+    fdiv = 1.0f * uart_clock / DEFAULT_BAUDRATE;
+    dl = fdiv / 16;
+    frac = 0.5f + fdiv - dl * 16;
+    if (dl == 0) {
+        dl = 1;
+        frac = 0;
     }
-
-    bdiv = uart_clock / DEFAULT_BAUDRATE;
-
-    dlh = bdiv >> 12;
-    dll = (bdiv - (dlh << 12)) / 16;
-    dlf = bdiv - (dlh << 12)  - dll * 16;
-    if(dlh == 0 && dll == 0)
-    {
-        dll = 1;
-        dlf = 0;
+    calc_baudrate = 1.0f * uart_clock / (dl * 16 + frac);
+    if ((calc_baudrate - DEFAULT_BAUDRATE) / DEFAULT_BAUDRATE > 0.02f) {
+        LOG_E("The baud rate error is too large, %u", (uint32_t)calc_baudrate);
+        return;
     }
 
     write32(uart_base + UART_LCR, 0x00);
@@ -292,14 +288,12 @@ static void kd_uart_init(volatile void *uart_base, int index)
     write32(uart_base + UART_IER, 0x00);
     /* Enable DLAB */
     write32(uart_base + UART_LCR, 0x80);
-    if (bdiv) {
-        /* Set divisor low byte */
-        write32(uart_base + UART_DLL, dll);
-        /* Set divisor high byte */
-        write32(uart_base + UART_DLH, dlh);
-        /* Set divisor fraction byte*/
-        write32(uart_base + UART_DLF, dlf);
-    }
+    /* Set divisor low byte */
+    write32(uart_base + UART_DLL, (uint8_t)dl);
+    /* Set divisor high byte */
+    write32(uart_base + UART_DLH, (uint8_t)(dl >> 8));
+    /* Set divisor fraction byte*/
+    write32(uart_base + UART_DLF, frac);
     /* 8 bits, no parity, one stop bit */
     write32(uart_base + UART_LCR, 0x03);
     /* Enable FIFO */
@@ -404,63 +398,32 @@ static rt_err_t  uart_control(rt_device_t dev, int cmd, void *args)
     struct kd_uart_device *kd_uart_device = (struct kd_uart_device *)dev->user_data;
     volatile void *uart_base = kd_uart_device->base;
     int id = kd_uart_device->id;
-
-    uint32_t bdiv;
-    uint32_t dlf;
-    uint32_t dlh;
-    uint32_t dll;
+    float calc_baudrate;
+    float fdiv;
+    uint8_t frac;
+    uint16_t dl;
     uint32_t uart_clock;
-    
-    uint32_t value = 0;
+    uint32_t value;
     struct uart_configure *config = (struct uart_configure*)args;
 
     if (cmd != IOC_SET_BAUDRATE)
-    {
         return -RT_EINVAL;
-    }
     if (config == RT_NULL || uart_base == RT_NULL)
-    {
         return -RT_EINVAL;
+
+    uart_clock = sysctl_clk_get_leaf_freq(SYSCTL_CLK_UART_0_CLK + id);
+
+    fdiv = 1.0f * uart_clock / config->baud_rate;
+    dl = fdiv / 16;
+    frac = 0.5f + fdiv - dl * 16;
+    if (dl == 0) {
+        dl = 1;
+        frac = 0;
     }
-
-    if (config->baud_rate > 3000000)
-    {
-        switch (id)
-        {
-            case 1:
-                sysctl_clk_set_leaf_div(SYSCTL_CLK_UART_1_CLK, 1, 1);
-                break;
-            case 2:
-                sysctl_clk_set_leaf_div(SYSCTL_CLK_UART_2_CLK, 1, 1);
-                break;
-            case 4:
-                sysctl_clk_set_leaf_div(SYSCTL_CLK_UART_4_CLK, 1, 1);
-                break;
-        }
-    }
-
-    switch (id)
-    {
-        case 1:
-            uart_clock = sysctl_clk_get_leaf_freq(SYSCTL_CLK_UART_1_CLK);
-            break;
-        case 2:
-            uart_clock = sysctl_clk_get_leaf_freq(SYSCTL_CLK_UART_2_CLK);
-            break;
-        case 4:
-            uart_clock = sysctl_clk_get_leaf_freq(SYSCTL_CLK_UART_4_CLK);
-            break;
-    }
-
-    bdiv = uart_clock / config->baud_rate;
-
-    dlh = bdiv >> 12;
-    dll = (bdiv - (dlh << 12)) / 16;
-    dlf = bdiv - (dlh << 12)  - dll * 16;
-    if(dlh == 0 && dll == 0)
-    {
-        dll = 1;
-        dlf = 0;
+    calc_baudrate = 1.0f * uart_clock / (dl * 16 + frac);
+    if ((calc_baudrate - config->baud_rate) / config->baud_rate > 0.02f) {
+        LOG_E("The baud rate error is too large, %u", (uint32_t)calc_baudrate);
+        return -RT_EINVAL;
     }
 
     /* stop uart */
@@ -468,11 +431,9 @@ static rt_err_t  uart_control(rt_device_t dev, int cmd, void *args)
     write32(uart_base + UART_IER, 0x00);
     write32(uart_base + UART_LCR, 0x80);
     /* caculate diciver */
-    if (bdiv) {
-        write32(uart_base + UART_DLL, dll);
-        write32(uart_base + UART_DLH, dlh);
-        write32(uart_base + UART_DLF, dlf);
-    }
+    write32(uart_base + UART_DLL, (uint8_t)dl);
+    write32(uart_base + UART_DLH, (uint8_t)(dl >> 8));
+    write32(uart_base + UART_DLF, frac);
 
     value = (config->data_bits - 5) | (config->stop_bits << 2) | (config->parity << 3);
     write32(uart_base + UART_LCR, value & ~0x80);

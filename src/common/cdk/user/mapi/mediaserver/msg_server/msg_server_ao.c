@@ -180,6 +180,27 @@ k_s32 msg_ao_unmute(k_s32 id, k_ipcmsg_message_t *msg)
 
 k_s32 msg_ao_send_frame(k_s32 id, k_ipcmsg_message_t *msg)
 {
+    k_s32 ret;
+    k_ipcmsg_message_t *resp_msg;
+    k_msg_ao_frame_t* ao_frame = msg->pBody;
+
+    ret =  kd_mapi_ao_send_frame(ao_frame->ao_hdl,&ao_frame->audio_frame);
+    if(ret != K_SUCCESS) {
+        mapi_ao_error_trace("%s failed:0x%x\n",__FUNCTION__ ,ret);
+    }
+
+    resp_msg = kd_ipcmsg_create_resp_message(msg, ret, NULL,0);
+    if(resp_msg == NULL) {
+        mapi_ao_error_trace("kd_ipcmsg_create_resp_message failed\n");
+        return K_FAILED;
+    }
+
+    ret = kd_ipcmsg_send_async(id, resp_msg, NULL);
+    if(ret != K_SUCCESS) {
+        mapi_ao_error_trace(" kd_ipcmsg_send_async failed:%x\n", ret);
+    }
+    kd_ipcmsg_destroy_message(resp_msg);
+
     return K_SUCCESS;
 }
 

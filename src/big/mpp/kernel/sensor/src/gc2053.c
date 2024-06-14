@@ -24,11 +24,7 @@
  */
 
 #include "sensor_dev.h"
-
-//#include <riscv_io.h>
 #include "io.h"
-
-// #include "gpio.h"
 #include "drv_gpio.h"
 
 #include "k_board_config_comm.h"
@@ -41,14 +37,13 @@
 #define GC2053_REG_CHIP_ID_H    0xf0
 #define GC2053_REG_CHIP_ID_L    0xf1
 
-#define GC2053_REG_LONG_EXP_TIME_H    0x3501
-#define GC2053_REG_LONG_EXP_TIME_L    0x3502
+#define GC2053_REG_EXP_TIME_H    0x03
+#define GC2053_REG_EXP_TIME_L    0x04
 
-#define GC2053_REG_LONG_AGAIN	0x3509
-//#define GC2053_REG_LONG_AGAIN_H    0x350a
-//#define GC2053_REG_LONG_AGAIN_L    0x350b
+#define GC2053_REG_AGAIN_H    0xb1
+#define GC2053_REG_AGAIN_L    0xb2
 
-#define GC2053_MIN_GAIN_STEP    (1.0f/16.0f)
+#define GC2053_MIN_GAIN_STEP    (1.0f/64.0f)
 
 
 
@@ -213,21 +208,21 @@ static const k_sensor_reg gc2053_mipi4lane_1080p_30fps_linear[] = {
 	{0xf9, 0x40},
 	{0xfc, 0x8e},
 	/****CISCTL & ANALOG****/
-	{0xfe, 0x00},
+	{0xfe, 0x00},	//Page 0
 	{0x87, 0x18},
 	{0xee, 0x30},
 	{0xd0, 0xb7},
-	{0x03, 0x04},
+	{0x03, 0x01},	//ET = 0x160 = 352
 	{0x04, 0x60},
-	{0x05, 0x04},
+	{0x05, 0x04},	//line length = 1100 * 2 = 2200
 	{0x06, 0x4c},
-	{0x07, 0x00},
+	{0x07, 0x00},	//Vblank = 0x11 = 17
 	{0x08, 0x11},
-	{0x09, 0x00},
+	{0x09, 0x00},	//raw start = 0x02
 	{0x0a, 0x02},
-	{0x0b, 0x00},
+	{0x0b, 0x00},	//col start = 0x02
 	{0x0c, 0x02},
-	{0x0d, 0x04},
+	{0x0d, 0x04},	//win_height = 1088
 	{0x0e, 0x40},
 	{0x12, 0xe2},
 	{0x13, 0x16},
@@ -261,7 +256,7 @@ static const k_sensor_reg gc2053_mipi4lane_1080p_30fps_linear[] = {
 	/*gain*/
 	{0xb6, 0xc0},
 	{0xb0, 0x60},
-	{0xb1, 0x01},
+	{0xb1, 0x01},	//gain: 1x
 	{0xb2, 0x00},
 	{0xb3, 0x00},
 	{0xb4, 0x00},
@@ -366,7 +361,7 @@ static k_sensor_mode gc2053_mode_info[] = {
         .mipi_info = {
             .csi_id = 0,
             .mipi_lanes = 2,
-            .data_type = 0x1e,
+            .data_type = 0x2B,
         },
         .reg_list = gc2053_mipi4lane_1080p_30fps_linear,
         .mclk_setting = {
@@ -492,16 +487,15 @@ static k_s32 gc2053_sensor_init(void *ctx, k_sensor_mode mode)
 
         current_mode->ae_info.frame_length = 2200;
         current_mode->ae_info.cur_frame_length = current_mode->ae_info.frame_length;
-        current_mode->ae_info.one_line_exp_time = 0.00001515;//s
+        current_mode->ae_info.one_line_exp_time = 0.000015152;//s
         current_mode->ae_info.gain_accuracy = 1024;
 
         current_mode->ae_info.min_gain = 1.0;
-        current_mode->ae_info.max_gain = 8.0;
+        current_mode->ae_info.max_gain = 15.984375;
 
-        current_mode->ae_info.int_time_delay_frame = 0;
-        current_mode->ae_info.gain_delay_frame = 0;
-        //current_mode->ae_info.ae_min_interval_frame =1.0;
-        current_mode->ae_info.color_type = SENSOR_MONO;	//mono sensor
+        current_mode->ae_info.int_time_delay_frame = 2;
+        current_mode->ae_info.gain_delay_frame = 2;
+        current_mode->ae_info.color_type = SENSOR_COLOR ;
 
         current_mode->ae_info.integration_time_increment = current_mode->ae_info.one_line_exp_time;
         current_mode->ae_info.gain_increment = GC2053_MIN_GAIN_STEP;
@@ -509,8 +503,8 @@ static k_s32 gc2053_sensor_init(void *ctx, k_sensor_mode mode)
         current_mode->ae_info.max_integraion_line = current_mode->ae_info.cur_frame_length - 1;    //2.5ms //197;  // 3ms
         current_mode->ae_info.min_integraion_line = 1;
 
-        current_mode->ae_info.max_vs_integraion_line = current_mode->ae_info.frame_length;
-        current_mode->ae_info.min_vs_integraion_line =     current_mode->ae_info.frame_length - 1;
+        current_mode->ae_info.max_vs_integraion_line = current_mode->ae_info.frame_length -1;
+        current_mode->ae_info.min_vs_integraion_line =  1;
 
         current_mode->ae_info.max_integraion_time = \
             current_mode->ae_info.integration_time_increment * \
@@ -531,20 +525,19 @@ static k_s32 gc2053_sensor_init(void *ctx, k_sensor_mode mode)
         current_mode->ae_info.cur_integration_time = 0.0;
         current_mode->ae_info.cur_vs_integration_time = 0.0;
 
+        current_mode->ae_info.cur_again = 1.0;
+        current_mode->ae_info.cur_dgain = 1.0;
 
-        current_mode->ae_info.cur_again = 0.0;
-        current_mode->ae_info.cur_dgain = 0.0;
-
-        current_mode->ae_info.cur_vs_again = 0.0;
-        current_mode->ae_info.cur_vs_dgain = 0.0;
+        current_mode->ae_info.cur_vs_again = 1.0;
+        current_mode->ae_info.cur_vs_dgain = 1.0;
 
         current_mode->ae_info.a_gain.min = 1.0;
-        current_mode->ae_info.a_gain.max = 15.9375;
-        current_mode->ae_info.a_gain.step = (1.0f/16.0f);
+        current_mode->ae_info.a_gain.max = 15.984375;
+        current_mode->ae_info.a_gain.step = (1.0f/64.0f);
 
         current_mode->ae_info.a_vs_gain.min = 1.0;
-        current_mode->ae_info.a_vs_gain.max = 15.9375;
-        current_mode->ae_info.a_vs_gain.step = (1.0f/16.0f);//
+        current_mode->ae_info.a_vs_gain.max = 15.984375;
+        current_mode->ae_info.a_vs_gain.step = (1.0f/64.0f);//
 
         current_mode->ae_info.d_gain.max = 1.0;
         current_mode->ae_info.d_gain.min = 1.0;
@@ -554,6 +547,9 @@ static k_s32 gc2053_sensor_init(void *ctx, k_sensor_mode mode)
         current_mode->ae_info.d_vs_gain.min = 1.0;
         current_mode->ae_info.d_vs_gain.step = (1.0f/1024.0f);//
         current_mode->ae_info.cur_fps = current_mode->fps;
+        current_mode->sensor_again = 0;
+        current_mode->et_line = 0;
+
         break;
 
 
@@ -567,28 +563,27 @@ static k_s32 gc2053_sensor_init(void *ctx, k_sensor_mode mode)
     k_u16 exp_time;
     float again = 0, dgain = 0;
 
-    // ret = sensor_reg_read(&dev->i2c_info, GC2053_REG_LONG_AGAIN, &again_h);
-    //ret = sensor_reg_read(&dev->i2c_info, GC2053_REG_LONG_AGAIN_H, &again_h);
-    //ret = sensor_reg_read(&dev->i2c_info, GC2053_REG_LONG_AGAIN_L, &again_l);
-    again = 1.0;// (float)again_h / 16.0f;
+    ret = sensor_reg_read(&dev->i2c_info, GC2053_REG_AGAIN_H, &again_h);
+    ret = sensor_reg_read(&dev->i2c_info, GC2053_REG_AGAIN_L, &again_l);
+    again = (float)(again_l>>2)/64.0f + again_h;
 
     dgain = 1.0;
     current_mode->ae_info.cur_gain = again * dgain;
     current_mode->ae_info.cur_long_gain = current_mode->ae_info.cur_gain;
     current_mode->ae_info.cur_vs_gain = current_mode->ae_info.cur_gain;
 
-    // ret = sensor_reg_read(&dev->i2c_info, GC2053_REG_LONG_EXP_TIME_H, &exp_time_h);
-    // ret = sensor_reg_read(&dev->i2c_info, GC2053_REG_LONG_EXP_TIME_L, &exp_time_l);
-    exp_time = (exp_time_h << 4) | ((exp_time_l >> 4) & 0x0F);
+    ret = sensor_reg_read(&dev->i2c_info, GC2053_REG_EXP_TIME_H, &exp_time_h);
+    ret = sensor_reg_read(&dev->i2c_info, GC2053_REG_EXP_TIME_L, &exp_time_l);
+    exp_time = ((exp_time_h & 0x3f) << 8) + exp_time_l;
 
-    current_mode->ae_info.cur_integration_time = exp_time * current_mode->ae_info.one_line_exp_time;
+    current_mode->ae_info.cur_integration_time = current_mode->ae_info.one_line_exp_time *  exp_time;
     gc2053_init_flag = K_TRUE;
 
     return ret;
 }
 
 
-k_s32 gc2053_sensor_get_mode(void *ctx, k_sensor_mode *mode)
+static k_s32 gc2053_sensor_get_mode(void *ctx, k_sensor_mode *mode)
 {
     k_s32 ret = -1;
 
@@ -606,7 +601,7 @@ k_s32 gc2053_sensor_get_mode(void *ctx, k_sensor_mode *mode)
     return ret;
 }
 
-k_s32 gc2053_sensor_set_mode(void *ctx, k_sensor_mode mode)
+static k_s32 gc2053_sensor_set_mode(void *ctx, k_sensor_mode mode)
 {
     k_s32 ret = 0;
 
@@ -615,7 +610,7 @@ k_s32 gc2053_sensor_set_mode(void *ctx, k_sensor_mode mode)
     return ret;
 }
 
-k_s32 gc2053_sensor_enum_mode(void *ctx, k_sensor_enum_mode *enum_mode)
+static k_s32 gc2053_sensor_enum_mode(void *ctx, k_sensor_enum_mode *enum_mode)
 {
     k_s32 ret = 0;
 
@@ -625,7 +620,7 @@ k_s32 gc2053_sensor_enum_mode(void *ctx, k_sensor_enum_mode *enum_mode)
     return ret;
 }
 
-k_s32 gc2053_sensor_get_caps(void *ctx, k_sensor_caps *caps)
+static k_s32 gc2053_sensor_get_caps(void *ctx, k_sensor_caps *caps)
 {
     k_s32 ret = 0;
 
@@ -639,7 +634,7 @@ k_s32 gc2053_sensor_get_caps(void *ctx, k_sensor_caps *caps)
     return ret;
 }
 
-k_s32 gc2053_sensor_conn_check(void *ctx, k_s32 *conn)
+static k_s32 gc2053_sensor_conn_check(void *ctx, k_s32 *conn)
 {
     k_s32 ret = 0;
 
@@ -649,7 +644,7 @@ k_s32 gc2053_sensor_conn_check(void *ctx, k_s32 *conn)
     return ret;
 }
 
-k_s32 gc2053_sensor_set_stream(void *ctx, k_s32 enable)
+static k_s32 gc2053_sensor_set_stream(void *ctx, k_s32 enable)
 {
     k_s32 ret = 0;
     struct sensor_driver_dev *dev = ctx;
@@ -665,7 +660,7 @@ k_s32 gc2053_sensor_set_stream(void *ctx, k_s32 enable)
     return ret;
 }
 
-k_s32 gc2053_sensor_get_again(void *ctx, k_sensor_gain *gain)
+static k_s32 gc2053_sensor_get_again(void *ctx, k_sensor_gain *gain)
 {
     k_s32 ret = 0;
 
@@ -684,28 +679,30 @@ k_s32 gc2053_sensor_get_again(void *ctx, k_sensor_gain *gain)
     return ret;
 }
 
-k_s32 gc2053_sensor_set_again(void *ctx, k_sensor_gain gain)
+static k_s32 gc2053_sensor_set_again(void *ctx, k_sensor_gain gain)
 {
     k_s32 ret = 0;
     k_u16 again;
     struct sensor_driver_dev *dev = ctx;
 
     if (current_mode->hdr_mode == SENSOR_MODE_LINEAR) {
-        again = (k_u16)(gain.gain[SENSOR_LINEAR_PARAS] * 16 + 0.5);
-        //if(current_mode->sensor_again !=again)
+        again = (k_u16)(gain.gain[SENSOR_LINEAR_PARAS] * 64 + 0.5)<<2;
+        if(current_mode->sensor_again !=again)
         {
-	        // ret = sensor_reg_write(&dev->i2c_info, GC2053_REG_LONG_AGAIN,(again & 0xff));
+	        ret = sensor_reg_write(&dev->i2c_info, GC2053_REG_AGAIN_H,(again>>8) & 0x0f);
+	        ret |= sensor_reg_write(&dev->i2c_info, GC2053_REG_AGAIN_L, again & 0xfc);
 	        current_mode->sensor_again = again;
         }
-        current_mode->ae_info.cur_again = (float)current_mode->sensor_again/16.0f;
+        current_mode->ae_info.cur_again = (float)current_mode->sensor_again/256.0f;
     } else if (current_mode->hdr_mode == SENSOR_MODE_HDR_STITCH) {
-        again = (k_u16)(gain.gain[SENSOR_DUAL_EXP_L_PARAS]* 16 + 0.5);
-        // ret = sensor_reg_write(&dev->i2c_info, GC2053_REG_LONG_AGAIN,(again & 0xff));
-        current_mode->ae_info.cur_again = (float)again/16.0f;
-
-        again = (k_u16)(gain.gain[SENSOR_DUAL_EXP_S_PARAS] * 16 + 0.5);
-        //TODO
-        current_mode->ae_info.cur_vs_again = (float)again/16.0f;
+        again = (k_u16)(gain.gain[SENSOR_LINEAR_PARAS] * 64 + 0.5)<<2;
+        if(current_mode->sensor_again !=again)
+        {
+	        ret = sensor_reg_write(&dev->i2c_info, GC2053_REG_AGAIN_H,(again>>8) & 0x0f);
+	        ret |= sensor_reg_write(&dev->i2c_info, GC2053_REG_AGAIN_L, again & 0xfc);
+	        current_mode->sensor_again = again;
+        }
+        current_mode->ae_info.cur_again = (float)current_mode->sensor_again/256.0f;
     } else {
         pr_err("%s, unsupport exposure frame.\n", __func__);
         return -1;
@@ -715,7 +712,7 @@ k_s32 gc2053_sensor_set_again(void *ctx, k_sensor_gain gain)
     return ret;
 }
 
-k_s32 gc2053_sensor_get_dgain(void *ctx, k_sensor_gain *gain)
+static k_s32 gc2053_sensor_get_dgain(void *ctx, k_sensor_gain *gain)
 {
     k_s32 ret = 0;
 
@@ -734,7 +731,7 @@ k_s32 gc2053_sensor_get_dgain(void *ctx, k_sensor_gain *gain)
     return ret;
 }
 
-k_s32 gc2053_sensor_set_dgain(void *ctx, k_sensor_gain gain)
+static k_s32 gc2053_sensor_set_dgain(void *ctx, k_sensor_gain gain)
 {
     k_s32 ret = 0;
     k_u32 dgain;
@@ -766,7 +763,7 @@ k_s32 gc2053_sensor_set_dgain(void *ctx, k_sensor_gain gain)
     return ret;
 }
 
-k_s32 gc2053_sensor_get_intg_time(void *ctx, k_sensor_intg_time *time)
+static k_s32 gc2053_sensor_get_intg_time(void *ctx, k_sensor_intg_time *time)
 {
     k_s32 ret = 0;
 
@@ -785,34 +782,26 @@ k_s32 gc2053_sensor_get_intg_time(void *ctx, k_sensor_intg_time *time)
     return ret;
 }
 
-k_s32 gc2053_sensor_set_intg_time(void *ctx, k_sensor_intg_time time)
+static k_s32 gc2053_sensor_set_intg_time(void *ctx, k_sensor_intg_time time)
 {
     k_s32 ret = 0;
     k_u16 exp_line = 0;
-    k_u16 Strobe_StartPoint = 0;
-    k_u16 Strobe_Width = 0;
     float integraion_time = 0;
     struct sensor_driver_dev *dev = ctx;
+
+    k_u16 exp_reg = 0;
+    k_u16 exp_reg_l = 0;
 
     if (current_mode->hdr_mode == SENSOR_MODE_LINEAR) {
         integraion_time = time.intg_time[SENSOR_LINEAR_PARAS];
 
         exp_line = integraion_time / current_mode->ae_info.one_line_exp_time;
         exp_line = MIN(current_mode->ae_info.max_integraion_line, MAX(1, exp_line));
-        //if (current_mode->et_line != exp_line)
+        if (current_mode->et_line != exp_line)
         {
-	        // ret |= sensor_reg_write(&dev->i2c_info, GC2053_REG_LONG_EXP_TIME_H, ( exp_line >> 4) & 0xff);
-	        // ret |= sensor_reg_write(&dev->i2c_info, GC2053_REG_LONG_EXP_TIME_L, ( exp_line << 4) & 0xf0);
-	        current_mode->et_line = exp_line;
-/*	        //set strobe
-	        Strobe_Width = (exp_line + 52)/3;
-	        Strobe_StartPoint = Sensor_VTS - Strobe_Width - 7;
-	        //Strobe_StartPoint = Sensor_VTS - Strobe_Width;
-
-	        ret |= sensor_reg_write(&dev->i2c_info, 0x3927, ( Strobe_Width >> 8) & 0xff);	//strobe width
-	        ret |= sensor_reg_write(&dev->i2c_info, 0x3928,  Strobe_Width & 0xff);
-	        ret |= sensor_reg_write(&dev->i2c_info, 0x3929, ( Strobe_StartPoint >> 8) & 0xff);	//strobe start point
-	        ret |= sensor_reg_write(&dev->i2c_info, 0x392a,  Strobe_StartPoint & 0xff);*/
+            ret |= sensor_reg_write(&dev->i2c_info, GC2053_REG_EXP_TIME_H, (exp_line >> 8) & 0x3f);
+            ret |= sensor_reg_write(&dev->i2c_info, GC2053_REG_EXP_TIME_L, (exp_line ) & 0xff);
+            current_mode->et_line = exp_line;
 	    }
 	    current_mode->ae_info.cur_integration_time = (float)current_mode->et_line * current_mode->ae_info.one_line_exp_time;
     } else if (current_mode->hdr_mode == SENSOR_MODE_HDR_STITCH) {
@@ -942,6 +931,12 @@ k_s32 gc2053_sensor_get_otp_data(void *ctx, void *data)
     return ret;
 }
 
+static k_s32 gc2053_sensor_mirror_set(void *ctx, k_vicap_mirror_mode mirror)
+{
+    return 0;
+}
+
+
 struct sensor_driver_dev gc2053_sensor_drv = {
     .i2c_info = {
         .i2c_bus = NULL,
@@ -978,5 +973,6 @@ struct sensor_driver_dev gc2053_sensor_drv = {
         .sensor_set_tpg = gc2053_sensor_set_tpg,
         .sensor_get_expand_curve = gc2053_sensor_get_expand_curve,
         .sensor_get_otp_data = gc2053_sensor_get_otp_data,
+        .sensor_mirror_set = gc2053_sensor_mirror_set,
     },
 };

@@ -8,6 +8,10 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int kd_mpi_dewarp_reset(void);
 int kd_mpi_dewarp_dwe_enable_bus(void);
 int kd_mpi_dewarp_dwe_disable_bus(void);
@@ -43,5 +47,11 @@ void kd_mpi_vicap_dw_exit(k_isp_dev dev_num);
 int kd_mpi_vicap_dw_init(k_isp_dev dev_num);
 int kd_mpi_vicap_dw_load(struct k_dw_load_request *lr);
 int kd_mpi_vicap_dw_dump_register(k_isp_dev dev_num, FILE* f);
+int kd_mpi_dw_init(struct k_dw_settings* settings);
+int kd_mpi_dw_exit(unsigned dev_id);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

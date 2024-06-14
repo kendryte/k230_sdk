@@ -18,7 +18,7 @@ for item in liblist:
         libname = libname + '-l' + item[3:-2] + ' '
 
 LINKFLAGS = ' -Wl,--whole-archive ' + libname  + ' -Wl,--no-whole-archive'
-group = DefineGroup('Mpp', src, depend = [''], CPPPATH = CPPPATH, LINKFLAGS = LINKFLAGS, LIBPATH=LIBPATH)
+group = DefineGroup('Mpp', src, depend = ['RT_USING_MPP'], CPPPATH = CPPPATH, LINKFLAGS = LINKFLAGS, LIBPATH=LIBPATH)
 
 objs = [group]
 

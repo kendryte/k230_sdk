@@ -405,6 +405,23 @@ typedef struct {
     k_u8 fps; // 0: original FPS
 } k_vicap_chn_attr;
 
+
+typedef enum {
+    VICAP_MIRROR_NONE = 0,
+    VICAP_MIRROR_HOR = 1,
+    VICAP_MIRROR_VER = 2,
+    VICAP_MIRROR_BOTH = 3,
+} k_vicap_mirror;
+
+
+typedef struct {
+    k_vicap_sensor_type sensor_type;
+    k_vicap_mirror mirror;
+}k_vicap_mirror_mode;
+
+
+
+
 /**
  * @brief Defines the attributes of a VICAP device
  *
@@ -421,6 +438,7 @@ typedef struct {
     k_bool dev_enable;
     k_u32 buffer_num;
     k_u32 buffer_size;
+    k_vicap_mirror mirror;
 } k_vicap_dev_attr;
 
 /**
@@ -616,6 +634,9 @@ typedef struct
 #define K_ERR_VICAP_NOTREADY          K_DEF_ERR(K_ID_VICAP, K_ERR_LEVEL_ERROR, K_ERR_NOTREADY)
 #define K_ERR_VICAP_BADADDR           K_DEF_ERR(K_ID_VICAP, K_ERR_LEVEL_ERROR, K_ERR_BADADDR)
 #define K_ERR_VICAP_BUSY              K_DEF_ERR(K_ID_VICAP, K_ERR_LEVEL_ERROR, K_ERR_BUSY)
+#define K_ERR_VICAP_OPT_ALREADY_WRITE             K_DEF_ERR(K_ID_VICAP, K_ERR_LEVEL_ERROR, K_ERR_OPT_ALREADY_WRITE)
+
+
 
 /** @} */ /** <!-- ==== VICAP End ==== */
 #ifdef __cplusplus

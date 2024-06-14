@@ -1784,4 +1784,7 @@ config SND_SOC_TPA6130A2
 	tristate "Texas Instruments TPA6130A2 headphone amplifier"
 	depends on I2C
 
+config SND_SOC_K230_INNO
+	tristate "K230 INNO Codec"
+
 endmenu

@@ -108,18 +108,25 @@ void video_proc(char *argv[])
         hd.post_process(results);
 
         cv::Mat osd_frame(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
+        #if defined(CONFIG_BOARD_K230D_CANMV)
+        {
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+        }
+        #elif defined(CONFIG_BOARD_K230_CANMV_01STUDIO)
+        {
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+        }
+        #else
+        {
+        }
+		#endif
+
         for (auto r: results)
         {
             std::string text = hd.labels_[r.label] + ":" + std::to_string(round(r.score * 100) / 100.0);
 
             int w = r.x2 - r.x1 + 1;
             int h = r.y2 - r.y1 + 1;
-            
-            int rect_x = r.x1/ SENSOR_WIDTH * osd_width;
-            int rect_y = r.y1/ SENSOR_HEIGHT * osd_height;
-            int rect_w = (float)w / SENSOR_WIDTH * osd_width;
-            int rect_h = (float)h / SENSOR_HEIGHT  * osd_height;
-            cv::rectangle(osd_frame, cv::Rect(rect_x, rect_y , rect_w, rect_h), cv::Scalar( 255,255, 255, 255), 2, 2, 0);
             
             int length = std::max(w,h)/2;
             int cx = (r.x1+r.x2)/2;
@@ -135,14 +142,55 @@ void video_proc(char *argv[])
             
             struct Bbox bbox = {x:x1_1,y:y1_1,w:w_1,h:h_1};
             hk.pre_process(bbox);
-
             hk.inference();
+
+            #if defined(CONFIG_BOARD_K230D_CANMV)
+            {
+                int rect_x = r.x1/ SENSOR_WIDTH * osd_height;
+                int rect_y = r.y1/ SENSOR_HEIGHT * osd_width;
+                int rect_w = (float)w / SENSOR_WIDTH * osd_height;
+                int rect_h = (float)h / SENSOR_HEIGHT  * osd_width;
+
+                cv::rectangle(osd_frame, cv::Rect(rect_x, rect_y , rect_w, rect_h), cv::Scalar( 255,255, 255, 255), 2, 2, 0);
+            }
+            #elif defined(CONFIG_BOARD_K230_CANMV_01STUDIO)
+            {
+                int rect_x = r.x1/ SENSOR_WIDTH * osd_height;
+                int rect_y = r.y1/ SENSOR_HEIGHT * osd_width;
+                int rect_w = (float)w / SENSOR_WIDTH * osd_height;
+                int rect_h = (float)h / SENSOR_HEIGHT  * osd_width;
+
+                cv::rectangle(osd_frame, cv::Rect(rect_x, rect_y , rect_w, rect_h), cv::Scalar( 255,255, 255, 255), 2, 2, 0);
+            }
+            #else
+            {
+                int rect_x = r.x1/ SENSOR_WIDTH * osd_width;
+                int rect_y = r.y1/ SENSOR_HEIGHT * osd_height;
+                int rect_w = (float)w / SENSOR_WIDTH * osd_width;
+                int rect_h = (float)h / SENSOR_HEIGHT  * osd_height;
+
+                cv::rectangle(osd_frame, cv::Rect(rect_x, rect_y , rect_w, rect_h), cv::Scalar( 255,255, 255, 255), 2, 2, 0);
+            }
+            #endif
 
             {
                 ScopedTiming st("osd draw", atoi(argv[6]));
                 hk.draw_keypoints(osd_frame, text, bbox, false);
             }
         }
+
+        #if defined(CONFIG_BOARD_K230D_CANMV)
+        {
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+        }
+        #elif defined(CONFIG_BOARD_K230_CANMV_01STUDIO)
+        {
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+        }
+        #else
+        {
+        }
+		#endif
 
         {
             ScopedTiming st("osd copy", atoi(argv[6]));

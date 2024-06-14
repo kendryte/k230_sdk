@@ -964,3 +964,97 @@ k_s32 audio_mapi_sample_audio_double_loopback(k_u32 sample_rate,k_u32 channels,k
 
     return 0;
 }
+
+
+#include "pcm_data.h"
+#include "wav_ctrl.h"
+static k_s32 _get_audio_frame(k_audio_frame *audio_frame, int nSize)
+{
+    k_u32 pool_id;
+    kd_mapi_sys_get_vb_block(&pool_id,&audio_frame->phys_addr,nSize,NULL);
+
+    audio_frame->virt_addr = _sys_mmap(audio_frame->phys_addr,nSize);
+    audio_frame->len = nSize;
+
+    return K_SUCCESS;
+}
+
+static k_s32 _release_audio_frame(k_audio_frame *audio_frame)
+{
+    kd_mapi_sys_release_vb_block(audio_frame->phys_addr, audio_frame->len);
+#if 1
+    _sys_munmap(audio_frame->phys_addr,audio_frame->virt_addr,audio_frame->len);
+#endif
+
+    return 0;
+}
+
+k_s32 audio_mapi_sample_play_wav(const char* filename)
+{
+    k_s32 ret;
+    k_handle ao_hdl = 0;
+    int audio_channel = 0;
+    int audio_samplerate = 0;
+    int audio_bitpersample = 0;
+
+
+    if (0 != load_wav_info(filename, &audio_channel, &audio_samplerate, &audio_bitpersample))
+    {
+        return -1;
+    }
+
+    ret = _mapi_sample_vb_init(K_TRUE, 48000);
+    if (ret != K_SUCCESS)
+    {
+        printf("audio_sample_vb_init failed\n");
+        return -1;
+    }
+
+    k_audio_frame audio_frame;
+    if (32 == audio_bitpersample)
+    {
+        _get_audio_frame(&audio_frame, audio_samplerate * 4 * 2 / AUDIO_PERSEC_DIV_NUM);
+    }
+    else if (24 == audio_bitpersample)
+    {
+        _get_audio_frame(&audio_frame, audio_samplerate * 3 * 2 / AUDIO_PERSEC_DIV_NUM);
+    }
+    else if (16 == audio_bitpersample)
+    {
+        _get_audio_frame(&audio_frame, audio_samplerate * 2 * 2 / AUDIO_PERSEC_DIV_NUM);
+    }
+
+    k_u32 *pDataBuf = (k_u32 *)audio_frame.virt_addr;
+    memset(pDataBuf, 0, audio_frame.len);
+
+    g_enable_audio_codec = K_TRUE;
+    ret = _init_ao(KD_AUDIO_BIT_WIDTH_16,audio_samplerate,audio_channel,K_STANDARD_MODE,&ao_hdl);
+    if(ret != K_SUCCESS) {
+        printf("_init_ao error: %x\n", ret);
+        return -1;
+    }
+
+    while (1)
+    {
+        // 获取音频数据
+        if (get_pcm_data_from_file(pDataBuf, audio_frame.len / 4) < 0)
+        {
+            break;
+        }
+
+        // 发送音频数据
+        ret = kd_mapi_ao_send_frame(ao_hdl, &audio_frame);
+    }
+    usleep(1000*100);
+
+    ret = _deinit_ao(ao_hdl);
+    if(ret != K_SUCCESS) {
+        printf("_deinit_ao error: %x\n", ret);
+        return -1;
+    }
+
+    _release_audio_frame(&audio_frame);
+
+    _mapi_sample_vb_deinit();
+    return 0;
+}

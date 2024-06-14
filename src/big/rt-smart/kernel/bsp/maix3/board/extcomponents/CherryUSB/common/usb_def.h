@@ -221,6 +221,7 @@
 #define USB_ENDPOINT_TYPE_BULK        (2 << USB_ENDPOINT_TYPE_SHIFT)
 #define USB_ENDPOINT_TYPE_INTERRUPT   (3 << USB_ENDPOINT_TYPE_SHIFT)
 #define USB_ENDPOINT_TYPE_MASK        (3 << USB_ENDPOINT_TYPE_SHIFT)
+#define USB_GET_ENDPOINT_TYPE(x)      ((x & USB_ENDPOINT_TYPE_MASK) >> USB_ENDPOINT_TYPE_SHIFT)
 
 #define USB_ENDPOINT_SYNC_SHIFT              2
 #define USB_ENDPOINT_SYNC_NO_SYNCHRONIZATION (0 << USB_ENDPOINT_SYNC_SHIFT)
@@ -245,6 +246,8 @@
 #define USB_MAXPACKETSIZE_ADDITIONAL_TRANSCATION_ONE   (1 << USB_MAXPACKETSIZE_ADDITIONAL_TRANSCATION_SHIFT)
 #define USB_MAXPACKETSIZE_ADDITIONAL_TRANSCATION_TWO   (2 << USB_MAXPACKETSIZE_ADDITIONAL_TRANSCATION_SHIFT)
 #define USB_MAXPACKETSIZE_ADDITIONAL_TRANSCATION_MASK  (3 << USB_MAXPACKETSIZE_ADDITIONAL_TRANSCATION_SHIFT)
+#define USB_GET_MAXPACKETSIZE(x)                       ((x & USB_MAXPACKETSIZE_MASK) >> USB_MAXPACKETSIZE_SHIFT)
+#define USB_GET_MULT(x)                                ((x & USB_MAXPACKETSIZE_ADDITIONAL_TRANSCATION_MASK) >> USB_MAXPACKETSIZE_ADDITIONAL_TRANSCATION_SHIFT)
 
 /* bDevCapabilityType in Device Capability Descriptor */
 #define USB_DEVICE_CAPABILITY_WIRELESS_USB                1
@@ -484,13 +487,10 @@ struct usb_msosv1_comp_id_function_descriptor {
     };
 
 struct usb_msosv1_descriptor {
-    uint8_t *string;
-    uint8_t string_len;
+    const uint8_t *string;
     uint8_t vendor_code;
-    uint8_t *compat_id;
-    uint16_t compat_id_len;
-    uint8_t *comp_id_property;
-    uint16_t comp_id_property_len;
+    const uint8_t *compat_id;
+    const uint8_t **comp_id_property;
 };
 
 /* MS OS 2.0 Header descriptor */

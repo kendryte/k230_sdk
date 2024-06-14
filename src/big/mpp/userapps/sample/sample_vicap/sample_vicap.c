@@ -102,6 +102,7 @@ typedef struct {
     k_u16 rotation[VICAP_CHN_ID_MAX];
     k_u8 fps[VICAP_CHN_ID_MAX];
     k_bool dw_enable;
+    k_vicap_mirror sensor_mirror;
 } vicap_device_obj;
 
 #define MAX_VO_LAYER_NUM 3
@@ -478,6 +479,8 @@ int main(int argc, char *argv[])
     k_u8 chn_count = 0, cur_chn = 0;
     k_u8 vo_count = 0, preview_count = 0;
 
+    
+
     k_u32 pipe_ctrl = 0xFFFFFFFF;
     memset(&dev_attr, 0, sizeof(k_vicap_dev_attr));
 
@@ -523,6 +526,8 @@ int main(int argc, char *argv[])
                 connector_type = LT9611_MIPI_4LAN_1920X1080_30FPS;
             }else if (conn == 3) {
                 connector_type = ST7701_V1_MIPI_2LAN_480X800_30FPS;
+            } else if(conn == 4) {
+                connector_type = ILI9806_MIPI_2LAN_480X800_30FPS;
             } else {
                 printf("unsupport connector deivce.\n");
                 return -1;
@@ -627,6 +632,13 @@ chn_parse:
                         {
                             k_u16 rotation = atoi(argv[i + 1]);
                             device_obj[cur_dev].rotation[cur_chn] = rotation;
+                        }
+                        else if (strcmp(argv[i], "-mirror") == 0)
+                        {
+                            k_vicap_mirror mirror;
+                            mirror  = atoi(argv[i + 1]);
+                            device_obj[cur_dev].sensor_mirror = mirror;
+
                         }
                         else if (strcmp(argv[i], "-fps") == 0)
                         {
@@ -1165,6 +1177,8 @@ chn_parse:
 
         dev_attr.cpature_frame = 0;
         dev_attr.dw_enable = device_obj[dev_num].dw_enable;
+
+        dev_attr.mirror = device_obj[cur_dev].sensor_mirror;
 
         ret = kd_mpi_vicap_set_dev_attr(dev_num, dev_attr);
         if (ret) {

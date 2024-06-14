@@ -111,12 +111,26 @@ void video_proc(char *argv[])
         head_detection.post_process({SENSOR_WIDTH, SENSOR_HEIGHT}, results,false);
 
         cv::Mat osd_frame(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-        cv::Mat osd_frame_tmp;
-
+        #if defined(CONFIG_BOARD_K230D_CANMV)
+        {
+            ScopedTiming st("osd draw", atoi(argv[5]));
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+            head_detection.draw_result(osd_frame,results,false);
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+        }
+        #elif defined(CONFIG_BOARD_K230_CANMV_01STUDIO)
+        {
+            ScopedTiming st("osd draw", atoi(argv[5]));
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+            fp.draw_result(osd_frame,det_results[i].bbox,pose_result,false);
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+        }
+        #else
         {
             ScopedTiming st("osd draw", atoi(argv[5]));
             head_detection.draw_result(osd_frame,results,false);
         }
+        #endif
 
         {
             ScopedTiming st("osd copy", atoi(argv[5]));

@@ -516,6 +516,7 @@ for subdir in $(ls -d */); do
             cp -a ../../big/kmodel/ai_poc/kmodel/yolov8n-pose.kmodel ${k230_bin}/$subdir_name
             cp -a shell/rtsp_plug_*.sh ${k230_bin}/$subdir_name
       fi
+      rm -rf out/*
 done
 
 rm -rf out

@@ -54,8 +54,8 @@
 #define VICAP_OUTPUT_BUF_NUM 30
 #define VICAP_INPUT_BUF_NUM 4
 
-#define DISPLAY_WITDH  1088
-#define DISPLAY_HEIGHT 1920
+// #define g_display_witdh  1920  //1088
+// #define g_display_height 1080 //1920
 
 #define	GPIO_DM_INPUT           _IOW('G', 1, int)
 #define GPIO_READ_VALUE       	_IOW('G', 12, int)
@@ -63,6 +63,9 @@
 #define IR_BUF_SIZE ((DMA_CHN0_WIDTH * DMA_CHN0_WIDTH *3/2 + 0x3ff) & ~0x3ff)//(5 * 1024 * 1024)
 
 extern k_dpu_dev_attr_t dpu_dev_attr;
+
+k_u32 g_display_witdh = 0;
+k_u32 g_display_height = 0;
 
 typedef struct kd_pin_mode
 {
@@ -152,11 +155,11 @@ pin_mode_t gpio;
 static int fd_usb = -1;
 #endif
 
-static k_u32 sample_vicap_vo_init(void)
+static k_u32 sample_vicap_vo_init(k_connector_type type)
 {
     k_u32 ret = 0;
     k_s32 connector_fd;
-    k_connector_type connector_type = HX8377_V2_MIPI_4LAN_1080X1920_30FPS;
+    k_connector_type connector_type = type;//HX8377_V2_MIPI_4LAN_1080X1920_30FPS;
     k_connector_info connector_info;
 
     memset(&connector_info, 0, sizeof(k_connector_info));
@@ -227,10 +230,10 @@ static k_s32 sample_vicap_vo_layer_init(k_vicap_vo_layer_conf *layer_conf)
                 return -1;
             }
             total_height += info[i].act_size.height;
-            margin = ((DISPLAY_HEIGHT - total_height) / (i+2));
-            if ((total_height > DISPLAY_HEIGHT) || (info[i].act_size.width > DISPLAY_WITDH)) {
+            margin = ((g_display_height - total_height) / (i+2));
+            if ((total_height > g_display_height) || (info[i].act_size.width > g_display_witdh)) {
                 printf("%s, the preview window size[%dx%d] exceeds the display window size[%dx%d].\n", \
-                    __func__, info[i].act_size.width, total_height, DISPLAY_WITDH, DISPLAY_HEIGHT);
+                    __func__, info[i].act_size.width, total_height, g_display_witdh, g_display_height);
                 return -1;
             }
             printf("%s, width(%d), height(%d), margin(%d), total_height(%d)\n", \
@@ -240,7 +243,7 @@ static k_s32 sample_vicap_vo_layer_init(k_vicap_vo_layer_conf *layer_conf)
 
     for (int i = 0; i < MAX_VO_LAYER_NUM; i++) {
         if (layer_conf->enable[i]) {
-            info[i].offset.x = (DISPLAY_WITDH - info[i].act_size.width)/2;
+            info[i].offset.x = (g_display_witdh - info[i].act_size.width)/2;
             info[i].offset.y = margin + relative_height;
             printf("%s, layer(%d), offset.x(%d), offset.y(%d), relative_height(%d)\n", __func__, layer_conf->layer[i], info[i].offset.x, info[i].offset.y, relative_height);
             relative_height += info[i].act_size.height + margin;
@@ -1043,6 +1046,7 @@ static void usage(void)
     printf("Options:\n");
     printf(" -o             output path, default is /sharefs/\n");
     printf(" -mode:         vicap work mode[0: online mode, 1: offline mode. only offline mode support multiple sensor input]\tdefault 0\n");
+    printf(" -vo:           video output, 0: HX8377, 101: LT9611(hdmi)");
     printf(" -cal:          1: for calibration, set it before -dev\n");
     printf(" -gpio:         gpio number, set it before -dev\n");
     printf(" -delay:        delay time ms, set it before -dev\n");
@@ -1085,6 +1089,7 @@ int main(int argc, char *argv[])
     k_u8 dev_count = 0, cur_dev = 0;
     k_u8 chn_count = 0, cur_chn = 0;
     k_u8 vo_count = 0, preview_count = 0;
+    k_connector_type connector_type = HX8377_V2_MIPI_4LAN_1080X1920_30FPS;
 
     k_u32 pipe_ctrl = 0xFFFFFFFF;
     memset(&dev_attr, 0, sizeof(k_vicap_dev_attr));
@@ -1130,6 +1135,21 @@ int main(int argc, char *argv[])
                 printf("unsupport mode.\n");
                 return -1;
             }
+        }
+        else if (strcmp(argv[i], "-vo") == 0)
+        {
+            connector_type = atoi(argv[i + 1]);
+            if(connector_type == LT9611_MIPI_4LAN_1920X1080_60FPS)
+            {
+                g_display_witdh = 1920;
+                g_display_height  = 1080;
+            }
+            else
+            {
+                g_display_witdh = 1088;
+                g_display_height  = 1920;
+            }
+            printf("set connector_type = %d\n", connector_type);
         }
         else if (strcmp(argv[i], "-adc") == 0)
         {
@@ -1393,7 +1413,7 @@ chn_parse:
         return 0;
     }
 
-    sample_vicap_vo_init();
+    sample_vicap_vo_init(connector_type);
 
     printf("sample_vicap ...kd_mpi_vicap_get_sensor_info\n");
 
@@ -1471,14 +1491,14 @@ chn_parse:
                 device_obj[dev_num].crop_enable[chn_num] = K_TRUE;
             }
 
-            if ((device_obj[dev_num].out_win[chn_num].width > DISPLAY_WITDH)
-                && (device_obj[dev_num].out_win[chn_num].height > DISPLAY_HEIGHT)) {
+            if ((device_obj[dev_num].out_win[chn_num].width > g_display_witdh)
+                && (device_obj[dev_num].out_win[chn_num].height > g_display_height)) {
                 device_obj[dev_num].preview[chn_num] = K_FALSE;
             }
 
             if (!device_obj[dev_num].rotation[chn_num]
-                && ((device_obj[dev_num].out_win[chn_num].width > DISPLAY_WITDH)
-                && (device_obj[dev_num].out_win[chn_num].width < DISPLAY_HEIGHT))) {
+                && ((device_obj[dev_num].out_win[chn_num].width > g_display_witdh)
+                && (device_obj[dev_num].out_win[chn_num].width < g_display_height))) {
                 device_obj[dev_num].rotation[chn_num] = 1;
             }
 

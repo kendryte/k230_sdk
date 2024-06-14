@@ -1022,6 +1022,12 @@ static k_s32 sc035hgs_sensor_get_otp_data(void* ctx, void* data)
     return ret;
 }
 
+
+static k_s32 sc035hgs_sensor_mirror_set(void *ctx, k_vicap_mirror_mode mirror)
+{
+    return 0;
+}
+
 struct sensor_driver_dev sc035hgs_sensor_drv = {
     .i2c_info = {
         .i2c_bus = NULL,
@@ -1058,5 +1064,6 @@ struct sensor_driver_dev sc035hgs_sensor_drv = {
         .sensor_set_tpg = sc035hgs_sensor_set_tpg,
         .sensor_get_expand_curve = sc035hgs_sensor_get_expand_curve,
         .sensor_get_otp_data = sc035hgs_sensor_get_otp_data,
+        .sensor_mirror_set = sc035hgs_sensor_mirror_set,
     },
 };

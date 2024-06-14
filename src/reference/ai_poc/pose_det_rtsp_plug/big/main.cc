@@ -52,7 +52,7 @@
 #include "vo_test_case.h"
 #include "pose_detect.h"
 
-#include "vi_vo.h"
+#include "vi_vo_rtsp.h"
 #include "k_datafifo.h"
 
 #define ENABLE_VDEC_DEBUG    1
@@ -200,6 +200,17 @@ static k_s32 sample_vb_init(k_u32 ch_cnt, k_bool osd_enable)
     config.comm_pool[2].blk_size =OSD_BUF_SIZE;
     config.comm_pool[2].mode = VB_REMAP_MODE_NOCACHE;
 
+
+    #if defined(CONFIG_BOARD_K230D_CANMV) 
+    //VB for YUV420SP output
+    config.comm_pool[0].blk_cnt = 4;
+    config.comm_pool[0].mode = VB_REMAP_MODE_NOCACHE;
+    config.comm_pool[0].blk_size = VICAP_ALIGN_UP((ISP_CHN0_WIDTH * ISP_CHN0_HEIGHT * 3 / 2), VICAP_ALIGN_1K);
+    //VB for RGB888 output
+    config.comm_pool[1].blk_cnt = 5;
+    config.comm_pool[1].mode = VB_REMAP_MODE_NOCACHE;
+    config.comm_pool[1].blk_size = VICAP_ALIGN_UP((SENSOR_HEIGHT * SENSOR_WIDTH * 3 ), VICAP_ALIGN_1K);
+    #else
     //VB for YUV420SP output
     config.comm_pool[3].blk_cnt = 5;
     config.comm_pool[3].mode = VB_REMAP_MODE_NOCACHE;
@@ -210,6 +221,7 @@ static k_s32 sample_vb_init(k_u32 ch_cnt, k_bool osd_enable)
     config.comm_pool[4].blk_cnt = 5;
     config.comm_pool[4].mode = VB_REMAP_MODE_NOCACHE;
     config.comm_pool[4].blk_size = VICAP_ALIGN_UP((SENSOR_HEIGHT * SENSOR_WIDTH * 3 ), VICAP_ALIGN_1K);
+    #endif
 
     ret = kd_mpi_vb_set_config(&config);
 
@@ -674,73 +686,357 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    k_s32 ret;
-    //**********************encoder****************************************
-    //编码器配置，编码通道编号为0
-    int chnum = 1;
-    int ve_ch = 0;
-    k_u32 output_frames = 10;
-    k_u32 bitrate   = 4000;   //kbps
-    int width       = 1280;
-    int height      = 720;
-    k_venc_rc_mode rc_mode  = K_VENC_RC_MODE_CBR;
-    k_payload_type ve_type     = K_PT_H265;
-    k_venc_profile profile  = VENC_PROFILE_H265_MAIN;
-    memset(&g_venc_conf, 0, sizeof(venc_conf_t));
-    
-    //vb初始化，(venc 以及 vicap)
-    sample_vb_init(chnum, K_FALSE);
-    //配置编码通道属性
-    k_venc_chn_attr ve_attr;
-    memset(&ve_attr, 0, sizeof(ve_attr));
-    ve_attr.venc_attr.pic_width = width;
-    ve_attr.venc_attr.pic_height = height;
-    ve_attr.venc_attr.stream_buf_size = VE_STREAM_BUF_SIZE;
-    ve_attr.venc_attr.stream_buf_cnt = VE_OUTPUT_BUF_CNT;
-    ve_attr.rc_attr.rc_mode = rc_mode;
-    ve_attr.rc_attr.cbr.src_frame_rate = 30;
-    ve_attr.rc_attr.cbr.dst_frame_rate = 30;
-    ve_attr.rc_attr.cbr.bit_rate = bitrate;
-    ve_attr.venc_attr.type = ve_type;
-    ve_attr.venc_attr.profile = profile;
-    venc_debug("payload type is H265\n");
-    //创建编码通道
-    ret = kd_mpi_venc_create_chn(ve_ch, &ve_attr);
-    CHECK_RET(ret, __func__, __LINE__);
-    g_venc_sample_status = VENC_SAMPLE_STATUS_INIT;
-    // 关键帧
-    kd_mpi_venc_enable_idr(ve_ch, K_TRUE);
-    //启动编码通道
-    ret = kd_mpi_venc_start_chn(ve_ch);
-    CHECK_RET(ret, __func__, __LINE__);
-    g_venc_sample_status = VENC_SAMPLE_STATUS_START;
-    //编码输出码流设置
-    output_info info;
-    memset(&info, 0, sizeof(info));
-    info.ch_id = ve_ch;
-    info.output_frames = output_frames;
-    //启动线程将输出的码流写入h265文件
-    pthread_create(&g_venc_conf.output_tid, NULL, venc_output_thread, &info);
-    g_venc_sample_status = VENC_SAMPLE_STATUE_RUNING;
-
-    // 启动 视频流 ai 线程 
-    std::thread face_det_enc(output_thread, argv);
-    while (getchar() != 'q')
+    #if defined(CONFIG_BOARD_K230_CANMV)
     {
+        k_s32 ret;
+        //**********************encoder****************************************
+        //编码器配置，编码通道编号为0
+        int chnum = 1;
+        int ve_ch = 0;
+        k_u32 output_frames = 10;
+        k_u32 bitrate   = 4000;   //kbps
+        int width       = 1280;
+        int height      = 720;
+        k_venc_rc_mode rc_mode  = K_VENC_RC_MODE_CBR;
+        k_payload_type ve_type     = K_PT_H265;
+        k_venc_profile profile  = VENC_PROFILE_H265_MAIN;
+        memset(&g_venc_conf, 0, sizeof(venc_conf_t));
+        
+        //vb初始化，(venc 以及 vicap)
+        sample_vb_init(chnum, K_FALSE);
+        //配置编码通道属性
+        k_venc_chn_attr ve_attr;
+        memset(&ve_attr, 0, sizeof(ve_attr));
+        ve_attr.venc_attr.pic_width = width;
+        ve_attr.venc_attr.pic_height = height;
+        ve_attr.venc_attr.stream_buf_size = VE_STREAM_BUF_SIZE;
+        ve_attr.venc_attr.stream_buf_cnt = VE_OUTPUT_BUF_CNT;
+        ve_attr.rc_attr.rc_mode = rc_mode;
+        ve_attr.rc_attr.cbr.src_frame_rate = 30;
+        ve_attr.rc_attr.cbr.dst_frame_rate = 30;
+        ve_attr.rc_attr.cbr.bit_rate = bitrate;
+        ve_attr.venc_attr.type = ve_type;
+        ve_attr.venc_attr.profile = profile;
+        venc_debug("payload type is H265\n");
+        //创建编码通道
+        ret = kd_mpi_venc_create_chn(ve_ch, &ve_attr);
+        CHECK_RET(ret, __func__, __LINE__);
+        g_venc_sample_status = VENC_SAMPLE_STATUS_INIT;
+        // 关键帧
+        kd_mpi_venc_enable_idr(ve_ch, K_TRUE);
+        //启动编码通道
+        ret = kd_mpi_venc_start_chn(ve_ch);
+        CHECK_RET(ret, __func__, __LINE__);
+        g_venc_sample_status = VENC_SAMPLE_STATUS_START;
+        //编码输出码流设置
+        output_info info;
+        memset(&info, 0, sizeof(info));
+        info.ch_id = ve_ch;
+        info.output_frames = output_frames;
+        //启动线程将输出的码流写入h265文件
+        pthread_create(&g_venc_conf.output_tid, NULL, venc_output_thread, &info);
+        g_venc_sample_status = VENC_SAMPLE_STATUE_RUNING;
+
+        // 启动 视频流 ai 线程 
+        std::thread face_det_enc(output_thread, argv);
+        while (getchar() != 'q')
+        {
+            usleep(10000);
+        }
+
+        isp_stop = true;
+        face_det_enc.join();
         usleep(10000);
+        sample_exit(&g_venc_conf);
+
+        // datafifo 退出
+        datafifo_deinit();
+        //vb退出
+        sample_vb_exit();
+
+        vdec_debug("sample decode done!\n");
     }
+    #elif defined(CONFIG_BOARD_K230_CANMV_V2)
+    {
+        k_s32 ret;
+        //**********************encoder****************************************
+        //编码器配置，编码通道编号为0
+        int chnum = 1;
+        int ve_ch = 0;
+        k_u32 output_frames = 10;
+        k_u32 bitrate   = 4000;   //kbps
+        int width       = 1280;
+        int height      = 720;
+        k_venc_rc_mode rc_mode  = K_VENC_RC_MODE_CBR;
+        k_payload_type ve_type     = K_PT_H265;
+        k_venc_profile profile  = VENC_PROFILE_H265_MAIN;
+        memset(&g_venc_conf, 0, sizeof(venc_conf_t));
+        
+        //vb初始化，(venc 以及 vicap)
+        sample_vb_init(chnum, K_FALSE);
+        //配置编码通道属性
+        k_venc_chn_attr ve_attr;
+        memset(&ve_attr, 0, sizeof(ve_attr));
+        ve_attr.venc_attr.pic_width = width;
+        ve_attr.venc_attr.pic_height = height;
+        ve_attr.venc_attr.stream_buf_size = VE_STREAM_BUF_SIZE;
+        ve_attr.venc_attr.stream_buf_cnt = VE_OUTPUT_BUF_CNT;
+        ve_attr.rc_attr.rc_mode = rc_mode;
+        ve_attr.rc_attr.cbr.src_frame_rate = 30;
+        ve_attr.rc_attr.cbr.dst_frame_rate = 30;
+        ve_attr.rc_attr.cbr.bit_rate = bitrate;
+        ve_attr.venc_attr.type = ve_type;
+        ve_attr.venc_attr.profile = profile;
+        venc_debug("payload type is H265\n");
+        //创建编码通道
+        ret = kd_mpi_venc_create_chn(ve_ch, &ve_attr);
+        CHECK_RET(ret, __func__, __LINE__);
+        g_venc_sample_status = VENC_SAMPLE_STATUS_INIT;
+        // 关键帧
+        kd_mpi_venc_enable_idr(ve_ch, K_TRUE);
+        //启动编码通道
+        ret = kd_mpi_venc_start_chn(ve_ch);
+        CHECK_RET(ret, __func__, __LINE__);
+        g_venc_sample_status = VENC_SAMPLE_STATUS_START;
+        //编码输出码流设置
+        output_info info;
+        memset(&info, 0, sizeof(info));
+        info.ch_id = ve_ch;
+        info.output_frames = output_frames;
+        //启动线程将输出的码流写入h265文件
+        pthread_create(&g_venc_conf.output_tid, NULL, venc_output_thread, &info);
+        g_venc_sample_status = VENC_SAMPLE_STATUE_RUNING;
 
-    isp_stop = true;
-    face_det_enc.join();
-    usleep(10000);
-    sample_exit(&g_venc_conf);
+        // 启动 视频流 ai 线程 
+        std::thread face_det_enc(output_thread, argv);
+        while (getchar() != 'q')
+        {
+            usleep(10000);
+        }
 
-    // datafifo 退出
-    datafifo_deinit();
-    //vb退出
-    sample_vb_exit();
+        isp_stop = true;
+        face_det_enc.join();
+        usleep(10000);
+        sample_exit(&g_venc_conf);
 
-    vdec_debug("sample decode done!\n");
+        // datafifo 退出
+        datafifo_deinit();
+        //vb退出
+        sample_vb_exit();
+
+        vdec_debug("sample decode done!\n");
+    }
+    #elif defined(CONFIG_BOARD_K230D_CANMV)
+    {
+        k_s32 ret;
+        //**********************encoder****************************************
+        //编码器配置，编码通道编号为0
+        int chnum = 1;
+        int ve_ch = 0;
+        k_u32 output_frames = 10;
+        k_u32 bitrate   = 4000;   //kbps
+        int width       = 1280;
+        int height      = 720;
+        k_venc_rc_mode rc_mode  = K_VENC_RC_MODE_CBR;
+        k_payload_type ve_type     = K_PT_H265;
+        k_venc_profile profile  = VENC_PROFILE_H265_MAIN;
+        memset(&g_venc_conf, 0, sizeof(venc_conf_t));
+        
+        //vb初始化，(venc 以及 vicap)
+        sample_vb_init(chnum, K_FALSE);
+        //配置编码通道属性
+        k_venc_chn_attr ve_attr;
+        memset(&ve_attr, 0, sizeof(ve_attr));
+        ve_attr.venc_attr.pic_width = width;
+        ve_attr.venc_attr.pic_height = height;
+        ve_attr.venc_attr.stream_buf_size = VE_STREAM_BUF_SIZE;
+        ve_attr.venc_attr.stream_buf_cnt = VE_OUTPUT_BUF_CNT;
+        ve_attr.rc_attr.rc_mode = rc_mode;
+        ve_attr.rc_attr.cbr.src_frame_rate = 30;
+        ve_attr.rc_attr.cbr.dst_frame_rate = 30;
+        ve_attr.rc_attr.cbr.bit_rate = bitrate;
+        ve_attr.venc_attr.type = ve_type;
+        ve_attr.venc_attr.profile = profile;
+        venc_debug("payload type is H265\n");
+        //创建编码通道
+        ret = kd_mpi_venc_create_chn(ve_ch, &ve_attr);
+        CHECK_RET(ret, __func__, __LINE__);
+        g_venc_sample_status = VENC_SAMPLE_STATUS_INIT;
+        // 关键帧
+        kd_mpi_venc_enable_idr(ve_ch, K_TRUE);
+        //启动编码通道
+        ret = kd_mpi_venc_start_chn(ve_ch);
+        CHECK_RET(ret, __func__, __LINE__);
+        g_venc_sample_status = VENC_SAMPLE_STATUS_START;
+        //编码输出码流设置
+        output_info info;
+        memset(&info, 0, sizeof(info));
+        info.ch_id = ve_ch;
+        info.output_frames = output_frames;
+        //启动线程将输出的码流写入h265文件
+        pthread_create(&g_venc_conf.output_tid, NULL, venc_output_thread, &info);
+        g_venc_sample_status = VENC_SAMPLE_STATUE_RUNING;
+
+        // 启动 视频流 ai 线程 
+        std::thread face_det_enc(output_thread, argv);
+        while (getchar() != 'q')
+        {
+            usleep(10000);
+        }
+
+        isp_stop = true;
+        face_det_enc.join();
+        usleep(10000);
+        sample_exit(&g_venc_conf);
+
+        // datafifo 退出
+        datafifo_deinit();
+        //vb退出
+        sample_vb_exit();
+
+        vdec_debug("sample decode done!\n");
+    }
+    #elif defined(CONFIG_BOARD_K230_CANMV_01STUDIO)
+    {
+        k_s32 ret;
+        //**********************encoder****************************************
+        //编码器配置，编码通道编号为0
+        int chnum = 1;
+        int ve_ch = 0;
+        k_u32 output_frames = 10;
+        k_u32 bitrate   = 4000;   //kbps
+        int width       = 1280;
+        int height      = 720;
+        k_venc_rc_mode rc_mode  = K_VENC_RC_MODE_CBR;
+        k_payload_type ve_type     = K_PT_H265;
+        k_venc_profile profile  = VENC_PROFILE_H265_MAIN;
+        memset(&g_venc_conf, 0, sizeof(venc_conf_t));
+        
+        //vb初始化，(venc 以及 vicap)
+        sample_vb_init(chnum, K_FALSE);
+        //配置编码通道属性
+        k_venc_chn_attr ve_attr;
+        memset(&ve_attr, 0, sizeof(ve_attr));
+        ve_attr.venc_attr.pic_width = width;
+        ve_attr.venc_attr.pic_height = height;
+        ve_attr.venc_attr.stream_buf_size = VE_STREAM_BUF_SIZE;
+        ve_attr.venc_attr.stream_buf_cnt = VE_OUTPUT_BUF_CNT;
+        ve_attr.rc_attr.rc_mode = rc_mode;
+        ve_attr.rc_attr.cbr.src_frame_rate = 30;
+        ve_attr.rc_attr.cbr.dst_frame_rate = 30;
+        ve_attr.rc_attr.cbr.bit_rate = bitrate;
+        ve_attr.venc_attr.type = ve_type;
+        ve_attr.venc_attr.profile = profile;
+        venc_debug("payload type is H265\n");
+        //创建编码通道
+        ret = kd_mpi_venc_create_chn(ve_ch, &ve_attr);
+        CHECK_RET(ret, __func__, __LINE__);
+        g_venc_sample_status = VENC_SAMPLE_STATUS_INIT;
+        // 关键帧
+        kd_mpi_venc_enable_idr(ve_ch, K_TRUE);
+        //启动编码通道
+        ret = kd_mpi_venc_start_chn(ve_ch);
+        CHECK_RET(ret, __func__, __LINE__);
+        g_venc_sample_status = VENC_SAMPLE_STATUS_START;
+        //编码输出码流设置
+        output_info info;
+        memset(&info, 0, sizeof(info));
+        info.ch_id = ve_ch;
+        info.output_frames = output_frames;
+        //启动线程将输出的码流写入h265文件
+        pthread_create(&g_venc_conf.output_tid, NULL, venc_output_thread, &info);
+        g_venc_sample_status = VENC_SAMPLE_STATUE_RUNING;
+
+        // 启动 视频流 ai 线程 
+        std::thread face_det_enc(output_thread, argv);
+        while (getchar() != 'q')
+        {
+            usleep(10000);
+        }
+
+        isp_stop = true;
+        face_det_enc.join();
+        usleep(10000);
+        sample_exit(&g_venc_conf);
+
+        // datafifo 退出
+        datafifo_deinit();
+        //vb退出
+        sample_vb_exit();
+
+        vdec_debug("sample decode done!\n");
+    }
+    #else
+    {
+        k_s32 ret;
+        //**********************encoder****************************************
+        //编码器配置，编码通道编号为0
+        int chnum = 1;
+        int ve_ch = 0;
+        k_u32 output_frames = 10;
+        k_u32 bitrate   = 4000;   //kbps
+        int width       = 1280;
+        int height      = 720;
+        k_venc_rc_mode rc_mode  = K_VENC_RC_MODE_CBR;
+        k_payload_type ve_type     = K_PT_H265;
+        k_venc_profile profile  = VENC_PROFILE_H265_MAIN;
+        memset(&g_venc_conf, 0, sizeof(venc_conf_t));
+        
+        //vb初始化，(venc 以及 vicap)
+        sample_vb_init(chnum, K_FALSE);
+        //配置编码通道属性
+        k_venc_chn_attr ve_attr;
+        memset(&ve_attr, 0, sizeof(ve_attr));
+        ve_attr.venc_attr.pic_width = width;
+        ve_attr.venc_attr.pic_height = height;
+        ve_attr.venc_attr.stream_buf_size = VE_STREAM_BUF_SIZE;
+        ve_attr.venc_attr.stream_buf_cnt = VE_OUTPUT_BUF_CNT;
+        ve_attr.rc_attr.rc_mode = rc_mode;
+        ve_attr.rc_attr.cbr.src_frame_rate = 30;
+        ve_attr.rc_attr.cbr.dst_frame_rate = 30;
+        ve_attr.rc_attr.cbr.bit_rate = bitrate;
+        ve_attr.venc_attr.type = ve_type;
+        ve_attr.venc_attr.profile = profile;
+        venc_debug("payload type is H265\n");
+        //创建编码通道
+        ret = kd_mpi_venc_create_chn(ve_ch, &ve_attr);
+        CHECK_RET(ret, __func__, __LINE__);
+        g_venc_sample_status = VENC_SAMPLE_STATUS_INIT;
+        // 关键帧
+        kd_mpi_venc_enable_idr(ve_ch, K_TRUE);
+        //启动编码通道
+        ret = kd_mpi_venc_start_chn(ve_ch);
+        CHECK_RET(ret, __func__, __LINE__);
+        g_venc_sample_status = VENC_SAMPLE_STATUS_START;
+        //编码输出码流设置
+        output_info info;
+        memset(&info, 0, sizeof(info));
+        info.ch_id = ve_ch;
+        info.output_frames = output_frames;
+        //启动线程将输出的码流写入h265文件
+        pthread_create(&g_venc_conf.output_tid, NULL, venc_output_thread, &info);
+        g_venc_sample_status = VENC_SAMPLE_STATUE_RUNING;
+
+        // 启动 视频流 ai 线程 
+        std::thread face_det_enc(output_thread, argv);
+        while (getchar() != 'q')
+        {
+            usleep(10000);
+        }
+
+        isp_stop = true;
+        face_det_enc.join();
+        usleep(10000);
+        sample_exit(&g_venc_conf);
+
+        // datafifo 退出
+        datafifo_deinit();
+        //vb退出
+        sample_vb_exit();
+
+        vdec_debug("sample decode done!\n");
+    }
+    #endif
 
     return 0;
 }

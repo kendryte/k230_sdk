@@ -9,6 +9,9 @@ config AP6256
         bool "enable ap6256"
         default n
 
+config RTL8188FU
+        bool "enable rtl8188fu"
+        default n
 endmenu
 
 

@@ -115,6 +115,7 @@ void video_proc(char *argv[])
         face_det.post_process({SENSOR_WIDTH, SENSOR_HEIGHT}, det_results);
 
         cv::Mat osd_frame(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
+
         for (int i = 0; i < det_results.size(); ++i)
         {
             //***for face recg***
@@ -123,7 +124,26 @@ void video_proc(char *argv[])
 
             FaceRecognitionInfo recg_result;
             face_recg.database_search(recg_result); 
-            face_recg.draw_result(osd_frame,det_results[i].bbox,recg_result,false);
+            #if defined(CONFIG_BOARD_K230D_CANMV)
+            {
+                ScopedTiming st("osd draw", atoi(argv[8]));
+                cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+                face_recg.draw_result(osd_frame,det_results[i].bbox,recg_result,false);
+                cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+            }
+            #elif defined(CONFIG_BOARD_K230_CANMV_01STUDIO)
+            {
+                ScopedTiming st("osd draw", atoi(argv[8]));
+                cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+                face_recg.draw_result(osd_frame,det_results[i].bbox,recg_result,false);
+                cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+            }
+            #else
+            {
+                ScopedTiming st("osd draw", atoi(argv[8]));
+                face_recg.draw_result(osd_frame,det_results[i].bbox,recg_result,false);
+            }
+            #endif
         }
 
         {

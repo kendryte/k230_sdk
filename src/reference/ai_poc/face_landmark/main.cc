@@ -107,13 +107,31 @@ void video_proc(char *argv[])
         fd.inference();
         fd.post_process({SENSOR_WIDTH, SENSOR_HEIGHT}, results);
         cv::Mat osd_frame(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-        // fd.draw_result(osd_frame,results,false);
         for (int i = 0; i < results.size(); ++i)
         {
             fkp.pre_process(results[i].bbox);
             fkp.inference();
             fkp.post_process();
-            fkp.draw_contour(osd_frame,false);
+            #if defined(CONFIG_BOARD_K230D_CANMV)
+            {
+                ScopedTiming st("osd draw", atoi(argv[6]));
+                cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+                fkp.draw_contour(osd_frame,false);
+                cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+            }
+            #elif defined(CONFIG_BOARD_K230_CANMV_01STUDIO)
+            {
+                ScopedTiming st("osd draw", atoi(argv[6]));
+                cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+                fkp.draw_contour(osd_frame,false);
+                cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+            }
+            #else
+            {
+                ScopedTiming st("osd draw", atoi(argv[6]));
+                fkp.draw_contour(osd_frame,false);
+            }
+            #endif
         }
 
         {

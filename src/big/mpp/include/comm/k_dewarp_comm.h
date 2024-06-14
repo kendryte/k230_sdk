@@ -38,7 +38,6 @@
 #include "k_vb_comm.h"
 #include "k_video_comm.h"
 #include <k_type.h>
-#include <k_ioctl.h>
 #include <k_vicap_comm.h>
 
 #ifdef __cplusplus

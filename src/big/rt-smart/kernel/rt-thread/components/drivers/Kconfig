@@ -226,6 +226,11 @@ config RT_USING_RTC
            endif
     endif
 
+
+config RT_USING_HARDLOCK
+    bool "Using hardlock drivers"
+    default y
+
 config RT_USING_SDIO
     bool "Using SD/MMC device drivers"
     default n

@@ -63,6 +63,7 @@ typedef enum
     K_ERR_NOTREADY      = 16,   /**< System is not ready,maybe not initialed or loaded.                               */
     K_ERR_BADADDR       = 17,   /**< bad address, eg. used for copy_from_user & copy_to_user                          */
     K_ERR_BUSY          = 18,   /**< resource is busy, eg. destroy a venc chn without unregister it                   */
+    K_ERR_OPT_ALREADY_WRITE          = 19,   /**< resource is busy, eg. destroy a venc chn without unregister it                   */
 
     K_ERR_BUTT          = 63,   /**< 64 maxium code, private error code of all modules must be greater than it           */
 } K_ERR_CODE_E;

@@ -179,6 +179,33 @@ k_s32 msg_sensor_exposure_time_get(k_s32 id, k_ipcmsg_message_t *msg)
     return K_SUCCESS;
 }
 
+
+k_s32 msg_sensor_otp_get(k_s32 id, k_ipcmsg_message_t *msg)
+{
+    k_s32 ret = 0;
+    k_ipcmsg_message_t *resp_msg;
+    msg_sensor_otp_opt_t *sensor_otp = msg->pBody;
+
+    ret = kd_mapi_sensor_otpdata_get(sensor_otp->sensor_type, &sensor_otp->otp_data);
+    if(ret != K_SUCCESS) {
+        mapi_sensor_error_trace("msg_sensor_otp_get failed:0x%x\n", ret);
+    }
+    resp_msg = kd_ipcmsg_create_resp_message(msg, ret, msg->pBody, sizeof(msg_sensor_otp_opt_t));
+    if(resp_msg == NULL) {
+        mapi_sensor_error_trace("kd_ipcmsg_create_resp_message failed\n");
+        return K_FAILED;
+    }
+
+    ret = kd_ipcmsg_send_async(id, resp_msg, NULL);
+    if(ret != K_SUCCESS) {
+        mapi_sensor_error_trace(" kd_ipcmsg_send_async failed:%x\n", ret);
+    }
+    kd_ipcmsg_destroy_message(resp_msg);
+
+    return K_SUCCESS;
+}
+
+
 static msg_module_cmd_t g_module_cmd_table[] = {
     {MSG_CMD_MEDIA_SENSOR_REG_READ,   msg_sensor_reg_read},
     {MSG_CMD_MEDIA_SENSOR_REG_WRITE,      msg_sensor_reg_write},
@@ -186,6 +213,8 @@ static msg_module_cmd_t g_module_cmd_table[] = {
     {MSG_CMD_MEDIA_SENSOR_EXPOSURE_GET,   msg_sensor_exposure_time_get},
     {MSG_CMD_MEDIA_SENSOR_AGAIN_SET,   msg_sensor_again_set},
     {MSG_CMD_MEDIA_SENSOR_AGAIN_GET,   msg_sensor_again_get},
+    {MSG_CMD_MEDIA_SENSOR_OTP_GET,   msg_sensor_otp_get},
+    
 };
 
 msg_server_module_t g_module_sensor = {

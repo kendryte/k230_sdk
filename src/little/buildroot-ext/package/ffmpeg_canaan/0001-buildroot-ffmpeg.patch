@@ -1,0 +1,102 @@
+Index: b/configure
+===================================================================
+--- a/configure
++++ b/configure
+@@ -3255,6 +3255,8 @@ hevc_vaapi_encoder_select="atsc_a53 cbs_
+ hevc_v4l2m2m_decoder_deps="v4l2_m2m hevc_v4l2_m2m"
+ hevc_v4l2m2m_decoder_select="hevc_mp4toannexb_bsf"
+ hevc_v4l2m2m_encoder_deps="v4l2_m2m hevc_v4l2_m2m"
++mjpeg_v4l2m2m_decoder_deps="v4l2_m2m mjpeg_v4l2_m2m"
++mjpeg_v4l2m2m_encoder_deps="v4l2_m2m mjpeg_v4l2_m2m"
+ mjpeg_cuvid_decoder_deps="cuvid"
+ mjpeg_qsv_decoder_select="qsvdec"
+ mjpeg_qsv_encoder_deps="libmfx"
+@@ -6988,6 +6990,7 @@ if enabled v4l2_m2m; then
+     check_cc h264_v4l2_m2m linux/videodev2.h "int i = V4L2_PIX_FMT_H264;"
+     check_cc vp8_v4l2_m2m linux/videodev2.h "int i = V4L2_PIX_FMT_VP8;"
+     check_cc vp9_v4l2_m2m linux/videodev2.h "int i = V4L2_PIX_FMT_VP9;"
++    check_cc mjpeg_v4l2_m2m linux/videodev2.h "int i = V4L2_PIX_FMT_MJPEG;"
+ fi
+ 
+ check_headers sys/videoio.h
+Index: b/libavcodec/allcodecs.c
+===================================================================
+--- a/libavcodec/allcodecs.c
++++ b/libavcodec/allcodecs.c
+@@ -867,6 +867,8 @@ extern const FFCodec ff_hevc_qsv_encoder
+ extern const FFCodec ff_hevc_v4l2m2m_encoder;
+ extern const FFCodec ff_hevc_vaapi_encoder;
+ extern const FFCodec ff_hevc_videotoolbox_encoder;
++extern const FFCodec ff_mjpeg_v4l2m2m_encoder;
++extern const FFCodec ff_mjpeg_v4l2m2m_decoder;
+ extern const FFCodec ff_libkvazaar_encoder;
+ extern const FFCodec ff_mjpeg_cuvid_decoder;
+ extern const FFCodec ff_mjpeg_qsv_encoder;
+Index: b/libavcodec/v4l2_buffers.c
+===================================================================
+--- a/libavcodec/v4l2_buffers.c
++++ b/libavcodec/v4l2_buffers.c
+@@ -385,7 +385,7 @@ static int v4l2_buffer_swframe_to_buf(co
+                 h = AV_CEIL_RSHIFT(h, desc->log2_chroma_h);
+             }
+             size = frame->linesize[i] * h;
+-            ret = v4l2_bufref_to_buf(out, 0, frame->data[i], size, offset);
++            ret = v4l2_bufref_to_buf(out, i, frame->data[i], size, 0);
+             if (ret)
+                 return ret;
+             offset += size;
+Index: b/libavcodec/v4l2_context.c
+===================================================================
+--- a/libavcodec/v4l2_context.c
++++ b/libavcodec/v4l2_context.c
+@@ -395,6 +395,18 @@ dequeue:
+             return NULL;
+         }
+ 
++        if(!V4L2_TYPE_IS_OUTPUT(ctx->type) &&
++           ctx->av_codec_id == AV_CODEC_ID_RAWVIDEO &&
++           ((buf.flags & 0x30000000) == 0))
++        {
++            ret = ioctl(ctx_to_m2mctx(ctx)->fd, VIDIOC_QBUF, &buf);
++            if (ret) {
++                av_log(logger(ctx), AV_LOG_DEBUG, "%s VIDIOC_QBUF, errno (%s)\n",
++                            ctx->name, av_err2str(AVERROR(errno)));
++            }
++            goto start;
++        }
++
+         if (ctx_to_m2mctx(ctx)->draining && !V4L2_TYPE_IS_OUTPUT(ctx->type)) {
+             int bytesused = V4L2_TYPE_IS_MULTIPLANAR(buf.type) ?
+                             buf.m.planes[0].bytesused : buf.bytesused;
+@@ -508,6 +520,11 @@ static int v4l2_get_raw_format(V4L2Conte
+             return AVERROR(EINVAL);
+ 
+         pixfmt = ff_v4l2_format_v4l2_to_avfmt(fdesc.pixelformat, AV_CODEC_ID_RAWVIDEO);
++        if (pixfmt == AV_PIX_FMT_NONE){
++            fdesc.index++;
++            continue;
++        }
++
+         ret = v4l2_try_raw_format(ctx, pixfmt);
+         if (ret){
+             fdesc.index++;
+Index: b/libavcodec/v4l2_m2m_dec.c
+===================================================================
+--- a/libavcodec/v4l2_m2m_dec.c
++++ b/libavcodec/v4l2_m2m_dec.c
+@@ -266,3 +266,5 @@ M2MDEC(h263,  "H.263", AV_CODEC_ID_H263,
+ M2MDEC(vc1 ,  "VC1",   AV_CODEC_ID_VC1,        NULL);
+ M2MDEC(vp8,   "VP8",   AV_CODEC_ID_VP8,        NULL);
+ M2MDEC(vp9,   "VP9",   AV_CODEC_ID_VP9,        NULL);
++M2MDEC(mjpeg, "MJPEG", AV_CODEC_ID_MJPEG,      NULL);
++
+Index: b/libavcodec/v4l2_m2m_enc.c
+===================================================================
+--- a/libavcodec/v4l2_m2m_enc.c
++++ b/libavcodec/v4l2_m2m_enc.c
+@@ -443,3 +443,5 @@ M2MENC(h263, "H.263", options,       AV_
+ M2MENC(h264, "H.264", options,       AV_CODEC_ID_H264);
+ M2MENC(hevc, "HEVC",  options,       AV_CODEC_ID_HEVC);
+ M2MENC(vp8,  "VP8",   options,       AV_CODEC_ID_VP8);
++M2MENC(mjpeg, "MJPEG", options,      AV_CODEC_ID_MJPEG);
++

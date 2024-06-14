@@ -40,6 +40,7 @@
 #include "lwp_user_mm.h"
 #include "k_type.h"
 #include "k_sensor_comm.h"
+#include "k_vicap_comm.h"
 
 typedef struct {
     k_s32 (*sensor_power) (void *ctx, k_s32 on);
@@ -68,6 +69,8 @@ typedef struct {
     k_s32 (*sensor_set_tpg)(void *ctx, k_sensor_test_pattern tpg);
     k_s32 (*sensor_get_expand_curve)(void *ctx, k_sensor_compand_curve *curve);
     k_s32 (*sensor_get_otp_data)(void *ctx, void *data);
+    k_s32 (*sensor_set_otp_data)(void *ctx, void *data);
+    k_s32 (*sensor_mirror_set)(void *ctx, k_vicap_mirror_mode mirror);
 } k_sensor_function;
 
 typedef struct {

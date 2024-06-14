@@ -97,7 +97,7 @@
     {
       "classname": "AGamma64",
       "disable": false,
-      "enable": true,
+      "enable": false,
       "forcecreate": true,
       "tables": [
         {
@@ -201,7 +201,7 @@
     {
       "classname": "ACproc",
       "disable": false,
-      "enable": true,
+      "enable": false,
       "forcecreate": true,
       "tables": [
         {
@@ -503,7 +503,7 @@
     {
       "classname": "AWdrv4",
       "disable": false,
-      "enable": true,
+      "enable": false,
       "forcecreate": true,
       "tables": [
         {
@@ -778,7 +778,7 @@
       "forcecreate": true,
       "tables": [
         {
-          "bls": [64, 64, 64, 64, 64],
+          "bls": [256, 256, 256, 256, 256],
           "gains": [1, 8, 16, 32, 64],
           "hdr": false
         },

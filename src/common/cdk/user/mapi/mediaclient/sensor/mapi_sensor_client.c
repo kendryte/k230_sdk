@@ -31,6 +31,7 @@
 #include "msg_sensor.h"
 #include "k_type.h"
 #include "k_sensor_comm.h"
+#include "k_vicap_comm.h"
 
 #include <stdio.h>
 
@@ -181,5 +182,24 @@ k_s32 kd_mapi_sensor_exposure_time_get(k_s32 fd, k_sensor_intg_time *exp_time)
         printf("kd_mapi_sensor_exposure_time_get failed\n");
     }
     memcpy(exp_time, &exp_opt.exp_time, sizeof(k_sensor_intg_time));
+    return ret;
+}
+
+
+k_s32 kd_mapi_sensor_otpdata_get(k_s32 sensor_type, k_sensor_otp_date *otp_data)
+{
+    msg_sensor_otp_opt_t sensor_otp;
+    k_s32 ret = 0;
+
+    sensor_otp.sensor_type = sensor_type;
+    memcpy(&sensor_otp.otp_data, otp_data, sizeof(k_sensor_otp_date));
+
+    ret = mapi_send_sync(MODFD(K_MAPI_MOD_SENSOR, 0, 0), MSG_CMD_MEDIA_SENSOR_OTP_GET,
+            &sensor_otp, sizeof(sensor_otp), NULL);
+    if(ret != K_SUCCESS) {
+        printf("kd_mpi_sensor_otpdata_get failed\n");
+    }
+    memcpy(otp_data, &sensor_otp.otp_data, sizeof(k_sensor_otp_date));
+
     return ret;
 }

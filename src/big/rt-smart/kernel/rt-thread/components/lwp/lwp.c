@@ -1050,16 +1050,24 @@ static void lwp_copy_stdio_fdt(struct rt_lwp *lwp)
 
     lwp_fdt = &lwp->fdt;
     /* init 4 fds */
-    lwp_fdt->fds = rt_calloc(4, sizeof(void *));
+    lwp_fdt->fds = rt_calloc(8, sizeof(void *));
     if (lwp_fdt->fds)
     {
-        lwp_fdt->maxfd = 4;
+        lwp_fdt->maxfd = 8;
         d = fd_get(0);
         fd_associate(lwp_fdt, 0, d);
         d = fd_get(1);
         fd_associate(lwp_fdt, 1, d);
         d = fd_get(2);
         fd_associate(lwp_fdt, 2, d);
+        d = fd_get(3);
+        fd_associate(lwp_fdt, 3, d);
+        d = fd_get(4);
+        fd_associate(lwp_fdt, 4, d);
+        d = fd_get(5);
+        fd_associate(lwp_fdt, 5, d);
+        d = fd_get(6);
+        fd_associate(lwp_fdt, 6, d);
     }
 
     return;

@@ -151,7 +151,7 @@
 			reg = <0x0 0x91580000 0x0 0x400>;
 			bus-width = <8>;
 			clocks = <&def_200mhz>;
-			max-frequency = <50000000>;
+			max-frequency = <200000000>;
 			fifo-mode;
 			have-emmc-phy;
 			status = "disabled";

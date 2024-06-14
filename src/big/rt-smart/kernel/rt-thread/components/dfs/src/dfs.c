@@ -912,6 +912,7 @@ MSH_CMD_EXPORT(lsof, list open files);
  */
 int mount(int argc, char *argv[])
 {
+    int ret = -1;
     if (argc == 1) /* display the mount history */
     {
         struct dfs_filesystem *iter;
@@ -936,7 +937,14 @@ int mount(int argc, char *argv[])
         char *fstype = argv[3];
 
         rt_kprintf("mount device %s(%s) onto %s ... ", device, fstype, path);
-        if (dfs_mount(device, path, fstype, 0, 0) == 0)
+#ifdef RT_USING_DFS_NFS
+        if(strcmp(fstype, "nfs") == 0)
+        {
+            ret = dfs_mount(RT_NULL, path, fstype, 0, device);
+        } else
+#endif
+        ret = dfs_mount(device, path, fstype, 0, 0);
+        if (ret == 0)
         {
             rt_kprintf("succeed!\n");
             return 0;

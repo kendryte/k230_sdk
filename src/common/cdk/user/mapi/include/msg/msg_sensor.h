@@ -36,6 +36,7 @@
 #define __MSG_SENSOR_H__
 
 #include "k_sensor_comm.h"
+#include "k_vicap_comm.h"
 #include "mpi_sensor_api.h"
 #include "mpi_sys_api.h"
 
@@ -52,6 +53,7 @@ typedef enum {
     MSG_CMD_MEDIA_SENSOR_EXPOSURE_GET,
     MSG_CMD_MEDIA_SENSOR_AGAIN_SET,
     MSG_CMD_MEDIA_SENSOR_AGAIN_GET,
+    MSG_CMD_MEDIA_SENSOR_OTP_GET,
 } msg_media_sensor_cmd_t;
 
 typedef struct {
@@ -69,6 +71,14 @@ typedef struct {
     k_s32 sensor_fd;
     k_sensor_intg_time exp_time;
 } msg_sensor_exposure_time_opt_t;
+
+
+typedef struct {
+    k_s32 sensor_type;
+    k_sensor_otp_date otp_data;
+} msg_sensor_otp_opt_t;
+
+
 
 /** @}*/  /** <!-- ==== COMM End ====*/
 #ifdef __cplusplus

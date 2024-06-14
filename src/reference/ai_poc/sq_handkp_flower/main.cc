@@ -49,7 +49,7 @@ void print_usage(const char *name)
          << "  nms_thresh      手掌检测kmodel nms阈值\n"
 		 << "  kmodel_kp       手势关键点检测kmodel路径\n"
          << "  flower_rec      花卉识别kmodel路径 \n"
-		 << "  debug_mode      是否需要调试，0、1、2分别表示不调试、简单调试、详细调试\n"
+		 << "  debug_mode      是否需要调试, 0、1、2分别表示不调试、简单调试、详细调试\n"
 		 << "\n"
 		 << endl;
 }
@@ -122,6 +122,18 @@ void video_proc(char *argv[])
                 fi ++;
 
                 cv::Mat osd_frame(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
+                #if defined(CONFIG_BOARD_K230D_CANMV)
+                {
+                    cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+                }
+                #elif defined(CONFIG_BOARD_K230_CANMV_01STUDIO)
+                {
+                    cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+                }
+                #else
+                {
+                }
+                #endif
 
                 if (frameTrackingResult.size()>=2 && fi>=5)
                 {
@@ -131,11 +143,36 @@ void video_proc(char *argv[])
                     for(int i=0;i< frameTrackingResult.size();i++)
                     {
                         auto tb = frameTrackingResult[i];
-                        int rect_x = tb.box.x / SENSOR_WIDTH * osd_width;
-                        int rect_y = tb.box.y / SENSOR_HEIGHT  * osd_height;
-                        int rect_w = (float)tb.box.width / SENSOR_WIDTH * osd_width;
-                        int rect_h = (float)tb.box.height / SENSOR_HEIGHT  * osd_height;
-                        cv::rectangle(osd_frame, cv::Rect(rect_x, rect_y, rect_w, rect_h), cv::Scalar( 255,255, 0, 255), 2, 2, 0);
+                        
+                        #if defined(CONFIG_BOARD_K230D_CANMV)
+                        {
+                            int rect_x = tb.box.x/ SENSOR_WIDTH * osd_height;
+                            int rect_y = tb.box.y/ SENSOR_HEIGHT * osd_width;
+                            int rect_w = (float)tb.box.width / SENSOR_WIDTH * osd_height;
+                            int rect_h = (float)tb.box.height / SENSOR_HEIGHT  * osd_width;
+
+                            cv::rectangle(osd_frame, cv::Rect(rect_x, rect_y, rect_w, rect_h), cv::Scalar( 255,255, 0, 255), 2, 2, 0);
+                        }
+                        #elif defined(CONFIG_BOARD_K230_CANMV_01STUDIO)
+                        {
+                            int rect_x = tb.box.x/ SENSOR_WIDTH * osd_height;
+                            int rect_y = tb.box.y/ SENSOR_HEIGHT * osd_width;
+                            int rect_w = (float)tb.box.width / SENSOR_WIDTH * osd_height;
+                            int rect_h = (float)tb.box.height / SENSOR_HEIGHT  * osd_width;
+
+                            cv::rectangle(osd_frame, cv::Rect(rect_x, rect_y, rect_w, rect_h), cv::Scalar( 255,255, 0, 255), 2, 2, 0);
+                        }
+                        #else
+                        {
+                            int rect_x = tb.box.x / SENSOR_WIDTH * osd_width;
+                            int rect_y = tb.box.y / SENSOR_HEIGHT  * osd_height;
+                            int rect_w = (float)tb.box.width / SENSOR_WIDTH * osd_width;
+                            int rect_h = (float)tb.box.height / SENSOR_HEIGHT  * osd_height;
+
+                            cv::rectangle(osd_frame, cv::Rect(rect_x, rect_y, rect_w, rect_h), cv::Scalar( 255,255, 0, 255), 2, 2, 0);
+                        }
+                        #endif
+                        
                         std::string num = std::to_string(tb.id);
 
                         int length = std::max(tb.box.width,tb.box.height)/2;
@@ -166,8 +203,22 @@ void video_proc(char *argv[])
                             left_top.x = left_pred_x * w_1 + x1_1;
                             left_top.y = left_pred_y * h_1 + y1_1;
 
-                            draw_x = left_top.x / SENSOR_WIDTH * osd_width;
-                            draw_y = left_top.y / SENSOR_HEIGHT * osd_height;
+                            #if defined(CONFIG_BOARD_K230D_CANMV)
+                            {
+                                draw_x = left_top.x / SENSOR_WIDTH * osd_height;
+                                draw_y = left_top.y / SENSOR_HEIGHT * osd_width;
+                            }
+                            #elif defined(CONFIG_BOARD_K230_CANMV_01STUDIO)
+                            {
+                                draw_x = left_top.x / SENSOR_WIDTH * osd_height;
+                                draw_y = left_top.y / SENSOR_HEIGHT * osd_width;
+                            }
+                            #else
+                            {
+                                draw_x = left_top.x / SENSOR_WIDTH * osd_width;
+                                draw_y = left_top.y / SENSOR_HEIGHT * osd_height;
+                            }
+                            #endif
                         }
                         else if (i==1)
                         {
@@ -177,8 +228,22 @@ void video_proc(char *argv[])
                             right_bottom.x = right_pred_x * w_1 + x1_1;
                             right_bottom.y = right_pred_y * h_1 + y1_1;
                         
-                            draw_x = right_bottom.x / SENSOR_WIDTH * osd_width;
-                            draw_y = right_bottom.y / SENSOR_HEIGHT * osd_height;
+                            #if defined(CONFIG_BOARD_K230D_CANMV)
+                            {
+                                draw_x = right_bottom.x / SENSOR_WIDTH * osd_height;
+                                draw_y = right_bottom.y / SENSOR_HEIGHT * osd_width;
+                            }
+                            #elif defined(CONFIG_BOARD_K230_CANMV_01STUDIO)
+                            {
+                                draw_x = right_bottom.x / SENSOR_WIDTH * osd_height;
+                                draw_y = right_bottom.y / SENSOR_HEIGHT * osd_width;
+                            }
+                            #else
+                            {
+                                draw_x = right_bottom.x / SENSOR_WIDTH * osd_width;
+                                draw_y = right_bottom.y / SENSOR_HEIGHT * osd_height;
+                            }
+                            #endif
                         }
 
                         cv::circle(osd_frame, cv::Point(draw_x, draw_y), 6, cv::Scalar(255, 0,0,0), 3);
@@ -201,13 +266,51 @@ void video_proc(char *argv[])
 
                     std::string text = fr.post_process();                    
                     
-                    int x = 1.0 * x_min/ SENSOR_WIDTH * osd_width;
-                    int y = 1.0 * y_min / SENSOR_HEIGHT  * osd_height;
-                    int w = 1.0 * (x_max-x_min) / SENSOR_WIDTH * osd_width;
-                    int h = 1.0 * (y_max-y_min) / SENSOR_HEIGHT  * osd_height;
-                    cv::putText(osd_frame, text, cv::Point(x, y-20),cv::FONT_HERSHEY_COMPLEX, 1, cv::Scalar(255, 255, 0, 0), 2);
-                    cv::rectangle(osd_frame, cv::Rect(x, y , w, h), cv::Scalar( 255,0, 255, 255), 2, 2, 0);
+                    #if defined(CONFIG_BOARD_K230D_CANMV)
+                    {
+                        int x = 1.0 * x_min/ SENSOR_WIDTH * osd_height;
+                        int y = 1.0 * y_min / SENSOR_HEIGHT * osd_width;
+                        int w = 1.0 * (x_max-x_min) / SENSOR_WIDTH * osd_height;
+                        int h = 1.0 * (y_max-y_min) / SENSOR_HEIGHT  * osd_width;
+
+                        cv::putText(osd_frame, text, cv::Point(x, y-20),cv::FONT_HERSHEY_COMPLEX, 1, cv::Scalar(255, 255, 0, 0), 2);
+                        cv::rectangle(osd_frame, cv::Rect(x, y , w, h), cv::Scalar( 255,0, 255, 255), 2, 2, 0);
+                    }
+                    #elif defined(CONFIG_BOARD_K230_CANMV_01STUDIO)
+                    {
+                        int x = 1.0 * x_min/ SENSOR_WIDTH * osd_height;
+                        int y = 1.0 * y_min / SENSOR_HEIGHT * osd_width;
+                        int w = 1.0 * (x_max-x_min) / SENSOR_WIDTH * osd_height;
+                        int h = 1.0 * (y_max-y_min) / SENSOR_HEIGHT  * osd_width;
+
+                        cv::putText(osd_frame, text, cv::Point(x, y-20),cv::FONT_HERSHEY_COMPLEX, 1, cv::Scalar(255, 255, 0, 0), 2);
+                        cv::rectangle(osd_frame, cv::Rect(x, y , w, h), cv::Scalar( 255,0, 255, 255), 2, 2, 0);
+                    }
+                    #else
+                    {
+                        int x = 1.0 * x_min/ SENSOR_WIDTH * osd_width;
+                        int y = 1.0 * y_min / SENSOR_HEIGHT * osd_height;
+                        int w = 1.0 * (x_max-x_min) / SENSOR_WIDTH * osd_width;
+                        int h = 1.0 * (y_max-y_min) / SENSOR_HEIGHT  * osd_height;
+
+                        cv::putText(osd_frame, text, cv::Point(x, y-20),cv::FONT_HERSHEY_COMPLEX, 1, cv::Scalar(255, 255, 0, 0), 2);
+                        cv::rectangle(osd_frame, cv::Rect(x, y , w, h), cv::Scalar( 255,0, 255, 255), 2, 2, 0);
+                    }
+                    #endif
                 }
+
+                #if defined(CONFIG_BOARD_K230D_CANMV)
+                {
+                    cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+                }
+                #elif defined(CONFIG_BOARD_K230_CANMV_01STUDIO)
+                {
+                    cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+                }
+                #else
+                {
+                }
+                #endif 
                 {
                     ScopedTiming st("osd copy", atoi(argv[7]));
                     memcpy(pic_vaddr, osd_frame.data, osd_width * osd_height * 4);

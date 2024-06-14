@@ -71,9 +71,10 @@ public:
      * @brief 将键盘画到原图
      * @param img 原始图片
      * @param alpha 键盘按钮的透明度
+     * @param fontScale 字体大小
      * @return None
      */
-    void drawKey(cv::Mat& img, float alpha);
+    void drawKey(cv::Mat& img, float alpha , double fontScale);
 
     /**
      * @brief 判断一个点是否在键盘按钮内

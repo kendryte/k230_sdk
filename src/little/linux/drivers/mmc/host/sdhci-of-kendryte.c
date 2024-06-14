@@ -131,7 +131,7 @@ static void dwcmshc_phy_delay_config(struct sdhci_host *host)
         sdhci_writeb(host, 0x0, DWC_MSHC_SDCLKDL_CNFG);
         sdhci_writeb(host, priv->tx_delay_line, DWC_MSHC_SDCLKDL_DC);
     }
-
+    sdhci_writeb(host, priv->rx_delay_line, DWC_MSHC_SMPLDL_CNFG);
 	sdhci_writeb(host, 0xc, DWC_MSHC_ATDL_CNFG);
 	sdhci_writel(host, (sdhci_readl(host, SDHCI_VENDER_AT_CTRL_REG) | \
 	  BIT(16) | BIT(17) | BIT(19) | BIT(20)), SDHCI_VENDER_AT_CTRL_REG);
@@ -353,11 +353,11 @@ static int dwcmshc_probe(struct platform_device *pdev)
         }
         err = device_property_read_u32(&pdev->dev, "tx_delay_line", &priv->tx_delay_line);
         if(err)
-            priv->tx_delay_line = 0;
+            priv->tx_delay_line = 0x40;
 
         err = device_property_read_u32(&pdev->dev, "rx_delay_line", &priv->rx_delay_line);
         if(err)
-            priv->rx_delay_line = 0;
+            priv->rx_delay_line = 0xd;
 
     } else {
         /*sdio:(fpga board) Launches CMD/DATA with respect to positive edge of cclk_tx */

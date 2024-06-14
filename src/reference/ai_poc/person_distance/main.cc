@@ -125,23 +125,73 @@ void video_proc(char *argv[])
         std::string text;
         cv::Point origin;
 
-        for (auto r : results)
+        
+        #if defined(CONFIG_BOARD_K230D_CANMV)
         {
-            ScopedTiming st("draw img", atoi(argv[6]));
-            text = pd.labels[r.label] + ":" + std::to_string(round(r.score * 100) / 100).substr(0,4);
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+            for (auto r : results)
+            {
+                ScopedTiming st("draw img", atoi(argv[6]));
+                text = pd.labels[r.label] + ":" + std::to_string(round(r.score * 100) / 100).substr(0,4);
 
-            int x1 =   r.x1 / SENSOR_WIDTH * osd_width;
-            int y1 =  r.y1 / SENSOR_HEIGHT  * osd_height;
+                int x1 =   r.x1 / SENSOR_WIDTH * osd_height;
+                int y1 =  r.y1 / SENSOR_HEIGHT  * osd_width;
 
-            int w = (r.x2-r.x1) / SENSOR_WIDTH * osd_width;
-            int h = (r.y2-r.y1) / SENSOR_HEIGHT  * osd_height;
+                int w = (r.x2-r.x1) / SENSOR_WIDTH * osd_height;
+                int h = (r.y2-r.y1) / SENSOR_HEIGHT  * osd_width;
 
-            float dis = detect_distance_people(atof(argv[5]), h);
+                float dis = detect_distance_people(atof(argv[5]), h);
 
-            cv::rectangle(osd_frame, cv::Rect( x1,y1,w,h ), cv::Scalar(255, 255,0, 0), 6, 2, 0); // ARGB
-            std::string text = "dis:" + std::to_string(int(dis)) + "cm";
-            cv::putText(osd_frame, text, cv::Point(x1,y1+20),cv::FONT_HERSHEY_COMPLEX, 1, cv::Scalar(255, 255, 195, 0), 2);
+                cv::rectangle(osd_frame, cv::Rect( x1,y1,w,h ), cv::Scalar(255, 255,0, 0), 6, 2, 0); // ARGB
+                std::string text = "dis:" + std::to_string(int(dis)) + "cm";
+                cv::putText(osd_frame, text, cv::Point(x1,y1+20),cv::FONT_HERSHEY_COMPLEX, 1, cv::Scalar(255, 255, 195, 0), 2);
+            }
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+
         }
+        #elif defined(CONFIG_BOARD_K230_CANMV_01STUDIO)
+        {
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+            for (auto r : results)
+            {
+                ScopedTiming st("draw img", atoi(argv[6]));
+                text = pd.labels[r.label] + ":" + std::to_string(round(r.score * 100) / 100).substr(0,4);
+
+                int x1 =   r.x1 / SENSOR_WIDTH * osd_height;
+                int y1 =  r.y1 / SENSOR_HEIGHT  * osd_width;
+
+                int w = (r.x2-r.x1) / SENSOR_WIDTH * osd_height;
+                int h = (r.y2-r.y1) / SENSOR_HEIGHT  * osd_width;
+
+                float dis = detect_distance_people(atof(argv[5]), h);
+
+                cv::rectangle(osd_frame, cv::Rect( x1,y1,w,h ), cv::Scalar(255, 255,0, 0), 6, 2, 0); // ARGB
+                std::string text = "dis:" + std::to_string(int(dis)) + "cm";
+                cv::putText(osd_frame, text, cv::Point(x1,y1+20),cv::FONT_HERSHEY_COMPLEX, 1, cv::Scalar(255, 255, 195, 0), 2);
+            }
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+        }
+        #else
+        {
+            for (auto r : results)
+            {
+                ScopedTiming st("draw img", atoi(argv[6]));
+                text = pd.labels[r.label] + ":" + std::to_string(round(r.score * 100) / 100).substr(0,4);
+
+                int x1 =   r.x1 / SENSOR_WIDTH * osd_width;
+                int y1 =  r.y1 / SENSOR_HEIGHT  * osd_height;
+
+                int w = (r.x2-r.x1) / SENSOR_WIDTH * osd_width;
+                int h = (r.y2-r.y1) / SENSOR_HEIGHT  * osd_height;
+
+                float dis = detect_distance_people(atof(argv[5]), h);
+
+                cv::rectangle(osd_frame, cv::Rect( x1,y1,w,h ), cv::Scalar(255, 255,0, 0), 6, 2, 0); // ARGB
+                std::string text = "dis:" + std::to_string(int(dis)) + "cm";
+                cv::putText(osd_frame, text, cv::Point(x1,y1+20),cv::FONT_HERSHEY_COMPLEX, 1, cv::Scalar(255, 255, 195, 0), 2);
+            }
+        }
+        #endif 
 
         {
             ScopedTiming st("osd copy", atoi(argv[6]));
@@ -168,7 +218,6 @@ void video_proc(char *argv[])
         std::cerr << "free failed: ret = " << ret << ", errno = " << strerror(errno) << std::endl;
         std::abort();
     }
-
 }
 
 

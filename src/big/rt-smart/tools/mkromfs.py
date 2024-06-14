@@ -67,6 +67,7 @@ def mkromfs_dir(dirname, is_root = False):
         mkromfs_output('const struct romfs_dirent _root_dirent[] = {\n')
         mkromfs_output(('#ifdef RT_USING_DFS_DEVFS\n\t{ROMFS_DIRENT_DIR, "dev", RT_NULL, 0},\n#endif\n'))
         mkromfs_output(('#ifdef RT_USING_SDIO\n\t{ROMFS_DIRENT_DIR, "sdcard", RT_NULL, 0},\n#endif\n'))
+        mkromfs_output(('#ifdef RT_USING_DFS_NFS\n\t{ROMFS_DIRENT_DIR, "nfs", RT_NULL, 0},\n#endif\n'))
         mkromfs_output(('#ifdef RT_USING_PROC\n\t{ROMFS_DIRENT_DIR, "proc", RT_NULL, 0},\n#endif\n'))
         mkromfs_output(('#ifdef RT_USING_DFS_SHAREFS\n\t{ROMFS_DIRENT_DIR, "sharefs", RT_NULL, 0},\n#endif\n'))
     else:

@@ -123,6 +123,9 @@ typedef enum
     PIXEL_FORMAT_U64C1,
     PIXEL_FORMAT_S64C1,
 
+    PIXEL_FORMAT_RGB_565_LE = 300,
+    PIXEL_FORMAT_BGR_565_LE,
+
     PIXEL_FORMAT_BUTT
 } k_pixel_format;
 

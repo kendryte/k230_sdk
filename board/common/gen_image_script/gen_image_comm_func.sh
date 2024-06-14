@@ -136,6 +136,11 @@ add_dev_firmware()
 	if [ "${CONFIG_AP6256}" = "y" ] ; then 
 		cp -f ${K230_SDK_ROOT}/board/common/dev_firmware/ap6256/* ${BUILD_DIR}/images/little-core/rootfs/${dev_firmware}/
 	fi
+
+    if [ "${CONFIG_RTL8188FU}" = "y" ] ; then 
+        mkdir -p ${BUILD_DIR}/images/little-core/rootfs/lib/firmware/rtlwifi/
+        cp -f ${K230_SDK_ROOT}/board/common/dev_firmware/rtl8188fu/* ${BUILD_DIR}/images/little-core/rootfs/lib/firmware/rtlwifi/
+    fi
 }
 
 #add_firmHead  xxx.bin  "-n"

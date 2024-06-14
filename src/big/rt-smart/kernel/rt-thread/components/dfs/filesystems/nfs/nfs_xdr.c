@@ -35,17 +35,13 @@ xdr_int64(register XDR *xdrs, int64 *objp)
 bool_t
 xdr_uint32(register XDR *xdrs, uint32 *objp)
 {
-	if (!xdr_u_long(xdrs, objp))
-		return (FALSE);
-	return (TRUE);
+    return (xdr_u_int(xdrs, objp));
 }
 
 bool_t
 xdr_int32(register XDR *xdrs, int32 *objp)
 {
-	if (!xdr_long(xdrs, objp))
-		return (FALSE);
-	return (TRUE);
+	return (xdr_int(xdrs, objp));
 }
 
 bool_t

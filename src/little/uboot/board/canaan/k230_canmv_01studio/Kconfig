@@ -18,7 +18,7 @@ config BOARD_SPECIFIC_OPTIONS # dummy
 	select RISCV_THEAD
 choice  
 	prompt "ddr typy freq"
-    default CANMV_01STUDIO_LPDDR3_2133
+    default CANMV_01STUDIO_LPDDR4_2667
 
 config CANMV_01STUDIO_LPDDR3_2133
 	bool  2133
@@ -26,5 +26,9 @@ config CANMV_01STUDIO_LPDDR3_1600
 	bool  1600
 config CANMV_01STUDIO_LPDDR3_800
 	bool 800
+config CANMV_01STUDIO_LPDDR4_2667
+	bool LP4_2667
+config CANMV_01STUDIO_LPDDR4_3200
+	bool LP4_3200
 endchoice
 endif

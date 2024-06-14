@@ -107,6 +107,45 @@ void video_proc(char *argv[])
         cv::Mat ori_img;
         std::vector<cv::Mat> sensor_bgr;
         cv::Mat osd_frame(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
+
+        #if defined(CONFIG_BOARD_K230D_CANMV) || defined(CONFIG_BOARD_K230_CANMV_01STUDIO)
+        {
+        cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+        cv::Mat ori_img_R = cv::Mat(SENSOR_HEIGHT, SENSOR_WIDTH, CV_8UC1, vaddr);
+        cv::Mat ori_img_G = cv::Mat(SENSOR_HEIGHT, SENSOR_WIDTH, CV_8UC1, vaddr + 1 * matsize);
+        cv::Mat ori_img_B = cv::Mat(SENSOR_HEIGHT, SENSOR_WIDTH, CV_8UC1, vaddr + 2 * matsize);
+        sensor_bgr.push_back(ori_img_B);
+        sensor_bgr.push_back(ori_img_G);
+        sensor_bgr.push_back(ori_img_R);
+        cv::merge(sensor_bgr, ori_img);
+
+        for(int i = 0; i < results.size(); i++)
+        {
+            vector<Point> vec;
+            vector<Point2f> sort_vtd(4);
+            vec.clear();
+            for(int j = 0; j < 4; j++)
+                vec.push_back(results[i].vertices[j]);
+            cv::RotatedRect rect = cv::minAreaRect(vec);
+            cv::Point2f ver[4];
+            rect.points(ver);
+            cv::Mat crop;
+            Utils::warppersp(ori_img, crop, results[i], sort_vtd);
+            ocrreco.pre_process(crop);
+            ocrreco.inference();
+            vector<unsigned char> results2;
+            ocrreco.post_process(results2);
+            Utils::draw_ocr_text(float(sort_vtd[3].x), float(sort_vtd[3].y),osd_frame,results2,{osd_height, osd_width}, {SENSOR_WIDTH, SENSOR_HEIGHT});
+        }
+
+        {
+            ScopedTiming st("osd draw", atoi(argv[5]));
+            Utils::draw_ocr_det_res(osd_frame, results, {osd_height, osd_width}, {SENSOR_WIDTH, SENSOR_HEIGHT});
+        }
+        cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+        }
+        #else
+        {
         cv::Mat ori_img_R = cv::Mat(SENSOR_HEIGHT, SENSOR_WIDTH, CV_8UC1, vaddr);
         cv::Mat ori_img_G = cv::Mat(SENSOR_HEIGHT, SENSOR_WIDTH, CV_8UC1, vaddr + 1 * matsize);
         cv::Mat ori_img_B = cv::Mat(SENSOR_HEIGHT, SENSOR_WIDTH, CV_8UC1, vaddr + 2 * matsize);
@@ -138,6 +177,8 @@ void video_proc(char *argv[])
             ScopedTiming st("osd draw", atoi(argv[5]));
             Utils::draw_ocr_det_res(osd_frame, results, {osd_width, osd_height}, {SENSOR_WIDTH, SENSOR_HEIGHT});
         }
+        }
+        #endif
 
         {
             ScopedTiming st("osd copy", atoi(argv[5]));

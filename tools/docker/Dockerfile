@@ -43,10 +43,6 @@ RUN apt-get clean all && \
     lib32z1 scons libncurses5-dev \
     kmod fakeroot pigz tree doxygen gawk pkg-config libyaml-dev libconfuse2 libconfuse-dev
 
-# local build flag
-RUN echo "False" > /tmp/.flag
-RUN wget -P /tmp/ "https://ai.b-bug.org/k230/downloads/aitest/aitest-0.0.4.dev20240111-py3-none-any.whl" || echo "True" > /tmp/.flag
-
 # config pip local source
 RUN echo \
     '[global]\n\
@@ -73,10 +69,6 @@ RUN wget https://github.com/pengutronix/genimage/releases/download/v16/genimage-
     && make install \
     && cd .. ; rm -rf genimage*
 
-# install local test env
-RUN FLAG=$(cat /tmp/.flag) && if [ "$FLAG" = "False" ]; then python3 -m pip install -U /tmp/aitest*.whl; else echo "Skip install"; fi \
-    && FLAG=$(cat /tmp/.flag) && if [ "$FLAG" = "False" ]; then python3 -m pip install -U robotframework requests; else echo "Skip install"; fi
-
 # default encode
 RUN rm -rf /var/lib/apt/lists/* \
     && localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
@@ -95,6 +87,14 @@ RUN groupadd --gid ${UID} ${USER} \
 
 # toolchain and work dir
 RUN mkdir -p /opt/toolchain/
+
+# local build flag
+RUN echo "False" > /tmp/.flag
+RUN wget -P /tmp/ "https://ai.b-bug.org/k230/downloads/aitest/aitest-0.0.5.dev20240613-py3-none-any.whl" || echo "True" > /tmp/.flag
+
+# install local test env
+RUN FLAG=$(cat /tmp/.flag) && if [ "$FLAG" = "False" ]; then python3 -m pip install -U /tmp/aitest*.whl; else echo "Skip install"; fi \
+    && FLAG=$(cat /tmp/.flag) && if [ "$FLAG" = "False" ]; then python3 -m pip install -U robotframework requests; else echo "Skip install"; fi
 
 # switch to new user
 USER ${USER}

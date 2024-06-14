@@ -1,6 +1,6 @@
 # K230 手势渲染POC
 ![Alt text](resource/image.png)
-Document version: V1.4 Release date: 2024-1-31
+Document version: V1.6 Release date: 2024-5-31
 ## 介绍
 该项目为K230手势渲染POC开源工程，本工程基于K230融合了手部动作捕捉、手部3D mesh模型（MANO模型）等技术。本应用可以手部动作捕捉以及渲染，即K230作为client端摄取真人手部动作，通过在K230上的模型inference和post-process，再将结果传输给作为server端的PC，驱动MANO模型动起来。
 ## 主要特点
@@ -22,7 +22,7 @@ Document version: V1.4 Release date: 2024-1-31
     wget https://ai.b-bug.org/k230/downloads/fancy_poc/meta_hand/$file || wget https://kendryte-download.canaan-creative.com/k230/downloads/fancy_poc/meta_hand/$file;  
     done  
     
-    for file in onboard_v2.8.zip
+    for file in onboard_v2.8.3.zip
     do
     wget https://ai.b-bug.org/k230/downloads/fancy_poc/meta_hand/k230_board/$file || wget https://kendryte-download.canaan-creative.com/k230/downloads/fancy_poc/meta_hand/k230_board/$file;  
     done

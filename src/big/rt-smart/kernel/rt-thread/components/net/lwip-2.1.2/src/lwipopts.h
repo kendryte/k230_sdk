@@ -661,5 +661,6 @@
 #define TFTP_MAX_FILENAME_LEN           64
 #endif
 
-
+#define MEMCPY(dst,src,len)             rt_memcpy(dst,src,len)
+#define SMEMCPY(dst,src,len)            rt_memcpy(dst,src,len)
 #endif /* __LWIPOPTS_H__ */

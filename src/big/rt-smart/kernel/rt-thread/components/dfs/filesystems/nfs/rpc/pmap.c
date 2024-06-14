@@ -55,7 +55,7 @@ unsigned short pmap_getport(struct sockaddr_in *address, unsigned long program, 
 		CLNT_DESTROY(client);
 	}
 
-	(void) lwip_close(socket);
+	(void) close(socket);
 	address->sin_port = 0;
 
 	return (port);

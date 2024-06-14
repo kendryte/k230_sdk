@@ -26,6 +26,14 @@
 		linux,initrd-end = <0x0 0x0>;
 		stdout-path = "serial0:115200";
 	};
+
+	sound {
+		status                      = "disable";
+		compatible                  = "canaan,k230-audio-inno";
+		canaan,model                = "CANAAN_K230_I2S_INNO";
+		canaan,k230-i2s-controller  = <&i2s>;
+		canaan,k230-audio-codec     = <&inno_codec>;
+	};
 };
 &ddr {
 	reg = <0x0 0x8200000 0x0 0x7dff000>;  /*linux memory config*/
@@ -42,7 +50,7 @@
 
 &mmc_sd0{
     status = "okay";
-    rx_delay_line = <0x00>;
+    rx_delay_line = <0x0d>;
     tx_delay_line = <0xc0>;
 };
 

@@ -87,3 +87,17 @@
     clocks = <&audio_dev_clk>;
     clock-names = "i2sclk";
 };
+
+&i2s {
+    clocks      = <&audio_dev_clk>;
+    clock-names = "i2sclk";
+};
+
+&pdma {
+    clocks      = <&pdma_aclk_gate>;
+};
+
+&inno_codec {
+    clocks = <&codec_adc_mclk>,<&codec_dac_mclk>;
+    clock-names = "adc", "dac";
+};

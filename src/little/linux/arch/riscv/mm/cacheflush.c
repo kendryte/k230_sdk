@@ -117,6 +117,19 @@ void dma_wb_range(unsigned long start, unsigned long end)
 	sync_is();
 }
 
+void dma_inv_range(unsigned long start, unsigned long end)
+{
+	register unsigned long i asm("a0") = start & ~(L1_CACHE_BYTES - 1);
+
+	if (!thead_dma_init_flag)
+		return;
+
+	for (; i < end; i += L1_CACHE_BYTES)
+		asm volatile (".long 0x02a5000b"); /* dcache.ipa a0 */
+
+	sync_is();
+}
+
 #define THEAD_VENDOR_ID       0x5b7
 
 static int __init thead_dma_init(void)

@@ -360,6 +360,9 @@ static int __dw_i2c_read(struct i2c_regs *i2c_base, rt_uint8_t dev, uint addr,
             {
                 writel(IC_CMD | need_restart, &i2c_base->ic_cmd_data);
             }
+
+            while( (readl(&i2c_base->ic_status) & IC_STATUS_TFE) != IC_STATUS_TFE);
+
             active = 1;
             need_restart = 0;
         }
@@ -427,6 +430,15 @@ static int __dw_i2c_write(struct i2c_regs *i2c_base, rt_uint8_t dev, uint addr,
             return 1;
         }
     }
+
+    while( (readl(&i2c_base->ic_status) & IC_STATUS_TFE) != IC_STATUS_TFE);
+
+    // if(readl(&i2c_base->ic_tx_abrt_source) != 0){
+    //     if(readl(&i2c_base->ic_raw_intr_stat)&IC_TX_ABRT){
+    //         LOG_E("i2c tx abort\n");
+    //         return 1;
+    //     }
+    // }
 
     return 0;
 }

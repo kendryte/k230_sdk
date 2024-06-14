@@ -118,3 +118,36 @@ k_s32 kd_mapi_sensor_exposure_time_get(k_s32 fd, k_sensor_intg_time *exp_time)
     }
     return K_SUCCESS;
 }
+
+
+k_s32 kd_mapi_sensor_otpdata_get(k_s32 sensor_type, k_sensor_otp_date *otp_data)
+{
+    k_s32 ret = 0;
+    k_s32 sensor_fd = -1;
+    k_sensor_mode mode;
+    k_vicap_sensor_info sensor_info;
+    k_sensor_otp_date read_otp_data;
+    
+    memset(&sensor_info, 0, sizeof(k_vicap_sensor_info));
+    memcpy(&read_otp_data, otp_data, sizeof(k_sensor_otp_date));
+
+    CHECK_MAPI_SENSOR_NULL_PTR("otp_data", otp_data);
+
+    ret = kd_mpi_vicap_get_sensor_info(sensor_type, &sensor_info);
+
+    sensor_fd = kd_mpi_sensor_open(sensor_info.sensor_name);
+    if (sensor_fd < 0) {
+        printf("%s, sensor open failed.\n", __func__);
+        return -1;
+    }
+
+    ret = kd_mpi_sensor_otpdata_get(sensor_fd, &read_otp_data);
+    if (ret) {
+        printf("%s, sensor stream on failed.\n", __func__);
+        return -1;
+    }
+
+    memcpy(otp_data, &read_otp_data, sizeof(k_sensor_otp_date));
+
+    return 0;
+}

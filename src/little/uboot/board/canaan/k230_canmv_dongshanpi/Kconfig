@@ -1,0 +1,23 @@
+if TARGET_K230_CANMV_DONGSHANPI
+
+config SYS_CPU
+	default "k230"
+    
+config SYS_VENDOR
+    default "canaan"
+
+config SYS_BOARD
+    default "k230_canmv_dongshanpi"
+
+config SYS_CONFIG_NAME
+    default "k230_evb"
+
+
+config BOARD_SPECIFIC_OPTIONS # dummy
+	def_bool y
+	select RISCV_THEAD
+    
+config CANMV_LPDDR3_2133
+	def_bool y
+
+endif

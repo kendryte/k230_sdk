@@ -90,7 +90,7 @@ void FaceAlignment::inference()
     this->get_output();
 }
 
-void FaceAlignment::post_process(FrameSize frame_size,vector<float>& vertices)
+void FaceAlignment::post_process(FrameSize frame_size,vector<float>& vertices, bool pic_mode)
 {
     ScopedTiming st(model_name_ + " post_process", debug_mode_);
     vector<float> param(p_outputs_[0],p_outputs_[0] + output_shapes_[0][1]);
@@ -100,11 +100,14 @@ void FaceAlignment::post_process(FrameSize frame_size,vector<float>& vertices)
     post_obj_.inference();
     post_obj_.post_process(vertices);
     
-    //因为要在osd上画图，故需要把返回值变换到osd的长、宽
-    roi.x0 = roi.x0 / isp_shape_.width * frame_size.width;
-    roi.y0 = roi.y0 / isp_shape_.height * frame_size.height;
-    roi.x1 = roi.x1 / isp_shape_.width * frame_size.width;
-    roi.y1 = roi.y1 / isp_shape_.height * frame_size.height; 
+    if (pic_mode==false)
+    {
+        //因为要在osd上画图，故需要把返回值变换到osd的长、宽
+        roi.x0 = roi.x0 / isp_shape_.width * frame_size.width;
+        roi.y0 = roi.y0 / isp_shape_.height * frame_size.height;
+        roi.x1 = roi.x1 / isp_shape_.width * frame_size.width;
+        roi.y1 = roi.y1 / isp_shape_.height * frame_size.height; 
+    }
     recon_vers(roi, vertices);
 }
 
@@ -117,6 +120,7 @@ void FaceAlignment::constant_init()
 /*************************前处理********************/
 LeftTopRightBottom FaceAlignment::parse_roi_box_from_bbox(FrameSize frame_size,Bbox& b,Bbox& roi_b)
 {
+    ScopedTiming st(model_name_ + " parse_roi_box_from_bbox", debug_mode_);
     float old_size = ( b.w + b.h) / 2;
     float center_x = b.x + b.w / 2;
     float center_y = b.y + b.h / 2 + old_size * 0.14;
@@ -142,6 +146,7 @@ LeftTopRightBottom FaceAlignment::parse_roi_box_from_bbox(FrameSize frame_size,B
 /*************************后处理********************/
 void FaceAlignment::get_depth(cv::Mat &img, vector<float>& vertices)
 {    
+    ScopedTiming st(model_name_ + " get_depth", debug_mode_);
     vector<float> z(post_ver_dim_ * 3);
     vector<float> ver(post_ver_dim_ * 3);
 
@@ -178,6 +183,7 @@ void FaceAlignment::get_depth(cv::Mat &img, vector<float>& vertices)
 
 void FaceAlignment::get_pncc(cv::Mat &img,vector<float>& vertices)
 {
+    ScopedTiming st(model_name_ + " get_pncc", debug_mode_);
     //rendering pncc
     vector<float> ver(post_ver_dim_ * 3);
     int row = 0, col = 0, end_ver = 3 * post_ver_dim_;
@@ -193,6 +199,7 @@ void FaceAlignment::get_pncc(cv::Mat &img,vector<float>& vertices)
 
 void FaceAlignment::param_normalized(vector<float>& param)
 {
+    ScopedTiming st(model_name_ + " param_normalized", debug_mode_);
     for (int param_index = 0; param_index < param.size(); ++param_index)
     {
         param[param_index] = param[param_index] * param_std[param_index] + param_mean[param_index];
@@ -201,11 +208,13 @@ void FaceAlignment::param_normalized(vector<float>& param)
 
 void FaceAlignment::recon_vers(LeftTopRightBottom& roi_box_lst,vector<float> &vertices)
 {
+    ScopedTiming st(model_name_ + " recon_vers", debug_mode_);
     similar_transform(roi_box_lst,vertices);
 }
 
 void FaceAlignment::similar_transform(LeftTopRightBottom& roi_box,vector<float> &vertices)
 {
+    ScopedTiming st(model_name_ + " similar_transform", debug_mode_);
     double scale_x = (roi_box.x1 - roi_box.x0) / input_shapes_[0][3];
     double scale_y = (roi_box.y1 - roi_box.y0) / input_shapes_[0][3];
     double s = (scale_x + scale_y) / 2;
@@ -259,6 +268,7 @@ void FaceAlignment::similar_transform(LeftTopRightBottom& roi_box,vector<float> 
 
 void FaceAlignment::rasterize(cv::Mat& img, vector<float>& vertices,vector<float> &colors,float alpha, bool reverse)
 {
+    ScopedTiming st(model_name_ + " rasterize", debug_mode_);
     vector<float> buffer(img.cols*img.rows,-1e8);
     _rasterize(img.data, vertices.data(), bfm_tri.data(), colors.data(), buffer.data(), bfm_tri.size()/3, img.rows, img.cols, img.channels(), alpha, reverse);
 }

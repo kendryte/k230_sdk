@@ -106,20 +106,62 @@ void video_proc(char *argv[])
         hd.post_process(results);
 
         cv::Mat osd_frame(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-        for (auto r: results)
+        #if defined(CONFIG_BOARD_K230D_CANMV)
         {
-            std::string text = hd.labels_[r.label] + ":" + std::to_string(round(r.score * 100) / 100.0);
-            std::cout << "text = " << text << std::endl;
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+            for (auto r: results)
+            {
+                std::string text = hd.labels_[r.label] + ":" + std::to_string(round(r.score * 100) / 100.0);
+                std::cout << "text = " << text << std::endl;
 
-            int w = r.x2 - r.x1 + 1;
-            int h = r.y2 - r.y1 + 1;
-            
-            int rect_x = r.x1/ SENSOR_WIDTH * osd_width;
-            int rect_y = r.y1/ SENSOR_HEIGHT * osd_height;
-            int rect_w = (float)w / SENSOR_WIDTH * osd_width;
-            int rect_h = (float)h / SENSOR_HEIGHT  * osd_height;
-            cv::rectangle(osd_frame, cv::Rect(rect_x, rect_y , rect_w, rect_h), cv::Scalar( 255,255, 255, 255), 2, 2, 0);
+                int w = r.x2 - r.x1 + 1;
+                int h = r.y2 - r.y1 + 1;
+                
+                int rect_x = r.x1/ SENSOR_WIDTH * osd_height;
+                int rect_y = r.y1/ SENSOR_HEIGHT * osd_width;
+                int rect_w = (float)w / SENSOR_WIDTH * osd_height;
+                int rect_h = (float)h / SENSOR_HEIGHT  * osd_width;
+                cv::rectangle(osd_frame, cv::Rect(rect_x, rect_y , rect_w, rect_h), cv::Scalar( 255,255, 255, 255), 2, 2, 0);
+            }
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
         }
+        #elif defined(CONFIG_BOARD_K230_CANMV_01STUDIO)
+        {
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+            for (auto r: results)
+            {
+                std::string text = hd.labels_[r.label] + ":" + std::to_string(round(r.score * 100) / 100.0);
+                std::cout << "text = " << text << std::endl;
+
+                int w = r.x2 - r.x1 + 1;
+                int h = r.y2 - r.y1 + 1;
+                
+                int rect_x = r.x1/ SENSOR_WIDTH * osd_height;
+                int rect_y = r.y1/ SENSOR_HEIGHT * osd_width;
+                int rect_w = (float)w / SENSOR_WIDTH * osd_height;
+                int rect_h = (float)h / SENSOR_HEIGHT  * osd_width;
+                cv::rectangle(osd_frame, cv::Rect(rect_x, rect_y , rect_w, rect_h), cv::Scalar( 255,255, 255, 255), 2, 2, 0);
+            }
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+        }
+        #else
+        {
+            for (auto r: results)
+            {
+                std::string text = hd.labels_[r.label] + ":" + std::to_string(round(r.score * 100) / 100.0);
+                std::cout << "text = " << text << std::endl;
+
+                int w = r.x2 - r.x1 + 1;
+                int h = r.y2 - r.y1 + 1;
+                
+                int rect_x = r.x1/ SENSOR_WIDTH * osd_width;
+                int rect_y = r.y1/ SENSOR_HEIGHT * osd_height;
+                int rect_w = (float)w / SENSOR_WIDTH * osd_width;
+                int rect_h = (float)h / SENSOR_HEIGHT  * osd_height;
+                cv::rectangle(osd_frame, cv::Rect(rect_x, rect_y , rect_w, rect_h), cv::Scalar( 255,255, 255, 255), 2, 2, 0);
+            }
+        }
+		#endif
 
         {
             ScopedTiming st("osd copy", atoi(argv[5]));

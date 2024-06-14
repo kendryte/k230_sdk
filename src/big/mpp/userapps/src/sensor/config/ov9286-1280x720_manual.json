@@ -170,7 +170,7 @@
         {
           "class": "CDpf",
           "div": 0,
-          "enable": true,
+          "enable": false,
           "gain": 24,
           "gradient": 2,
           "min": 2.5,
@@ -385,7 +385,7 @@
           "range_h": 7,
           "range_v": 7,
           "sadweight": 16,
-          "sigma": 4,
+          "sigma": 2,
           "strength": 110,
           "thr_motion_slope": 16,
           "tnr_en": false

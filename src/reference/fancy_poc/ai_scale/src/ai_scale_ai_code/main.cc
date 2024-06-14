@@ -572,6 +572,10 @@ void video_proc(string &kmodel_path, size_t top_k, int debug_mode)
         cv::Mat osd_frame(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
         cv::Mat osd_frame_tmp;
 
+        #if defined(CONFIG_BOARD_K230D_CANMV)
+        cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+        #endif
+
         if(file_exists(weight_flag) && rec_flag){
             ScopedTiming st("embedding search", debug_mode);
             // Get the top k similar files
@@ -590,6 +594,9 @@ void video_proc(string &kmodel_path, size_t top_k, int debug_mode)
             save_result("res/result.txt",text);
         }
 
+        #if defined(CONFIG_BOARD_K230D_CANMV)
+        cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+        #endif
         {
             ScopedTiming st("osd copy", debug_mode);
             memcpy(pic_vaddr, osd_frame.data, osd_width * osd_height * 4);

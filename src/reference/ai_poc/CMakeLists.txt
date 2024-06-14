@@ -19,8 +19,11 @@ include_directories(${nncase_sdk_root}/riscv64/nncase/include)
 include_directories(${nncase_sdk_root}/riscv64/nncase/include/nncase/runtime)
 link_directories(${nncase_sdk_root}/riscv64/nncase/lib/)
 
+# set vi_vo
+include_directories(./vi_vo)
+
 # 定义要排除的目录列表
-set(exclude_dirs "cmake" "k230_bin" "shell" "out" "llamac" ".git")
+set(exclude_dirs "cmake" "k230_bin" "shell" "out" "llamac" ".git" "vi_vo")
 file(GLOB files "${CMAKE_CURRENT_SOURCE_DIR}/*")
 foreach(file ${files})
     # 判断当前文件是否是一个目录

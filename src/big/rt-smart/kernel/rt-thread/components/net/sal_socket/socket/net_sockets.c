@@ -323,7 +323,7 @@ int closesocket(int s)
         error = -1;
     }
 
-    rt_free(d->fnode);
+    // rt_free(d->fnode);
     /* socket has been closed, delete it from file system fd */
     fd_release(s);
 

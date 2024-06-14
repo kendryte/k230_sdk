@@ -2,7 +2,7 @@
 
 ![](./resource/example_images/canaan-cover.png)
 
-Document version: V1.4 Release date: 2024-1-31
+Document version: V1.6 Release date: 2024-5-31
 
 ## 介绍
 

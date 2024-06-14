@@ -769,6 +769,6 @@ void Utils::action_count( cv::Mat& image, std::vector<KKeyPoint> keypoints, floa
 {
     int deepdown = PoseAction::single_action_check(keypoints, thresh, 3, 2);
     std::string deep = "deep-down:" + std::to_string(deepdown);
-    cv::putText(image, deep, cv::Point(240, 80), cv::FONT_HERSHEY_COMPLEX, 3, cv::Scalar(255, 0, 255, 255), 3, 8, 0);
+    cv::putText(image, deep, cv::Point(10, 80), cv::FONT_HERSHEY_COMPLEX, 3, cv::Scalar(255, 0, 255, 255), 2, 5, 0);
 }
 

@@ -138,14 +138,6 @@ void FaceDetection::pre_process()
     hrt::sync(ai2d_in_tensor_, sync_op_t::sync_write_back, true).expect("sync write_back failed");
     ai2d_builder_->invoke(ai2d_in_tensor_,ai2d_out_tensor_).expect("error occurred in ai2d running");
 #endif
-    static int aa = 0;
-    if(aa==50)
-    {
-        auto vaddr_out_buf = ai2d_in_tensor_.impl()->to_host().unwrap()->buffer().as_host().unwrap().map(map_access_::map_read).unwrap().buffer();
-        unsigned char *output = reinterpret_cast<unsigned char *>(vaddr_out_buf.data());
-        Utils::dump_color_image("FaceDetection_input_ori_50.png",{isp_shape_.width,isp_shape_.height},output);
-    }
-    aa += 1;
 }
 
 void FaceDetection::inference()

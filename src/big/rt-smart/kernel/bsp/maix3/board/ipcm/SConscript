@@ -18,7 +18,7 @@ for item in liblist:
         libname = libname + '-l' + item[3:-2] + ' '
 
 LINKFLAGS = ' -Wl,--whole-archive ' + libname  + ' -Wl,--no-whole-archive'
-group = DefineGroup('Ipcm', src, depend = [''], CPPPATH = CPPPATH, LINKFLAGS = LINKFLAGS, LIBPATH=LIBPATH)
+group = DefineGroup('Ipcm', src, depend = ['RT_USING_IPCM'], CPPPATH = CPPPATH, LINKFLAGS = LINKFLAGS, LIBPATH=LIBPATH)
 
 objs = [group]
 

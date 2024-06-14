@@ -577,6 +577,11 @@ typedef struct {
     float   exp_time[4];
 } k_sensor_exposure_param;
 
+typedef struct {
+    k_u8   otp_type;
+    k_u8   otp_date[20];
+} k_sensor_otp_date;
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

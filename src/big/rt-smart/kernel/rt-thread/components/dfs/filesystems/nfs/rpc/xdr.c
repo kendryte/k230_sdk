@@ -98,15 +98,12 @@ bool_t xdr_int(XDR* xdrs, int* ip)
 	if (sizeof(int) == sizeof(long)) {
 		return (xdr_long(xdrs, (long *) ip));
 	} else if (sizeof(int) < sizeof(long)) {
-	  long l;
 	  switch (xdrs->x_op) {
 	  case XDR_ENCODE:
-		l = (long) *ip;
-		return XDR_PUTLONG(xdrs, &l);
+		return XDR_PUTINT32(xdrs, ip);
 	  case XDR_DECODE:
-		if (!XDR_GETLONG(xdrs, &l))
+		if (!XDR_GETINT32(xdrs, ip))
 		  return FALSE;
-		*ip = (int) l;
 	  case XDR_FREE:
 		return TRUE;
 	  }
@@ -128,9 +125,9 @@ bool_t xdr_u_int(XDR* xdrs, unsigned int* up)
 	  switch (xdrs->x_op) {
 	  case XDR_ENCODE:
 		l = (unsigned long) *up;
-		return XDR_PUTLONG(xdrs, (long*)&l);
+		return XDR_PUTINT32(xdrs, (long*)&l);
 	  case XDR_DECODE:
-		if (!XDR_GETLONG(xdrs, (long*)&l))
+		if (!XDR_GETINT32(xdrs, (long*)&l))
 		  return FALSE;
 		*up = (unsigned int) l;
 	  case XDR_FREE:
@@ -337,16 +334,16 @@ bool_t xdr_u_char(XDR* xdrs, unsigned char* cp)
  */
 bool_t xdr_bool(XDR *xdrs, bool_t *bp)
 {
-	long lb;
+	unsigned int lb;
 
 	switch (xdrs->x_op) {
 
 	case XDR_ENCODE:
 		lb = *bp ? XDR_TRUE : XDR_FALSE;
-		return (XDR_PUTLONG(xdrs, &lb));
+		return (XDR_PUTINT32(xdrs, &lb));
 
 	case XDR_DECODE:
-		if (!XDR_GETLONG(xdrs, &lb)) {
+		if (!XDR_GETINT32(xdrs, &lb)) {
 			return (FALSE);
 		}
 		*bp = (lb == XDR_FALSE) ? FALSE : TRUE;
@@ -363,10 +360,20 @@ bool_t xdr_bool(XDR *xdrs, bool_t *bp)
  */
 bool_t xdr_enum(XDR *xdrs, enum_t *ep)
 {
+	enum sizecheck { SIZEVAL };	/* used to find the size of an enum */
+
 	/*
 	 * enums are treated as ints
 	 */
-	return (xdr_long(xdrs, (long *) ep));
+	/* LINTED */ if (sizeof (enum sizecheck) == sizeof (long)) {
+		return (xdr_long(xdrs, (long *)(void *)ep));
+	} else /* LINTED */ if (sizeof (enum sizecheck) == sizeof (int)) {
+		return (xdr_int(xdrs, (int *)(void *)ep));
+	} else /* LINTED */ if (sizeof (enum sizecheck) == sizeof (short)) {
+		return (xdr_short(xdrs, (short *)(void *)ep));
+	} else {
+		return (FALSE);
+	}
 }
 
 /*

@@ -14,7 +14,7 @@
 
 ## AT32
 
-- AT32F415xx
+- AT32F402xx、AT32F405xx、AT32F415xx、AT32F423xx、AT32F425xx、AT32F435xx、AT32F437xx
 
 ## GD32
 
@@ -29,10 +29,3 @@
 ## Espressif
 
 - ESP32S2、ESP32S3
-
-## Before Use
-
-Your should implement `usb_dc_low_level_init` and `usb_dc_low_level_deinit`.
-- Enable or disable USB clock and set USB clock for 48M.
-- Enable or disable gpio and gpio clk for usb dp and dm.
-- Enable or disable usb irq

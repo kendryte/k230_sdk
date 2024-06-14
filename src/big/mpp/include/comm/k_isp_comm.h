@@ -489,6 +489,7 @@ typedef struct {
     k_u32 buffer_size;
     k_u64 *vb_phys_addr;
     void **vb_virt_addr;
+    // k_vicap_mirror mirror;
 } k_isp_dev_attr;
 
 typedef struct {

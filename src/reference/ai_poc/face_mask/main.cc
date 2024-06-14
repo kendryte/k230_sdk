@@ -114,7 +114,26 @@ void video_proc(char *argv[])
             fm.pre_process(det_results[i].sparse_kps.points);
             fm.inference();
             fm.post_process(fm_result);
-            fm.draw_result(osd_frame,det_results[i].bbox,fm_result,false);
+            #if defined(CONFIG_BOARD_K230D_CANMV)
+            {
+                ScopedTiming st("osd draw", atoi(argv[7]));
+                cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+                fm.draw_result(osd_frame,det_results[i].bbox,fm_result,false);
+                cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+            }
+            #elif defined(CONFIG_BOARD_K230_CANMV_01STUDIO)
+            {
+                ScopedTiming st("osd draw", atoi(argv[7]));
+                cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+                fm.draw_result(osd_frame,det_results[i].bbox,fm_result,false);
+                cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+            }
+            #else
+            {
+                ScopedTiming st("osd draw", atoi(argv[7]));
+                fm.draw_result(osd_frame,det_results[i].bbox,fm_result,false);
+            }
+            #endif
         }
 
         {

@@ -226,7 +226,7 @@ static enum clnt_stat clntudp_call(CLIENT *cl, unsigned long proc,
 	XDR reply_xdrs;
 	bool_t ok;
 	int nrefreshes = 2;			/* number of times to refresh cred */
-
+    int ret;
 call_again:
 	xdrs = &(cu->cu_outxdrs);
 	xdrs->x_op = XDR_ENCODE;
@@ -246,9 +246,9 @@ call_again:
 	outlen = (int) XDR_GETPOS(xdrs);
 
 send_again:
-	if (sendto(cu->cu_sock, cu->cu_outbuf, outlen, 0,
-			   (struct sockaddr *) &(cu->cu_raddr), cu->cu_rlen)
-			!= outlen)
+    ret = sendto(cu->cu_sock, cu->cu_outbuf, outlen, 0,
+			   (struct sockaddr *) &(cu->cu_raddr), cu->cu_rlen);
+	if (ret != outlen)
 	{
 		cu->cu_error.re_errno = errno;
         cu->cu_error.re_status = RPC_CANTSEND;
@@ -395,7 +395,7 @@ static void clntudp_destroy(CLIENT *cl)
 
 	if (cu->cu_closeit)
 	{
-		lwip_close(cu->cu_sock);
+		close(cu->cu_sock);
 	}
 
 	XDR_DESTROY(&(cu->cu_outxdrs));

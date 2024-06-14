@@ -189,8 +189,8 @@ struct i2c_regs
 /* Worst case timeout for 1 byte is kept as 2ms */
 
 #define CONFIG_SYS_HZ       RT_TICK_PER_SECOND
-#define I2C_BYTE_TO         (CONFIG_SYS_HZ/500)
-#define I2C_STOPDET_TO      (CONFIG_SYS_HZ/500)
+#define I2C_BYTE_TO         (CONFIG_SYS_HZ/250)
+#define I2C_STOPDET_TO      (CONFIG_SYS_HZ/250)
 #define I2C_BYTE_TO_BB      (I2C_BYTE_TO * 16)
 
 /* i2c control register definitions */

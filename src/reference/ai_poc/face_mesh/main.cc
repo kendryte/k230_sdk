@@ -116,7 +116,26 @@ void video_proc(char *argv[])
             face_mesh.inference();
             vector<float> vertices;
             face_mesh.post_process({osd_width, osd_height},vertices,false); 
-            face_mesh.get_mesh(osd_frame,vertices,false);
+            #if defined(CONFIG_BOARD_K230D_CANMV)
+            {
+                ScopedTiming st("osd draw", atoi(argv[7]));
+                cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+                face_mesh.get_mesh(osd_frame,vertices,false);
+                cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+            }
+            #elif defined(CONFIG_BOARD_K230_CANMV_01STUDIO)
+            {
+                ScopedTiming st("osd draw", atoi(argv[7]));
+                cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+                face_mesh.get_mesh(osd_frame,vertices,false);
+                cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+            }
+            #else
+            {
+                ScopedTiming st("osd draw", atoi(argv[7]));
+                face_mesh.get_mesh(osd_frame,vertices,false);
+            }
+            #endif
         }
 
         {

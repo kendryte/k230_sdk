@@ -16,7 +16,15 @@ download_dir_release:
     - .setup_env
     - .release_download_dir
 
-# sdk zip and image publish with tag
+# k230_sdk.tar.gz github zip publish with tag
+sdk_github_zip:
+  rules:
+   - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_TAG =~ /^v\d+\.\d+.*$/
+  extends:
+    - .setup_env
+    - .sync_sdk_github_zip
+
+# image publish with tag
 release_image_publish:
   rules:
    - if: $CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_TAG =~ /^v\d+\.\d+.*$/
@@ -148,9 +156,9 @@ build-image:
   script:
     - cd $CI_PROJECT_DIR
     - ls -alht
-    - wget -qc https://ai.b-bug.org/k230/test_resources/ci/release/release_download_dir.sh -O ./release_download_dir.sh
+    - wget -qc https://ai.b-bug.org/k230/test_resources/ci/release/release_download_dir.sh -O ./release_download_dir.sh || exit 1
     - chmod +x ./release_download_dir.sh
-    - time ./release_download_dir.sh || time ./release_download_dir.sh
+    - time ./release_download_dir.sh || time ./release_download_dir.sh || exit 1
     - echo "all file synced"
 
 .sync_release_image:
@@ -161,14 +169,14 @@ build-image:
   script:
     - cd $CI_PROJECT_DIR
     - ls -alht
-    - wget -qc https://ai.b-bug.org/k230/test_resources/ci/release/release_k230_sdk_image.sh -O ./release_k230_sdk_image.sh
+    - wget -qc https://ai.b-bug.org/k230/test_resources/ci/release/release_k230_sdk_image.sh -O ./release_k230_sdk_image.sh || exit 1
     - chmod +x ./release_k230_sdk_image.sh
     - echo $CI_COMMIT_TAG || exit 1
     - echo $CONF || exit 1
-    - time ./release_k230_sdk_image.sh $CI_COMMIT_TAG $CONF || time ./release_k230_sdk_image.sh $CI_COMMIT_TAG $CONF
+    - time ./release_k230_sdk_image.sh $CI_COMMIT_TAG $CONF || time ./release_k230_sdk_image.sh $CI_COMMIT_TAG $CONF || exit 1
     - echo "all release file synced"
 
-.sync_github_zip:
+.sync_sdk_github_zip:
   timeout: 60m
   retry: 2
   tags:
@@ -176,11 +184,10 @@ build-image:
   script:
     - cd $CI_PROJECT_DIR
     - ls -alht
-    - wget -qc https://ai.b-bug.org/k230/test_resources/ci/release/release_k230_sdk_github_zip.sh -O ./release_k230_sdk_github_zip.sh
+    - wget -qc https://ai.b-bug.org/k230/test_resources/ci/release/release_k230_sdk_github_zip.sh -O ./release_k230_sdk_github_zip.sh || exit 1
     - chmod +x ./release_k230_sdk_github_zip.sh
     - echo $CI_COMMIT_TAG || exit 1
-    - echo $CONF || exit 1
-    - time ./release_k230_sdk_github_zip.sh $CI_COMMIT_TAG || time ./release_k230_sdk_github_zip.sh $CI_COMMIT_TAG
+    - time ./release_k230_sdk_github_zip.sh $CI_COMMIT_TAG || time ./release_k230_sdk_github_zip.sh $CI_COMMIT_TAG || exit 1
     - echo "all release file synced"
 
 .generate_version: &generate_version

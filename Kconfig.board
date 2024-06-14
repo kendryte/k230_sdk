@@ -38,6 +38,11 @@ config BOARD_K230_CANMV_01STUDIO
        bool "K230 CANMV(01STUDIO)"
         help 
            "CANMV(01STUDIO)";
+
+config BOARD_K230_CANMV_DONGSHANPI
+       bool "K230 CANMV(DONGSHANPI)"
+        help 
+           "CANMV(DONGSHANPI)";
 endchoice
 
 config BOARD_NAME

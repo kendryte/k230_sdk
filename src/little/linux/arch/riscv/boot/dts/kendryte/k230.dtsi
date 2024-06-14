@@ -234,6 +234,39 @@
 			interrupts          = <132>;
 		};
 
+		/* peri dma */
+		pdma: pdma@80804000 {
+			#dma-cells          = <4>;
+			dma-channels        = <8>;
+			dma-requests        = <35>;
+			status              = "okay";
+			compatible          = "canaan,k230-pdma";
+			reg                 = <0x0  0x80804000 0x0 0x400>;
+			interrupt-parent    = <&intc>;
+			/*interrupts        = <139>,<196>,<197>,<198>,<199>,<200>,<201>,<202>;*/
+			interrupts          = <203>;
+		};
+
+		i2s: i2s@0x9140f000 {
+			status              = "okay";
+			compatible          = "snps,designware-i2s";
+			reg                 = <0x0 0x9140f000 0x0 0x400>;
+			dmas                = <&pdma 1 0xfff 0 0x14>, <&pdma 1 0xfff 0 0x15>;
+			dma-names           = "tx", "rx";
+		};
+
+		/* audio */
+		audio: audio@0x9140f400 {
+			status              = "okay";
+			compatible          = "canaan,k230-audio";
+			reg                 = <0x0 0x9140f400 0x0 0xc00>;
+		};
+
+		inno_codec:inno_codec@0x9140e000{
+			status              = "okay";
+			compatible          = "k230,inno-codec";
+			reg                 = <0x0 0x9140e000 0x0 0x1000>;
+		};
 
 		pmu_thead: pmu_thead {
 			interrupt-parent = <&cpu0_intc>;

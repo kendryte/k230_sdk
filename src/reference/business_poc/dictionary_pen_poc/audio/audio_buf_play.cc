@@ -118,6 +118,7 @@ k_s32 audio_buffer_play_init(k_u32 sample_rate,k_u32 channel_count)
     g_sample_rate = sample_rate;
 
     k_aio_dev_attr ao_dev_attr;
+    memset(&ao_dev_attr,0,sizeof(ao_dev_attr));
     ao_dev_attr.audio_type = KD_AUDIO_OUTPUT_TYPE_I2S;
     ao_dev_attr.kd_audio_attr.i2s_attr.sample_rate = sample_rate;
     ao_dev_attr.kd_audio_attr.i2s_attr.bit_width = KD_AUDIO_BIT_WIDTH_16;

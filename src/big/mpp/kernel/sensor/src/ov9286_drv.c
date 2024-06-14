@@ -33,6 +33,8 @@
 
 #include "k_board_config_comm.h"
 
+#include "k_vicap_comm.h"
+
 #define pr_info(...) //rt_kprintf(__VA_ARGS__)
 #define pr_debug(...) //rt_kprintf(__VA_ARGS__)
 #define pr_warn(...)    //rt_kprintf(__VA_ARGS__)
@@ -1513,12 +1515,102 @@ k_s32 ov9286_sensor_get_expand_curve(void *ctx, k_sensor_compand_curve *curve)
 
 k_s32 ov9286_sensor_get_otp_data(void *ctx, void *data)
 {
+    struct sensor_driver_dev *dev = ctx;
     k_s32 ret = 0;
+    k_sensor_otp_date otp_date;
+    k_u16 reg_data = 0;
+    rt_kprintf("%s enter\n", __func__);
 
-    pr_info("%s enter\n", __func__);
-    memset(data, 0, sizeof(void *));
+    //get opt data 
+    memcpy(&otp_date, data, sizeof(k_sensor_otp_date));
+    //clear 0x3D00~0x3D1F 0
+    for(int i = 0; i < 32; i++)
+    {   
+        sensor_reg_write(&dev->i2c_info, 0x3d00 + i, 0x00);
+    }
+    sensor_reg_write(&dev->i2c_info, 0x3d81, 0x01);
+    rt_thread_mdelay(15);
+
+    if(otp_date.otp_type == 1)
+    {
+        for(int i = 0; i < 17; i++)
+        {
+            ret = sensor_reg_read(&dev->i2c_info,  0x3d00 + i, &reg_data);
+            otp_date.otp_date[i] = (k_u8)reg_data;
+            // rt_kprintf("read otp tpye is %d read reg(%d) val is %x \n", otp_date.otp_type, i, reg_data);
+        }
+    }
+    else
+    {
+        for(int i = 0; i < 15; i++)
+        {
+            ret = sensor_reg_read(&dev->i2c_info,  0x3d11 + i, &reg_data);
+            otp_date.otp_date[i] = (k_u8)reg_data;
+            // rt_kprintf("read otp tpye is %d read reg(%d) val is %x \n", otp_date.otp_type, i, reg_data);
+        }
+    }
+    memcpy(data, &otp_date, sizeof(k_sensor_otp_date));
 
     return ret;
+}
+
+k_s32 ov9286_sensor_set_otp_data(void *ctx, void *data)
+{
+    struct sensor_driver_dev *dev = ctx;
+    k_s32 ret = 0;
+    k_sensor_otp_date otp_date;
+    k_sensor_otp_date read_otp_date;
+    k_u16 reg_data = 0;
+    k_u16 data_len = 0;
+    pr_info("%s enter\n", __func__);
+
+    memset(&read_otp_date, 0, sizeof(k_sensor_otp_date));
+    memcpy(&otp_date, data, sizeof(k_sensor_otp_date));
+
+    // for(int i = 0; i < 15; i++)
+    // {
+    //     rt_kprintf("read otp tpye is %d read reg(%d) val is %x \n", otp_date.otp_type, i, otp_date.otp_date[i]);
+    // }
+
+    rt_kprintf("read otp tpye   char val is %s  \n", otp_date.otp_date);
+#if 1
+    // clear otp blank
+    for(int i = 0; i < 32; i++)
+    {
+        sensor_reg_write(&dev->i2c_info, 0x3d00 + i, 0x00);
+    }
+    // write reg 
+    data_len = strlen(otp_date.otp_date);
+    if(data_len > 15)
+        return -1;
+    for(int i = 0; i < data_len; i++)
+    {
+        sensor_reg_write(&dev->i2c_info, 0x3d11 + i, otp_date.otp_date[i]);
+    }
+    sensor_reg_write(&dev->i2c_info, 0x3d80, 0x01);
+    rt_thread_mdelay(30);
+
+    // read opt date 
+    read_otp_date.otp_type = 0;
+    ov9286_sensor_get_otp_data(ctx, &read_otp_date);
+    // compare date 
+    for(int i = 0; i < data_len; i++)
+    {
+        if(read_otp_date.otp_date[i] != otp_date.otp_date[i])
+        {
+            rt_kprintf("otp write failed read_otp_date is %x otp_date is %x i is %d K_ERR_VICAP_OPT_ALREADY_WRITE is %d \n", read_otp_date.otp_date[i], otp_date.otp_date[i], i, K_ERR_VICAP_OPT_ALREADY_WRITE);
+            ret = K_ERR_VICAP_OPT_ALREADY_WRITE;
+        }
+    }
+#endif
+
+    return ret;
+}
+
+
+static k_s32 ov9286_sensor_mirror_set(void *ctx, k_vicap_mirror_mode mirror)
+{
+    return 0;
 }
 
 struct sensor_driver_dev ov9286_sensor_drv = {
@@ -1557,5 +1649,7 @@ struct sensor_driver_dev ov9286_sensor_drv = {
         .sensor_set_tpg = ov9286_sensor_set_tpg,
         .sensor_get_expand_curve = ov9286_sensor_get_expand_curve,
         .sensor_get_otp_data = ov9286_sensor_get_otp_data,
+        .sensor_set_otp_data = ov9286_sensor_set_otp_data,
+        .sensor_mirror_set = ov9286_sensor_mirror_set,
     },
 };

@@ -34,7 +34,7 @@
 
 &mmc_sd0{
     status = "okay";
-    rx_delay_line = <0x00>;
+    rx_delay_line = <0x0d>;
     tx_delay_line = <0xc0>;
 };
 

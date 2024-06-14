@@ -41,7 +41,7 @@ extern "C" {
 #endif
 
 #ifndef RT_CPU_CACHE_LINE_SZ
-#define RT_CPU_CACHE_LINE_SZ    32
+#define RT_CPU_CACHE_LINE_SZ    64
 #endif
 
 enum RT_HW_CACHE_OPS

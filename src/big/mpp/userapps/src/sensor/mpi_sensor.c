@@ -1226,3 +1226,37 @@ k_s32 kd_mpi_sensor_otpdata_get(k_s32 fd, void *ota_data)
 
     return ret;
 }
+
+k_s32 kd_mpi_sensor_otpdata_set(k_s32 fd, void *ota_data)
+{
+    k_s32 ret;
+
+    if(!ota_data) {
+        pr_err("%s, ota_data is null\n",__func__);
+        return K_ERR_VICAP_NULL_PTR;
+    }
+
+    ret = ioctl(fd, KD_IOC_SENSOR_S_OTP_DATA, ota_data);
+    if (ret != 0) {
+        pr_err("%s, error(%d)\n", __func__, ret);
+        return ret;
+    }
+
+    return ret;
+}
+
+
+k_s32 kd_mpi_sensor_mirror_set(k_s32 fd, k_vicap_mirror_mode mirror)
+{
+    k_s32 ret;
+
+    ret = ioctl(fd, KD_IOC_SENSOR_S_MIRROR, &mirror);
+    if (ret != 0) {
+        pr_err("%s, error(%d)\n", __func__, ret);
+        return ret;
+    }
+
+    return ret;
+}
+
+

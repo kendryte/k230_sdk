@@ -796,6 +796,7 @@ static k_s32 sample_dpu_vicap_init(vicap_device_obj *dev_obj)
 
 static void do_transfer_frame_data(unsigned char* pdata,int len,unsigned int frame_number, unsigned long pts,float temperature,int frame_start_code,int frame_total_cnt,int frame_total_size,int cur_cnt)
 {
+    static int get_node_failed_cnt = 0;
     uvc_cache_t *uvc_cache = uvc_cache_get();
     UVC_PRIVATE_DATA_HEAD_INFO  private_head_info;
     int head_len = sizeof(UVC_PRIVATE_DATA_HEAD_INFO);
@@ -823,6 +824,12 @@ static void do_transfer_frame_data(unsigned char* pdata,int len,unsigned int fra
                     }
                     else
                     {
+                        printf("get_node_from_queue failed cnt:%d\n",get_node_failed_cnt++);
+                        if (get_node_failed_cnt > 100)
+                        {
+                            printf("restart the system ...\n");
+                            system("reboot");
+                        }
                         return;
                     }
                 }

@@ -929,6 +929,10 @@ int main(int argc, char *argv[])
         sensor_type = OV_OV5647_MIPI_CSI0_1920X1080_30FPS_10BIT_LINEAR;
     #elif defined(CONFIG_BOARD_K230_CANMV_V2)
         sensor_type = OV_OV5647_MIPI_CSI2_1920X1080_30FPS_10BIT_LINEAR_V2;
+    #elif defined(CONFIG_BOARD_K230_CANMV_01STUDIO)
+        sensor_type = OV_OV5647_MIPI_CSI2_1920X1080_30FPS_10BIT_LINEAR_V2;
+    #elif defined(CONFIG_BOARD_K230D_CANMV)
+        sensor_type = OV_OV5647_MIPI_1920X1080_30FPS_10BIT_LINEAR;
     #else
         sensor_type = IMX335_MIPI_2LANE_RAW12_2592X1944_30FPS_LINEAR;
     #endif

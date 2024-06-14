@@ -33,10 +33,9 @@ Key::~Key()
 {
 }
 
-void Key::drawKey(cv::Mat& img,  float alpha = 0.5) 
+void Key::drawKey(cv::Mat& img,  float alpha = 0.5, double fontScale = 2) 
 {
     int fontFace = cv::FONT_HERSHEY_SIMPLEX;
-    double fontScale = 2;
     int thickness = 2;
     cv::Scalar text_color = cv::Scalar(255, 255, 255, 255);
     cv::Scalar bg_color = cv::Scalar(255, 0, 0, 0);
