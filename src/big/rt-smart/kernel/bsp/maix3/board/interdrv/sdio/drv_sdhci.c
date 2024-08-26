@@ -19,6 +19,8 @@
 #include "riscv_io.h"
 #include <string.h>
 #include <ioremap.h>
+#include <cache.h>
+
 #ifdef RT_USING_SDIO
 
 #define DBG_TAG "drv_sdhci"
@@ -31,54 +33,68 @@
 
 #if defined(RT_USING_SDIO0) || defined(RT_USING_SDIO1)
 
+#define SDHCI_SDMA_ENABLE
 #define CACHE_LINESIZE (64)
 
-#define KD_MAX_FREQ (25UL * 1000UL * 1000UL)
+#define BIT(x) (1 << x)
+#define DWC_MSHC_PTR_VENDOR1 0x500
+#define MSHC_CTRL_R (DWC_MSHC_PTR_VENDOR1 + 0x08)
+#define EMMC_CTRL_R (DWC_MSHC_PTR_VENDOR1 + 0x2c)
+#define SDHCI_VENDER_AT_CTRL_REG (DWC_MSHC_PTR_VENDOR1 + 0x40)
+#define SDHCI_VENDER_AT_STAT_REG (DWC_MSHC_PTR_VENDOR1 + 0x44)
+#define SDHCI_TUNE_CLK_STOP_EN_MASK BIT(16)
+#define SDHCI_TUNE_SWIN_TH_VAL_LSB (24)
+#define SDHCI_TUNE_SWIN_TH_VAL_MASK (0xFF)
+#define CARD_IS_EMMC 0
+#define EMMC_RST_N 2
+#define EMMC_RST_N_OE 3
 
-#define USDHC_ADMA_TABLE_WORDS (8U) /* define the ADMA descriptor table length */
-#define USDHC_ADMA2_ADDR_ALIGN (4U) /* define the ADMA2 descriptor table addr align size */
-#define USDHC_DATA_TIMEOUT (0xFU) /*!< data timeout counter value */
+#define DWC_MSHC_PTR_PHY_REGS 0x300
+#define DWC_MSHC_PHY_CNFG (DWC_MSHC_PTR_PHY_REGS + 0x0)
+#define PAD_SN_LSB 20
+#define PAD_SN_MASK 0xF
+#define PAD_SN_DEFAULT ((0x8 & PAD_SN_MASK) << PAD_SN_LSB)
+#define PAD_SP_LSB 16
+#define PAD_SP_MASK 0xF
+#define PAD_SP_DEFAULT ((0x9 & PAD_SP_MASK) << PAD_SP_LSB)
+#define PHY_PWRGOOD BIT(1)
+#define PHY_RSTN BIT(0)
 
-#define REG_SD_EMMC_SEL 0x64 // bit0 for sd0/emmc0  bit1 for sd1/emmc1  (0:sd  1:emmc)
-#define KD_SDMMC_VER_ID 0x2A
-#define SDHCI_VENDOR_PTR_R 0xE8
-#define SYS_CTRL_SDEMMC_DIV_CTRL 0x3C
-#define SYS_CTRL_SDEMMC_CTRL_EN_CLR 0x68
-#define REG_SDMMC_SOFTRST_SEL 0x4
+#define DWC_MSHC_CMDPAD_CNFG (DWC_MSHC_PTR_PHY_REGS + 0x4)
+#define DWC_MSHC_DATPAD_CNFG (DWC_MSHC_PTR_PHY_REGS + 0x6)
+#define DWC_MSHC_CLKPAD_CNFG (DWC_MSHC_PTR_PHY_REGS + 0x8)
+#define DWC_MSHC_STBPAD_CNFG (DWC_MSHC_PTR_PHY_REGS + 0xA)
+#define DWC_MSHC_RSTNPAD_CNFG (DWC_MSHC_PTR_PHY_REGS + 0xC)
+#define TXSLEW_N_LSB 9
+#define TXSLEW_N_MASK 0xF
+#define TXSLEW_P_LSB 5
+#define TXSLEW_P_MASK 0xF
+#define WEAKPULL_EN_LSB 3
+#define WEAKPULL_EN_MASK 0x3
+#define RXSEL_LSB 0
+#define RXSEL_MASK 0x3
 
-#define SDHCI_DEFAULT_BOUNDARY_SIZE (512 * 1024)
-#define SDHCI_DEFAULT_BOUNDARY_ARG (7)
+#define DWC_MSHC_COMMDL_CNFG (DWC_MSHC_PTR_PHY_REGS + 0x1C)
+#define DWC_MSHC_SDCLKDL_CNFG (DWC_MSHC_PTR_PHY_REGS + 0x1D)
+#define DWC_MSHC_SDCLKDL_DC (DWC_MSHC_PTR_PHY_REGS + 0x1E)
+#define DWC_MSHC_SMPLDL_CNFG (DWC_MSHC_PTR_PHY_REGS + 0x20)
+#define DWC_MSHC_ATDL_CNFG (DWC_MSHC_PTR_PHY_REGS + 0x21)
 
-/* Synopsys vendor specific registers */
-#define reg_offset_addr_vendor (sdhci_readw(host, SDHCI_VENDOR_PTR_R))
-#define SDHC_MHSC_VER_ID_R (reg_offset_addr_vendor)
-#define SDHC_MHSC_VER_TPYE_R (reg_offset_addr_vendor + 0X4)
-#define SDHC_MHSC_CTRL_R (reg_offset_addr_vendor + 0X8)
-#define SDHC_MBIU_CTRL_R (reg_offset_addr_vendor + 0X10)
-#define SDHC_EMMC_CTRL_R (reg_offset_addr_vendor + 0X2C)
-#define SDHC_BOOT_CTRL_R (reg_offset_addr_vendor + 0X2E)
-#define SDHC_GP_IN_R (reg_offset_addr_vendor + 0X30)
-#define SDHC_GP_OUT_R (reg_offset_addr_vendor + 0X34)
-#define SDHC_AT_CTRL_R (reg_offset_addr_vendor + 0X40)
-#define SDHC_AT_STAT_R (reg_offset_addr_vendor + 0X44)
+#define DWC_MSHC_PHY_PAD_SD_CLK \
+    ((1 << TXSLEW_N_LSB) | (3 << TXSLEW_P_LSB) | (0 << WEAKPULL_EN_LSB) | (2 << RXSEL_LSB))
+#define DWC_MSHC_PHY_PAD_SD_DAT \
+    ((1 << TXSLEW_N_LSB) | (3 << TXSLEW_P_LSB) | (1 << WEAKPULL_EN_LSB) | (2 << RXSEL_LSB))
+#define DWC_MSHC_PHY_PAD_SD_STB \
+    ((1 << TXSLEW_N_LSB) | (3 << TXSLEW_P_LSB) | (2 << WEAKPULL_EN_LSB) | (2 << RXSEL_LSB))
+#define DWC_MSHC_PHY_PAD_EMMC_CLK \
+    ((2 << TXSLEW_N_LSB) | (2 << TXSLEW_P_LSB) | (0 << WEAKPULL_EN_LSB) | (1 << RXSEL_LSB))
+#define DWC_MSHC_PHY_PAD_EMMC_DAT \
+    ((2 << TXSLEW_N_LSB) | (2 << TXSLEW_P_LSB) | (1 << WEAKPULL_EN_LSB) | (1 << RXSEL_LSB))
+#define DWC_MSHC_PHY_PAD_EMMC_STB \
+    ((2 << TXSLEW_N_LSB) | (2 << TXSLEW_P_LSB) | (2 << WEAKPULL_EN_LSB) | (1 << RXSEL_LSB))
 
-void* emmc0_base;
-void* emmc1_base;
-
-/* ENABLE CACHER . */
-#define SDHCI_ENABLE_CACHE_CONTROL
-#define SDHCI_SDMA_ENABLE
-
-struct sdhci_64bit_adma2_descriptor adma2_tbl[32] __attribute__((aligned(32)));
-struct rt_mmcsd_host* host1;
-struct rt_mmcsd_host* host2;
-static rt_mutex_t mmcsd_mutex = RT_NULL;
-
-static rt_err_t sdhci_receive_command_response(struct sdhci_host* sdhci_host, struct sdhci_command* command);
-static void sdhci_reset(struct sdhci_host* host, uint8_t mask);
-extern void rt_hw_cpu_dcache_invalidate(void* addr, int size);
-extern void rt_hw_cpu_dcache_clean(void* addr, int size);
-extern void rt_hw_cpu_dcache_clean_and_invalidate(void* addr, int size);
+static struct sdhci_host* sdhci_host0;
+static struct sdhci_host* sdhci_host1;
 
 static inline void sdhci_writel(struct sdhci_host* host, uint32_t val, int reg)
 {
@@ -110,7 +126,7 @@ static inline uint8_t sdhci_readb(struct sdhci_host* host, int reg)
     return (uint8_t)readb((void*)host->mapbase + reg);
 }
 
-void emmc_reg_display(struct sdhci_host* host)
+static void emmc_reg_display(struct sdhci_host* host)
 {
     rt_kprintf("SD_MASA_R:%x\n", sdhci_readl(host, SDHCI_DMA_ADDRESS));
     rt_kprintf("BLCOKSIZE_R:%x\n", sdhci_readw(host, SDHCI_BLOCK_SIZE));
@@ -148,8 +164,6 @@ void emmc_reg_display(struct sdhci_host* host)
     rt_kprintf("AMDA_SA_HIGH_STAT_R:%x\n", sdhci_readl(host, SDHCI_ADMA_ADDRESS_HI));
 }
 
-void host_change(void);
-
 static inline void delay_1k(unsigned int uicnt)
 {
     int i, j;
@@ -157,6 +171,86 @@ static inline void delay_1k(unsigned int uicnt)
     for (i = 0; i < uicnt; i++)
         for (j = 0; j < 1000; j++)
             asm("nop");
+}
+
+static void dwcmshc_phy_1_8v_init(struct sdhci_host* host)
+{
+    sdhci_writew(host, DWC_MSHC_PHY_PAD_EMMC_DAT, DWC_MSHC_CMDPAD_CNFG);
+    sdhci_writew(host, DWC_MSHC_PHY_PAD_EMMC_DAT, DWC_MSHC_DATPAD_CNFG);
+    sdhci_writew(host, DWC_MSHC_PHY_PAD_EMMC_CLK, DWC_MSHC_CLKPAD_CNFG);
+    sdhci_writew(host, DWC_MSHC_PHY_PAD_EMMC_STB, DWC_MSHC_STBPAD_CNFG);
+    sdhci_writew(host, DWC_MSHC_PHY_PAD_EMMC_DAT, DWC_MSHC_RSTNPAD_CNFG);
+}
+
+static void dwcmshc_phy_3_3v_init(struct sdhci_host* host)
+{
+    sdhci_writew(host, DWC_MSHC_PHY_PAD_SD_DAT, DWC_MSHC_CMDPAD_CNFG);
+    sdhci_writew(host, DWC_MSHC_PHY_PAD_SD_DAT, DWC_MSHC_DATPAD_CNFG);
+    sdhci_writew(host, DWC_MSHC_PHY_PAD_SD_CLK, DWC_MSHC_CLKPAD_CNFG);
+    sdhci_writew(host, DWC_MSHC_PHY_PAD_SD_STB, DWC_MSHC_STBPAD_CNFG);
+    sdhci_writew(host, DWC_MSHC_PHY_PAD_SD_DAT, DWC_MSHC_RSTNPAD_CNFG);
+}
+
+static void dwcmshc_phy_delay_config(struct sdhci_host* host)
+{
+    sdhci_writeb(host, 1, DWC_MSHC_COMMDL_CNFG);
+    if (host->tx_delay_line > 256) {
+        LOG_E("host%d: tx_delay_line err\n", host->index);
+    } else if (host->tx_delay_line > 128) {
+        sdhci_writeb(host, 0x1, DWC_MSHC_SDCLKDL_CNFG);
+        sdhci_writeb(host, host->tx_delay_line - 128, DWC_MSHC_SDCLKDL_DC);
+    } else {
+        sdhci_writeb(host, 0x0, DWC_MSHC_SDCLKDL_CNFG);
+        sdhci_writeb(host, host->tx_delay_line, DWC_MSHC_SDCLKDL_DC);
+    }
+    sdhci_writeb(host, host->rx_delay_line, DWC_MSHC_SMPLDL_CNFG);
+    sdhci_writeb(host, 0xc, DWC_MSHC_ATDL_CNFG);
+    sdhci_writel(host, (sdhci_readl(host, SDHCI_VENDER_AT_CTRL_REG) | BIT(16) | BIT(17) | BIT(19) | BIT(20)), SDHCI_VENDER_AT_CTRL_REG);
+    sdhci_writel(host, 0x0, SDHCI_VENDER_AT_STAT_REG);
+}
+
+static int dwcmshc_phy_init(struct sdhci_host* host)
+{
+    uint32_t reg;
+    uint32_t timeout = 15000;
+    /* reset phy */
+    sdhci_writew(host, 0, DWC_MSHC_PHY_CNFG);
+
+    /* Disable the clock */
+    sdhci_writew(host, 0, SDHCI_CLOCK_CONTROL);
+
+    if (host->io_fixed_1v8) {
+        uint32_t data = sdhci_readw(host, SDHCI_HOST_CONTROL2);
+        data |= SDHCI_CTRL_VDD_180;
+        sdhci_writew(host, data, SDHCI_HOST_CONTROL2);
+        dwcmshc_phy_1_8v_init(host);
+    } else {
+        dwcmshc_phy_3_3v_init(host);
+    }
+
+    dwcmshc_phy_delay_config(host);
+
+    /* Wait max 150 ms */
+    while (1) {
+        reg = sdhci_readl(host, DWC_MSHC_PHY_CNFG);
+        if (reg & PHY_PWRGOOD)
+            break;
+        if (!timeout) {
+            return -1;
+        }
+        timeout--;
+
+        delay_1k(1);
+    }
+
+    reg = PAD_SN_DEFAULT | PAD_SP_DEFAULT;
+    sdhci_writel(host, reg, DWC_MSHC_PHY_CNFG);
+
+    /* de-assert the phy */
+    reg |= PHY_RSTN;
+    sdhci_writel(host, reg, DWC_MSHC_PHY_CNFG);
+
+    return 0;
 }
 
 static void sdhci_reset(struct sdhci_host* host, uint8_t mask)
@@ -174,6 +268,20 @@ static void sdhci_reset(struct sdhci_host* host, uint8_t mask)
         }
         timeout--;
         delay_1k(1);
+    }
+    if (mask == SDHCI_RESET_ALL) {
+        if (host->index == 0) {
+            uint16_t emmc_ctl = sdhci_readw(host, EMMC_CTRL_R);
+            if (host->is_emmc_card)
+                emmc_ctl |= (1 << CARD_IS_EMMC);
+            else
+                emmc_ctl &= ~(1 << CARD_IS_EMMC);
+            sdhci_writeb(host, emmc_ctl, EMMC_CTRL_R);
+        }
+        if (host->have_phy)
+            dwcmshc_phy_init(host);
+        else
+            sdhci_writeb(host, host->mshc_ctrl_r, MSHC_CTRL_R);
     }
 }
 
@@ -209,44 +317,25 @@ static void sdhic_error_recovery(struct sdhci_host* sdhci_host)
     }
 }
 
-static void sdhci_interrupt_init(struct sdhci_host* sdhci_host)
+static rt_err_t sdhci_receive_command_response(struct sdhci_host* sdhci_host, struct sdhci_command* command)
 {
-    /* Enable only interrupts served by the SD controller */
-    sdhci_writel(sdhci_host, (SDHCI_INT_DATA_MASK | SDHCI_INT_CMD_MASK), SDHCI_INT_ENABLE);
-
-    /* Mask all sdhci interrupt sources */
-    sdhci_writel(sdhci_host, 0x0, SDHCI_SIGNAL_ENABLE);
-}
-
-static void _mmcsd_host_init(struct sdhci_host* mmcsd)
-{
-    sdhci_interrupt_init(mmcsd);
-
-    sdhci_writeb(mmcsd, 0x00, 0x508);
-}
-
-static void _mmcsd_clk_init(struct sdhci_host* mmcsd)
-{
-    uint8_t pwr = 0;
-    uint8_t ctl;
-
-    ctl = sdhci_readb(mmcsd, SDHCI_HOST_CONTROL);
-    ctl &= ~SDHCI_CTRL_DMA_MASK;
-    ctl |= SDHCI_CTRL_HISPD;
-    sdhci_writeb(mmcsd, ctl, SDHCI_HOST_CONTROL);
-    // sdhci_writew(mmcsd,sdhci_readw(mmcsd, SDHCI_HOST_CONTROL)|SDHCI_CTRL_HISPD, SDHCI_HOST_CONTROL);
-    if (mmcsd->mapbase == (void*)emmc0_base) {
-#ifdef RT_SDIO0_SD
-        pwr |= SDHCI_POWER_ON | SDHCI_POWER_330;
-#else
-        sdhci_writew(mmcsd, SDHCI_CTRL_VDD_180, SDHCI_HOST_CONTROL2);
-        pwr |= SDHCI_POWER_ON | SDHCI_POWER_180;
-#endif
+    if (command->responseType == card_response_type_r2) {
+        /* CRC is stripped so we need to do some shifting. */
+        for (int i = 0; i < 4; i++) {
+            command->response[3 - i] = sdhci_readl(sdhci_host, SDHCI_RESPONSE + (3 - i) * 4) << 8;
+            if (i != 3)
+                command->response[3 - i] |= sdhci_readb(sdhci_host, SDHCI_RESPONSE + (3 - i) * 4 - 1);
+        }
     } else {
-        pwr |= SDHCI_POWER_ON | SDHCI_POWER_330;
+        command->response[0] = sdhci_readl(sdhci_host, SDHCI_RESPONSE);
+    }
+    /* check response error flag */
+    if ((command->responseErrorFlags != 0U) && ((command->responseType == card_response_type_r1) || (command->responseType == card_response_type_r1b) || (command->responseType == card_response_type_r6) || (command->responseType == card_response_type_r5))) {
+        if (((command->responseErrorFlags) & (command->response[0U])) != 0U)
+            return -1; // kStatus_USDHC_SendCommandFailed;
     }
 
-    sdhci_writeb(mmcsd, pwr, SDHCI_POWER_CONTROL);
+    return 0;
 }
 
 static void sdhci_send_command(struct sdhci_host* sdhci_host, struct sdhci_command* command, rt_bool_t enDMA)
@@ -269,11 +358,11 @@ static void sdhci_send_command(struct sdhci_host* sdhci_host, struct sdhci_comma
         command->flags2 |= sdhci_enable_dma_flag;
         sdhci_writel(sdhci_host, start_addr, SDHCI_DMA_ADDRESS);
 #endif
-        xfer_mode = command->flags2 & 0x1ff;
         sdhci_writew(sdhci_host, SDHCI_MAKE_BLKSZ(7, sdhci_data->blockSize), SDHCI_BLOCK_SIZE);
         sdhci_writew(sdhci_host, sdhci_data->blockCount, SDHCI_BLOCK_COUNT);
-        sdhci_writew(sdhci_host, xfer_mode, SDHCI_TRANSFER_MODE);
     }
+    xfer_mode = command->flags2 & 0x1ff;
+    sdhci_writew(sdhci_host, xfer_mode, SDHCI_TRANSFER_MODE);
     sdhci_writel(sdhci_host, command->argument, SDHCI_ARGUMENT);
     sdhci_writew(sdhci_host, cmd_r, SDHCI_COMMAND);
 }
@@ -281,121 +370,90 @@ static void sdhci_send_command(struct sdhci_host* sdhci_host, struct sdhci_comma
 static rt_err_t sdhci_wait_command_done(struct sdhci_host* sdhci_host, struct sdhci_command* command, rt_bool_t executeTuning)
 {
     RT_ASSERT(RT_NULL != command);
-
-    int error = 0;
-    uint32_t interruptStatus = 0U;
+    rt_uint32_t event;
     /* tuning cmd do not need to wait command done */
-    if (!executeTuning) {
-        /* Wait command complete or USDHC encounters error. */
-        while (!(sdhci_get_int_status_flag(sdhci_host) & (SDHCI_INT_RESPONSE | sdhci_command_error_flag))) {
-        }
-
-        interruptStatus = sdhci_get_int_status_flag(sdhci_host);
-
-        if ((interruptStatus & sdhci_sdr104_tuning_flag) != 0U) {
-            error = sdhci_tuning_error_flag;
-        } else if ((interruptStatus & sdhci_command_error_flag) != 0U) {
-            error = 1;
-        } else {
-        }
-        /* Receive response when command completes successfully. */
-        if (error == 0) {
-            error = sdhci_receive_command_response(sdhci_host, command);
-        }
-
-        sdhci_clear_int_status_flag(
-            sdhci_host, (sdhci_command_complete_flag | sdhci_command_error_flag | sdhci_tuning_error_flag));
+    if (executeTuning)
+        return 0;
+    /* Wait command complete or USDHC encounters error. */
+    rt_event_recv(&sdhci_host->event, SDHCI_INT_ERROR | SDHCI_INT_RESPONSE,
+        RT_EVENT_FLAG_OR | RT_EVENT_FLAG_CLEAR, RT_WAITING_FOREVER, &event);
+    if (event & SDHCI_INT_ERROR) {
+        LOG_D("%s: Error detected in status(0x%X)!\n", __func__, sdhci_host->error_code);
+        return -1;
     }
-
-    return error;
+    return sdhci_receive_command_response(sdhci_host, command);
 }
 
 static rt_err_t sdhci_transfer_data_blocking(struct sdhci_host* sdhci_host, struct sdhci_data* data, rt_bool_t enDMA)
 {
-    rt_err_t error = RT_EOK;
-    uint32_t interruptStatus = 0U;
-    unsigned int stat, rdy, mask, timeout, block = 0;
-    rt_bool_t transfer_done = false;
-    int i = 0;
-
-    if (enDMA) {
-        /* Wait data complete or USDHC encounters error. */
-        while (!(sdhci_get_int_status_flag(sdhci_host) & (sdhci_data_complete_flag | sdhci_data_error_flag | sdhci_dma_error_flag | sdhci_tuning_error_flag))) {
-        }
-
-        interruptStatus = sdhci_get_int_status_flag(sdhci_host);
-        if ((interruptStatus & sdhci_tuning_error_flag) != 0U) {
-            error = sdhci_status_tuning_error;
-        } else if ((interruptStatus & (sdhci_data_error_flag | sdhci_dma_error_flag)) != 0U) {
-            if (!(data->enableIgnoreError) || (interruptStatus & sdhci_data_timeout_flag)) {
-                error = RT_ERROR;
-                emmc_reg_display(sdhci_host);
-            }
-        } else {
-        }
-
-        sdhci_clear_int_status_flag(sdhci_host, (sdhci_data_complete_flag | sdhci_data_error_flag | sdhci_dma_error_flag | sdhci_tuning_error_flag));
-    } else {
-        timeout = 1000000;
-        rdy = SDHCI_INT_SPACE_AVAIL | SDHCI_INT_DATA_AVAIL;
-        mask = SDHCI_DATA_AVAILABLE | SDHCI_SPACE_AVAILABLE;
-
-        do {
-            stat = sdhci_readl(sdhci_host, SDHCI_INT_STATUS);
-            if (stat & SDHCI_INT_ERROR) {
-                LOG_D("%s: Error detected in status(0x%X)!\n",
-                    __func__, stat);
-                emmc_reg_display(sdhci_host);
-                return -1;
-            }
-
-            if (!transfer_done && (stat & rdy)) {
-                if (!(sdhci_readl(sdhci_host, SDHCI_PRESENT_STATE) & mask)) {
-                    continue;
-                }
-                sdhci_writel(sdhci_host, rdy, SDHCI_INT_STATUS);
-                if (data->rxData) {
-                    for (i = 0; i < data->blockSize / 4; i++) {
-                        data->rxData[i + block * data->blockSize] = sdhci_readl(sdhci_host, SDHCI_BUFFER);
-                    }
-                } else {
-                    for (i = 0; i < data->blockSize / 4; i++) {
-                        sdhci_writel(sdhci_host, data->txData[i + block * data->blockSize], SDHCI_BUFFER);
-                    }
-                }
-                if (++block >= data->blockCount) {
-                    /* Keep looping until the SDHCI_INT_DATA_END is
-                     * cleared, even if we finished sending all the
-                     * blocks.
-                     */
-                    transfer_done = true;
-                    continue;
-                }
-            }
-
 #ifdef SDHCI_SDMA_ENABLE
-            if (!transfer_done && (stat & SDHCI_INT_DMA_END)) {
-                sdhci_writel(sdhci_host, SDHCI_INT_DMA_END, SDHCI_INT_STATUS);
-                sdhci_writel(sdhci_host, sdhci_readl(sdhci_host, SDHCI_DMA_ADDRESS), SDHCI_DMA_ADDRESS);
-            }
-#endif
-            if (timeout-- > 0) {
-                delay_1k(1);
-            } else {
-                rt_kprintf("%s: Transfer data timeout\n", __func__);
-                return -1;
-            }
-        } while (!(stat & SDHCI_INT_DATA_END));
-#ifdef SDHCI_SDMA_ENABLE
-        /* invalidate cache for read */
-        if (data && data->rxData)
-            rt_hw_cpu_dcache_invalidate((void*)data->rxData, data->blockSize * data->blockCount);
-#endif
+    rt_err_t err;
+    rt_uint32_t event;
+
+    while (1) {
+        err = rt_event_recv(&sdhci_host->event, SDHCI_INT_ERROR | SDHCI_INT_DATA_END | SDHCI_INT_DMA_END,
+            RT_EVENT_FLAG_OR | RT_EVENT_FLAG_CLEAR, 1000, &event);
+        if (err == -RT_ETIMEOUT) {
+            rt_kprintf("%s: Transfer data timeout\n", __func__);
+            return -1;
+        }
+        if (event & SDHCI_INT_ERROR) {
+            LOG_D("%s: Error detected in status(0x%X)!\n", __func__, sdhci_host->error_code);
+            emmc_reg_display(sdhci_host);
+            return -1;
+        }
+        if (event & SDHCI_INT_DMA_END) {
+            sdhci_writel(sdhci_host, SDHCI_INT_DMA_END, SDHCI_INT_STATUS);
+            sdhci_writel(sdhci_host, sdhci_readl(sdhci_host, SDHCI_DMA_ADDRESS), SDHCI_DMA_ADDRESS);
+        }
+        if (event & SDHCI_INT_DATA_END) {
+            if (data && data->rxData)
+                rt_hw_cpu_dcache_invalidate((void*)data->rxData, data->blockSize * data->blockCount);
+            return 0;
+        }
     }
-    return error;
+#else
+    uint32_t stat, rdy, mask, timeout, block;
+
+    block = 0;
+    timeout = 1000000;
+    rdy = SDHCI_INT_SPACE_AVAIL | SDHCI_INT_DATA_AVAIL;
+    mask = SDHCI_DATA_AVAILABLE | SDHCI_SPACE_AVAILABLE;
+
+    while (1) {
+        stat = sdhci_get_int_status_flag(sdhci_host);
+        if (stat & SDHCI_INT_ERROR) {
+            LOG_D("%s: Error detected in status(0x%X)!\n", __func__, stat);
+            emmc_reg_display(sdhci_host);
+            return -1;
+        }
+        if (stat & rdy) {
+            if (!(sdhci_readl(sdhci_host, SDHCI_PRESENT_STATE) & mask)) {
+                continue;
+            }
+            sdhci_clear_int_status_flag(sdhci_host, rdy);
+            if (data->rxData) {
+                for (int i = 0; i < data->blockSize / 4; i++)
+                    data->rxData[i + block * data->blockSize] = sdhci_readl(sdhci_host, SDHCI_BUFFER);
+            } else {
+                for (int i = 0; i < data->blockSize / 4; i++)
+                    sdhci_writel(sdhci_host, data->txData[i + block * data->blockSize], SDHCI_BUFFER);
+            }
+            block++;
+            if (block >= data->blockCount)
+                return 0;
+        }
+        if (timeout == 0) {
+            rt_kprintf("%s: Transfer data timeout\n", __func__);
+            return -1;
+        }
+        timeout--;
+        delay_1k(1);
+    }
+#endif
 }
 
-rt_err_t sdhci_set_transfer_config(struct sdhci_host* sdhci_host, struct sdhci_command* sdhci_command, struct sdhci_data* sdhci_data)
+static rt_err_t sdhci_set_transfer_config(struct sdhci_host* sdhci_host, struct sdhci_command* sdhci_command, struct sdhci_data* sdhci_data)
 {
     RT_ASSERT(sdhci_command);
     /* Define the flag corresponding to each response type. */
@@ -437,10 +495,10 @@ rt_err_t sdhci_set_transfer_config(struct sdhci_host* sdhci_host, struct sdhci_c
     } else if (sdhci_command->type == card_command_type_normal) {
         sdhci_command->flags |= sdhci_enable_command_type_normal;
     }
-    sdhci_writeb(sdhci_host, 0xe, SDHCI_TIMEOUT_CONTROL);
+
     if (sdhci_data) {
         sdhci_command->flags |= sdhci_enable_cmd_data_present_flag;
-        sdhci_command->flags2 |= sdhci_enable_block_count_flag | sdhci_enable_auto_command12_flag;
+        sdhci_command->flags2 |= sdhci_enable_block_count_flag;
 
         if (sdhci_data->rxData) {
             sdhci_command->flags2 |= sdhci_data_read_flag;
@@ -461,33 +519,7 @@ rt_err_t sdhci_set_transfer_config(struct sdhci_host* sdhci_host, struct sdhci_c
     return 0;
 }
 
-static rt_err_t sdhci_receive_command_response(struct sdhci_host* sdhci_host, struct sdhci_command* command)
-{
-    uint32_t i;
-
-    if (command->responseType == card_response_type_r2) {
-        /* CRC is stripped so we need to do some shifting. */
-        for (i = 0; i < 4; i++) {
-            command->response[3 - i] = sdhci_readl(sdhci_host, SDHCI_RESPONSE + (3 - i) * 4) << 8;
-            if (i != 3) {
-                command->response[3 - i] |= sdhci_readb(sdhci_host, SDHCI_RESPONSE + (3 - i) * 4 - 1);
-            }
-        }
-
-    } else {
-        command->response[0] = sdhci_readl(sdhci_host, SDHCI_RESPONSE);
-    }
-    /* check response error flag */
-    if ((command->responseErrorFlags != 0U) && ((command->responseType == card_response_type_r1) || (command->responseType == card_response_type_r1b) || (command->responseType == card_response_type_r6) || (command->responseType == card_response_type_r5))) {
-        if (((command->responseErrorFlags) & (command->response[0U])) != 0U) {
-            return -1; // kStatus_USDHC_SendCommandFailed;
-        }
-    }
-
-    return 0;
-}
-
-rt_err_t sdhci_transfer_blocking(struct sdhci_host* sdhci_host)
+static rt_err_t sdhci_transfer_blocking(struct sdhci_host* sdhci_host)
 {
     RT_ASSERT(sdhci_host);
     struct sdhci_command* sdhci_command = sdhci_host->sdhci_command;
@@ -506,6 +538,9 @@ rt_err_t sdhci_transfer_blocking(struct sdhci_host* sdhci_host)
     if (ret != 0) {
         return ret;
     }
+    sdhci_writel(sdhci_host, sdhci_readl(sdhci_host, SDHCI_SIGNAL_ENABLE) |
+        SDHCI_INT_DATA_MASK | SDHCI_INT_CMD_MASK, SDHCI_SIGNAL_ENABLE);
+    rt_event_control(&sdhci_host->event, RT_IPC_CMD_RESET, 0);
     sdhci_send_command(sdhci_host, sdhci_command, enDMA);
     /* wait command done */
     ret = sdhci_wait_command_done(sdhci_host, sdhci_command, ((sdhci_data == RT_NULL) ? false : sdhci_data->executeTuning));
@@ -513,10 +548,39 @@ rt_err_t sdhci_transfer_blocking(struct sdhci_host* sdhci_host)
     if ((sdhci_data != RT_NULL) && (ret == 0)) {
         ret = sdhci_transfer_data_blocking(sdhci_host, sdhci_data, enDMA);
     }
+    sdhci_writel(sdhci_host, sdhci_readl(sdhci_host, SDHCI_SIGNAL_ENABLE) &
+        ~(SDHCI_INT_DATA_MASK | SDHCI_INT_CMD_MASK), SDHCI_SIGNAL_ENABLE);
     sdhci_writel(sdhci_host, SDHCI_INT_ALL_MASK, SDHCI_INT_STATUS);
     sdhci_reset(sdhci_host, SDHCI_RESET_CMD);
     sdhci_reset(sdhci_host, SDHCI_RESET_DATA);
     return ret;
+}
+
+static void sdhci_init(struct sdhci_host* host)
+{
+    sdhci_reset(host, SDHCI_RESET_ALL);
+    sdhci_writeb(host, SDHCI_CTRL_HISPD, SDHCI_HOST_CONTROL);
+    sdhci_writeb(host, 0x7, SDHCI_TIMEOUT_CONTROL);
+    sdhci_writeb(host, SDHCI_POWER_ON | SDHCI_POWER_330, SDHCI_POWER_CONTROL);
+    sdhci_writew(host, SDHCI_CLOCK_INT_EN, SDHCI_CLOCK_CONTROL);
+    while ((sdhci_readw(host, SDHCI_CLOCK_CONTROL) & SDHCI_CLOCK_INT_STABLE) == 0)
+        ;
+    sdhci_writel(host, SDHCI_INT_DATA_MASK | SDHCI_INT_CMD_MASK, SDHCI_INT_ENABLE);
+    sdhci_writel(host, SDHCI_INT_CARD_INT, SDHCI_SIGNAL_ENABLE);
+}
+
+static void sdhci_irq(int vector, void* param)
+{
+    struct sdhci_host* host = param;
+    uint32_t status = sdhci_get_int_status_flag(host);
+
+    if (status & (SDHCI_INT_ERROR | SDHCI_INT_DATA_END | SDHCI_INT_DMA_END | SDHCI_INT_RESPONSE)) {
+        host->error_code = (status >> 16) & 0xffff;
+        rt_event_send(&host->event, status & (SDHCI_INT_ERROR | SDHCI_INT_DATA_END | SDHCI_INT_DMA_END | SDHCI_INT_RESPONSE));
+    }
+    if (status & SDHCI_INT_CARD_INT)
+        sdio_irq_wakeup(host->host);
+    sdhci_clear_int_status_flag(host, status);
 }
 
 static void kd_mmc_request(struct rt_mmcsd_host* host, struct rt_mmcsd_req* req)
@@ -527,8 +591,6 @@ static void kd_mmc_request(struct rt_mmcsd_host* host, struct rt_mmcsd_req* req)
     rt_err_t error;
     struct sdhci_data sdhci_data = { 0 };
     struct sdhci_command sdhci_command = { 0 };
-
-    rt_mutex_take(mmcsd_mutex, RT_WAITING_FOREVER);
 
     RT_ASSERT(host != RT_NULL);
     RT_ASSERT(req != RT_NULL);
@@ -584,6 +646,8 @@ static void kd_mmc_request(struct rt_mmcsd_host* host, struct rt_mmcsd_req* req)
     }
 
     sdhci_command.flags = 0;
+    sdhci_command.flags2 = 0;
+    sdhci_command.responseErrorFlags = 0;
     mmcsd->sdhci_command = &sdhci_command;
 
     if (data) {
@@ -597,8 +661,7 @@ static void kd_mmc_request(struct rt_mmcsd_host* host, struct rt_mmcsd_req* req)
         sdhci_data.blockSize = data->blksize;
         sdhci_data.blockCount = data->blks;
 
-        LOG_D(" buf: %p, blksize:%d, blks:%d ", data->buf, sdhci_data.blockSize, sdhci_data.blockCount);
-        if ((cmd->cmd_code == WRITE_BLOCK) || (cmd->cmd_code == WRITE_MULTIPLE_BLOCK)) {
+        if (data->flags == DATA_DIR_WRITE) {
             sdhci_data.txData = data->buf;
             sdhci_data.rxData = RT_NULL;
         } else {
@@ -606,11 +669,15 @@ static void kd_mmc_request(struct rt_mmcsd_host* host, struct rt_mmcsd_req* req)
             sdhci_data.txData = RT_NULL;
         }
 #ifdef SDHCI_SDMA_ENABLE
-        if ((uint64_t)(sdhci_data.rxData) & 0x3f) {
-            sdhci_data.rxData = rt_malloc_align(sdhci_data.blockSize * sdhci_data.blockCount, 64);
-        } else if ((uint64_t)(sdhci_data.txData) & 0x3f) {
-            sdhci_data.txData = rt_malloc_align(sdhci_data.blockSize * sdhci_data.blockCount, 64);
-            rt_memcpy(sdhci_data.txData, data->buf, sdhci_data.blockSize * sdhci_data.blockCount);
+        uint32_t sz = sdhci_data.blockSize * sdhci_data.blockCount;
+        uint32_t pad = 0;
+        if (sz & (CACHE_LINESIZE - 1))
+            pad = (sz + (CACHE_LINESIZE - 1)) & ~(CACHE_LINESIZE - 1);
+        if (sdhci_data.rxData && (((uint64_t)(sdhci_data.rxData) & (CACHE_LINESIZE - 1)) || pad)) {
+            sdhci_data.rxData = rt_malloc_align(pad ? pad : sz, CACHE_LINESIZE);
+        } else if (((uint64_t)(sdhci_data.txData) & (CACHE_LINESIZE - 1)) || pad) {
+            sdhci_data.txData = rt_malloc_align(pad ? pad : sz, CACHE_LINESIZE);
+            rt_memcpy(sdhci_data.txData, data->buf, sz);
         }
 #endif
         mmcsd->sdhci_data = &sdhci_data;
@@ -626,8 +693,7 @@ static void kd_mmc_request(struct rt_mmcsd_host* host, struct rt_mmcsd_req* req)
         rt_free_align(sdhci_data.txData);
     }
 #endif
-    if (error == 1) {
-        sdhic_error_recovery(mmcsd);
+    if (error == -1) {
         LOG_D(" ***USDHC_TransferBlocking error: %d*** --> \n", error);
         cmd->err = -RT_ERROR;
     }
@@ -644,60 +710,36 @@ static void kd_mmc_request(struct rt_mmcsd_host* host, struct rt_mmcsd_req* req)
         LOG_D(" resp 0x%08X\n", cmd->resp[0]);
     }
     mmcsd_req_complete(host);
-
-    rt_mutex_release(mmcsd_mutex);
-    return;
 }
 
-void kd_card_clk_enable(struct sdhci_host* host, uint32_t enable)
+static void kd_mmc_clock_freq_change(struct sdhci_host* host, uint32_t clock)
 {
-    if (enable) {
-        sdhci_writew(host, sdhci_readw(host, SDHCI_CLOCK_CONTROL) | SDHCI_CLOCK_CARD_EN | SDHCI_PROG_CLOCK_MODE, SDHCI_CLOCK_CONTROL);
-    } else {
-        sdhci_writew(host, sdhci_readw(host, SDHCI_CLOCK_CONTROL) & (~SDHCI_CLOCK_CARD_EN), SDHCI_CLOCK_CONTROL);
-    }
-}
+    uint32_t div, val;
 
-void kd_pll_clk_enable(struct sdhci_host* host, uint32_t enable)
-{
-    if (enable) {
-        sdhci_writew(host, sdhci_readw(host, SDHCI_CLOCK_CONTROL) | SDHCI_CLOCK_PLL_EN, SDHCI_CLOCK_CONTROL);
-    } else {
-        sdhci_writew(host, sdhci_readw(host, SDHCI_CLOCK_CONTROL) & (~SDHCI_CLOCK_PLL_EN), SDHCI_CLOCK_CONTROL);
-    }
-}
+    val = sdhci_readw(host, SDHCI_CLOCK_CONTROL);
+    val &= ~(SDHCI_CLOCK_CARD_EN | SDHCI_PROG_CLOCK_MODE);
+    sdhci_writew(host, val, SDHCI_CLOCK_CONTROL);
 
-void kd_mmc_clock_freq_change(struct sdhci_host* host, uint32_t clock)
-{
-    uint32_t div = 0, clk = 0;
-
-    // Execute SD Clock Stop Sequence
-    kd_card_clk_enable(host, 0);
-    // Set CLK_CTRL_R.PLL_ENABLE to 0
-    kd_pll_clk_enable(host, 0);
     if (clock == 0)
         return;
 
     if (host->max_clk <= clock) {
         div = 1;
     } else {
-        for (div = 2;
-             div < SDHCI_MAX_DIV_SPEC_300;
-             div += 2) {
+        for (div = 2; div < SDHCI_MAX_DIV_SPEC_300; div += 2) {
             if ((host->max_clk / div) <= clock)
                 break;
         }
     }
     div >>= 1;
-    clk |= (div & SDHCI_DIV_MASK) << SDHCI_DIVIDER_SHIFT;
-    clk |= ((div & SDHCI_DIV_HI_MASK) >> SDHCI_DIV_MASK_LEN)
+    val &= ~((SDHCI_DIV_MASK << SDHCI_DIVIDER_SHIFT) | SDHCI_DIV_HI_MASK);
+    val |= (div & SDHCI_DIV_MASK) << SDHCI_DIVIDER_SHIFT;
+    val |= ((div & SDHCI_DIV_HI_MASK) >> SDHCI_DIV_MASK_LEN)
         << SDHCI_DIVIDER_HI_SHIFT;
-
-    sdhci_writew(host, clk, SDHCI_CLOCK_CONTROL);
-
-    kd_pll_clk_enable(host, 1);
-    kd_card_clk_enable(host, 1);
-    sdhci_writew(host, sdhci_readw(host, SDHCI_CLOCK_CONTROL) | SDHCI_CLOCK_INT_EN, SDHCI_CLOCK_CONTROL);
+    val |= SDHCI_CLOCK_CARD_EN | SDHCI_PROG_CLOCK_MODE;
+    sdhci_writew(host, val, SDHCI_CLOCK_CONTROL);
+    while ((sdhci_readw(host, SDHCI_CLOCK_CONTROL) & SDHCI_CLOCK_INT_STABLE) == 0)
+        ;
 }
 
 static void kd_set_iocfg(struct rt_mmcsd_host* host, struct rt_mmcsd_io_cfg* io_cfg)
@@ -705,7 +747,7 @@ static void kd_set_iocfg(struct rt_mmcsd_host* host, struct rt_mmcsd_io_cfg* io_
     struct sdhci_host* mmcsd;
     unsigned int sdhci_clk;
     unsigned int bus_width;
-    uint8_t ctrl = 0;
+    uint8_t ctrl;
     RT_ASSERT(host != RT_NULL);
     RT_ASSERT(host->private_data != RT_NULL);
     RT_ASSERT(io_cfg != RT_NULL);
@@ -714,182 +756,174 @@ static void kd_set_iocfg(struct rt_mmcsd_host* host, struct rt_mmcsd_io_cfg* io_
     sdhci_clk = io_cfg->clock;
     bus_width = io_cfg->bus_width;
 
-    /* ToDo : Use the Clock Framework */
     LOG_D("%s: sdhci_clk=%d, bus_width:%d\n", __func__, sdhci_clk, bus_width);
 
     kd_mmc_clock_freq_change(mmcsd, sdhci_clk);
     ctrl = sdhci_readb(mmcsd, SDHCI_HOST_CONTROL);
-    if (bus_width == 3) {
-        ctrl &= ~SDHCI_CTRL_4BITBUS;
+    ctrl &= ~(SDHCI_CTRL_4BITBUS | SDHCI_CTRL_8BITBUS);
+    if (bus_width == 3)
         ctrl |= SDHCI_CTRL_8BITBUS;
-    } else {
-        ctrl &= ~SDHCI_CTRL_8BITBUS;
-        if (bus_width == 2) {
-            ctrl |= SDHCI_CTRL_4BITBUS;
-        } else {
-            ctrl &= ~SDHCI_CTRL_4BITBUS;
-        }
-    }
+    else if (bus_width == 2)
+        ctrl |= SDHCI_CTRL_4BITBUS;
     sdhci_writeb(mmcsd, ctrl, SDHCI_HOST_CONTROL);
+}
+
+static void kd_enable_sdio_irq(struct rt_mmcsd_host* mmcsd_host, rt_int32_t en)
+{
+    struct sdhci_host* host = (struct sdhci_host*)mmcsd_host->private_data;
+    uint32_t val;
+
+    val = sdhci_readw(host, SDHCI_INT_ENABLE);
+    if (en)
+        val |= SDHCI_INT_CARD_INT;
+    else
+        val &= ~SDHCI_INT_CARD_INT;
+    sdhci_writew(host, val, SDHCI_INT_ENABLE);
 }
 
 static const struct rt_mmcsd_host_ops ops = {
     kd_mmc_request,
     kd_set_iocfg,
-    RT_NULL, //_mmc_get_card_status,
-    RT_NULL, //_mmc_enable_sdio_irq,
+    RT_NULL,
+    kd_enable_sdio_irq,
+    RT_NULL,
 };
 
-static int init_kd_mmc_core(struct sdhci_host* host)
+void kd_sdhci0_reset(int value)
 {
-    if ((sdhci_readb(host, SDHCI_SOFTWARE_RESET) & SDHCI_RESET_ALL)) {
-        LOG_E("%s: sd host controller reset error\n", __func__);
-        return -1;
-    }
+    struct sdhci_host* host = sdhci_host0;
 
-    return 0;
+    uint16_t emmc_ctl = sdhci_readw(host, EMMC_CTRL_R);
+    emmc_ctl |= (1 << EMMC_RST_N_OE);
+    if (value)
+        emmc_ctl |= (1 << EMMC_RST_N);
+    else
+        emmc_ctl &= ~(1 << EMMC_RST_N);
+    sdhci_writeb(host, emmc_ctl, EMMC_CTRL_R);
 }
 
-static void kd_sdhci_clk_reset(void)
+void kd_sdhci_change(int id)
 {
-    static char* hi_sys_virt_addr;
-    static char* sysctl_virt_addr;
-    unsigned int data;
-    unsigned int hi_sys_config_addr = 0x91585000;
-    unsigned int sysctl_addr = 0x91101000;
-
-    /*sdio:Hi_sys_config space,sdio write protect open */
-    hi_sys_virt_addr = rt_ioremap((void*)hi_sys_config_addr, 0x400);
-    sysctl_virt_addr = rt_ioremap((void*)sysctl_addr, 0xb0);
-    data = readl(hi_sys_virt_addr + 8);
-    data |= 0x4;
-    writel(data, hi_sys_virt_addr + 8);
-    /*sysctl reset sdio1*/
-    writel(0x2, sysctl_virt_addr + 0x34);
-    rt_thread_mdelay(1);
-    while (!(readl(sysctl_virt_addr + 0x34) & 0x20000000))
-        ;
-    writel(0x20000000, sysctl_virt_addr + 0x34);
-    rt_thread_mdelay(5);
-    rt_iounmap(hi_sys_virt_addr);
-    rt_iounmap(sysctl_virt_addr);
+    if (id == 0)
+        mmcsd_change(sdhci_host0->host);
+    else if (id == 1)
+        mmcsd_change(sdhci_host1->host);
 }
 
 rt_int32_t kd_sdhci_init(void)
 {
+    uint32_t val;
+    void* hi_sys_virt_addr = rt_ioremap((void*)0x91585000, 0x10);
 #ifdef RT_USING_SDIO0
-    struct sdhci_host* mmcsd1;
+    val = readl(hi_sys_virt_addr + 0);
+    val |= 1 << 6 | 1 << 4;
+    writel(val, hi_sys_virt_addr + 0);
+    sdhci_host0 = rt_malloc(sizeof(struct sdhci_host));
+    if (!sdhci_host0)
+        return -1;
 
-    host1 = mmcsd_alloc_host();
-    if (!host1) {
-        goto err;
-    }
-
-    mmcsd1 = rt_malloc(sizeof(struct sdhci_host));
-    if (!mmcsd1) {
-        LOG_E("alloc mci failed\n");
-        goto err;
-    }
-
-    rt_memset(mmcsd1, 0, sizeof(struct sdhci_host));
-    mmcsd1->mapbase = (void*)rt_ioremap((void*)SDEMMC0_BASE, 0x1000);
-    emmc0_base = (void*)mmcsd1->mapbase;
-    mmcsd1->sdhci_data = RT_NULL;
-    mmcsd1->sdhci_command = RT_NULL;
-    mmcsd1->max_clk = 200000000;
-    strncpy(host1->name, "sd", sizeof(host1->name) - 1);
-    host1->ops = &ops;
-    host1->freq_min = 400000;
-    host1->freq_max = 50000000;
-#ifdef RT_SDIO0_SD
-    host1->valid_ocr = VDD_32_33 | VDD_33_34;
-    host1->flags = MMCSD_BUSWIDTH_4 | MMCSD_MUTBLKWRITE | MMCSD_SUP_HIGHSPEED | MMCSD_SUP_SDIO_IRQ;
+    rt_memset(sdhci_host0, 0, sizeof(struct sdhci_host));
+    sdhci_host0->mapbase = (void*)rt_ioremap((void*)SDEMMC0_BASE, 0x1000);
+    sdhci_host0->index = 0;
+    sdhci_host0->have_phy = 1;
+    sdhci_host0->mshc_ctrl_r = 0;
+    sdhci_host0->rx_delay_line = 0x0d;
+    sdhci_host0->tx_delay_line = 0xc0;
+#ifdef RT_SDIO0_EMMC
+    sdhci_host0->is_emmc_card = 1;
 #else
-    host1->valid_ocr = VDD_165_195;
-    host1->flags = MMCSD_BUSWIDTH_8 | MMCSD_MUTBLKWRITE | MMCSD_SUP_HIGHSPEED | MMCSD_SUP_SDIO_IRQ;
+    sdhci_host0->is_emmc_card = 0;
 #endif
-    host1->max_seg_size = 512 * 512;
-    host1->max_dma_segs = 1;
-    host1->max_blk_size = 512;
-    host1->max_blk_count = 4096;
+#ifdef RT_SDIO0_1V8
+    sdhci_host0->io_fixed_1v8 = 1;
+#else
+    sdhci_host0->io_fixed_1v8 = 0;
+#endif
+    sdhci_host0->sdhci_data = RT_NULL;
+    sdhci_host0->sdhci_command = RT_NULL;
+    sdhci_host0->max_clk = 200000000;
+    sdhci_init(sdhci_host0);
 
-    mmcsd1->host = host1;
-    _mmcsd_clk_init(mmcsd1);
+    rt_event_init(&sdhci_host0->event, "sd0_event", RT_IPC_FLAG_PRIO);
+    rt_hw_interrupt_install(IRQN_SD0, sdhci_irq, sdhci_host0, "sd0");
+    rt_hw_interrupt_umask(IRQN_SD0);
 
-    _mmcsd_host_init(mmcsd1);
-    host1->private_data = mmcsd1;
-
-    if (init_kd_mmc_core(mmcsd1)) {
-        rt_free(mmcsd1);
-        goto err;
+    struct rt_mmcsd_host* mmcsd_host0 = mmcsd_alloc_host();
+    if (!mmcsd_host0) {
+        rt_free(sdhci_host0);
+        return -1;
     }
-    mmcsd_change(host1);
+    mmcsd_host0->ops = &ops;
+    mmcsd_host0->freq_min = 400000;
+    mmcsd_host0->freq_max = 50000000;
+#ifdef RT_SDIO0_EMMC
+    strncpy(mmcsd_host0->name, "emmc", sizeof(mmcsd_host0->name) - 1);
+    mmcsd_host0->flags = MMCSD_BUSWIDTH_8 | MMCSD_MUTBLKWRITE | MMCSD_SUP_HIGHSPEED | MMCSD_SUP_SDIO_IRQ;
+#else
+    strncpy(mmcsd_host0->name, "sd0", sizeof(mmcsd_host0->name) - 1);
+    mmcsd_host0->flags = MMCSD_BUSWIDTH_4 | MMCSD_MUTBLKWRITE | MMCSD_SUP_HIGHSPEED | MMCSD_SUP_SDIO_IRQ;
+#endif
+    mmcsd_host0->valid_ocr = sdhci_host0->io_fixed_1v8 ? VDD_165_195 : VDD_32_33 | VDD_33_34;
+#ifdef RT_USING_CYW43XX
+    mmcsd_host0->valid_ocr = VDD_32_33 | VDD_33_34;
+#endif
+    mmcsd_host0->max_seg_size = 512 * 512;
+    mmcsd_host0->max_dma_segs = 1;
+    mmcsd_host0->max_blk_size = 512;
+    mmcsd_host0->max_blk_count = 4096;
+    mmcsd_host0->private_data = sdhci_host0;
+    sdhci_host0->host = mmcsd_host0;
 #endif
 #ifdef RT_USING_SDIO1
-    struct sdhci_host* mmcsd2;
+    val = readl(hi_sys_virt_addr + 8);
+    val |= 1 << 2 | 1 << 0;
+    writel(val, hi_sys_virt_addr + 8);
+    sdhci_host1 = rt_malloc(sizeof(struct sdhci_host));
+    if (!sdhci_host1)
+        return -2;
 
-    host2 = mmcsd_alloc_host();
-    if (!host2) {
-        goto err;
+    rt_memset(sdhci_host1, 0, sizeof(struct sdhci_host));
+    sdhci_host1->mapbase = (void*)rt_ioremap((void*)SDEMMC1_BASE, 0x1000);
+    sdhci_host1->index = 1;
+    sdhci_host1->have_phy = 0;
+    sdhci_host1->mshc_ctrl_r = 0;
+    sdhci_host1->rx_delay_line = 0;
+    sdhci_host1->tx_delay_line = 0;
+    sdhci_host1->sdhci_data = RT_NULL;
+    sdhci_host1->sdhci_command = RT_NULL;
+    sdhci_host1->max_clk = 100000000;
+    sdhci_init(sdhci_host1);
+
+    rt_event_init(&sdhci_host1->event, "sd1_event", RT_IPC_FLAG_PRIO);
+    rt_hw_interrupt_install(IRQN_SD1, sdhci_irq, sdhci_host1, "sd1");
+    rt_hw_interrupt_umask(IRQN_SD1);
+
+    struct rt_mmcsd_host* mmcsd_host1 = mmcsd_alloc_host();
+    if (!mmcsd_host1) {
+        rt_free(sdhci_host1);
+        return -2;
     }
-
-    mmcsd2 = rt_malloc(sizeof(struct sdhci_host));
-    if (!mmcsd2) {
-        LOG_E("alloc mci failed\n");
-        goto err;
-    }
-
-    rt_memset(mmcsd2, 0, sizeof(struct sdhci_host));
-    mmcsd2->mapbase = (void*)rt_ioremap((void*)SDEMMC1_BASE, 0x1000);
-    emmc1_base = (void*)mmcsd2->mapbase;
-    mmcsd2->sdhci_data = RT_NULL;
-    mmcsd2->sdhci_command = RT_NULL;
-    mmcsd2->max_clk = 100000000;
-    strncpy(host2->name, "sd", sizeof(host2->name) - 1);
-    host2->ops = &ops;
-    host2->freq_min = 375000;
-    host2->freq_max = 50000000;
-    host2->valid_ocr = VDD_32_33 | VDD_33_34;
-    host2->flags = MMCSD_BUSWIDTH_4 | MMCSD_MUTBLKWRITE | MMCSD_SUP_HIGHSPEED | MMCSD_SUP_SDIO_IRQ;
-    host2->max_seg_size = 512 * 512;
-    host2->max_dma_segs = 1;
-    host2->max_blk_size = 512;
-    host2->max_blk_count = 4096;
-
-    mmcsd2->host = host2;
-
-    kd_sdhci_clk_reset();
-    _mmcsd_clk_init(mmcsd2);
-    _mmcsd_host_init(mmcsd2);
-
-    host2->private_data = mmcsd2;
-
-    if (init_kd_mmc_core(mmcsd2)) {
-        rt_free(mmcsd2);
-        goto err;
-    }
-    mmcsd_change(host2);
+    strncpy(mmcsd_host1->name, "sd1", sizeof(mmcsd_host1->name) - 1);
+    mmcsd_host1->ops = &ops;
+    mmcsd_host1->freq_min = 400000;
+    mmcsd_host1->freq_max = 50000000;
+    mmcsd_host1->valid_ocr = VDD_32_33 | VDD_33_34;
+    mmcsd_host1->flags = MMCSD_BUSWIDTH_4 | MMCSD_MUTBLKWRITE | MMCSD_SUP_HIGHSPEED | MMCSD_SUP_SDIO_IRQ;
+    mmcsd_host1->max_seg_size = 512 * 512;
+    mmcsd_host1->max_dma_segs = 1;
+    mmcsd_host1->max_blk_size = 512;
+    mmcsd_host1->max_blk_count = 4096;
+    mmcsd_host1->private_data = sdhci_host1;
+    sdhci_host1->host = mmcsd_host1;
 #endif
-
-    mmcsd_mutex = rt_mutex_create("mmutex", RT_IPC_FLAG_FIFO);
-    if (mmcsd_mutex == RT_NULL) {
-        LOG_E("create mmcsd mutex failed.\n");
-        goto err;
-    }
-
+#ifdef SD_SDIO_DEV
+    kd_sdhci_change(SD_SDIO_DEV);
+#endif
+    rt_iounmap(hi_sys_virt_addr);
     return 0;
-
-err:
-#ifdef RT_USING_SDIO0
-    mmcsd_free_host(host1);
-#endif
-#ifdef RT_USING_SDIO1
-    mmcsd_free_host(host2);
-#endif
-    return -RT_ENOMEM;
 }
-
 INIT_DEVICE_EXPORT(kd_sdhci_init);
+
 #endif /*defined(RT_USING_SDIO0) || defined(RT_USING_SDIO1)*/
 
 #endif /*defined(RT_USING_SDIO)*/

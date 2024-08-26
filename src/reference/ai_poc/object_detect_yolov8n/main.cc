@@ -401,12 +401,19 @@ void video_proc_01(char *argv[])
 
         cv::Mat osd_frame(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
 
+        #if defined(STUDIO_HDMI)
+        {
+            ScopedTiming st("osd draw", atoi(argv[5]));
+            Utils::draw_detections(osd_frame, results, {osd_frame.cols, osd_frame.rows}, {SENSOR_WIDTH, SENSOR_HEIGHT});
+        }
+        #else
         {
             ScopedTiming st("osd draw", atoi(argv[5]));
             cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
             Utils::draw_detections(osd_frame, results, {osd_frame.cols, osd_frame.rows}, {SENSOR_WIDTH, SENSOR_HEIGHT});
             cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
         }
+        #endif
 
         {
             ScopedTiming st("osd copy", atoi(argv[5]));

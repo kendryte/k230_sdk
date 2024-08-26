@@ -54,7 +54,7 @@ CONFIG_MEM_BOUNDARY_RESERVED_SIZE=0x00001000
 #
 # storage configurations
 #
-CONFIG_SPI_NOR=y
+# CONFIG_SPI_NOR is not set
 # CONFIG_SPI_NAND is not set
 # CONFIG_SDCAED is not set
 # CONFIG_EMMC is not set

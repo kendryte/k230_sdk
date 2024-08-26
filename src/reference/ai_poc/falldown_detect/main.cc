@@ -478,38 +478,74 @@ void video_proc_01(char *argv[])
         fdd.post_process({SENSOR_WIDTH, SENSOR_HEIGHT}, results);
 
         cv::Mat osd_frame(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-        cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
 
-        std::string text;
-        cv::Point origin;
-        std::vector<cv::Scalar> scalars= {
-            cv::Scalar(255,0, 0, 255), //  "Fall" 
-            cv::Scalar(255,0, 255, 0), //  "NoFall"
-            cv::Scalar(255,255,0, 0), 
-            cv::Scalar(255,255,0, 255)  
-        };
 
-        for (auto r : results)
+        #if defined(STUDIO_HDMI)
         {
-            ScopedTiming st("draw boxes", atoi(argv[5]));
-            text = fdd.labels[r.label] + ":" + std::to_string(round(r.score * 100) / 100).substr(0,4);
-            std::cout << "text = " << text << std::endl;
+            std::string text;
+            cv::Point origin;
+            std::vector<cv::Scalar> scalars= {
+                cv::Scalar(255,0, 0, 255), //  "Fall" 
+                cv::Scalar(255,0, 255, 0), //  "NoFall"
+                cv::Scalar(255,255,0, 0), 
+                cv::Scalar(255,255,0, 255)  
+            };
 
-            int x1 = r.x1 / SENSOR_WIDTH * osd_frame.cols;
-            int y1 = r.y1 / SENSOR_HEIGHT  * osd_frame.rows;
+            for (auto r : results)
+            {
+                ScopedTiming st("draw boxes", atoi(argv[5]));
+                text = fdd.labels[r.label] + ":" + std::to_string(round(r.score * 100) / 100).substr(0,4);
+                std::cout << "text = " << text << std::endl;
 
-            origin.x = x1;
-            origin.y = y1-20;
+                int x1 = r.x1 / SENSOR_WIDTH * osd_frame.cols;
+                int y1 = r.y1 / SENSOR_HEIGHT  * osd_frame.rows;
 
-            int w = (r.x2-r.x1) / SENSOR_WIDTH * osd_frame.cols;
-            int h = (r.y2-r.y1) / SENSOR_HEIGHT  * osd_frame.rows;
-            cv::rectangle(osd_frame, cv::Rect( x1,y1,w,h ), scalars[r.label], 6, 2, 0); // ARGB
-            cv::putText(osd_frame, text, origin, cv::FONT_HERSHEY_COMPLEX, 2, scalars[r.label+2], 1, 8, 0);
-            
-            
+                origin.x = x1;
+                origin.y = y1-20;
+
+                int w = (r.x2-r.x1) / SENSOR_WIDTH * osd_frame.cols;
+                int h = (r.y2-r.y1) / SENSOR_HEIGHT  * osd_frame.rows;
+                cv::rectangle(osd_frame, cv::Rect( x1,y1,w,h ), scalars[r.label], 6, 2, 0); // ARGB
+                cv::putText(osd_frame, text, origin, cv::FONT_HERSHEY_COMPLEX, 2, scalars[r.label+2], 1, 8, 0);
+                
+                
+            }
         }
-        cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+        #else
+        {
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
 
+            std::string text;
+            cv::Point origin;
+            std::vector<cv::Scalar> scalars= {
+                cv::Scalar(255,0, 0, 255), //  "Fall" 
+                cv::Scalar(255,0, 255, 0), //  "NoFall"
+                cv::Scalar(255,255,0, 0), 
+                cv::Scalar(255,255,0, 255)  
+            };
+
+            for (auto r : results)
+            {
+                ScopedTiming st("draw boxes", atoi(argv[5]));
+                text = fdd.labels[r.label] + ":" + std::to_string(round(r.score * 100) / 100).substr(0,4);
+                std::cout << "text = " << text << std::endl;
+
+                int x1 = r.x1 / SENSOR_WIDTH * osd_frame.cols;
+                int y1 = r.y1 / SENSOR_HEIGHT  * osd_frame.rows;
+
+                origin.x = x1;
+                origin.y = y1-20;
+
+                int w = (r.x2-r.x1) / SENSOR_WIDTH * osd_frame.cols;
+                int h = (r.y2-r.y1) / SENSOR_HEIGHT  * osd_frame.rows;
+                cv::rectangle(osd_frame, cv::Rect( x1,y1,w,h ), scalars[r.label], 6, 2, 0); // ARGB
+                cv::putText(osd_frame, text, origin, cv::FONT_HERSHEY_COMPLEX, 2, scalars[r.label+2], 1, 8, 0);
+                
+                
+            }
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+        }
+        #endif
 
         {
             ScopedTiming st("osd copy", atoi(argv[5]));

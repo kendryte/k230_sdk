@@ -1,0 +1,14 @@
+prefix=/home/sunxiaopeng/src/work/k230/k230_sdk/src/big/mpp/middleware/src/ffmpeg/ffmpeg-4.3.1/ffmpeg_lib
+exec_prefix=${prefix}
+libdir=/home/sunxiaopeng/src/work/k230/k230_sdk/src/big/mpp/middleware/src/ffmpeg/ffmpeg-4.3.1/ffmpeg_lib/lib
+includedir=/home/sunxiaopeng/src/work/k230/k230_sdk/src/big/mpp/middleware/src/ffmpeg/ffmpeg-4.3.1/ffmpeg_lib/include
+
+Name: libavdevice
+Description: FFmpeg device handling library
+Version: 58.10.100
+Requires: libavfilter >= 7.85.100, libswscale >= 5.7.100, libpostproc >= 55.7.100, libavformat >= 58.45.100, libavcodec >= 58.91.100, libswresample >= 3.7.100, libavutil >= 56.51.100
+Requires.private: 
+Conflicts:
+Libs: -L${libdir}  -lavdevice -lm
+Libs.private: 
+Cflags: -I${includedir}

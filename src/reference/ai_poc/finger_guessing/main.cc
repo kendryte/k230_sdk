@@ -1083,7 +1083,17 @@ void video_proc_01(char *argv[])
     sync();
 
     cv::Mat osd_frame_tmp(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-    cv::rotate(osd_frame_tmp, osd_frame_tmp, cv::ROTATE_90_COUNTERCLOCKWISE);
+    
+    #if defined(STUDIO_HDMI)
+    {
+        osd_frame_tmp = osd_frame_tmp;
+    }
+    #else
+    {
+        cv::rotate(osd_frame_tmp, osd_frame_tmp, cv::ROTATE_90_COUNTERCLOCKWISE);
+    }
+    #endif
+    
     std::vector<BoxInfo> results;
     
     while (!isp_stop)
@@ -1109,226 +1119,452 @@ void video_proc_01(char *argv[])
         }
 
         cv::Mat osd_frame(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-        cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
-        cv::Mat osd_frame_out;//(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-        cv::Mat osd_frame_vertical;
-        cv::Mat osd_frame_horizontal;
 
-        results.clear();
-        hd.pre_process();
-        hd.inference();
-        hd.post_process(results);
-
-        float max_area_hand = 0;
-        int max_id_hand = -1;
-        for (int i = 0; i < results.size(); ++i)
+        #if defined(STUDIO_HDMI)
         {
-            float area_i = (results[i].x2 - results[i].x1) * (results[i].y2 - results[i].y1);
-            if (area_i > max_area_hand)
+            cv::Mat osd_frame_out;//(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
+            cv::Mat osd_frame_vertical;
+            cv::Mat osd_frame_horizontal;
+
+            results.clear();
+            hd.pre_process();
+            hd.inference();
+            hd.post_process(results);
+
+            float max_area_hand = 0;
+            int max_id_hand = -1;
+            for (int i = 0; i < results.size(); ++i)
             {
-                max_area_hand = area_i;
-                max_id_hand = i;
-            }
-        }
-
-        std::string gesture = "";
-        if (max_id_hand != -1)
-        {
-            std::string text = hd.labels_[results[max_id_hand].label] + ":" + std::to_string(round(results[max_id_hand].score * 100) / 100.0);
-
-            int w = results[max_id_hand].x2 - results[max_id_hand].x1 + 1;
-            int h = results[max_id_hand].y2 - results[max_id_hand].y1 + 1;
-            
-            int rect_x = results[max_id_hand].x1/ SENSOR_WIDTH * osd_frame.cols;
-            int rect_y = results[max_id_hand].y1/ SENSOR_HEIGHT * osd_frame.rows;
-            int rect_w = (float)w / SENSOR_WIDTH * osd_frame.cols;
-            int rect_h = (float)h / SENSOR_HEIGHT  * osd_frame.rows;
-            // cv::rectangle(osd_frame, cv::Rect(rect_x, rect_y , rect_w, rect_h), cv::Scalar( 255,255, 255, 255), 2, 2, 0);
-            
-            int length = std::max(w,h)/2;
-            int cx = (results[max_id_hand].x1+results[max_id_hand].x2)/2;
-            int cy = (results[max_id_hand].y1+results[max_id_hand].y2)/2;
-            int ratio_num = 1.26*length;
-
-            int x1_1 = std::max(0,cx-ratio_num);
-            int y1_1 = std::max(0,cy-ratio_num);
-            int x2_1 = std::min(SENSOR_WIDTH-1, cx+ratio_num);
-            int y2_1 = std::min(SENSOR_HEIGHT-1, cy+ratio_num);
-            int w_1 = x2_1 - x1_1 + 1;
-            int h_1 = y2_1 - y1_1 + 1;
-            
-            struct Bbox bbox = {x:x1_1,y:y1_1,w:w_1,h:h_1};
-            hk.pre_process(bbox);
-
-            hk.inference();
-
-            hk.post_process(bbox);
-
-            std::vector<double> angle_list = hk.hand_angle();
-            gesture = hk.h_gesture(angle_list);
-
-            std::string text1 = "Gesture: " + gesture;
-        }
-
-
-        if(MODE == 0)
-        {
-            {
-                ScopedTiming st("osd draw", atoi(argv[6]));
-
-                if(gesture == "fist")
+                float area_i = (results[i].x2 - results[i].x1) * (results[i].y2 - results[i].y1);
+                if (area_i > max_area_hand)
                 {
-                    cv::Mat copy_ori_image = osd_frame(cv::Rect(20,20,jiandao_width,jiandao_height));
-                    image_jiandao_argb.copyTo(copy_ori_image,image_jiandao_argb); 
-                }
-                else if(gesture == "five")
-                {
-                    cv::Mat copy_ori_image = osd_frame(cv::Rect(20,20,shitou_width,shitou_height));
-                    image_shitou_argb.copyTo(copy_ori_image,image_shitou_argb); 
-                }
-                else if(gesture == "yeah")
-                {
-                    cv::Mat copy_ori_image = osd_frame(cv::Rect(20,20,bu_width,bu_height));
-                    image_bu_argb.copyTo(copy_ori_image,image_bu_argb);  
+                    max_area_hand = area_i;
+                    max_id_hand = i;
                 }
             }
-        }
-        else if (MODE == 1)
-        {
-            {
-                ScopedTiming st("osd draw", atoi(argv[6]));
 
-                if(gesture == "fist")
+            std::string gesture = "";
+            if (max_id_hand != -1)
+            {
+                std::string text = hd.labels_[results[max_id_hand].label] + ":" + std::to_string(round(results[max_id_hand].score * 100) / 100.0);
+
+                int w = results[max_id_hand].x2 - results[max_id_hand].x1 + 1;
+                int h = results[max_id_hand].y2 - results[max_id_hand].y1 + 1;
+                
+                int rect_x = results[max_id_hand].x1/ SENSOR_WIDTH * osd_frame.cols;
+                int rect_y = results[max_id_hand].y1/ SENSOR_HEIGHT * osd_frame.rows;
+                int rect_w = (float)w / SENSOR_WIDTH * osd_frame.cols;
+                int rect_h = (float)h / SENSOR_HEIGHT  * osd_frame.rows;
+                // cv::rectangle(osd_frame, cv::Rect(rect_x, rect_y , rect_w, rect_h), cv::Scalar( 255,255, 255, 255), 2, 2, 0);
+                
+                int length = std::max(w,h)/2;
+                int cx = (results[max_id_hand].x1+results[max_id_hand].x2)/2;
+                int cy = (results[max_id_hand].y1+results[max_id_hand].y2)/2;
+                int ratio_num = 1.26*length;
+
+                int x1_1 = std::max(0,cx-ratio_num);
+                int y1_1 = std::max(0,cy-ratio_num);
+                int x2_1 = std::min(SENSOR_WIDTH-1, cx+ratio_num);
+                int y2_1 = std::min(SENSOR_HEIGHT-1, cy+ratio_num);
+                int w_1 = x2_1 - x1_1 + 1;
+                int h_1 = y2_1 - y1_1 + 1;
+                
+                struct Bbox bbox = {x:x1_1,y:y1_1,w:w_1,h:h_1};
+                hk.pre_process(bbox);
+
+                hk.inference();
+
+                hk.post_process(bbox);
+
+                std::vector<double> angle_list = hk.hand_angle();
+                gesture = hk.h_gesture(angle_list);
+
+                std::string text1 = "Gesture: " + gesture;
+            }
+
+
+            if(MODE == 0)
+            {
                 {
-                    cv::Mat copy_ori_image = osd_frame(cv::Rect(20,20,bu_width,bu_height));
-                    image_bu_argb.copyTo(copy_ori_image,image_bu_argb); 
-                }
-                else if(gesture == "five")
-                {
-                    cv::Mat copy_ori_image = osd_frame(cv::Rect(20,20,jiandao_width,jiandao_height));
-                    image_jiandao_argb.copyTo(copy_ori_image,image_jiandao_argb);  
-                }
-                else if(gesture == "yeah")
-                {
-                    cv::Mat copy_ori_image = osd_frame(cv::Rect(20,20,shitou_width,shitou_height));
-                    image_shitou_argb.copyTo(copy_ori_image,image_shitou_argb); 
+                    ScopedTiming st("osd draw", atoi(argv[6]));
+
+                    if(gesture == "fist")
+                    {
+                        cv::Mat copy_ori_image = osd_frame(cv::Rect(20,20,jiandao_width,jiandao_height));
+                        image_jiandao_argb.copyTo(copy_ori_image,image_jiandao_argb); 
+                    }
+                    else if(gesture == "five")
+                    {
+                        cv::Mat copy_ori_image = osd_frame(cv::Rect(20,20,shitou_width,shitou_height));
+                        image_shitou_argb.copyTo(copy_ori_image,image_shitou_argb); 
+                    }
+                    else if(gesture == "yeah")
+                    {
+                        cv::Mat copy_ori_image = osd_frame(cv::Rect(20,20,bu_width,bu_height));
+                        image_bu_argb.copyTo(copy_ori_image,image_bu_argb);  
+                    }
                 }
             }
-        }
-        else
-        {
-            if(sleep_end)
+            else if (MODE == 1)
             {
-                usleep(2000000);
-                sleep_end = false;
-            }
-
-            if(max_id_hand == -1)
-            {
-                set_stop_id = true;
-            }
-
-            if(counts_guess == -1 && gesture != "fist" && gesture != "yeah" && gesture != "five")
-            {
-                std::string start_txt = " G A M E   S T A R T ";
-                std::string oneset_txt = std::to_string(1) + "  S E T";
-                cv::putText(osd_frame, start_txt, cv::Point(50,200),cv::FONT_HERSHEY_COMPLEX, 2, cv::Scalar(255, 255, 0, 0), 4);
-                cv::putText(osd_frame, oneset_txt, cv::Point(150,300),cv::FONT_HERSHEY_COMPLEX, 2, cv::Scalar(255, 0, 150, 255), 4);
-            }
-            else if(counts_guess == MODE)
-            {
-                // osd_frame = cv::Mat(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-                if(k230_win > player_win)
                 {
-                    cv::putText(osd_frame, "Y O U   L O S E", cv::Point(100,200),cv::FONT_HERSHEY_COMPLEX, 2, cv::Scalar(255, 255, 0, 0), 4);
-                }
-                else if(k230_win < player_win)
-                {
-                    cv::putText(osd_frame, "Y O U   W I N", cv::Point(100,200),cv::FONT_HERSHEY_COMPLEX, 2, cv::Scalar(255, 255, 0, 0), 4);
-                }
-                else
-                {
-                    cv::putText(osd_frame, "T I E   G A M E", cv::Point(100,200),cv::FONT_HERSHEY_COMPLEX, 2, cv::Scalar(255, 255, 0, 0), 4);
-                }
-                counts_guess = -1;
-                player_win = 0;
-                k230_win = 0;
+                    ScopedTiming st("osd draw", atoi(argv[6]));
 
-                sleep_end = true;
+                    if(gesture == "fist")
+                    {
+                        cv::Mat copy_ori_image = osd_frame(cv::Rect(20,20,bu_width,bu_height));
+                        image_bu_argb.copyTo(copy_ori_image,image_bu_argb); 
+                    }
+                    else if(gesture == "five")
+                    {
+                        cv::Mat copy_ori_image = osd_frame(cv::Rect(20,20,jiandao_width,jiandao_height));
+                        image_jiandao_argb.copyTo(copy_ori_image,image_jiandao_argb);  
+                    }
+                    else if(gesture == "yeah")
+                    {
+                        cv::Mat copy_ori_image = osd_frame(cv::Rect(20,20,shitou_width,shitou_height));
+                        image_shitou_argb.copyTo(copy_ori_image,image_shitou_argb); 
+                    }
+                }
             }
             else
             {
-                if(set_stop_id)
+                if(sleep_end)
                 {
-                    if(counts_guess == -1 && (gesture == "fist" || gesture == "yeah" || gesture == "five"))
+                    usleep(2000000);
+                    sleep_end = false;
+                }
+
+                if(max_id_hand == -1)
+                {
+                    set_stop_id = true;
+                }
+
+                if(counts_guess == -1 && gesture != "fist" && gesture != "yeah" && gesture != "five")
+                {
+                    std::string start_txt = " G A M E   S T A R T ";
+                    std::string oneset_txt = std::to_string(1) + "  S E T";
+                    cv::putText(osd_frame, start_txt, cv::Point(50,200),cv::FONT_HERSHEY_COMPLEX, 2, cv::Scalar(255, 255, 0, 0), 4);
+                    cv::putText(osd_frame, oneset_txt, cv::Point(150,300),cv::FONT_HERSHEY_COMPLEX, 2, cv::Scalar(255, 0, 150, 255), 4);
+                }
+                else if(counts_guess == MODE)
+                {
+                    // osd_frame = cv::Mat(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
+                    if(k230_win > player_win)
                     {
-                        counts_guess = 0;
+                        cv::putText(osd_frame, "Y O U   L O S E", cv::Point(100,200),cv::FONT_HERSHEY_COMPLEX, 2, cv::Scalar(255, 255, 0, 0), 4);
                     }
-
-                    if(counts_guess != -1 && (gesture == "fist" || gesture == "yeah" || gesture == "five"))
+                    else if(k230_win < player_win)
                     {
-                        int k230_guess=rand()%3;
-                        if(gesture == "fist" && LIBRARY[k230_guess] == "yeah")
-                        {
-                            player_win += 1;
-                        }
-                        else if(gesture == "fist" && LIBRARY[k230_guess] == "five")
-                        {
-                            k230_win += 1;
-                        }
-                        if(gesture == "yeah" && LIBRARY[k230_guess] == "fist")
-                        {
-                            k230_win += 1;
-                        }
-                        else if(gesture == "yeah" && LIBRARY[k230_guess] == "five")
-                        {
-                            player_win += 1;
-                        }
-                        if(gesture == "five" && LIBRARY[k230_guess] == "fist")
-                        {
-                            player_win += 1;
-                        }
-                        else if(gesture == "five" && LIBRARY[k230_guess] == "yeah")
-                        {
-                            k230_win += 1;
-                        }
-
-                        if(LIBRARY[k230_guess] == "fist")
-                        {
-                            cv::Mat copy_ori_image = osd_frame(cv::Rect(20,20,shitou_width,shitou_height));
-                            image_shitou_argb.copyTo(copy_ori_image,image_shitou_argb);  
-                        }
-                        else if(LIBRARY[k230_guess] == "five")
-                        {
-                            cv::Mat copy_ori_image = osd_frame(cv::Rect(20,20,bu_width,bu_height));
-                            image_bu_argb.copyTo(copy_ori_image,image_bu_argb);  
-                        }
-                        else if(LIBRARY[k230_guess] == "yeah")
-                        {
-                            cv::Mat copy_ori_image = osd_frame(cv::Rect(20,20,jiandao_width,jiandao_height));
-                            image_jiandao_argb.copyTo(copy_ori_image,image_jiandao_argb);  
-                        }
-                        counts_guess += 1;
-
-                        std::string set_txt = std::to_string(counts_guess) + "  S E T";
-                        cv::putText(osd_frame, set_txt, cv::Point(150,300),cv::FONT_HERSHEY_COMPLEX, 2, cv::Scalar(255, 0, 150, 255), 4);
-                        osd_frame_tmp = osd_frame;
-                        set_stop_id = false;
-                        sleep_end = true;
+                        cv::putText(osd_frame, "Y O U   W I N", cv::Point(100,200),cv::FONT_HERSHEY_COMPLEX, 2, cv::Scalar(255, 255, 0, 0), 4);
                     }
                     else
                     {
-                        std::string set_txt = std::to_string(counts_guess + 1) + "  S E T";
-                        cv::putText(osd_frame, set_txt, cv::Point(150,300),cv::FONT_HERSHEY_COMPLEX, 2, cv::Scalar(255, 0, 150, 255), 4);
+                        cv::putText(osd_frame, "T I E   G A M E", cv::Point(100,200),cv::FONT_HERSHEY_COMPLEX, 2, cv::Scalar(255, 255, 0, 0), 4);
                     }
+                    counts_guess = -1;
+                    player_win = 0;
+                    k230_win = 0;
+
+                    sleep_end = true;
                 }
                 else
                 {
-                    osd_frame = osd_frame_tmp;
+                    if(set_stop_id)
+                    {
+                        if(counts_guess == -1 && (gesture == "fist" || gesture == "yeah" || gesture == "five"))
+                        {
+                            counts_guess = 0;
+                        }
+
+                        if(counts_guess != -1 && (gesture == "fist" || gesture == "yeah" || gesture == "five"))
+                        {
+                            int k230_guess=rand()%3;
+                            if(gesture == "fist" && LIBRARY[k230_guess] == "yeah")
+                            {
+                                player_win += 1;
+                            }
+                            else if(gesture == "fist" && LIBRARY[k230_guess] == "five")
+                            {
+                                k230_win += 1;
+                            }
+                            if(gesture == "yeah" && LIBRARY[k230_guess] == "fist")
+                            {
+                                k230_win += 1;
+                            }
+                            else if(gesture == "yeah" && LIBRARY[k230_guess] == "five")
+                            {
+                                player_win += 1;
+                            }
+                            if(gesture == "five" && LIBRARY[k230_guess] == "fist")
+                            {
+                                player_win += 1;
+                            }
+                            else if(gesture == "five" && LIBRARY[k230_guess] == "yeah")
+                            {
+                                k230_win += 1;
+                            }
+
+                            if(LIBRARY[k230_guess] == "fist")
+                            {
+                                cv::Mat copy_ori_image = osd_frame(cv::Rect(20,20,shitou_width,shitou_height));
+                                image_shitou_argb.copyTo(copy_ori_image,image_shitou_argb);  
+                            }
+                            else if(LIBRARY[k230_guess] == "five")
+                            {
+                                cv::Mat copy_ori_image = osd_frame(cv::Rect(20,20,bu_width,bu_height));
+                                image_bu_argb.copyTo(copy_ori_image,image_bu_argb);  
+                            }
+                            else if(LIBRARY[k230_guess] == "yeah")
+                            {
+                                cv::Mat copy_ori_image = osd_frame(cv::Rect(20,20,jiandao_width,jiandao_height));
+                                image_jiandao_argb.copyTo(copy_ori_image,image_jiandao_argb);  
+                            }
+                            counts_guess += 1;
+
+                            std::string set_txt = std::to_string(counts_guess) + "  S E T";
+                            cv::putText(osd_frame, set_txt, cv::Point(150,300),cv::FONT_HERSHEY_COMPLEX, 2, cv::Scalar(255, 0, 150, 255), 4);
+                            osd_frame_tmp = osd_frame;
+                            set_stop_id = false;
+                            sleep_end = true;
+                        }
+                        else
+                        {
+                            std::string set_txt = std::to_string(counts_guess + 1) + "  S E T";
+                            cv::putText(osd_frame, set_txt, cv::Point(150,300),cv::FONT_HERSHEY_COMPLEX, 2, cv::Scalar(255, 0, 150, 255), 4);
+                        }
+                    }
+                    else
+                    {
+                        osd_frame = osd_frame_tmp;
+                    }
                 }
             }
         }
-        cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+        #else
+        {
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+            cv::Mat osd_frame_out;//(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
+            cv::Mat osd_frame_vertical;
+            cv::Mat osd_frame_horizontal;
+
+            results.clear();
+            hd.pre_process();
+            hd.inference();
+            hd.post_process(results);
+
+            float max_area_hand = 0;
+            int max_id_hand = -1;
+            for (int i = 0; i < results.size(); ++i)
+            {
+                float area_i = (results[i].x2 - results[i].x1) * (results[i].y2 - results[i].y1);
+                if (area_i > max_area_hand)
+                {
+                    max_area_hand = area_i;
+                    max_id_hand = i;
+                }
+            }
+
+            std::string gesture = "";
+            if (max_id_hand != -1)
+            {
+                std::string text = hd.labels_[results[max_id_hand].label] + ":" + std::to_string(round(results[max_id_hand].score * 100) / 100.0);
+
+                int w = results[max_id_hand].x2 - results[max_id_hand].x1 + 1;
+                int h = results[max_id_hand].y2 - results[max_id_hand].y1 + 1;
+                
+                int rect_x = results[max_id_hand].x1/ SENSOR_WIDTH * osd_frame.cols;
+                int rect_y = results[max_id_hand].y1/ SENSOR_HEIGHT * osd_frame.rows;
+                int rect_w = (float)w / SENSOR_WIDTH * osd_frame.cols;
+                int rect_h = (float)h / SENSOR_HEIGHT  * osd_frame.rows;
+                // cv::rectangle(osd_frame, cv::Rect(rect_x, rect_y , rect_w, rect_h), cv::Scalar( 255,255, 255, 255), 2, 2, 0);
+                
+                int length = std::max(w,h)/2;
+                int cx = (results[max_id_hand].x1+results[max_id_hand].x2)/2;
+                int cy = (results[max_id_hand].y1+results[max_id_hand].y2)/2;
+                int ratio_num = 1.26*length;
+
+                int x1_1 = std::max(0,cx-ratio_num);
+                int y1_1 = std::max(0,cy-ratio_num);
+                int x2_1 = std::min(SENSOR_WIDTH-1, cx+ratio_num);
+                int y2_1 = std::min(SENSOR_HEIGHT-1, cy+ratio_num);
+                int w_1 = x2_1 - x1_1 + 1;
+                int h_1 = y2_1 - y1_1 + 1;
+                
+                struct Bbox bbox = {x:x1_1,y:y1_1,w:w_1,h:h_1};
+                hk.pre_process(bbox);
+
+                hk.inference();
+
+                hk.post_process(bbox);
+
+                std::vector<double> angle_list = hk.hand_angle();
+                gesture = hk.h_gesture(angle_list);
+
+                std::string text1 = "Gesture: " + gesture;
+            }
+
+
+            if(MODE == 0)
+            {
+                {
+                    ScopedTiming st("osd draw", atoi(argv[6]));
+
+                    if(gesture == "fist")
+                    {
+                        cv::Mat copy_ori_image = osd_frame(cv::Rect(20,20,jiandao_width,jiandao_height));
+                        image_jiandao_argb.copyTo(copy_ori_image,image_jiandao_argb); 
+                    }
+                    else if(gesture == "five")
+                    {
+                        cv::Mat copy_ori_image = osd_frame(cv::Rect(20,20,shitou_width,shitou_height));
+                        image_shitou_argb.copyTo(copy_ori_image,image_shitou_argb); 
+                    }
+                    else if(gesture == "yeah")
+                    {
+                        cv::Mat copy_ori_image = osd_frame(cv::Rect(20,20,bu_width,bu_height));
+                        image_bu_argb.copyTo(copy_ori_image,image_bu_argb);  
+                    }
+                }
+            }
+            else if (MODE == 1)
+            {
+                {
+                    ScopedTiming st("osd draw", atoi(argv[6]));
+
+                    if(gesture == "fist")
+                    {
+                        cv::Mat copy_ori_image = osd_frame(cv::Rect(20,20,bu_width,bu_height));
+                        image_bu_argb.copyTo(copy_ori_image,image_bu_argb); 
+                    }
+                    else if(gesture == "five")
+                    {
+                        cv::Mat copy_ori_image = osd_frame(cv::Rect(20,20,jiandao_width,jiandao_height));
+                        image_jiandao_argb.copyTo(copy_ori_image,image_jiandao_argb);  
+                    }
+                    else if(gesture == "yeah")
+                    {
+                        cv::Mat copy_ori_image = osd_frame(cv::Rect(20,20,shitou_width,shitou_height));
+                        image_shitou_argb.copyTo(copy_ori_image,image_shitou_argb); 
+                    }
+                }
+            }
+            else
+            {
+                if(sleep_end)
+                {
+                    usleep(2000000);
+                    sleep_end = false;
+                }
+
+                if(max_id_hand == -1)
+                {
+                    set_stop_id = true;
+                }
+
+                if(counts_guess == -1 && gesture != "fist" && gesture != "yeah" && gesture != "five")
+                {
+                    std::string start_txt = " G A M E   S T A R T ";
+                    std::string oneset_txt = std::to_string(1) + "  S E T";
+                    cv::putText(osd_frame, start_txt, cv::Point(50,200),cv::FONT_HERSHEY_COMPLEX, 2, cv::Scalar(255, 255, 0, 0), 4);
+                    cv::putText(osd_frame, oneset_txt, cv::Point(150,300),cv::FONT_HERSHEY_COMPLEX, 2, cv::Scalar(255, 0, 150, 255), 4);
+                }
+                else if(counts_guess == MODE)
+                {
+                    // osd_frame = cv::Mat(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
+                    if(k230_win > player_win)
+                    {
+                        cv::putText(osd_frame, "Y O U   L O S E", cv::Point(100,200),cv::FONT_HERSHEY_COMPLEX, 2, cv::Scalar(255, 255, 0, 0), 4);
+                    }
+                    else if(k230_win < player_win)
+                    {
+                        cv::putText(osd_frame, "Y O U   W I N", cv::Point(100,200),cv::FONT_HERSHEY_COMPLEX, 2, cv::Scalar(255, 255, 0, 0), 4);
+                    }
+                    else
+                    {
+                        cv::putText(osd_frame, "T I E   G A M E", cv::Point(100,200),cv::FONT_HERSHEY_COMPLEX, 2, cv::Scalar(255, 255, 0, 0), 4);
+                    }
+                    counts_guess = -1;
+                    player_win = 0;
+                    k230_win = 0;
+
+                    sleep_end = true;
+                }
+                else
+                {
+                    if(set_stop_id)
+                    {
+                        if(counts_guess == -1 && (gesture == "fist" || gesture == "yeah" || gesture == "five"))
+                        {
+                            counts_guess = 0;
+                        }
+
+                        if(counts_guess != -1 && (gesture == "fist" || gesture == "yeah" || gesture == "five"))
+                        {
+                            int k230_guess=rand()%3;
+                            if(gesture == "fist" && LIBRARY[k230_guess] == "yeah")
+                            {
+                                player_win += 1;
+                            }
+                            else if(gesture == "fist" && LIBRARY[k230_guess] == "five")
+                            {
+                                k230_win += 1;
+                            }
+                            if(gesture == "yeah" && LIBRARY[k230_guess] == "fist")
+                            {
+                                k230_win += 1;
+                            }
+                            else if(gesture == "yeah" && LIBRARY[k230_guess] == "five")
+                            {
+                                player_win += 1;
+                            }
+                            if(gesture == "five" && LIBRARY[k230_guess] == "fist")
+                            {
+                                player_win += 1;
+                            }
+                            else if(gesture == "five" && LIBRARY[k230_guess] == "yeah")
+                            {
+                                k230_win += 1;
+                            }
+
+                            if(LIBRARY[k230_guess] == "fist")
+                            {
+                                cv::Mat copy_ori_image = osd_frame(cv::Rect(20,20,shitou_width,shitou_height));
+                                image_shitou_argb.copyTo(copy_ori_image,image_shitou_argb);  
+                            }
+                            else if(LIBRARY[k230_guess] == "five")
+                            {
+                                cv::Mat copy_ori_image = osd_frame(cv::Rect(20,20,bu_width,bu_height));
+                                image_bu_argb.copyTo(copy_ori_image,image_bu_argb);  
+                            }
+                            else if(LIBRARY[k230_guess] == "yeah")
+                            {
+                                cv::Mat copy_ori_image = osd_frame(cv::Rect(20,20,jiandao_width,jiandao_height));
+                                image_jiandao_argb.copyTo(copy_ori_image,image_jiandao_argb);  
+                            }
+                            counts_guess += 1;
+
+                            std::string set_txt = std::to_string(counts_guess) + "  S E T";
+                            cv::putText(osd_frame, set_txt, cv::Point(150,300),cv::FONT_HERSHEY_COMPLEX, 2, cv::Scalar(255, 0, 150, 255), 4);
+                            osd_frame_tmp = osd_frame;
+                            set_stop_id = false;
+                            sleep_end = true;
+                        }
+                        else
+                        {
+                            std::string set_txt = std::to_string(counts_guess + 1) + "  S E T";
+                            cv::putText(osd_frame, set_txt, cv::Point(150,300),cv::FONT_HERSHEY_COMPLEX, 2, cv::Scalar(255, 0, 150, 255), 4);
+                        }
+                    }
+                    else
+                    {
+                        osd_frame = osd_frame_tmp;
+                    }
+                }
+            }
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+        }
+        #endif
             
         {
             ScopedTiming st("osd copy", atoi(argv[6]));

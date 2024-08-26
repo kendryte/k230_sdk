@@ -26,11 +26,11 @@
 #ifndef RT_MMCSD_STACK_SIZE
 #define RT_MMCSD_STACK_SIZE 1024
 #endif
-#ifndef RT_MMCSD_THREAD_PREORITY
+#ifndef RT_MMCSD_THREAD_PRIORITY
 #if (RT_THREAD_PRIORITY_MAX == 32)
-#define RT_MMCSD_THREAD_PREORITY  0x16
+#define RT_MMCSD_THREAD_PRIORITY  0x16
 #else
-#define RT_MMCSD_THREAD_PREORITY  0x40
+#define RT_MMCSD_THREAD_PRIORITY  0x40
 #endif
 #endif
 
@@ -38,9 +38,9 @@
 static struct rt_thread mmcsd_detect_thread;
 static rt_uint8_t mmcsd_stack[RT_MMCSD_STACK_SIZE];
 static struct rt_mailbox  mmcsd_detect_mb;
-static rt_uint32_t mmcsd_detect_mb_pool[4];
+static rt_ubase_t mmcsd_detect_mb_pool[4];
 static struct rt_mailbox mmcsd_hotpluge_mb;
-static rt_uint32_t mmcsd_hotpluge_mb_pool[4];
+static rt_ubase_t mmcsd_hotpluge_mb_pool[4];
 
 void mmcsd_host_lock(struct rt_mmcsd_host *host)
 {
@@ -767,7 +767,7 @@ int rt_mmcsd_core_init(void)
                      RT_IPC_FLAG_FIFO);
     RT_ASSERT(ret == RT_EOK);
     ret = rt_thread_init(&mmcsd_detect_thread, "mmcsd_detect", mmcsd_detect, RT_NULL,
-                         &mmcsd_stack[0], RT_MMCSD_STACK_SIZE, RT_MMCSD_THREAD_PREORITY, 20);
+                         &mmcsd_stack[0], RT_MMCSD_STACK_SIZE, RT_MMCSD_THREAD_PRIORITY, 20);
     if (ret == RT_EOK)
     {
         rt_thread_startup(&mmcsd_detect_thread);

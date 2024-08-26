@@ -1,0 +1,7 @@
+config BR2_PACKAGE_AMP_APP
+	bool "amp app"
+	help
+	  k230 amp demo for test
+
+
+

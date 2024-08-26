@@ -960,10 +960,21 @@ void video_proc_01(char *argv[])
     int puzzle_height;
     int puzzle_ori_width;
     int puzzle_ori_height;
-    puzzle_width = osd_width;
-    puzzle_height = osd_width;
-    puzzle_ori_width = osd_height-puzzle_height-5;
-    puzzle_ori_height = osd_height-puzzle_height-5;
+    #if defined(STUDIO_HDMI)
+    {
+        puzzle_width = osd_height;
+        puzzle_height = osd_height;
+        puzzle_ori_width = osd_width-puzzle_height-5;
+        puzzle_ori_height = osd_width-puzzle_height-5;
+    }
+    #else
+    {
+        puzzle_width = osd_width;
+        puzzle_height = osd_width;
+        puzzle_ori_width = osd_height-puzzle_height-5;
+        puzzle_ori_height = osd_height-puzzle_height-5;
+    }
+    #endif
 
 
     int level = atoi(argv[6]);
@@ -977,11 +988,28 @@ void video_proc_01(char *argv[])
     cv::Mat image_puzzle_argb;
     cv::Mat image_puzzle_ori;
     cv::Mat osd_frame_tmp(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-    cv::rotate(osd_frame_tmp, osd_frame_tmp, cv::ROTATE_90_COUNTERCLOCKWISE);
+    #if defined(STUDIO_HDMI)
+    {
+        osd_frame_tmp = osd_frame_tmp;
+    }
+    #else
+    {
+        cv::rotate(osd_frame_tmp, osd_frame_tmp, cv::ROTATE_90_COUNTERCLOCKWISE);
+    }
+    #endif
 
     int exact_division_x = 0;
     int exact_division_y = 0;
-    int distance_tow_points = osd_width;
+    int distance_tow_points;
+    #if defined(STUDIO_HDMI)
+    {
+        distance_tow_points = osd_height;
+    }
+    #else
+    {
+        distance_tow_points = osd_width;
+    }
+    #endif
     int distance_thred = every_block_width*0.3;
     cv::Rect move_rect;
     cv::Mat move_mat;
@@ -1094,107 +1122,213 @@ void video_proc_01(char *argv[])
         hd.post_process(results);
 
         cv::Mat osd_frame(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-        cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
 
-        float max_area_hand = 0;
-        int max_id_hand = -1;
-        for (int i = 0; i < results.size(); ++i)
+        #if defined(STUDIO_HDMI)
         {
-            float area_i = (results[i].x2 - results[i].x1) * (results[i].y2 - results[i].y1);
-            if (area_i > max_area_hand)
+            float max_area_hand = 0;
+            int max_id_hand = -1;
+            for (int i = 0; i < results.size(); ++i)
             {
-                max_area_hand = area_i;
-                max_id_hand = i;
+                float area_i = (results[i].x2 - results[i].x1) * (results[i].y2 - results[i].y1);
+                if (area_i > max_area_hand)
+                {
+                    max_area_hand = area_i;
+                    max_id_hand = i;
+                }
             }
-        }
 
-        if (max_id_hand != -1)
-        {
-            std::string text = hd.labels_[results[max_id_hand].label] + ":" + std::to_string(round(results[max_id_hand].score * 100) / 100.0);
-
-            int w = results[max_id_hand].x2 - results[max_id_hand].x1 + 1;
-            int h = results[max_id_hand].y2 - results[max_id_hand].y1 + 1;
-            
-            int length = std::max(w,h)/2;
-            int cx = (results[max_id_hand].x1+results[max_id_hand].x2)/2;
-            int cy = (results[max_id_hand].y1+results[max_id_hand].y2)/2;
-            int ratio_num = 1.26*length;
-
-            int x1_1 = std::max(0,cx-ratio_num);
-            int y1_1 = std::max(0,cy-ratio_num);
-            int x2_1 = std::min(SENSOR_WIDTH-1, cx+ratio_num);
-            int y2_1 = std::min(SENSOR_HEIGHT-1, cy+ratio_num);
-            int w_1 = x2_1 - x1_1 + 1;
-            int h_1 = y2_1 - y1_1 + 1;
-            
-            struct Bbox bbox = {x:x1_1,y:y1_1,w:w_1,h:h_1};
-            hk.pre_process(bbox);
-
-            hk.inference();
-
+            if (max_id_hand != -1)
             {
-                ScopedTiming st("osd draw", atoi(argv[7]));
-                hk.draw_keypoints(osd_frame, text, bbox, false, two_point);
+                std::string text = hd.labels_[results[max_id_hand].label] + ":" + std::to_string(round(results[max_id_hand].score * 100) / 100.0);
+
+                int w = results[max_id_hand].x2 - results[max_id_hand].x1 + 1;
+                int h = results[max_id_hand].y2 - results[max_id_hand].y1 + 1;
+                
+                int length = std::max(w,h)/2;
+                int cx = (results[max_id_hand].x1+results[max_id_hand].x2)/2;
+                int cy = (results[max_id_hand].y1+results[max_id_hand].y2)/2;
+                int ratio_num = 1.26*length;
+
+                int x1_1 = std::max(0,cx-ratio_num);
+                int y1_1 = std::max(0,cy-ratio_num);
+                int x2_1 = std::min(SENSOR_WIDTH-1, cx+ratio_num);
+                int y2_1 = std::min(SENSOR_HEIGHT-1, cy+ratio_num);
+                int w_1 = x2_1 - x1_1 + 1;
+                int h_1 = y2_1 - y1_1 + 1;
+                
+                struct Bbox bbox = {x:x1_1,y:y1_1,w:w_1,h:h_1};
+                hk.pre_process(bbox);
+
+                hk.inference();
+
+                {
+                    ScopedTiming st("osd draw", atoi(argv[7]));
+                    hk.draw_keypoints(osd_frame, text, bbox, false, two_point);
+                }
             }
-        }
 
-        if(max_id_hand != -1 && two_point[1] <= SENSOR_WIDTH)
-        {
-            distance_tow_points = std::sqrt(std::pow((two_point[0] - two_point[2]),2) + std::pow((two_point[1] - two_point[3]),2))* 1.0 / SENSOR_WIDTH * osd_frame.cols;
-            exact_division_x = (two_point[0] * 1.0 / SENSOR_WIDTH * osd_frame.cols)/every_block_width;
-            exact_division_y = (two_point[1] * 1.0 / SENSOR_HEIGHT * osd_frame.rows)/every_block_height;
-            if(distance_tow_points < distance_thred && exact_division_x >= 0 && exact_division_x < level && exact_division_y >= 0 && exact_division_y < level)
-            {   
-                if(std::abs(blank_x - exact_division_x) == 1 && std::abs(blank_y - exact_division_y) == 0)
-                {
-                    move_rect = cv::Rect(exact_division_x*every_block_width,exact_division_y*every_block_height,every_block_width,every_block_height);
-                    move_mat = osd_frame_tmp(move_rect);
+            if(max_id_hand != -1 && two_point[1] <= SENSOR_WIDTH)
+            {
+                distance_tow_points = std::sqrt(std::pow((two_point[0] - two_point[2]),2) + std::pow((two_point[1] - two_point[3]),2))* 1.0 / SENSOR_WIDTH * osd_frame.cols;
+                exact_division_x = (two_point[0] * 1.0 / SENSOR_WIDTH * osd_frame.cols)/every_block_width;
+                exact_division_y = (two_point[1] * 1.0 / SENSOR_HEIGHT * osd_frame.rows)/every_block_height;
+                if(distance_tow_points < distance_thred && exact_division_x >= 0 && exact_division_x < level && exact_division_y >= 0 && exact_division_y < level)
+                {   
+                    if(std::abs(blank_x - exact_division_x) == 1 && std::abs(blank_y - exact_division_y) == 0)
+                    {
+                        move_rect = cv::Rect(exact_division_x*every_block_width,exact_division_y*every_block_height,every_block_width,every_block_height);
+                        move_mat = osd_frame_tmp(move_rect);
 
-                    copy_blank = osd_frame_tmp(cv::Rect(exact_division_x*every_block_width,exact_division_y*every_block_height,every_block_width,every_block_height));
-                    copy_move = osd_frame_tmp(cv::Rect(blank_x*every_block_width,blank_y*every_block_height,every_block_width,every_block_height));
-                    move_mat.copyTo(copy_move);
-                    blank_block.copyTo(copy_blank);
+                        copy_blank = osd_frame_tmp(cv::Rect(exact_division_x*every_block_width,exact_division_y*every_block_height,every_block_width,every_block_height));
+                        copy_move = osd_frame_tmp(cv::Rect(blank_x*every_block_width,blank_y*every_block_height,every_block_width,every_block_height));
+                        move_mat.copyTo(copy_move);
+                        blank_block.copyTo(copy_blank);
 
-                    blank_x = exact_division_x;
+                        blank_x = exact_division_x;
+                    }
+                    else if (std::abs(blank_y - exact_division_y) == 1 && std::abs(blank_x - exact_division_x) == 0)
+                    {
+                        move_rect = cv::Rect(exact_division_x*every_block_width,exact_division_y*every_block_height,every_block_width,every_block_height);
+                        move_mat = osd_frame_tmp(move_rect);
+
+                        copy_blank = osd_frame_tmp(cv::Rect(exact_division_x*every_block_width,exact_division_y*every_block_height,every_block_width,every_block_height));
+                        copy_move = osd_frame_tmp(cv::Rect(blank_x*every_block_width,blank_y*every_block_height,every_block_width,every_block_height));
+                        move_mat.copyTo(copy_move);
+                        blank_block.copyTo(copy_blank);
+
+                        blank_y = exact_division_y;
+                    }
+
+                    osd_frame = osd_frame_tmp.clone();
+                    if(two_point.size() > 0)
+                    {
+                        int x1 = two_point[0] * 1.0 / SENSOR_WIDTH * osd_frame.cols;
+                        int y1 = two_point[1] * 1.0 / SENSOR_HEIGHT * osd_frame.rows;
+                        cv::circle(osd_frame, cv::Point(x1, y1), 10, cv::Scalar(255, 0, 255, 255), 10);
+                    }
                 }
-                else if (std::abs(blank_y - exact_division_y) == 1 && std::abs(blank_x - exact_division_x) == 0)
+                else
                 {
-                    move_rect = cv::Rect(exact_division_x*every_block_width,exact_division_y*every_block_height,every_block_width,every_block_height);
-                    move_mat = osd_frame_tmp(move_rect);
-
-                    copy_blank = osd_frame_tmp(cv::Rect(exact_division_x*every_block_width,exact_division_y*every_block_height,every_block_width,every_block_height));
-                    copy_move = osd_frame_tmp(cv::Rect(blank_x*every_block_width,blank_y*every_block_height,every_block_width,every_block_height));
-                    move_mat.copyTo(copy_move);
-                    blank_block.copyTo(copy_blank);
-
-                    blank_y = exact_division_y;
+                    osd_frame = osd_frame_tmp.clone();
+                    if(two_point.size() > 0)
+                    {
+                        int x1 = two_point[0] * 1.0 / SENSOR_WIDTH * osd_frame.cols;
+                        int y1 = two_point[1] * 1.0 / SENSOR_HEIGHT * osd_frame.rows;
+                        cv::circle(osd_frame, cv::Point(x1, y1), 10, cv::Scalar(255, 255, 255, 0), 10);
+                    }
                 }
-
-                osd_frame = osd_frame_tmp.clone();
-                if(two_point.size() > 0)
-                {
-                    int x1 = two_point[0] * 1.0 / SENSOR_WIDTH * osd_frame.cols;
-                    int y1 = two_point[1] * 1.0 / SENSOR_HEIGHT * osd_frame.rows;
-                    cv::circle(osd_frame, cv::Point(x1, y1), 10, cv::Scalar(255, 0, 255, 255), 10);
-                }
+                sync();
             }
             else
             {
                 osd_frame = osd_frame_tmp.clone();
-                if(two_point.size() > 0)
+            }
+        }
+        #else
+        {
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+
+            float max_area_hand = 0;
+            int max_id_hand = -1;
+            for (int i = 0; i < results.size(); ++i)
+            {
+                float area_i = (results[i].x2 - results[i].x1) * (results[i].y2 - results[i].y1);
+                if (area_i > max_area_hand)
                 {
-                    int x1 = two_point[0] * 1.0 / SENSOR_WIDTH * osd_frame.cols;
-                    int y1 = two_point[1] * 1.0 / SENSOR_HEIGHT * osd_frame.rows;
-                    cv::circle(osd_frame, cv::Point(x1, y1), 10, cv::Scalar(255, 255, 255, 0), 10);
+                    max_area_hand = area_i;
+                    max_id_hand = i;
                 }
             }
-            sync();
+
+            if (max_id_hand != -1)
+            {
+                std::string text = hd.labels_[results[max_id_hand].label] + ":" + std::to_string(round(results[max_id_hand].score * 100) / 100.0);
+
+                int w = results[max_id_hand].x2 - results[max_id_hand].x1 + 1;
+                int h = results[max_id_hand].y2 - results[max_id_hand].y1 + 1;
+                
+                int length = std::max(w,h)/2;
+                int cx = (results[max_id_hand].x1+results[max_id_hand].x2)/2;
+                int cy = (results[max_id_hand].y1+results[max_id_hand].y2)/2;
+                int ratio_num = 1.26*length;
+
+                int x1_1 = std::max(0,cx-ratio_num);
+                int y1_1 = std::max(0,cy-ratio_num);
+                int x2_1 = std::min(SENSOR_WIDTH-1, cx+ratio_num);
+                int y2_1 = std::min(SENSOR_HEIGHT-1, cy+ratio_num);
+                int w_1 = x2_1 - x1_1 + 1;
+                int h_1 = y2_1 - y1_1 + 1;
+                
+                struct Bbox bbox = {x:x1_1,y:y1_1,w:w_1,h:h_1};
+                hk.pre_process(bbox);
+
+                hk.inference();
+
+                {
+                    ScopedTiming st("osd draw", atoi(argv[7]));
+                    hk.draw_keypoints(osd_frame, text, bbox, false, two_point);
+                }
+            }
+
+            if(max_id_hand != -1 && two_point[1] <= SENSOR_WIDTH)
+            {
+                distance_tow_points = std::sqrt(std::pow((two_point[0] - two_point[2]),2) + std::pow((two_point[1] - two_point[3]),2))* 1.0 / SENSOR_WIDTH * osd_frame.cols;
+                exact_division_x = (two_point[0] * 1.0 / SENSOR_WIDTH * osd_frame.cols)/every_block_width;
+                exact_division_y = (two_point[1] * 1.0 / SENSOR_HEIGHT * osd_frame.rows)/every_block_height;
+                if(distance_tow_points < distance_thred && exact_division_x >= 0 && exact_division_x < level && exact_division_y >= 0 && exact_division_y < level)
+                {   
+                    if(std::abs(blank_x - exact_division_x) == 1 && std::abs(blank_y - exact_division_y) == 0)
+                    {
+                        move_rect = cv::Rect(exact_division_x*every_block_width,exact_division_y*every_block_height,every_block_width,every_block_height);
+                        move_mat = osd_frame_tmp(move_rect);
+
+                        copy_blank = osd_frame_tmp(cv::Rect(exact_division_x*every_block_width,exact_division_y*every_block_height,every_block_width,every_block_height));
+                        copy_move = osd_frame_tmp(cv::Rect(blank_x*every_block_width,blank_y*every_block_height,every_block_width,every_block_height));
+                        move_mat.copyTo(copy_move);
+                        blank_block.copyTo(copy_blank);
+
+                        blank_x = exact_division_x;
+                    }
+                    else if (std::abs(blank_y - exact_division_y) == 1 && std::abs(blank_x - exact_division_x) == 0)
+                    {
+                        move_rect = cv::Rect(exact_division_x*every_block_width,exact_division_y*every_block_height,every_block_width,every_block_height);
+                        move_mat = osd_frame_tmp(move_rect);
+
+                        copy_blank = osd_frame_tmp(cv::Rect(exact_division_x*every_block_width,exact_division_y*every_block_height,every_block_width,every_block_height));
+                        copy_move = osd_frame_tmp(cv::Rect(blank_x*every_block_width,blank_y*every_block_height,every_block_width,every_block_height));
+                        move_mat.copyTo(copy_move);
+                        blank_block.copyTo(copy_blank);
+
+                        blank_y = exact_division_y;
+                    }
+
+                    osd_frame = osd_frame_tmp.clone();
+                    if(two_point.size() > 0)
+                    {
+                        int x1 = two_point[0] * 1.0 / SENSOR_WIDTH * osd_frame.cols;
+                        int y1 = two_point[1] * 1.0 / SENSOR_HEIGHT * osd_frame.rows;
+                        cv::circle(osd_frame, cv::Point(x1, y1), 10, cv::Scalar(255, 0, 255, 255), 10);
+                    }
+                }
+                else
+                {
+                    osd_frame = osd_frame_tmp.clone();
+                    if(two_point.size() > 0)
+                    {
+                        int x1 = two_point[0] * 1.0 / SENSOR_WIDTH * osd_frame.cols;
+                        int y1 = two_point[1] * 1.0 / SENSOR_HEIGHT * osd_frame.rows;
+                        cv::circle(osd_frame, cv::Point(x1, y1), 10, cv::Scalar(255, 255, 255, 0), 10);
+                    }
+                }
+                sync();
+            }
+            else
+            {
+                osd_frame = osd_frame_tmp.clone();
+            }
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
         }
-        else
-        {
-            osd_frame = osd_frame_tmp.clone();
-        }
-        cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+        #endif
 
         {
             ScopedTiming st("osd copy", atoi(argv[7]));

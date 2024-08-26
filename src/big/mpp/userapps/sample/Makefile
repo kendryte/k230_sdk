@@ -46,6 +46,9 @@ all:
 	@cd sample_canaan_uart_rx; make || exit 1
 	@cd sample_canaan_uart_tx; make || exit 1
 	#@cd opencv_camera_test; make || exit 1
+	@cd sample_sensor_otp; make || exit 1
+	@cd sample_eeprom; make || exit 1
+	@$(MAKE) -C sample_i2c_slave
 clean:
 	@cd sample_audio; make clean
 	@cd sample_dma; make clean
@@ -86,6 +89,7 @@ clean:
 	@cd sample_fft; make clean
 	@cd sample_canaan_uart_rx; make clean
 	@cd sample_canaan_uart_tx; make clean
-
-
+	@cd sample_sensor_otp; make clean
+	@cd sample_eeprom; make clean
+	@$(MAKE) -C sample_i2c_slave clean
 

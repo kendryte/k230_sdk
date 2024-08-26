@@ -40,10 +40,8 @@
 
 static struct rt_device g_aes_device = {0};
 static void *sec_base_addr = RT_NULL;
-static int aes_hardlock;
-rt_uint8_t pufs_buffer[BUFFER_SIZE];
-pufs_ka_slot_t g_keyslot;
-struct aes_context aes_ctx = { .op = GCM_AVAILABLE_OP };
+static rt_uint8_t pufs_buffer[BUFFER_SIZE];
+static struct aes_context aes_ctx = { .op = GCM_AVAILABLE_OP, .busy = RT_FALSE };
 
 //----------------------BASE FUNCTION ----------------------------------------//
 #ifdef aes_debug
@@ -322,9 +320,8 @@ static void dma_write_rwcfg(const rt_uint8_t *out, const rt_uint8_t *in, rt_uint
         writel((uintptr_t)out, sec_base_addr + DMA_DSC_CFG_1_OFFSET);
     else
     {
-        rt_hw_cpu_dcache_clean_flush(out_kvirt, len);
+        rt_hw_cpu_dcache_clean(out_kvirt, len);
         out_pa = virt_to_phys((void*)out_kvirt);
-        rt_hw_cpu_dcache_clean_flush((void *)out_pa, len);
         writel(out_pa, sec_base_addr + DMA_DSC_CFG_1_OFFSET);
     }
 
@@ -332,11 +329,10 @@ static void dma_write_rwcfg(const rt_uint8_t *out, const rt_uint8_t *in, rt_uint
         writel((uintptr_t)in, sec_base_addr + DMA_DSC_CFG_0_OFFSET);
     else    // virtual to physical
     {
-        rt_memcpy(in_kvirt, (void *)in, len);
-
-        rt_hw_cpu_dcache_clean_flush(in_kvirt, len);
+        if (0 == lwp_get_from_user(in_kvirt, in, len))
+            rt_memcpy(in_kvirt, in, len);
+        rt_hw_cpu_dcache_clean(in_kvirt, len);
         in_pa = virt_to_phys(in_kvirt);
-        rt_hw_cpu_dcache_clean_flush((void *)in_pa, len);
         writel(in_pa, sec_base_addr + DMA_DSC_CFG_0_OFFSET);
     }
 }
@@ -480,7 +476,7 @@ static int get_key_slot_idx(pufs_key_type_t keytype, rt_uint32_t keyslot)
         case SWKEY:
             return 0;
         case OTPKEY:
-            // TODO
+            return (keyslot - OTPKEY_0);
         case PUFKEY:
             // TODO
         case SSKEY:
@@ -678,7 +674,7 @@ static pufs_status_t _ctx_update(struct aes_context* aes_ctx,
                                 rt_bool_t last)
 {
     rt_uint32_t val32;
-    pufs_status_t check;
+    pufs_status_t check = SUCCESS;
     // Register manipulation
     if (dma_check_busy_status(RT_NULL))
         return E_BUSY;
@@ -690,47 +686,50 @@ static pufs_status_t _ctx_update(struct aes_context* aes_ctx,
     dma_write_data_block_config(aes_ctx->start ? RT_FALSE : RT_TRUE, last, RT_TRUE, RT_TRUE, 0);
 
     void *in_kvirt, *out_kvirt;
-    in_kvirt = rt_malloc(inlen);
-    out_kvirt = rt_malloc(inlen);
-    if(!in_kvirt || !out_kvirt)
-    {
+    in_kvirt = rt_malloc_align(inlen, 64);
+    out_kvirt = rt_malloc_align(inlen, 64);
+    if (!in_kvirt || !out_kvirt) {
         rt_kprintf("%s malloc fail!\n", __func__);
-        check = -E_ERROR;
-        return check;
+        check = E_ERROR;
+        goto error;
     }
     dma_write_rwcfg(out, in, inlen, in_kvirt, out_kvirt);
-  
+
     if ((check = gcm_prepare(aes_ctx, out, inlen)) != SUCCESS)
-        return check;
+        goto error;
 
     dma_write_start();
     while (dma_check_busy_status(&val32));
  
-    if (val32 != 0)
-    {
+    if (val32 != 0) {
         rt_kprintf("[ERROR] DMA status 0: 0x%08x\n", val32);
-        return E_ERROR;
+        check = E_ERROR;
+        goto error;
     }
 
     val32 = readl(sec_base_addr + GCM_STAT_OFFSET);
-    if ((val32 & GCM_STATUS_RESP_MASK) != 0)
-    {
+    if ((val32 & GCM_STATUS_RESP_MASK) != 0) {
         rt_kprintf("[ERROR] GCM status 0: 0x%08x\n", val32);
-        return E_ERROR;
+        check = E_ERROR;
+        goto error;
     }
 
     if ((check = gcm_postproc(aes_ctx)) != SUCCESS)
-        return check;
+        goto error;
 
-    if (out != RT_NULL) // output
-    {
+    if (out != RT_NULL) {
         *outlen = inlen;
-        rt_memcpy(out, out_kvirt, inlen);
+        rt_hw_cpu_dcache_invalidate(out_kvirt, inlen);
+        if (0 == lwp_put_to_user(out, out_kvirt, inlen))
+            rt_memcpy(out, out_kvirt, inlen);
     }
-    rt_free(in_kvirt);
-    rt_free(out_kvirt);
+error:
+    if (in_kvirt)
+        rt_free_align(in_kvirt);
+    if (out_kvirt)
+        rt_free_align(out_kvirt);
 
-    return SUCCESS;
+    return check;
 }
 
 static pufs_status_t gcm_tag(struct aes_context *aes_ctx, rt_uint8_t *tag, rt_uint32_t taglen, rt_bool_t from_reg)
@@ -894,32 +893,6 @@ static pufs_status_t ctx_init(gcm_op op,
                                 rt_uint32_t keybits,
                                 const rt_uint8_t* j0)
 {
-    rt_uint32_t val32;
-    pufs_status_t check;
-
-    // abort if aes_ctx is occupied
-    if (aes_ctx->op != GCM_AVAILABLE_OP)
-        return E_BUSY;
-
-    // check if op is valid
-    switch (op)
-    {
-        case GCM_GHASH_OP:
-        case AES_GCM_OP:
-        case GCM_GMAC_OP:
-            break;
-        default:
-            return E_INVALID;
-    }
-
-    // check keytype
-    if ((keytype == PUFKEY) || (keytype == SHARESEC))
-        return E_DENY;
-
-    // check key settings for block cipher
-    if ((keytype != SWKEY) && ((check = keyslot_check(RT_TRUE, keytype, (rt_uint32_t)keyaddr, keybits)) != SUCCESS))
-        return check;
-
     // check and set J_0 if needed
     if (op != GCM_GHASH_OP)
     {
@@ -1072,21 +1045,6 @@ static pufs_status_t build_j0(rt_uint8_t* j0,
 #endif
 }
 
-static pufs_status_t pufs_dec_gcm_final(struct aes_context *aes_ctx,
-                                        rt_uint8_t *out,
-                                        rt_uint32_t *outlen,
-                                        const rt_uint8_t *tag,
-                                        rt_uint32_t taglen)
-{
-    rt_uint8_t newtag[AES_BLOCK_SIZE];
-    pufs_status_t check;
-
-    if ((check = pufs_gcm_final(AES_GCM_OP, aes_ctx, RT_FALSE, out, outlen, newtag, taglen, RT_FALSE)) != SUCCESS)
-        return check;
-
-    return ((rt_memcmp(tag, newtag, taglen) == 0) ? SUCCESS : E_VERFAIL);
-}
-
 static pufs_status_t pufs_gcm_update(struct aes_context *aes_ctx,
                                     rt_uint8_t *out,
                                     rt_uint32_t *outlen,
@@ -1118,251 +1076,145 @@ static pufs_status_t pufs_gcm_init(struct aes_context *aes_ctx,
     return ctx_init(AES_GCM_OP, aes_ctx, encrypt, cipher, keytype, keyaddr, keybits, j0);
 }
 
-//----------------------ENCRYPT FUNCTION----------------------------------------//
-static pufs_status_t pufs_enc_gcm(rt_uint8_t* out,
-                            rt_uint32_t* outlen,
-                            const rt_uint8_t* in,
-                            rt_uint32_t inlen,
-                            pufs_cipher_t cipher,
-                            pufs_key_type_t keytype,
-                            rt_size_t keyaddr,
-                            rt_uint32_t keybits,
-                            const rt_uint8_t* iv,
-                            rt_uint32_t ivlen,
-                            const rt_uint8_t* aad,
-                            rt_uint32_t aadlen,
-                            rt_uint8_t* tag,
-                            rt_uint32_t taglen)
+static int aes_deinit(void)
 {
-    pufs_status_t check;
-    rt_uint32_t toutlen;
-    *outlen = 0;
+    if (aes_ctx.busy == RT_FALSE)
+        return 0;
 
-    // Call I-U-F model
-    if ((check = pufs_gcm_init(&aes_ctx, cipher, keytype, keyaddr, keybits, iv, ivlen, RT_TRUE)) != SUCCESS)
-        return check;
+    if (aes_ctx.keytype == SSKEY)
+        pufs_clear_key(SSKEY, aes_ctx.keyslot, aes_ctx.keylen << 3);
 
-    if ((check = pufs_gcm_update(&aes_ctx, RT_NULL, RT_NULL, aad, aadlen, RT_TRUE)) != SUCCESS)
-        return check;
-
-    if ((check = pufs_gcm_update(&aes_ctx, out, &toutlen, in, inlen, RT_TRUE)) != SUCCESS)
-        return check;
-    *outlen += toutlen;
-
-    if ((check = pufs_gcm_final(AES_GCM_OP, &aes_ctx, RT_TRUE, out + *outlen, &toutlen, tag, taglen, RT_TRUE)) != SUCCESS)
-        return check;
-    *outlen += toutlen;
-
-    return check;
+    aes_ctx.busy = RT_FALSE;
+    kd_hardlock_unlock(HARDLOCK_AES);
+    return 0;
 }
 
-//----------------------DECRYPT FUNCTION----------------------------------------//
-static pufs_status_t pufs_dec_gcm(rt_uint8_t* out,
-                            rt_uint32_t* outlen,
-                            const rt_uint8_t* in,
-                            rt_uint32_t inlen,
-                            pufs_cipher_t cipher,
-                            pufs_key_type_t keytype,
-                            rt_size_t keyaddr,
-                            rt_uint32_t keybits,
-                            const rt_uint8_t* iv,
-                            int ivlen,
-                            const rt_uint8_t* aad,
-                            int aadlen,
-                            const rt_uint8_t* tag,
-                            int taglen)
+static int aes_init(union rt_aes_control_args* ctl)
 {
+    int ret;
     pufs_status_t check;
-    rt_uint32_t toutlen;
-    rt_uint8_t newtag[AES_BLOCK_SIZE];
+    uint32_t keytype = ctl->init.keytype;
+    uint32_t keyaddr = ctl->init.keyslot;
+    uint32_t keybits = ctl->init.keylen << 3;
+    uint32_t ivlen = ctl->init.ivlen;
+    uint32_t encrypt = ctl->init.encrypt ? 1 : 0;
+    uint8_t iv[16];
 
-    *outlen = 0;
-
-    // Call I-U-F model
-    if ((check = pufs_gcm_init(&aes_ctx, cipher, keytype, keyaddr, keybits, iv, ivlen, RT_FALSE)) != SUCCESS)
-        return check;
-
-    if ((check = pufs_gcm_update(&aes_ctx, RT_NULL, RT_NULL, aad, aadlen, RT_FALSE)) != SUCCESS)
-        return check;
-
-    if ((check = pufs_gcm_update(&aes_ctx, out, &toutlen, in, inlen, RT_FALSE)) != SUCCESS)
-        return check;
-    *outlen += toutlen;
-
-    if ((check = pufs_gcm_final(AES_GCM_OP, &aes_ctx, RT_FALSE, out + *outlen, &toutlen, newtag, taglen, RT_FALSE)) != SUCCESS)
-        return check;
-    *outlen += toutlen;
-
-    return ((rt_memcmp(tag, newtag, taglen) == 0) ? SUCCESS : E_VERFAIL);
-}
-
-static rt_err_t aes_control(rt_device_t dev, int cmd, void *args)
-{
-    struct rt_aes_config_args *config_args = (struct rt_aes_config_args *)args;
-    void *_aad, *_iv, *_key, *_in, *_out, *_tag;
-    rt_uint32_t _aadlen, _ivlen, _keybits, _keylen, _inlen, _outlen, _taglen;
-    void *total;
-    pufs_status_t check;
-    rt_err_t ret = RT_EOK;
-
-    RT_ASSERT(dev != RT_NULL);
-
-    _ivlen = config_args->ivlen;
-    _keybits = config_args->keybits;
-    _inlen = config_args->pclen;
-    _outlen = config_args->pclen;
-    _aadlen = config_args->aadlen;
-    _taglen = AES_BLOCK_SIZE;
-    _keylen = _keybits >> 3;
-
-    // allocate one big address space, the space structure is:" key + iv + aad + pt/ct + tag + ct/pt "
-    total = rt_malloc(_keylen + _ivlen + _aadlen + _inlen + _outlen + _taglen + 16);
-    if(!total)
-        return -RT_ENOMEM;
-
-    _key = total;
-    _iv = _key + _keylen;
-    _aad = _iv + _ivlen;
-    _in = _aad + _aadlen;
-    if(_aadlen == 0)
-        _in = _in + 1;
-    _tag = _in + _inlen;
-    if(_inlen == 0)
-        _tag = _tag + 1;
-    _out = _tag + _taglen;
-
-    lwp_get_from_user(_key, config_args->key, _keylen);
-    lwp_get_from_user(_iv, config_args->iv, _ivlen);
-    lwp_get_from_user(_aad, config_args->in, _aadlen);
-    lwp_get_from_user(_in, (config_args->in + _aadlen), _inlen);
-
-    // rt_kprintf("keybits = %d, ivlen = %d, inlen = %d, outlen = %d, aadlen = %d, taglen = %d\n", _keybits, _ivlen, _inlen, _outlen, _aadlen, _taglen);
-
-    switch(cmd)
-    {
-        case RT_AES_GCM_ENC:
-        {
-            // debug
-            debug_func("key", _key, _keylen);
-            debug_func("iv", _iv, _ivlen);
-            debug_func("aad", _aad, _aadlen);
-            debug_func("in", _in, _inlen);
-
-            // initial outbuf
-            rt_memset(_out, 0, _outlen);
-
-            // input key to hardware
-            g_keyslot = (_keybits > 128) ? SK256_0 : SK128_0;
-            // add hardlock
-            while(0 != kd_hardlock_lock(aes_hardlock));
-            if((check = pufs_import_plaintext_key(SSKEY, g_keyslot, (const rt_uint8_t *)_key, _keybits)) != SUCCESS) {
-                ret = -RT_ERROR;
-                goto release_lock;
-            }
-
-            // do encrypt
-            if((check = pufs_enc_gcm((rt_uint8_t *)_out, &_outlen,
-                                    (const rt_uint8_t *)_in, _inlen,
-                                    AES, SSKEY,
-                                    g_keyslot, _keybits,
-                                    (const rt_uint8_t *)_iv, _ivlen,
-                                    (const rt_uint8_t *)_aad, _aadlen,
-                                    (rt_uint8_t *)_tag, _taglen)) != SUCCESS)
-            {
-                ret = -RT_ERROR;
-                goto release_lock;
-            }
-            
-            // clear key from hardware
-            if((check = pufs_clear_key(SSKEY, g_keyslot, _keybits) != SUCCESS))
-            {
-                ret = -RT_ERROR;
-                goto release_lock;
-            }
-            kd_hardlock_unlock(aes_hardlock);
-
-            // debug
-            debug_func("out", _out, _outlen);
-            
-            // output result
-            config_args->outlen = _aadlen + _outlen + _taglen;
-            config_args->taglen = _taglen;
-            lwp_put_to_user(config_args->out, _aad, _aadlen);
-            lwp_put_to_user((config_args->out + _aadlen), _out, _outlen);
-            lwp_put_to_user((config_args->out + _aadlen + _outlen), _tag, _taglen);
-
-            rt_free(total);
-            break;
-        }
-        case RT_AES_GCM_DEC:
-        {
-            lwp_get_from_user(_tag, (config_args->in + _aadlen + _inlen), _taglen);
-            rt_memset(_out, 0, _outlen);
-
-            // debug
-            debug_func("key", _key, _keylen);
-            debug_func("iv", _iv, _ivlen);
-            debug_func("aad", _aad, _aadlen);
-            debug_func("in", _in, _inlen);
-            debug_func("tag", _tag, _taglen);
-
-            // input key to hardware
-            g_keyslot = (_keybits > 128) ? SK256_0 : SK128_0;
-            // add hardlock
-            while(0 != kd_hardlock_lock(aes_hardlock));
-            if((check = pufs_import_plaintext_key(SSKEY, g_keyslot, (const rt_uint8_t *)_key, _keybits)) != SUCCESS) {
-                ret = -RT_ERROR;
-                goto release_lock;
-            }
-
-            // do decrypt
-            if((check = pufs_dec_gcm((rt_uint8_t*)_out, &_outlen,
-                                    (const rt_uint8_t *)_in, _inlen,
-                                    AES, SSKEY,
-                                    g_keyslot, _keybits,
-                                    (const rt_uint8_t *)_iv, _ivlen,
-                                    (const rt_uint8_t *)_aad, _aadlen,
-                                    (const rt_uint8_t *)_tag, _taglen)) != SUCCESS)
-            {
-                ret = -RT_ERROR;
-                goto release_lock;
-            }
-
-            // clear key from hardware
-            if((check = pufs_clear_key(SSKEY, g_keyslot, _keybits) != SUCCESS))
-            {
-                ret = -RT_ERROR;
-                goto release_lock;
-            }
-            kd_hardlock_unlock(aes_hardlock);
-
-            // debug
-            debug_func("out", _out, _outlen);
-
-            // output result
-            config_args->outlen = _aadlen + _outlen;
-            config_args->taglen = 0;
-            lwp_put_to_user(config_args->out, _aad, _aadlen);
-            lwp_put_to_user((config_args->out + _aadlen), _out, _outlen);
-
-            rt_free(total);
-            break;
-        }
-
-        default:
-            return -RT_EINVAL;
+    if (aes_ctx.busy == RT_FALSE) {
+        if (0 != kd_hardlock_lock(HARDLOCK_AES))
+            return -EBUSY;
+        aes_ctx.busy = RT_TRUE;
     }
 
-    if(ret != RT_EOK)
-        goto release_lock;
+    if (keytype == SSKEY) {
+        uint8_t key[64];
+        if (keybits > 512) {
+            ret = -EINVAL;
+            goto error;
+        }
+        keyaddr = keybits > 256 ? SK512_0 : keybits > 128 ? SK256_0
+                                                          : SK128_0;
+        lwp_get_from_user(key, ctl->init.key, keybits >> 3);
+        check = pufs_import_plaintext_key(SSKEY, keyaddr, key, keybits);
+        if (check != SUCCESS) {
+            ret = -check;
+            goto error;
+        }
+        aes_ctx.keytype = SSKEY;
+        aes_ctx.keyslot = keyaddr;
+        aes_ctx.keylen = keybits >> 3;
+    }
 
-ret_aes:
+    if (ivlen > 16) {
+        ret = -EINVAL;
+        goto error;
+    }
+    lwp_get_from_user(iv, ctl->init.iv, ivlen);
+    check = pufs_gcm_init(&aes_ctx, AES, keytype, keyaddr, keybits, iv, ivlen, encrypt);
+    if (check != SUCCESS) {
+        ret = -check;
+        goto error;
+    }
+    return 0;
+error:
+    aes_deinit();
+    return ret;
+}
+
+static int aes_update(union rt_aes_control_args* ctl)
+{
+    pufs_status_t check;
+    uint32_t outlen;
+
+    if (aes_ctx.busy == RT_FALSE)
+        return -EPERM;
+
+    check = pufs_gcm_update(&aes_ctx, ctl->update.out, &outlen, ctl->update.in, ctl->update.inlen, aes_ctx.encrypt);
+    if (check == SUCCESS) {
+        lwp_put_to_user(ctl->update.outlen, &outlen, sizeof(*(ctl->update.outlen)));
+        return 0;
+    }
+
+    aes_deinit();
+    return -check;
+}
+
+static int aes_final(union rt_aes_control_args* ctl)
+{
+    int ret = 0;
+    pufs_status_t check;
+    uint32_t outlen;
+    uint8_t tag[16];
+    uint32_t taglen = ctl->final.taglen;
+
+    if (aes_ctx.busy == RT_FALSE)
+        return -EPERM;
+
+    if (taglen > 16)
+        return -EINVAL;
+
+    check = pufs_gcm_final(AES_GCM_OP, &aes_ctx, aes_ctx.encrypt, ctl->final.out, &outlen, tag, taglen, aes_ctx.encrypt);
+    if (check != SUCCESS) {
+        ret = -check;
+        goto exit;
+    }
+
+    lwp_put_to_user(ctl->final.outlen, &outlen, sizeof(*(ctl->final.outlen)));
+    if (aes_ctx.encrypt) {
+        lwp_put_to_user(ctl->final.tag, tag, taglen);
+    } else {
+        uint8_t cmp_tag[16];
+        lwp_get_from_user(cmp_tag, ctl->final.tag, taglen);
+        if (rt_memcmp(tag, cmp_tag, taglen) != 0)
+            ret = -E_VERFAIL;
+    }
+exit:
+    aes_deinit();
+    return ret;
+}
+
+static rt_err_t aes_control(rt_device_t dev, int cmd, void* args)
+{
+    int ret;
+    union rt_aes_control_args ctl;
+
+    lwp_get_from_user(&ctl, args, sizeof(ctl));
+
+    switch (cmd) {
+    case RT_AES_INIT:
+        ret = aes_init(&ctl);
+        break;
+    case RT_AES_UPDATE:
+        ret = aes_update(&ctl);
+        break;
+    case RT_AES_FINAL:
+        ret = aes_final(&ctl);
+        break;
+    default:
+        ret = -EINVAL;
+    }
 
     return ret;
-
-release_lock:
-    kd_hardlock_unlock(aes_hardlock);
-    goto ret_aes;
 }
 
 static rt_err_t aes_open(rt_device_t dev, rt_uint16_t oflag)
@@ -1375,8 +1227,7 @@ static rt_err_t aes_close(rt_device_t dev)
     return RT_EOK;
 }
 
-const static struct rt_device_ops aes_ops =
-{
+const static struct rt_device_ops aes_ops = {
     RT_NULL,
     aes_open,
     aes_close,
@@ -1387,29 +1238,24 @@ const static struct rt_device_ops aes_ops =
 
 int rt_hw_aes_device_init(void)
 {
-    rt_device_t aes_device = &g_aes_device;
-    rt_err_t ret = RT_EOK;
+    if (kd_request_lock(HARDLOCK_AES)) {
+        rt_kprintf("Fail to request hardlock-%d\n", HARDLOCK_AES);
+        return -RT_ERROR;
+    }
 
     sec_base_addr = rt_ioremap((void*)SECURITY_BASE_ADDR, SECURITY_IO_SIZE);
-    if(RT_NULL == sec_base_addr) {
+    if (RT_NULL == sec_base_addr) {
         rt_kprintf("Security module ioremap error!\n");
         return -RT_ERROR;
     }
 
-    ret = rt_device_register(aes_device, K230_AES_NAME, RT_DEVICE_FLAG_RDWR);
-    if(ret) {
+    if (RT_EOK != rt_device_register(&g_aes_device, K230_AES_NAME, RT_DEVICE_FLAG_RDWR)) {
         rt_kprintf("AES device register fail!\n");
-        return ret;
+        return -RT_ERROR;
     }
 
-    aes_device->ops = &aes_ops;
+    g_aes_device.ops = &aes_ops;
 
-    if(kd_request_lock(HARDLOCK_AES)) {
-        rt_kprintf("Fail to request hardlock-%d\n", HARDLOCK_AES);
-        aes_hardlock = -1;
-    } else
-        aes_hardlock = HARDLOCK_AES;
-
-    return ret;
-}
+    return 0;
+    }
 INIT_BOARD_EXPORT(rt_hw_aes_device_init);

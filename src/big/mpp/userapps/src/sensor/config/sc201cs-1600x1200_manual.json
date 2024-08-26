@@ -2,16 +2,15 @@
   "ARCH": "ISP8000_V2201.Manual_ext",
   "root": [
     {
+      "nr_reloc" : true,
       "driver": [
         {
           "base_frame": 0,
-          "bls": [64, 64, 64, 64],
           "bls_out": [0, 0, 0, 0],
           "bypass": false,
           "bypass_select": 0,
           "class": "CHdrv2",
           "color_weight": [254, 1, 0],
-          "driver_load": false,
           "enable": false,
           "extend_bit": [-1, -1],
           "ratio": [4, 4],
@@ -28,12 +27,11 @@
         },
         {
           "class": "CGreenEqu",
-          "driver_load": true,
+          "enable": true,
           "threshold": 2.5
         },
         {
           "bit" : 12,
-          "bls" : [ 64, 64, 64, 64 ],
           "ccmatrix" : [ 1.0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 1.0, 0 ],
           "class" : "CRgbIR",
           "dpcc_mid_th" : [ 4095, 4095, 4095, 4095 ],
@@ -47,19 +45,19 @@
         },
         {
           "class": "CManualWb",
-          "driver_load": true,
-          "gain": [1.0, 1.0, 1.0, 1.0]
+          "enable": true,
+          "gain": [1, 1, 1, 1]
         },
         {
           "bit": 13,
           "ccmatrix": [
-            1.0, 0, 0,
-            0, 1.0, 0,
-            0, 0, 1.0
+            1.0, 0.0, 0.0,
+            0.0, 1.0, 0.0,
+            0.0, 0.0, 1.0
           ],
           "ccoffset": [0, 0, 0],
           "class": "CCcm",
-          "driver_load": true
+          "enable": true
         },
         {
           "class": "CDgain",
@@ -67,12 +65,9 @@
           "digital_gain_gb": 1,
           "digital_gain_gr": 1,
           "digital_gain_r": 1,
-          "driver_load": true
+          "enable": true
         },
         {
-          "bit": 20,
-          "bls": [64, 64, 64, 64],
-          "bls_enable": true,
           "class": "CCpdv1",
           "compress_curve_x": [
             21, 20, 18, 14, 20, 18, 14, 13, 20, 18, 14, 13, 20, 18, 14, 20, 18,
@@ -112,6 +107,10 @@
           ],
           "expand_enable": false,
           "expand_use_out_y_curve": false
+        },
+		{
+          "class" : "Bls",
+          "bls" : [ 64, 64, 64, 64]
         },
         {
           "class": "CGamma64",
@@ -361,8 +360,8 @@
             881361, 964968, 1048575
           ],
           "global_strength": 0,
-          "high_strength": 60,
-          "low_strength": 8,
+          "high_strength": 90,
+          "low_strength": 2,
           "strength": 128
         },
         {
@@ -392,13 +391,11 @@
         },
         {
           "bright": 0,
-          "chroma_out": 2,
           "class": "CCproc",
+          "yuvRange": 2,
           "contrast": 1,
-          "driver_load": true,
+          "enable": true,
           "hue": 0,
-          "luma_in": 2,
-          "luma_out": 2,
           "saturation": 1.1
         },
         {
@@ -421,7 +418,7 @@
             656, 672, 688, 704, 720, 736, 752, 768, 784, 800, 816, 832, 848,
             864, 880, 896, 912, 928, 944, 960, 976, 992, 1008, 1023
           ],
-          "dci_en": true,
+          "dci_en": false,
           "ee_edge_gain": 2000,
           "ee_src_strength": 1,
           "ee_strength": 100,
@@ -437,7 +434,7 @@
           "b_red": 0,
           "c_blue": 0,
           "c_red": 0,
-          "cac_enable": false,
+          "cac_enable": true,
           "center_h_offs": 0,
           "center_v_offs": 0,
           "class": "CDmscv2",
@@ -486,8 +483,7 @@
           "dmsc_skin_cr_thr_min": 0,
           "dmsc_skin_enable": false,
           "dmsc_skin_y_thr_max": 0,
-          "dmsc_skin_y_thr_min": 0,
-          "enable": true
+          "dmsc_skin_y_thr_min": 0
         }
       ]
     }

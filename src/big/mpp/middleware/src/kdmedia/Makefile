@@ -30,7 +30,6 @@ CPP_SRCS = $(wildcard $(LOCAL_SRC_DIR)/*.cpp)
 CPP_OBJS = $(patsubst %.cpp,%.o,$(CPP_SRCS))
 
 all:$(BIN)
-	@-rm -f *.o
 	@echo "${PWD}/Makefile all"
 
 $(OBJS): %.o : %.c
@@ -47,6 +46,6 @@ $(BIN): $(OBJS) $(CPP_OBJS)
 	$(AR) $(ARFLAGS) $@ $^
 clean:
 	echo "${PWD}/Makefile clean"
-	rm -rf $(BIN) $(OBJS)
+	rm -rf $(BIN) $(OBJS) $(CPP_OBJS)
 
 .PHONY: all clean

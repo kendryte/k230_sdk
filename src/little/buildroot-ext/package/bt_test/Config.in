@@ -1,0 +1,7 @@
+config BR2_PACKAGE_BT_TEST
+	bool "bt test"
+	help
+	  k230 bt demo for test
+
+
+

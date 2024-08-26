@@ -4,6 +4,7 @@
 #include "usbh_msc.h"
 #include "usbh_video.h"
 #include "usbh_audio.h"
+#include <ioremap.h>
 
 #define TEST_USBH_CDC_ACM   0
 #define TEST_USBH_CDC_SPEED 0
@@ -1109,3 +1110,16 @@ void usbh_class_test(void)
 #endif
 #endif
 }
+
+int usbh_init(void)
+{
+    char *usb_base = NULL;
+#ifdef CHERRYUSB_HOST_USING_USB1
+    usb_base = (char *)rt_ioremap((void *)0x91540000UL, 0x10000);
+#else
+    usb_base = (char *)rt_ioremap((void *)0x91500000UL, 0x10000);
+#endif
+    return usbh_initialize(0, (uint32_t)usb_base);
+}
+
+INIT_DEVICE_EXPORT(usbh_init);

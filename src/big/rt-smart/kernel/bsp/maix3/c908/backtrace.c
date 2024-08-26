@@ -16,6 +16,8 @@ extern rt_ubase_t __text_end[];
 
 static char *_get_elf_name();
 
+#pragma GCC push_options
+#pragma GCC optimize("-O0")
 void rt_hw_backtrace(rt_uint32_t *ffp, rt_ubase_t sepc)
 {
     rt_ubase_t *ra;
@@ -70,6 +72,7 @@ void rt_hw_backtrace(rt_uint32_t *ffp, rt_ubase_t sepc)
 
     rt_kputs("\r\n");
 }
+#pragma GCC pop_options
 
 static void _assert_backtrace_cb(const char *ex, const char *func, rt_size_t line)
 {

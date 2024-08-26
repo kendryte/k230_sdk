@@ -118,6 +118,7 @@ static int speckle_dev;
 static int speckle_chn;
 static k_vb_blk_handle ir_handle;
 static k_bool adc_en = K_FALSE;
+static k_u32 adc_ch = 2;
 static k_u64 dump_start_time = 0;
 static k_u64 rgb_dump_start_time = 0;
 static k_bool depth_send_done;
@@ -147,6 +148,7 @@ static float g_cur_temperature = 0;
 static k_dpu_image_mode image_mode;
 static k_u32 delay_us = 3000;
 static pthread_mutex_t dump_mutex = PTHREAD_MUTEX_INITIALIZER;
+static k_gdma_rotation_e dma_ro;
 
 static k_u64 get_ticks()
 {
@@ -161,7 +163,6 @@ int sample_adc(float *temp)
 {
     // adc
     int ret = 0;
-    unsigned int channel = 2;
     unsigned int reg_value = 0;
     float R_series = 10.2;
     float R_ntc = 1.0;
@@ -192,7 +193,7 @@ int sample_adc(float *temp)
     // get temperature
     // 1read
     uint32_t *p;
-    p = (uint32_t *)(intptr_t)channel;
+    p = (uint32_t *)(intptr_t)adc_ch;
     ret = rt_device_control(adc_dev, ADC_CHN_ENABLE, (void *)p);
     if (ret != RT_EOK)
     {
@@ -200,7 +201,7 @@ int sample_adc(float *temp)
         return -1;
     }
 
-    ret = rt_device_read(adc_dev, channel, (void *)&reg_value, sizeof(unsigned int));
+    ret = rt_device_read(adc_dev, adc_ch, (void *)&reg_value, sizeof(unsigned int));
 
     // 2get target
     vol = REF_VOL * reg_value / RESOLUTION;
@@ -268,7 +269,7 @@ int sample_dv_dpu_update_temp(float temperature_obj)
         return -1;
         // goto err_dpu_delet;
     }
-    printf("rectify success\n");
+    printf("rectify success: g_cur_temperature %f\n", g_cur_temperature);
 
     return 0;
 }
@@ -462,7 +463,7 @@ static k_s32 dma_chn_attr_init(k_dma_chn_attr_u attr[8])
 
     gdma_attr = &attr[0].gdma_attr;
     gdma_attr->buffer_num = dma_buf_cnt;
-    gdma_attr->rotation = DEGREE_90; // DEGREE_90;
+    gdma_attr->rotation = dma_ro;
     gdma_attr->x_mirror = K_FALSE;
     gdma_attr->y_mirror = K_FALSE;
     gdma_attr->width = width;
@@ -474,7 +475,7 @@ static k_s32 dma_chn_attr_init(k_dma_chn_attr_u attr[8])
 
     gdma_attr = &attr[1].gdma_attr;
     gdma_attr->buffer_num = dma_buf_cnt;
-    gdma_attr->rotation = DEGREE_90;
+    gdma_attr->rotation = dma_ro;
     gdma_attr->x_mirror = K_FALSE;
     gdma_attr->y_mirror = K_FALSE;
     gdma_attr->width = width;
@@ -935,43 +936,54 @@ static void send_image(k_u64 depth_pts)
 
     memset(image_send_buf, 0, BLOCKLEN * 8);
 
-    // printf("depth_pts %ld, rgb_wp %d, rgb_rp %d\n", depth_pts, rgb_wp, rgb_rp);
-    // for(i=0; i<VICAP_OUTPUT_BUF_NUM; i++)
-    // {
-    //     printf("i %d, pts %ld\n", i, rgb_buf[i].v_frame.pts);
-    // }
-
-    //find the closest pts
-    temp_rp = rgb_rp;
-    while(rgb_wp != temp_rp)
+    if(depth_pts == 0)
     {
-        if(depth_pts > rgb_buf[temp_rp].v_frame.pts)
-            delta = depth_pts - rgb_buf[temp_rp].v_frame.pts;
-        else
-            delta = rgb_buf[temp_rp].v_frame.pts - depth_pts;
-        // printf("temp_rp %d, pts %ld, delta %ld, prev_delta %ld\n", temp_rp, rgb_buf[temp_rp].v_frame.pts, delta, prev_delta);
-        if(cnt > 0)
+        temp_rp = rgb_rp;
+        while(rgb_wp != temp_rp)
         {
-            if(delta > prev_delta)
+            temp_rp ++;
+            temp_rp %= VICAP_OUTPUT_BUF_NUM;
+            if(temp_rp == rgb_wp)
             {
-                // printf("found matched pts %ld, cnt %d\n", prev_pts, cnt);
                 break;
             }
+            release_image();
         }
-        prev_delta = delta;
-        prev_pts = rgb_buf[temp_rp].v_frame.pts;
-
-        temp_rp ++;
-        temp_rp %= VICAP_OUTPUT_BUF_NUM;
-        if(temp_rp == rgb_wp)
-        {
-            break;
-        }
-        cnt++;
     }
-    for(i=0; i<cnt-1; i++)
+    else
     {
-        release_image();
+        //find the closest pts
+        temp_rp = rgb_rp;
+        while(rgb_wp != temp_rp)
+        {
+            if(depth_pts > rgb_buf[temp_rp].v_frame.pts)
+                delta = depth_pts - rgb_buf[temp_rp].v_frame.pts;
+            else
+                delta = rgb_buf[temp_rp].v_frame.pts - depth_pts;
+            // printf("temp_rp %d, pts %ld, delta %ld, prev_delta %ld\n", temp_rp, rgb_buf[temp_rp].v_frame.pts, delta, prev_delta);
+            if(cnt > 0)
+            {
+                if(delta > prev_delta)
+                {
+                    // printf("found matched pts %ld, cnt %d\n", prev_pts, cnt);
+                    break;
+                }
+            }
+            prev_delta = delta;
+            prev_pts = rgb_buf[temp_rp].v_frame.pts;
+
+            temp_rp ++;
+            temp_rp %= VICAP_OUTPUT_BUF_NUM;
+            if(temp_rp == rgb_wp)
+            {
+                break;
+            }
+            cnt++;
+        }
+        for(i=0; i<cnt-1; i++)
+        {
+            release_image();
+        }
     }
 
     //send image
@@ -1086,6 +1098,7 @@ static void dpu_unbind_dump()
         k_u64 start_time = get_ticks() / 27000;
 
         if (image_mode == IMAGE_MODE_RGB_IR ||
+            image_mode == IMAGE_MODE_RGB_SPECKLE ||
             image_mode == IMAGE_MODE_NONE_SPECKLE ||
             image_mode == IMAGE_MODE_NONE_IR)
         {
@@ -1117,6 +1130,9 @@ static void dpu_unbind_dump()
 
             kd_mpi_dma_release_frame(0, &dma_get_info);
             // printf("send %d IR pts %ld take time %6ld ms\n", dump_count, depth_pts, (get_ticks()/27000-start_time));
+
+            if(image_mode == IMAGE_MODE_RGB_IR || image_mode == IMAGE_MODE_RGB_SPECKLE)
+                send_image(depth_pts);
         }
         else
         {
@@ -1180,158 +1196,22 @@ static void dpu_unbind_dump()
             }
             kd_mpi_dpu_release_frame();
             // printf("send %d depth pts %ld take time %6ld ms\n", dump_count, depth_pts, (get_ticks()/27000-start_time));
+
+            if(image_mode != IMAGE_MODE_NONE_DEPTH)
+                send_image(depth_pts);
         }
-
-        send_image(depth_pts);
-
         dump_count++;
-        if (dump_count % 30 == 0)
-        {
-            printf("dump_count %d, Average FrameRate = %ld Fps\n", dump_count, (dump_count * 1000) / (get_ticks() / 27000 - dump_start_time));
-        }
     }
-}
 
-static void dpu_bind_dump()
-{
-    k_dpu_chn_result_u lcn_result;
-    k_bool get_ir = K_FALSE;
-    int dataret = -1;
-    k_s32 ret;
-    k_u64 depth_pts=0;
-    k_video_frame_info dma_get_info;
-
-    memset(depth_send_buf, 0, BLOCKLEN * sizeof(k_char));
-
-    if(dump_start_time == 0)
-        dump_start_time = get_ticks()/27000;
-
-    while(depth_wp != depth_rp && rgb_wp != rgb_rp)
+    if(image_mode == IMAGE_MODE_RGB_NONE && rgb_wp != rgb_rp)
     {
-        k_bool found = K_FALSE;
-
-		lcn_result = depth_buf[depth_rp];
-		depth_pts = lcn_result.lcn_result.pts;
-        {
-            k_u32 next_depth_rp = depth_rp + 1;
-            next_depth_rp %= VICAP_OUTPUT_BUF_NUM;
-            //find the latest frame and drop old frames
-            if (next_depth_rp != depth_wp)
-            {
-                kd_mpi_dpu_release_frame();
-                depth_rp++;
-                depth_rp %= VICAP_OUTPUT_BUF_NUM;
-                continue;
-            }
-        }
-
-        while(rgb_wp != rgb_rp)
-        {
-            k_u64 delta, rgb_pts;
-            k_u32 temp;
-            rgb_pts = rgb_buf[rgb_rp].v_frame.pts;
-            delta = depth_pts > rgb_pts?(depth_pts - rgb_pts):(rgb_pts - depth_pts);
-            temp = (rgb_rp + 1) % VICAP_OUTPUT_BUF_NUM;
-            // printf("rgb_rp %d, rgb pts %ld, depth pts %ld, delta %ld\n", rgb_rp, rgb_pts, depth_pts, delta);
-            if((delta < 100000) || (delta > 1000000) || (temp == rgb_wp))
-            {
-                found = K_TRUE;
-                break;
-            }
-            release_image();
-        }
-
-        if(!found)
-        {
-            kd_mpi_dpu_release_frame();
-            depth_rp++;
-            depth_rp %= VICAP_OUTPUT_BUF_NUM;
-            continue;
-        }
-
-        k_u64 start_time=get_ticks()/27000;
-
-        datafifo_msg *pmsg = (datafifo_msg *)depth_send_buf;
-        pmsg->msg_type = MSG_KEY_TYPE;
-        pmsg->dev_num = speckle_dev;
-        pmsg->result_type = DPU_RESULT_TYPE_LCN;
-        pmsg->upfunc = (k_u8 *)dpu_callback_attr[speckle_dev].pfn_data_cb;
-        pmsg->puserdata = dpu_callback_attr[speckle_dev].p_private_data;
-        depth_send_done = K_FALSE;
-        memcpy(&pmsg->dpu_result.lcn_result, &lcn_result, sizeof(k_dpu_chn_result_u));
-        pmsg->dpu_result.lcn_result.time_ref = dump_count;
-        pmsg->dpu_result.lcn_result.pts = depth_pts;
-        pmsg->temperature = g_cur_temperature;
-
-        dataret = -1;
-        dataret = send_dpu_data_to_little(speckle_dev, depth_send_buf);
-        if(dataret){
-            printf("send depth error: %d\n", dataret);
-            kd_mpi_dpu_release_frame();
-        }
-
-        while(!depth_send_done)
-        {
-            callwriteNULLtoflushdpu(speckle_dev);
-            usleep(1000);
-        }
-
-        // printf("send depth take time %6ld ms\n", (get_ticks()/27000-start_time));
-        kd_mpi_dpu_release_frame();
-
-        k_u32 data_size = 0;
-        void *virt_addr = NULL;
-        k_char filename[256];
-
-        data_size = rgb_buf[rgb_rp].v_frame.width * rgb_buf[rgb_rp].v_frame.height * 3 / 2;
-
-        ret = kd_mpi_dma_send_frame(1, &rgb_buf[rgb_rp], 30);
-        if (ret != K_SUCCESS)
-        {
-            printf("dma send frame error\r\n");
-        }
-
-        ret = kd_mpi_dma_get_frame(1, &dma_get_info, 30);
-        if (ret != K_SUCCESS)
-        {
-            printf("dma get frame error\r\n");
-        }
-
-        start_time = get_ticks() / 27000;
-        pmsg = (datafifo_msg *)image_send_buf;
-        pmsg->msg_type = MSG_KEY_TYPE;
-        pmsg->dev_num = rgb_dev;
-        pmsg->result_type = DPU_RESULT_TYPE_IMG;
-        pmsg->upfunc = (k_u8 *)dpu_callback_attr[rgb_dev].pfn_data_cb;
-        pmsg->puserdata = dpu_callback_attr[rgb_dev].p_private_data;
-
-        rgb_send_done = K_FALSE;
-        memcpy(&pmsg->dpu_result.img_result, &dma_get_info, sizeof(k_video_frame));
-        pmsg->dpu_result.img_result.time_ref = dump_count;
-        pmsg->dpu_result.img_result.pts = rgb_buf[rgb_rp].v_frame.pts;
-        dataret = -1;
-        pmsg->temperature = g_cur_temperature;
-        dataret = send_dpu_data_to_little(rgb_dev, image_send_buf);
-        // printf("send depth and rgb: delta pts %6ld, time %6ld ms\n", delta, get_ticks()/27000);
-        if (dataret)
-        {
-            printf("send img error: %d\n", dataret);
-        }
-        while (!rgb_send_done)
-        {
-            callwriteNULLtoflushdpu(rgb_dev);
-            usleep(1000);
-        }
-        // printf("send rgb take time %6ld ms\n", (get_ticks()/27000-start_time));
-        kd_mpi_dma_release_frame(1, &dma_get_info);
-
-        release_image();
-
+        send_image(0);
         dump_count++;
-        if(dump_count % 30 == 0)
-        {
-            printf("dump_count %d, Average FrameRate = %ld Fps\n", dump_count, (dump_count*1000)/(get_ticks()/27000-dump_start_time));
-        }
+    }
+
+    if (dump_count > 0 && dump_count % 30 == 0)
+    {
+        printf("dump_count %d, Average FrameRate = %ld Fps\n", dump_count, (dump_count * 1000) / (get_ticks() / 27000 - dump_start_time));
     }
 }
 
@@ -1342,14 +1222,7 @@ static void *dump_thread(void *arg)
 
     while (!exiting)
     {
-        if (dpu_bind == DPU_BIND)
-        {
-            dpu_bind_dump();
-        }
-        else
-        {
-            dpu_unbind_dump();
-        }
+        dpu_unbind_dump();
         usleep(10000);
     }
     exiting = K_FALSE;
@@ -1363,7 +1236,11 @@ static void *dump_rgb_thread(void *arg)
 
     while (!image_exiting)
     {
-        if (image_mode < IMAGE_MODE_NONE_SPECKLE)
+        if (image_mode == IMAGE_MODE_RGB_DEPTH ||
+            image_mode == IMAGE_MODE_RGB_IR ||
+            image_mode == IMAGE_MODE_RGB_SPECKLE ||
+            image_mode == IMAGE_MODE_IR_DEPTH ||
+            image_mode == IMAGE_MODE_RGB_NONE)
         {
             image_dump();
         }
@@ -1387,10 +1264,17 @@ static void *dump_speckle_thread(void *arg)
 
     while (!speckle_exiting)
     {
+        if (image_mode == IMAGE_MODE_RGB_NONE)
+        {
+            usleep(100000);
+            continue;
+        }
+
         if(dpu_bind == DPU_UNBIND)
             speckle_dump();
         else
             depth_dump();
+
     }
 
     while (speckle_wp != speckle_rp)
@@ -1420,7 +1304,7 @@ static void *adc_thread(void *arg)
         if (!sample_adc(&temp))
         {
             // printf("%f\n", temp - old_temp);
-            if (temp - old_temp > 5 || temp - old_temp < -5)
+            if ((temp - old_temp > 5 || temp - old_temp < -5) && adc_en)
             {
                 sample_dv_dpu_update_temp(temp);
                 old_temp = temp;
@@ -1545,6 +1429,8 @@ k_s32 kd_mapi_dpu_init(k_dpu_info_t *init)
     image_mode = init->mode;
     delay_us = init->delay_ms * 1000;
     dpu_bind = init->dpu_bind;
+    dma_ro = init->dma_ro;
+    adc_ch = init->adc_ch;
     memcpy(&temperature, &init->temperature, sizeof(k_dpu_temperature_t));
 
     ir_buf_size = ((width * height * 3 / 2 + 0x3ff) & ~0x3ff);
@@ -1565,8 +1451,9 @@ k_s32 kd_mapi_dpu_init(k_dpu_info_t *init)
     }
 
     printf("rgb_dev %d, rgb_chn %d, speckle_dev %d, speckle_chn %d\n", rgb_dev, rgb_chn, speckle_dev, speckle_chn);
-    printf("adc_en %d, dpu_bind %d, image_mode %d, delay_ms %d\n", adc_en, dpu_bind, image_mode, init->delay_ms);
+    printf("adc_en %d, adc_ch %d, dpu_bind %d, image_mode %d, delay_ms %d\n", adc_en, adc_ch, dpu_bind, image_mode, init->delay_ms);
     printf("dpu_buf_cnt %d, dma_buf_cnt %d\n", dpu_buf_cnt, dma_buf_cnt);
+    printf("dma rotation %d\n", dma_ro);
 
     if (dpu_bind == DPU_BIND)
     {
@@ -1607,10 +1494,7 @@ k_s32 kd_mapi_dpu_start_grab()
     // param.sched_priority = 3;
     // pthread_setschedparam(image_tid, SCHED_FIFO, &param);
 
-    if (adc_en)
-    {
-        pthread_create(&adc_tid, NULL, adc_thread, NULL);
-    }
+    pthread_create(&adc_tid, NULL, adc_thread, NULL);
 
     return K_SUCCESS;
 }

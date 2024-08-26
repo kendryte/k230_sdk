@@ -39,6 +39,9 @@ extern struct sensor_driver_dev xs9950_csi0_sensor_drv;
 extern struct sensor_driver_dev xs9950_csi1_sensor_drv;
 extern struct sensor_driver_dev xs9950_csi2_sensor_drv;
 extern struct sensor_driver_dev gc2053_sensor_drv;
+extern struct sensor_driver_dev gc2093_sensor_drv;
+extern struct sensor_driver_dev gc2093_csi1_sensor_drv;
+extern struct sensor_driver_dev gc2093_csi2_sensor_drv;
 
 struct sensor_driver_dev *sensor_drv_list[SENSOR_NUM_MAX] = {
     &ov9732_sensor_drv,
@@ -53,6 +56,9 @@ struct sensor_driver_dev *sensor_drv_list[SENSOR_NUM_MAX] = {
     &xs9950_csi1_sensor_drv,
     &xs9950_csi2_sensor_drv,
     &gc2053_sensor_drv,
+    &gc2093_sensor_drv,
+    &gc2093_csi1_sensor_drv,
+    &gc2093_csi2_sensor_drv,
 };
 
 void sensor_drv_list_init(struct sensor_driver_dev *drv_list[])
@@ -94,7 +100,7 @@ k_s32 sensor_reg_read(k_sensor_i2c_info *i2c_info, k_u16 reg_addr, k_u16 *buf)
         // rt_kprintf("sensor_reg_read: [0x%04x] = [0x%02x] i2c_info->size is %d \n", reg_addr, *buf, i2c_info->size);
         return RT_EOK;
     }
-    rt_kprintf("%s err.\n", __func__);
+    // rt_kprintf("%s err.\n", __func__);
 
     return RT_ERROR;
 }
@@ -216,7 +222,7 @@ k_s32 sensor_priv_ioctl(struct sensor_driver_dev *dev, k_u32 cmd, void *args)
 			}
 			ret = dev->sensor_func.sensor_get_chip_id(dev, &chip_id);
             if (ret) {
-                rt_kprintf("%s (%s)sensor_get_chip_id err\n", __func__, dev->sensor_name);
+                // rt_kprintf("%s (%s)sensor_get_chip_id err\n", __func__, dev->sensor_name);
                 return -1;
             }
             if (sizeof(chip_id) != lwp_put_to_user(args, &chip_id, sizeof(chip_id))){
@@ -237,7 +243,7 @@ k_s32 sensor_priv_ioctl(struct sensor_driver_dev *dev, k_u32 cmd, void *args)
             k_u16 reg_val;
             ret = sensor_reg_read(&dev->i2c_info, reg.addr, &reg_val);
             if (ret) {
-                rt_kprintf("%s:%d sensor_reg_read err\n", __func__, __LINE__);
+                // rt_kprintf("%s:%d sensor_reg_read err\n", __func__, __LINE__);
                 return -1;
             }
             reg.val = reg_val;

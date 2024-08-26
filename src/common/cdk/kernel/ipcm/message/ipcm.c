@@ -415,27 +415,28 @@ int ipcm_vdd_connect(void *data, int is_block)
 	__ipcm_unlock__(&handle->lock);
 	__ipcm_irq_restore__(irq_save);
 
-	if (CONNECT_NONBLOCK == is_block)
-		return 1;
-
+	__ipcm_msleep__(100);
 #ifndef NO_MULTITASKS
+
 	if (__HANDLE_DISCONNECTED == handle->state) {
-		ipcm_err("handle is disconnected\n");
+		ipcm_trace(TRACE_MSG, "handle is disconnected\n");
 		return -1;
 	}
 
-	if(__HANDLE_CONNECTED == handle->state) {
-		ipcm_info("handle is CONNECTED \n");
+	if (__HANDLE_CONNECTED == handle->state) {
+		ipcm_trace(TRACE_MSG, "handle is CONNECTED \n");
 		return 0;
 	}
 
+	if (is_block == CONNECT_NONBLOCK) {
+		return 1;
+	}
 	/* wait until the handle is connected */
-	__ipcm_wait_event__(&handle->connect_event);
+	return __ipcm_wait_event__(&handle->connect_event);
 
 #else
 	return 1;
 #endif
-	return 0;
 }
 
 void ipcm_vdd_disconnect(void *data)

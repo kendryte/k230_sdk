@@ -43,6 +43,14 @@ static struct rt_device g_otp_device = {0};
 void *otp_base_addr = RT_NULL;
 void *otp_bypass_addr = RT_NULL;
 
+static rt_uint32_t be2le(rt_uint32_t var)
+{
+    return (((0xff000000 & var) >> 24) |
+            ((0x00ff0000 & var) >> 8) |
+            ((0x0000ff00 & var) << 8) |
+            ((0x000000ff & var) << 24));
+}
+
 static rt_bool_t sysctl_boot_get_otp_bypass(void)
 {
     if(readl(otp_bypass_addr) & (0x1 << 4))
@@ -77,12 +85,14 @@ rt_size_t otp_device_read(rt_device_t dev, rt_off_t pos, void *buffer, rt_size_t
     for(i=0; i<wlen; i++)
     {
         outbuf[i] = readl(otp_read_addr + pos + i*WORD_SIZE);
+        outbuf[i] = be2le(outbuf[i]);
     }
 
     if(size % WORD_SIZE != 0)
     {
         outbuf += wlen * WORD_SIZE;
         word = readl(otp_read_addr + pos + wlen*WORD_SIZE);
+        word = be2le(word);
         memcpy(outbuf, &word, size % WORD_SIZE);
         ret = (uint32_t)(size - size % WORD_SIZE + WORD_SIZE);
 
@@ -94,8 +104,7 @@ rt_size_t otp_device_read(rt_device_t dev, rt_off_t pos, void *buffer, rt_size_t
 
 rt_size_t otp_device_write(rt_device_t dev, rt_off_t pos, const void *buffer, rt_size_t size)
 {
-    rt_uint32_t *inbuf = (rt_uint32_t *)buffer;
-    rt_uint32_t wlen = size / WORD_SIZE;
+    rt_uint8_t *inbuf = (rt_uint8_t *)buffer;
     rt_uint32_t ret = (uint32_t)size;
     rt_uint32_t i = 0, j = 0;
     void *otp_write_addr = (void *)((char *)otp_base_addr + OTP_WRITE_OFFSET + pos);
@@ -110,13 +119,18 @@ rt_size_t otp_device_write(rt_device_t dev, rt_off_t pos, const void *buffer, rt
     sbi_pmp_write_enable(1);
 
     // 2. write OTP2
-    while(wlen--)
+    for (i=0; i<size; i+=4)
     {
-        writel(inbuf[i], (rt_uint32_t*)otp_write_addr+i);
-        i += 4;
-        j += 1;
-    }
+        union {
+            rt_uint32_t word;
+            rt_uint8_t byte[4];
+        } otp_word;
+        for (int8_t j=3; j>=0; j--)
+            otp_word.byte[j] = ((i+3-j) < size) ? inbuf[i+3-j] : 0x00;
 
+        writel(otp_word.word, (rt_uint32_t*)otp_write_addr+i);
+    }
+    
     // 3. config pmp reg for read only
     sbi_pmp_write_enable(0);
 

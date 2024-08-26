@@ -66,7 +66,11 @@ copye_file_to_images()
 		cp -rf ${K230_SDK_ROOT}/tools/ota/ota_aes_key_iv  	${BUILD_DIR}/images/little-core/rootfs/etc/
 		cp -rf ${K230_SDK_ROOT}/tools/ota/hwrevision  	${BUILD_DIR}/images/little-core/rootfs/etc/
 
-		cp -rf ${K230_SDK_ROOT}/board/common/post_copy_rootfs/*  	${BUILD_DIR}/images/little-core/rootfs/
+		if [ -d "${K230_SDK_ROOT}/board/${CONFIG_BOARD_NAME}/post_copy_rootfs" ]; then
+			cp -rf ${K230_SDK_ROOT}/board/${CONFIG_BOARD_NAME}/post_copy_rootfs/*  	${BUILD_DIR}/images/little-core/rootfs/
+		else 
+			cp -rf ${K230_SDK_ROOT}/board/common/post_copy_rootfs/*         ${BUILD_DIR}/images/little-core/rootfs/
+		fi
 		fakeroot -- cp -rf ${BUILD_DIR}/images/little-core/ko-apps/* ${BUILD_DIR}/images/little-core/rootfs/
 		cd ${BUILD_DIR}/images/little-core/rootfs/; \
 		fakeroot -- ${K230_SDK_ROOT}/tools/mkcpio-rootfs.sh; \
@@ -140,6 +144,11 @@ add_dev_firmware()
     if [ "${CONFIG_RTL8188FU}" = "y" ] ; then 
         mkdir -p ${BUILD_DIR}/images/little-core/rootfs/lib/firmware/rtlwifi/
         cp -f ${K230_SDK_ROOT}/board/common/dev_firmware/rtl8188fu/* ${BUILD_DIR}/images/little-core/rootfs/lib/firmware/rtlwifi/
+    fi
+    
+    if [ "${CONFIG_RTL8723DU}" = "y" ] ; then 
+        mkdir -p ${BUILD_DIR}/images/little-core/rootfs/lib/firmware/
+        cp -rf ${K230_SDK_ROOT}/board/common/dev_firmware/rtl8723du/* ${BUILD_DIR}/images/little-core/rootfs/lib/firmware/
     fi
 }
 

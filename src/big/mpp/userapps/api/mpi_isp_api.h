@@ -285,7 +285,7 @@ k_s32 kd_mpi_isp_load_image(k_isp_dev dev_num, const void *image_data, k_u32 dat
 
 k_s32 kd_mpi_isp_dump_register(k_isp_dev dev_num, FILE* file);
 
-int kd_mpi_isp_tuning(const char* command, k_u32 command_size, char** response, k_u32* response_size);
+int kd_mpi_isp_tuning(char* command, k_u32 command_size, char** response, k_u32* response_size);
 
 k_s32 kd_mpi_isp_get_chn_buf_size(k_isp_dev dev_num, k_isp_chn chn_num);
 

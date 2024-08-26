@@ -100,6 +100,7 @@ typedef unsigned char     uchar;
 #define DW_IC_DATA_CMD_READ         BIT(8)
 #define DW_IC_DATA_CMD_STOP         BIT(9)
 #define DW_IC_DATA_CMD_RESTART      BIT(10)
+#define DW_IC_DATA_CMD_FIRST_DATA_BYTE		BIT(11)
 
 #define DW_IC_INTR_RX_UNDER         0x001u
 #define DW_IC_INTR_RX_OVER          0x002u
@@ -120,6 +121,7 @@ typedef unsigned char     uchar;
 
 #define DW_IC_STATUS_ACTIVITY       0x1u
 #define DW_IC_STATUS_TFE                BIT(2)
+#define DW_IC_STATUS_RFNE			BIT(3)
 #define DW_IC_STATUS_MASTER_ACTIVITY    BIT(5)
 #define DW_IC_STATUS_SLAVE_ACTIVITY     BIT(6)
 #define DW_IC_STATUS_SLAVE_ACTIVITY_SHIFT  (6)

@@ -406,16 +406,28 @@ void video_proc_01(char *argv[])
 
 
         cv::Mat osd_frame(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-        cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
-        seg.post_process({osd_frame.cols, osd_frame.rows}, results);
 
-
-
+        #if defined(STUDIO_HDMI)
         {
-            ScopedTiming st("osd draw", atoi(argv[6]));
-            Utils::draw_segmentation(osd_frame, results, {osd_frame.cols, osd_frame.rows});
+            seg.post_process({osd_frame.cols, osd_frame.rows}, results);
+
+            {
+                ScopedTiming st("osd draw", atoi(argv[6]));
+                Utils::draw_segmentation(osd_frame, results, {osd_frame.cols, osd_frame.rows});
+            }           
         }
-        cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+        #else
+        {
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+            seg.post_process({osd_frame.cols, osd_frame.rows}, results);
+
+            {
+                ScopedTiming st("osd draw", atoi(argv[6]));
+                Utils::draw_segmentation(osd_frame, results, {osd_frame.cols, osd_frame.rows});
+            }
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+        }
+        #endif
 
         {
             ScopedTiming st("osd copy", atoi(argv[6]));

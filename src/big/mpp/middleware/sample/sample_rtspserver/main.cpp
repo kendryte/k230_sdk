@@ -17,7 +17,7 @@ static void sigHandler(int sig_no) {
 }
 
 static void Usage() {
-    std::cout << "Usage: ./rtsp_sever [-v] [-s <sensor_type>] [-t <codec_type>] [-w <width>] [-h <height>] [-b <bitrate_kbps>] [-a <semitones>]" << std::endl;
+    std::cout << "Usage: ./sample_rtspsever.elf [-v] [-s <sensor_type>] [-t <codec_type>] [-w <width>] [-h <height>] [-b <bitrate_kbps>] [-a <semitones>]" << std::endl;
     std::cout << "-v: enable video session" << std::endl;
     std::cout << "-s: the sensor type, default 7 :" << std::endl;
     std::cout << "       see camera sensor doc." << std::endl;
@@ -118,6 +118,8 @@ class MyRtspServer : public IOnBackChannel, public IOnAEncData, public IOnVEncDa
 
     // IOnAEncData
     virtual void OnAEncData(k_u32 chn_id, k_u8*pdata,size_t size,k_u64 time_stamp) override {
+        // printf("===========OnAEncData chn_id:%d,size:%d\n",chn_id,size);
+        // return ;
         if (started_) {
             rtsp_server_.SendAudioData(stream_url_, (const uint8_t*)pdata, size, time_stamp);
         }
@@ -125,19 +127,21 @@ class MyRtspServer : public IOnBackChannel, public IOnAEncData, public IOnVEncDa
 
     // IOnVEncData
     virtual void OnVEncData(k_u32 chn_id, void *data, size_t size, k_venc_pack_type type,uint64_t timestamp) override {
+        // printf("===========OnVEncData chn_id:%d,size:%d\n",chn_id,size);
+        // return ;
         if (started_) {
             rtsp_server_.SendVideoData(stream_url_, (const uint8_t*)data, size, timestamp);
         }
     }
 
-    int Init(const KdMediaInputConfig &config, const std::string &stream_url = "BackChannelTest", int port = 8554) {
+    int Init(const KdMediaInputConfig &config, const std::string &stream_url = "test", int port = 8554) {
         if (rtsp_server_.Init(port, this) < 0) {
             return -1;
         }
         // enable audio-track and backchannel-track
         SessionAttr session_attr;
         session_attr.with_audio = true;
-        session_attr.with_audio_backchannel = true;
+        session_attr.with_audio_backchannel = false;
         session_attr.with_video = config.video_valid;
         if (config.video_valid) {
             if (config.video_type == KdMediaVideoType::kVideoTypeH264) session_attr.video_type = VideoType::kVideoTypeH264;
@@ -209,6 +213,7 @@ int main(int argc, char *argv[]) {
         std::cout << "KdRtspServer Init failed." << std::endl;
         return -1;
     }
+
     server->Start();
 
     while (!g_exit_flag) {

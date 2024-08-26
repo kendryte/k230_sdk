@@ -618,6 +618,7 @@ k_s32 audio_sample_send_ao_data(const char *filename, int nDev, int nChannel, in
     memset(pDataBuf, 0, audio_frame.len);
 
     k_aio_dev_attr ao_dev_attr;
+    memset(&ao_dev_attr,0,sizeof(ao_dev_attr));
     ao_dev_attr.audio_type = KD_AUDIO_OUTPUT_TYPE_I2S;
     ao_dev_attr.kd_audio_attr.i2s_attr.sample_rate = audio_samplerate;
     ao_dev_attr.kd_audio_attr.i2s_attr.bit_width = _get_sample_bitwidth(audio_bitpersample);
@@ -729,6 +730,7 @@ k_s32 audio_sample_api_ai_to_ao(int ai_dev_num, int ai_channel, int ao_dev_num, 
     }
 
     k_aio_dev_attr ao_dev_attr;
+    memset(&ao_dev_attr,0,sizeof(ao_dev_attr));
     ao_dev_attr.audio_type = KD_AUDIO_OUTPUT_TYPE_I2S;
     ao_dev_attr.kd_audio_attr.i2s_attr.sample_rate = sample_rate;
     ao_dev_attr.kd_audio_attr.i2s_attr.bit_width = bit_width;
@@ -839,6 +841,7 @@ k_s32 audio_sample_bind_ai_to_ao(int ai_dev_num, int ai_channel, int ao_dev_num,
     }
 
     k_aio_dev_attr ao_dev_attr;
+    memset(&ao_dev_attr,0,sizeof(ao_dev_attr));
     ao_dev_attr.audio_type = KD_AUDIO_OUTPUT_TYPE_I2S;
     ao_dev_attr.kd_audio_attr.i2s_attr.sample_rate = sample_rate;
     ao_dev_attr.kd_audio_attr.i2s_attr.bit_width = bit_width;
@@ -1264,6 +1267,7 @@ k_s32 audio_sample_decode_ao(k_bool use_sysbind, k_u32 samplerate, k_audio_bit_w
     }
 
     k_aio_dev_attr aio_dev_attr;
+    memset(&aio_dev_attr,0,sizeof(aio_dev_attr));
     aio_dev_attr.audio_type = KD_AUDIO_OUTPUT_TYPE_I2S;
     aio_dev_attr.kd_audio_attr.i2s_attr.sample_rate = sample_rate;
     aio_dev_attr.kd_audio_attr.i2s_attr.bit_width = bit_width;
@@ -1463,6 +1467,7 @@ k_s32 audio_sample_ai_aenc_adec_ao(k_audio_dev ai_dev, k_ai_chn ai_chn, k_audio_
     }
 
     k_aio_dev_attr ao_dev_attr;
+    memset(&ao_dev_attr,0,sizeof(ao_dev_attr));
     ao_dev_attr.audio_type = KD_AUDIO_OUTPUT_TYPE_I2S;
     ao_dev_attr.kd_audio_attr.i2s_attr.sample_rate = sample_rate;
     ao_dev_attr.kd_audio_attr.i2s_attr.bit_width = bit_width;
@@ -1542,6 +1547,7 @@ k_s32 audio_sample_ai_aenc_adec_ao_2(k_audio_dev ai_dev, k_ai_chn ai_chn, k_audi
     }
 
     k_aio_dev_attr ao_dev_attr;
+    memset(&ao_dev_attr,0,sizeof(ao_dev_attr));
     ao_dev_attr.audio_type = KD_AUDIO_OUTPUT_TYPE_I2S;
     ao_dev_attr.kd_audio_attr.i2s_attr.sample_rate = sample_rate;
     ao_dev_attr.kd_audio_attr.i2s_attr.bit_width = bit_width;

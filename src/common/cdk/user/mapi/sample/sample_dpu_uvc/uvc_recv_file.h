@@ -35,6 +35,7 @@ typedef enum
 	GRAB_IMAGE_MODE_NONE_IR,      /*sensor 0: none, sensor 1: IR*/
 	GRAB_IMAGE_MODE_NONE_DEPTH,   /*sensor 0: none, sensor 1: speckle*/
 	GRAB_IMAGE_MODE_RGB_SPECKLE,  /*sensor 0: RGB,  sensor 1: speckle*/
+	GRAB_IMAGE_MODE_RGB_NONE,     /*sensor 0: RGB,  sensor 1: none*/
 	GRAB_IMAGE_MODE_BUTT,
 } k_grab_image_mode;
 
@@ -61,7 +62,9 @@ typedef struct tag_uvc_grab_init_parameters_ex
 	int sensor_type[2];
 	bool adc_enable;
 	bool overwrite_file;
-	int  reverse[11];
+	int  reverse[10];
+	int dma_ro; //bit0~bit7: 0: DEGREE_0, 1: DEGREE_90, 2: DEGREE_180, 3: DEGREE_270
+	            //bit8~bit15: adc channel number
 	//from file
 	char serialNumber[64];
 	k_dpu_temperature temperature;

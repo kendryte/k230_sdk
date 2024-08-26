@@ -1,0 +1,30 @@
+# RT-Thread building script for component
+
+from building import *
+
+cwd = GetCurrentDir()
+
+path = [cwd]
+path += [cwd + '/api']
+path += [cwd + '/include']
+path += [cwd + '/os/customer_rtos']
+path += [cwd + '/os/os_dep/include']
+path += [cwd + '/platform/include']
+path += [cwd + '/platform/rtwlan_bsp']
+path += [cwd + '/platform/sdio']
+path += [cwd + '/platform/sdio/include']
+
+src = Glob('*.c')
+src += Glob('api/*.c')
+src += Glob('api/wifi/*.c')
+src += Glob('os/customer_rtos/customer_rtt_service.c')
+src += Glob('os/os_dep/*.c')
+src += Glob('platform/rtwlan_bsp/*.c')
+src += Glob('platform/sdio/*.c')
+
+libs = 'wlan_v1_1'
+libpath = [cwd + '/wlan_lib']
+
+group = DefineGroup('realtek', src, depend = ['RT_USING_REALTEK'], CPPPATH = path, LIBS = libs, LIBPATH = libpath)
+
+Return('group')

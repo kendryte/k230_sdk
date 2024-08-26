@@ -55,7 +55,7 @@ struct kos_mem_list {
 struct ipcm_dev_handle {
 	unsigned long ipcm_handle;
 	struct kos_mem_list mem_list;
-	rt_wqueue_t *wait;
+	struct rt_wqueue wait;
 	rt_mutex_t mlist_mtx;
 };
 
@@ -134,7 +134,7 @@ static int ipcm_dev_recv(void *vdd_handle, void *buf, unsigned int len)
 
 	mem = (struct kos_mem_list *)data;
 	mem->data = (void *)((unsigned long)data + sizeof(struct kos_mem_list));
-	memcpy(mem->data, buf, len);
+	__memcpy__(mem->data, buf, len);
 	mem->len = len;
 
 
@@ -142,7 +142,7 @@ static int ipcm_dev_recv(void *vdd_handle, void *buf, unsigned int len)
 	insert_mem_list(mem, &phandle->mem_list);
 	rt_hw_interrupt_enable(flags);
 
-	wait = phandle->wait;
+	wait = &phandle->wait;
 	rt_wqueue_wakeup(wait, (void*)POLLIN);
 
 	return 0;
@@ -166,13 +166,11 @@ int ipcm_dev_open(struct dfs_fd *fd)
 		free(handle);
 		return -RT_ENOMEM;
 	}
-	device = (rt_device_t)fd->fnode->data;
-    RT_ASSERT(device != RT_NULL);
 
 	init_mem_list(&handle->mem_list);
 	handle->ipcm_handle = 0;
 	handle->mlist_mtx = mutex;
-	handle->wait = &device->wait_queue;
+	rt_wqueue_init(&handle->wait);
 	fd->data = (void *)handle;
 	return RT_EOK;
 }
@@ -383,7 +381,7 @@ int ipcm_dev_read(struct dfs_fd *fd, void *buf, size_t count)
 #if 0
 		lwp_put_to_user(buf, mem->data, len);
 #else
-		memcpy(buf, mem->data, len);
+		__memcpy__(buf, mem->data, len);
 #endif
 		free(mem);
 	}
@@ -398,7 +396,7 @@ int ipcm_dev_poll(struct dfs_fd *fd, struct rt_pollreq *req)
 		ipcm_err("ipcm_dev_handle NULL!");
 		return -EINVAL;
 	}
-	rt_poll_add(handle->wait, req);
+	rt_poll_add(&handle->wait, req);
 
 	flags =  rt_hw_interrupt_disable();
 	/* mem list empty means no data comming */

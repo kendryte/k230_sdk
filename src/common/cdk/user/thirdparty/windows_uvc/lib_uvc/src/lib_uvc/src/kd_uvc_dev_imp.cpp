@@ -20,7 +20,7 @@ extern "C"
 #define  K230_UVC_DEVICE_VID 0x29f1
 #define  K230_UVC_DEVICE_PID 0x0230
 
-#define  SYNC_K230_TIMESTAMP_DELAY_TIME  100*1000 //100ms
+#define  SYNC_K230_TIMESTAMP_DELAY_TIME  50*1000 //50ms
 
 static int gettimeofday(struct timeval* tp, void* tzp)
 {
@@ -60,6 +60,7 @@ kd_uvc_dev_imp::~kd_uvc_dev_imp()
 
 kd_uvc_dev_imp::kd_uvc_dev_imp():m_ref_file_path_name((char*)"/sharefs/H1280W720_ref.bin"), m_conf_file_path_name((char*)"/sharefs/H1280W720_conf.bin")
 {
+	m_brgb_mode_only = false;
 	m_bstart_uvc_stream = false;
 	memset(&m_grab_frame_info_rgb, 0, sizeof(m_grab_frame_info_rgb));
 	memset(&m_grab_frame_info_depth, 0, sizeof(m_grab_frame_info_depth));
@@ -78,6 +79,16 @@ bool kd_uvc_dev_imp::kd_uvc_init(const grabber_init_param& pInitParam)
 	}
 
 	m_uvc_param = pInitParam;
+	if (m_uvc_param.init_param.grab_mode == GRAB_IMAGE_MODE_RGB_NONE)
+	{
+		//m_uvc_param.init_param.grab_mode = GRAB_IMAGE_MODE_RGB_DEPTH;
+		m_brgb_mode_only = true;
+	}
+	else
+	{
+		m_brgb_mode_only = false;
+	}
+
 	m_uvc_device.format = UVC_FRAME_FORMAT_NV12;//UVC_FRAME_FORMAT_NV12
 	m_uvc_device.frameWidth = 640;
 	m_uvc_device.frameHeight = 360;
@@ -167,6 +178,11 @@ bool kd_uvc_dev_imp::kd_uvc_snap()
 	m_uvc_ctrl_status = em_uvc_control_snap_stop;
 
 	return true;
+}
+
+kd_uvc_camera_info kd_uvc_dev_imp::kd_uvc_get_camera_information()
+{
+	return m_uvc_camera_info;
 }
 
 bool kd_uvc_dev_imp::kd_uvc_get_all_uvc_dev_info(bool bfilter_k230, UVC_DEV_INFO_LIST& lst_dev_uvc_info)
@@ -426,7 +442,7 @@ int kd_uvc_dev_imp::_do_uvc_frame_data(uvc_frame_t* frame, void* ptr)
 								m_grab_frame_info_depth.height = uvc_data_head->height;
 								
 
-								m_grab_all_frame_info.frame_depth = &m_grab_frame_info_depth;
+								m_grab_all_frame_info.frame_depth = m_brgb_mode_only ?nullptr:&m_grab_frame_info_depth;
 								m_grab_all_frame_info.frame_rgb = &m_grab_frame_info_rgb;
 								m_grab_all_frame_info.frame_speckle = nullptr;
 								m_grab_all_frame_info.frame_ir = nullptr;
@@ -560,7 +576,7 @@ int kd_uvc_dev_imp::_do_uvc_frame_data(uvc_frame_t* frame, void* ptr)
 								m_grab_frame_info_depth.width = uvc_data_head->width;
 								m_grab_frame_info_depth.height = uvc_data_head->height;
 
-								m_grab_all_frame_info.frame_depth = &m_grab_frame_info_depth;
+								m_grab_all_frame_info.frame_depth = m_brgb_mode_only ? nullptr : &m_grab_frame_info_depth;
 								m_grab_all_frame_info.frame_rgb = &m_grab_frame_info_rgb;
 								m_grab_all_frame_info.frame_speckle = nullptr;
 								m_grab_all_frame_info.frame_ir = nullptr;
@@ -1035,7 +1051,18 @@ bool kd_uvc_dev_imp::_do_uvc_start_stream(bool bstart)
 
 int kd_uvc_dev_imp::_update_dev_cfg(const grabber_init_param& pInitParam)
 {
+#if 0
+	if (pInitParam.init_param.grab_mode == GRAB_IMAGE_MODE_RGB_NONE)
+	{
+		m_uvc_grab_init_parameters.grab_mode = GRAB_IMAGE_MODE_RGB_DEPTH;
+	}
+	else
+	{
+		m_uvc_grab_init_parameters.grab_mode = pInitParam.init_param.grab_mode;
+	}
+#else
 	m_uvc_grab_init_parameters.grab_mode = pInitParam.init_param.grab_mode;
+#endif 
 	m_uvc_grab_init_parameters.sensor_type[0] = pInitParam.init_param.sensor_type[0];
 	m_uvc_grab_init_parameters.sensor_type[1] = pInitParam.init_param.sensor_type[1];
 	m_uvc_grab_init_parameters.adc_enable = pInitParam.init_param.adc_enable;
@@ -1046,6 +1073,7 @@ int kd_uvc_dev_imp::_update_dev_cfg(const grabber_init_param& pInitParam)
 	m_uvc_grab_init_parameters.depth_maximum_distance = pInitParam.init_param.depth_maximum_distance;
 	m_uvc_grab_init_parameters.camera_width = pInitParam.init_param.camera_width;
 	m_uvc_grab_init_parameters.camera_height = pInitParam.init_param.camera_height;
+	m_uvc_grab_init_parameters.dma_ro = pInitParam.init_param.dma_ro;
 
 	//decrypt file
 	if (0 != _decrypt_bin_file(pInitParam))
@@ -1053,13 +1081,14 @@ int kd_uvc_dev_imp::_update_dev_cfg(const grabber_init_param& pInitParam)
 		return -1;
 	}
 
-#if 0
-	if (0 != strcmp(m_uvc_serialNumber, pInitParam.init_param.serialNumber))
+	if (pInitParam.init_param.overwrite_file)
 	{
-		printf("serialNumber not match(%s_%s)\n", m_uvc_serialNumber, pInitParam.init_param.serialNumber);
-		return -1;
+		if (0 != strcmp(m_uvc_serialNumber, pInitParam.init_param.serialNumber))
+		{
+			printf("serialNumber not match(%s_%s)\n", m_uvc_serialNumber, pInitParam.init_param.serialNumber);
+			return -1;
+		}
 	}
-#endif 
 
 	//update serialnumber and temperature
 	memcpy(m_uvc_grab_init_parameters.serialNumber, m_uvc_serialNumber, sizeof(m_uvc_serialNumber));
@@ -1087,6 +1116,8 @@ int kd_uvc_dev_imp::_update_dev_cfg(const grabber_init_param& pInitParam)
 		return -1;
 	}
 
+
+
 	bool bfind = false;
 	for (UVC_DEV_INFO_LIST::iterator itr = lst_dev_uvc_info.begin(); itr != lst_dev_uvc_info.end(); itr++)
 	{
@@ -1097,6 +1128,32 @@ int kd_uvc_dev_imp::_update_dev_cfg(const grabber_init_param& pInitParam)
 			break;
 		}
 	}
+
+	int i = 0;
+	for (UVC_DEV_INFO_LIST::iterator itr = lst_dev_uvc_info.begin(); itr != lst_dev_uvc_info.end(); itr++)
+	{
+		printf("[%d]serialNumber:%s\n", i, itr->serialNumber);
+		i++;
+	}
+	printf("=========k230 cnt:%d,update serialnumber:%s,find:%d,overwrite:%d\n", lst_dev_uvc_info.size(), m_uvc_serialNumber, bfind, pInitParam.init_param.overwrite_file);
+
+	//没有找到当前设备，并且overwrite_file为true，只有当前一个设备时才更新。
+	if (!bfind && pInitParam.init_param.overwrite_file && lst_dev_uvc_info.size() >1)
+	{
+		printf("find k230 device serialNumber:%s failed,update failed\n", m_uvc_serialNumber);
+		return -1;
+	}
+	else if (!bfind && !pInitParam.init_param.overwrite_file && lst_dev_uvc_info.size() > 1)
+	{
+		printf("find k230 device serialNumber:%s failed,update failed\n", m_uvc_serialNumber);
+		return -1;
+	}
+	else if (!bfind && !pInitParam.init_param.overwrite_file && lst_dev_uvc_info.size() == 1)
+	{
+		printf("find k230 device serialNumber:%s failed,update failed\n", m_uvc_serialNumber);
+		return -1;
+	}
+	
 
 	//transfer ref and conf file
 	//When will it be updated? Update only when no matching UVC serial number is found (currently not updated) or when forced to update.
@@ -1266,7 +1323,16 @@ int kd_uvc_dev_imp::_decrypt_bin_file(const grabber_init_param& pInitParam)
 	//printf("=====param_bin_name:%s\n", data_file_info.param_bin_name);
 	//printf("=====ref_size_:%d\n", data_file_info.ref_size_);
 	memset(m_uvc_serialNumber, 0, sizeof(m_uvc_serialNumber));
-	strncpy(m_uvc_serialNumber, m_calib_data.param_bin_name, sizeof(m_uvc_serialNumber));
+	if (pInitParam.init_param.overwrite_file)
+	{
+		strncpy(m_uvc_serialNumber, m_calib_data.param_bin_name, sizeof(m_uvc_serialNumber));
+	}
+	else
+	{
+		strncpy(m_uvc_serialNumber, pInitParam.init_param.serialNumber, sizeof(m_uvc_serialNumber));
+	}
+	
+	
 	//printf("=====serialNumber:%s\n", m_uvc_serialNumber);
 
 	m_pref_file_data = pfile_data + data_index;
@@ -1274,6 +1340,36 @@ int kd_uvc_dev_imp::_decrypt_bin_file(const grabber_init_param& pInitParam)
 
 	m_pconf_file_data = pfile_data + data_index + m_calib_data.ref_size_;
 	m_conf_file_data_len = file_size - data_index - m_calib_data.ref_size_;
+
+	//get camera info
+	unsigned char* p_buffer2_binparams = m_pconf_file_data;
+	//get ushort height width
+	unsigned char* p_buffer2_binparams_ushort = p_buffer2_binparams + 52;
+	unsigned short* p_params_ushort = reinterpret_cast<unsigned short*>(p_buffer2_binparams_ushort);
+
+	m_uvc_camera_info.ir_width = p_params_ushort[0];
+	m_uvc_camera_info.ir_height = p_params_ushort[1];
+	m_uvc_camera_info.rgb_width = p_params_ushort[2];
+	m_uvc_camera_info.rgb_height = p_params_ushort[3];
+
+	//get float - cx cy
+	m_uvc_camera_info.ir_fx = m_calib_data.info.reserve[0];
+	m_uvc_camera_info.ir_fy = m_calib_data.info.reserve[1];
+	m_uvc_camera_info.ir_cx = m_calib_data.info.reserve[2];
+	m_uvc_camera_info.ir_cy = m_calib_data.info.reserve[3];
+
+	unsigned char* p_buffer2_binparams_float = p_buffer2_binparams + 72;
+	float* p_params_float = reinterpret_cast<float*>(p_buffer2_binparams_float);
+	m_uvc_camera_info.rgb_fx = p_params_float[18];//rgb
+	m_uvc_camera_info.rgb_fy = p_params_float[19];
+	m_uvc_camera_info.rgb_cx = p_params_float[20];
+	m_uvc_camera_info.rgb_cy = p_params_float[21];
+	m_uvc_camera_info.depth_precision = p_params_float[24];
+
+	printf("bin file:%s param info,ir_width:%d,ir_height:%d,rgb_width:%d,rgb_height:%d,ir_fx:%f,ir_fy:%f,ir_cx:%f,ir_cy:%f,rgb_fx:%f,rgb_fy:%f,rgb_cx:%f,rgb_cy:%f,depth_precision:%f\n", \
+		pInitParam.init_param.cfg_file_path_name, m_uvc_camera_info.ir_width, m_uvc_camera_info.ir_height, m_uvc_camera_info.rgb_width, m_uvc_camera_info.rgb_height, \
+		m_uvc_camera_info.ir_fx, m_uvc_camera_info.ir_fy, m_uvc_camera_info.ir_cx, m_uvc_camera_info.ir_cy, m_uvc_camera_info.rgb_fx, m_uvc_camera_info.rgb_fy, \
+		m_uvc_camera_info.rgb_cx, m_uvc_camera_info.rgb_cy, m_uvc_camera_info.depth_precision);
 
 	return 0;
 }

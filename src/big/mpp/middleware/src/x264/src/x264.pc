@@ -1,0 +1,11 @@
+prefix=/home/sunxiaopeng/src/work/k230/k230_sdk/src/big/mpp/middleware/src/ffmpeg/x264/x264/x264lib
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: x264
+Description: H.264 (MPEG4 AVC) encoder library
+Version: 0.157.x
+Libs: -L${exec_prefix}/lib -lx264 -lpthread -lm -ldl
+Libs.private: 
+Cflags: -I${prefix}/include

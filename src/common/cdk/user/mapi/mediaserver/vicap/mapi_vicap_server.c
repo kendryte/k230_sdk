@@ -238,6 +238,12 @@ k_s32 kd_mapi_vicap_set_chn_attr(k_vicap_chn_set_info chn_info)
 k_s32 kd_mapi_vicap_start(k_vicap_dev vicap_dev)
 {
     k_s32 ret = 0;
+
+    printf("kd_mapi_vicap_start dev id is %d \n", vicap_dev);
+
+    if(sizeof(msg_vicap_sensor_info_t) != sizeof(k_vicap_sensor_info))
+        printf("msg_vicap_sensor_info_t != k_vicap_sensor_info \n");
+
     if(vicap_dev > VICAP_DEV_ID_MAX || vicap_dev < VICAP_DEV_ID_0)
     {
         mapi_vicap_error_trace("kd_mapi_vicap_start failed, dev_num %d out of range\n", vicap_dev);
@@ -357,4 +363,20 @@ k_s32 kd_mapi_vicap_set_mclk(k_vicap_mclk_id id, k_vicap_mclk_sel sel, k_u8 mclk
 k_s32 kd_mapi_vicap_tuning(char* string, k_u32 size, char** response, k_u32* response_len)
 {
     return kd_mpi_isp_tuning(string, size, response, response_len);
+}
+
+
+k_s32 kd_mapi_vicap_3d_mode_crtl(k_u8 mode_en)
+{
+    k_s32 ret = 0;
+
+    ret = kd_mpi_vicap_3d_mode_crtl((k_bool)mode_en);
+    printf("kd_mpi_vicap_3d_mode_crtl  mode_en is %d \n", mode_en);
+    
+    if(ret)
+    {
+        mapi_vicap_error_trace("kd_mapi_vicap_set_vi_drop_frame failed\n");
+    }
+
+    return K_SUCCESS;
 }

@@ -131,7 +131,13 @@ void video_proc(char *argv[])
         }
         #elif defined(CONFIG_BOARD_K230_CANMV_01STUDIO)
         {
-            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+            #if defined(STUDIO_HDMI)
+            {}
+            #else
+            {
+                cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+            }
+            #endif
         }
         #else
         {
@@ -431,30 +437,61 @@ void video_proc(char *argv[])
         }
         #elif defined(CONFIG_BOARD_K230_CANMV_01STUDIO)
         {
-            if (elapsed_ms_show<1000)
+            #if defined(STUDIO_HDMI)
             {
-                if (draw_state_ == UP)
+                if (elapsed_ms_show<1000)
                 {
-                    cv::putText(osd_frame, "UP", cv::Point(osd_height * 3/7, osd_width/2),cv::FONT_HERSHEY_COMPLEX, 3, cv::Scalar(255, 255, 195, 0), 2);
-                } else if (draw_state_ == RIGHT)
+                    if (draw_state_ == UP)
+                    {
+                        cv::putText(osd_frame, "UP", cv::Point(osd_width*3/7,osd_height/2),cv::FONT_HERSHEY_COMPLEX, 5, cv::Scalar(255, 255, 195, 0), 2);
+                    } else if (draw_state_ == RIGHT)
+                    {
+                        cv::putText(osd_frame, "LEFT", cv::Point(osd_width*3/7,osd_height/2),cv::FONT_HERSHEY_COMPLEX, 5, cv::Scalar(255, 255, 195, 0), 2);
+                    }else if (draw_state_ == DOWN)
+                    {
+                        cv::putText(osd_frame, "DOWN", cv::Point(osd_width*3/7,osd_height/2),cv::FONT_HERSHEY_COMPLEX, 5, cv::Scalar(255, 255, 195, 0), 2);
+                    }else if (draw_state_ == LEFT)
+                    {
+                        cv::putText(osd_frame, "RIGHT", cv::Point(osd_width*3/7,osd_height/2),cv::FONT_HERSHEY_COMPLEX, 5, cv::Scalar(255, 255, 195, 0), 2);
+                    }else if (draw_state_ == MIDDLE)
+                    {
+                        cv::putText(osd_frame, "MIDDLE", cv::Point(osd_width*3/7,osd_height/2),cv::FONT_HERSHEY_COMPLEX, 5, cv::Scalar(255, 255, 195, 0), 2);
+                    }
+
+                }else
                 {
-                    cv::putText(osd_frame, "LEFT", cv::Point(osd_height * 3/7, osd_width/2),cv::FONT_HERSHEY_COMPLEX, 3, cv::Scalar(255, 255, 195, 0), 2);
-                }else if (draw_state_ == DOWN)
-                {
-                    cv::putText(osd_frame, "DOWN", cv::Point(osd_height * 3/7, osd_width/2),cv::FONT_HERSHEY_COMPLEX, 3, cv::Scalar(255, 255, 195, 0), 2);
-                }else if (draw_state_ == LEFT)
-                {
-                    cv::putText(osd_frame, "RIGHT", cv::Point(osd_height * 3/7, osd_width/2),cv::FONT_HERSHEY_COMPLEX, 3, cv::Scalar(255, 255, 195, 0), 2);
-                }else if (draw_state_ == MIDDLE)
-                {
-                    cv::putText(osd_frame, "MIDDLE", cv::Point(osd_height * 3/7, osd_width/2),cv::FONT_HERSHEY_COMPLEX, 3, cv::Scalar(255, 255, 195, 0), 2);
+                    draw_state_ = TRIGGER;
                 }
 
-            }else
-            {
-                draw_state_ = TRIGGER;
             }
-            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+            #else
+            {
+                if (elapsed_ms_show<1000)
+                {
+                    if (draw_state_ == UP)
+                    {
+                        cv::putText(osd_frame, "UP", cv::Point(osd_height * 3/7, osd_width/2),cv::FONT_HERSHEY_COMPLEX, 3, cv::Scalar(255, 255, 195, 0), 2);
+                    } else if (draw_state_ == RIGHT)
+                    {
+                        cv::putText(osd_frame, "LEFT", cv::Point(osd_height * 3/7, osd_width/2),cv::FONT_HERSHEY_COMPLEX, 3, cv::Scalar(255, 255, 195, 0), 2);
+                    }else if (draw_state_ == DOWN)
+                    {
+                        cv::putText(osd_frame, "DOWN", cv::Point(osd_height * 3/7, osd_width/2),cv::FONT_HERSHEY_COMPLEX, 3, cv::Scalar(255, 255, 195, 0), 2);
+                    }else if (draw_state_ == LEFT)
+                    {
+                        cv::putText(osd_frame, "RIGHT", cv::Point(osd_height * 3/7, osd_width/2),cv::FONT_HERSHEY_COMPLEX, 3, cv::Scalar(255, 255, 195, 0), 2);
+                    }else if (draw_state_ == MIDDLE)
+                    {
+                        cv::putText(osd_frame, "MIDDLE", cv::Point(osd_height * 3/7, osd_width/2),cv::FONT_HERSHEY_COMPLEX, 3, cv::Scalar(255, 255, 195, 0), 2);
+                    }
+
+                }else
+                {
+                    draw_state_ = TRIGGER;
+                }
+                cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+            }
+            #endif
         }
         #else
         {

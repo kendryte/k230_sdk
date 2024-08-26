@@ -460,12 +460,13 @@ struct dfs_ramfs *dfs_ramfs_create(rt_uint8_t *pool, rt_size_t size)
     result = rt_memheap_init(&ramfs->memheap, "ramfs", data_ptr, size);
     if (result != RT_EOK)
         return NULL;
-    /* detach this memheap object from the system */
-    rt_object_detach((rt_object_t) & (ramfs->memheap));
+    // /* detach this memheap object from the system */
+    // rt_memheap_detach(&ramfs->memheap);
 
-    /* initialize ramfs object */
-    ramfs->magic = RAMFS_MAGIC;
-    ramfs->memheap.parent.type = RT_Object_Class_MemHeap | RT_Object_Class_Static;
+    // /* initialize ramfs object */
+    // ramfs->magic = RAMFS_MAGIC;
+    // ramfs->memheap.parent.type = RT_Object_Class_MemHeap | RT_Object_Class_Static;
+    // ramfs->memheap.lock.parent.parent.type = RT_Object_Class_Semaphore | RT_Object_Class_Static;
 
     /* initialize root directory */
     memset(&(ramfs->root), 0x00, sizeof(ramfs->root));

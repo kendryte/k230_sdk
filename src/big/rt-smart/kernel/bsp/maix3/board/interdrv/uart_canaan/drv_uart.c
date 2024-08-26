@@ -28,6 +28,8 @@
 #include <ioremap.h>
 #include "board.h"
 #include "drv_uart.h"
+#include "drv_pdma.h"
+#include <cache.h>
 #include "riscv_io.h"
 #include "board.h"
 #include "sysctl_clk.h"
@@ -132,6 +134,7 @@ struct kd_uart_device {
 };
 
 static uint32_t timeout = UART_TIMEOUT;
+static pdma_reg_t *pdma_reg;
 
 #define write32(addr, val) writel(val, (void*)(addr))
 #define read32(addr) readl((void*)(addr))
@@ -297,7 +300,7 @@ static void kd_uart_init(volatile void *uart_base, int index)
     /* 8 bits, no parity, one stop bit */
     write32(uart_base + UART_LCR, 0x03);
     /* Enable FIFO */
-    write32(uart_base + UART_FCR, 0x01 | UART_RECEIVE_FIFO_16 << 6);
+    write32(uart_base + UART_FCR, 0x3f | UART_RECEIVE_FIFO_16 << 6);
     /* No modem control DTR RTS */
     write32(uart_base + UART_MCR, 0x00);
     /* Clear line status */
@@ -309,7 +312,7 @@ static void kd_uart_init(volatile void *uart_base, int index)
     /* Set scratchpad */
     write32(uart_base + UART_SCH, 0x00);
     //enable uart rx irq
-    write32(uart_base + UART_IER, 0x01);
+    write32(uart_base + UART_IER, 0x81);
 }
 
 static rt_err_t uart_open(rt_device_t dev, rt_uint16_t oflag)
@@ -372,24 +375,32 @@ static rt_size_t uart_write(rt_device_t dev, rt_off_t pos, const void *buffer, r
 {
     struct kd_uart_device *kd_uart_device = (struct kd_uart_device *)dev->user_data;
     volatile void *base_addr = kd_uart_device->base;
+    int id = kd_uart_device->id;
+    uint32_t len = RT_ALIGN(size, 64);
+    uint8_t *buf = rt_malloc_align(len, 64);
+    rt_memcpy(buf, buffer, size);
+    rt_hw_cpu_dcache_clean((void*)buf, len);
+    usr_pdma_cfg_t pdma_cfg;
+    pdma_cfg.ch = id;
+    pdma_cfg.device = id * 2;
+    pdma_cfg.src_addr = buf;
+    pdma_cfg.dst_addr = 0x91400000 + id * 0x1000 + 0x30;
+    pdma_cfg.line_size = size;
+    pdma_cfg.pdma_ch_cfg.ch_src_type = TX;
+    pdma_cfg.pdma_ch_cfg.ch_dev_hsize = PSBYTE1;
+    pdma_cfg.pdma_ch_cfg.ch_dat_endian = PDEFAULT;
+    pdma_cfg.pdma_ch_cfg.ch_dev_blen = PBURST_LEN_16;
+    pdma_cfg.pdma_ch_cfg.ch_priority = 7;
+    pdma_cfg.pdma_ch_cfg.ch_dev_tout = 0xFFF;
+    while (k_pdma_config(pdma_reg, pdma_cfg) != 0)
+        rt_thread_mdelay(10);
+    k_pdma_start(pdma_reg, pdma_cfg.ch);
+    while (!(k_pdma_interrupt_stat(pdma_reg) & (PDONE_INT << pdma_cfg.ch)));
+    k_pdma_llt_free(pdma_reg, pdma_cfg.ch);
+    rt_free_align(buf);
+    while (!(read32(base_addr + UART_LSR) & UART_LSR_TEMT));
 
-    uint32_t i;
-    volatile uint32_t *sed_buf;
-    volatile uint32_t *sta;
-    uint8_t *buf = (uint8_t *)buffer;
-    int length = size;
-
-    sed_buf = (uint32_t *)(base_addr + UART_THR);
-    sta = (uint32_t *)(base_addr + UART_USR);
-
-    while (size)
-    {
-        while (!(read32(base_addr + UART_LSR) & 0x20));
-        *sed_buf = *buf;
-        buf ++; size --;
-    }
-
-    return (length);
+    return size;
 }
 
 
@@ -438,7 +449,7 @@ static rt_err_t  uart_control(rt_device_t dev, int cmd, void *args)
     value = (config->data_bits - 5) | (config->stop_bits << 2) | (config->parity << 3);
     write32(uart_base + UART_LCR, value & ~0x80);
 
-    write32(uart_base + UART_FCR, 0x01 | config->fifo_lenth << 6);
+    write32(uart_base + UART_FCR, 0x3f | config->fifo_lenth << 6);
 
     if (config->auto_flow)
         write32(uart_base + UART_MCR, (0x1 << 5 | 0x1 << 1));  //auto flow
@@ -449,7 +460,7 @@ static rt_err_t  uart_control(rt_device_t dev, int cmd, void *args)
     read32(uart_base + UART_RBR);
     read32(uart_base + UART_USR);
     read32(uart_base + UART_FCR);
-    write32(uart_base + UART_IER, 0x01);
+    write32(uart_base + UART_IER, 0x81);
 
     return RT_EOK;
 }
@@ -653,6 +664,7 @@ int kd_hw_uart_init(void)
     rt_kprintf("k230 uart4 register OK.\n");
 #endif
 #endif
+    pdma_reg = rt_ioremap((void *)PDMA_BASE_ADDR, PDMA_IO_SIZE);
 
     return ret;
 }

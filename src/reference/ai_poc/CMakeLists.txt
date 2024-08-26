@@ -22,6 +22,13 @@ link_directories(${nncase_sdk_root}/riscv64/nncase/lib/)
 # set vi_vo
 include_directories(./vi_vo)
 
+if (DEFINED DISPLAY_MODE)
+  message(${DISPLAY_MODE})
+  if (${DISPLAY_MODE} STREQUAL "hdmi")
+    add_definitions(-DSTUDIO_HDMI)
+  endif()
+endif()
+
 # 定义要排除的目录列表
 set(exclude_dirs "cmake" "k230_bin" "shell" "out" "llamac" ".git" "vi_vo")
 file(GLOB files "${CMAKE_CURRENT_SOURCE_DIR}/*")

@@ -39,9 +39,9 @@ FLV_COBJS:= $(addprefix $(BUILD_DIR)/,$(patsubst %.c,%.o,$(notdir $(FLV_SRCS))))
 
 
 all:$(BIN)
-	@rm -f $(MP4_COBJS)
-	@rm -f $(MOV_COBJS)
-	@rm -f $(FLV_COBJS)
+	#@rm -f $(MP4_COBJS)
+	#@rm -f $(MOV_COBJS)
+	#@rm -f $(FLV_COBJS)
 
 $(MOV_COBJS) : $(BUILD_DIR)/%.o: $(MOV_SRC)/%.c
 	$(CC) -c -fPIC $(CFLAGS) $< -o $@ $(INCS)  $(DEFINE)

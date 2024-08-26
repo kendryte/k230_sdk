@@ -130,6 +130,50 @@ void dma_inv_range(unsigned long start, unsigned long end)
 	sync_is();
 }
 
+void dcache_wb_range(unsigned long start, unsigned long end)
+{
+    unsigned long i = start & ~(L1_CACHE_BYTES - 1);
+
+    for (; i < end; i += L1_CACHE_BYTES)
+    {
+        /* asm volatile("dcache.cva %0\n"::"r"(i):"memory"); */
+        /*
+         * compiler always use a5 = i.
+         * a6 not used, so we use a6 here.
+         */
+        asm volatile("mv a6, %0\n" ::"r"(i)
+                     : "memory");         /* a6 = a5(i) */
+        asm volatile(".long 0x0257800b"); /* dcache.cva a6 */
+    }
+}
+
+void dcache_inv_range(unsigned long start, unsigned long end)
+{
+    unsigned long i = start & ~(L1_CACHE_BYTES - 1);
+
+    for (; i < end; i += L1_CACHE_BYTES)
+    {
+        /* asm volatile("dcache.iva %0\n"::"r"(i):"memory"); */
+        asm volatile("mv a6, %0\n" ::"r"(i)
+                     : "memory");         /* a6 = a5(i) */
+        asm volatile(".long 0x0268000b"); /* dcache.iva a6 */
+    }
+}
+
+void dcache_wbinv_range(unsigned long start, unsigned long end)
+{
+    unsigned long i = start & ~(L1_CACHE_BYTES - 1);
+
+    for (; i < end; i += L1_CACHE_BYTES)
+    {
+        /* asm volatile("dcache.civa %0\n"::"r"(i):"memory"); */
+        asm volatile("mv a6, %0\n" ::"r"(i)
+                     : "memory");         /* a6 = a5(i) */
+        asm volatile(".long 0x0278000b"); /* dcache.civa a6 */
+    }
+}
+
+
 #define THEAD_VENDOR_ID       0x5b7
 
 static int __init thead_dma_init(void)

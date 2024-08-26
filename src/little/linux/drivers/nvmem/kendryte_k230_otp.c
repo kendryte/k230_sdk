@@ -33,6 +33,13 @@ struct otp_priv {
     struct nvmem_config *config;
 };
 
+static uint32_t be2le(uint32_t var)
+{
+    return (((0xff000000 & var) >> 24) |
+            ((0x00ff0000 & var) >> 8) |
+            ((0x0000ff00 & var) << 8) |
+            ((0x000000ff & var) << 24));
+}
 
 /**
  * @brief After the OTP is powered on, the driver can read the sysctl register SOC_BOOT_CTL 
@@ -73,7 +80,7 @@ static int k230_otp_read(void *context, unsigned int offset,
 {
     struct otp_priv *priv = context;
     uint32_t *outbuf = (uint32_t *)val;
-    uint32_t *buf;
+    uint32_t *out32;
     uint32_t WORD_SIZE = priv->config->word_size;
     uint32_t wlen = bytes / WORD_SIZE;
     uint32_t word;
@@ -84,14 +91,18 @@ static int k230_otp_read(void *context, unsigned int offset,
 
     if(wlen > 0)
     {
-        for(i=0; i<wlen; i++)
-            outbuf[i] = readl(priv->base + OTP_REG_OFFSET + offset + i*WORD_SIZE);
+        memcpy(outbuf, (void *)(priv->base + OTP_REG_OFFSET + offset), wlen * WORD_SIZE);
+
+        out32 = (uint32_t *)outbuf;
+        for (i = 0; i < wlen; ++i)
+            *(out32 + i) = be2le(*(out32 + i));
     }
 
     if(bytes % WORD_SIZE != 0)
     {
         outbuf += wlen * WORD_SIZE;
-        word = readl(priv->base + OTP_REG_OFFSET + offset + wlen);
+        word = readl(priv->base + OTP_REG_OFFSET + offset + wlen * WORD_SIZE);
+        word = be2le(word);
         memcpy(outbuf, &word, bytes % WORD_SIZE);
     }
 
@@ -112,18 +123,23 @@ static int k230_otp_write(void *context, unsigned int offset,
 				 void *val, size_t bytes)
 {
     struct otp_priv *priv = context;
-    uint32_t *inbuf = (uint32_t *)val;
+    uint8_t *inbuf = (uint8_t *)val;
     uint32_t WORD_SIZE = priv->config->word_size;
-    uint32_t wlen = bytes / WORD_SIZE;
     uint32_t i = 0;
 
     if(true == otp_get_status(OTP_BYPASS_STATUS))
         return -1;
 
-    while(wlen--)
+    for (i=0; i<bytes; i+=4)
     {
-        writel(inbuf[i], priv->base + OTP_USER_START_OFFSET + offset + i);
-        i += 4;
+        union {
+            uint32_t word;
+            uint8_t byte[4];
+        } otp_word;
+        for (int8_t j=3;j>=0;j--)
+            otp_word.byte[j] = ((i+3-j) < bytes) ? inbuf[i+3-j] : 0x00;
+            
+        writel(otp_word.word, priv->base + OTP_USER_START_OFFSET + offset + i);
     }
 
     return 0;

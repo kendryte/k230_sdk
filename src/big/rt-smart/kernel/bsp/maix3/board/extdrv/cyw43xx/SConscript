@@ -1,0 +1,13 @@
+# RT-Thread building script for component
+
+from building import *
+
+cwd = GetCurrentDir()
+path = [cwd]
+path += [cwd + '/src']
+path += [cwd + '/firmware']
+src = Glob('src/*.c')
+
+group = DefineGroup('cyw43xx', src, depend = ['RT_USING_CYW43XX'], CPPPATH = path)
+
+Return('group')

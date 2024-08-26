@@ -42,13 +42,15 @@ OutputSocket::~OutputSocket() {
 
 Boolean OutputSocket::write(struct sockaddr_storage const& addressAndPort, u_int8_t ttl,
 			    unsigned char* buffer, unsigned bufferSize) {
-  if ((unsigned)ttl == fLastSentTTL) {
-    // Optimization: Don't do a 'set TTL' system call again
-    if (!writeSocket(env(), socketNum(), addressAndPort, buffer, bufferSize)) return False;
-  } else {
-    if (!writeSocket(env(), socketNum(), addressAndPort, ttl, buffer, bufferSize)) return False;
-    fLastSentTTL = (unsigned)ttl;
-  }
+  // if ((unsigned)ttl == fLastSentTTL) {
+  //   // Optimization: Don't do a 'set TTL' system call again
+  //   if (!writeSocket(env(), socketNum(), addressAndPort, buffer, bufferSize)) return False;
+  // } else {
+  //   printf("=============bbbbb\n");
+  //   if (!writeSocket(env(), socketNum(), addressAndPort, ttl, buffer, bufferSize)) return False;
+  //   fLastSentTTL = (unsigned)ttl;
+  // }
+  if (!writeSocket(env(), socketNum(), addressAndPort, buffer, bufferSize)) return False;
 
   if (sourcePortNum() == 0) {
     // Now that we've sent a packet, we can find out what the
@@ -229,7 +231,7 @@ void Groupsock::addDestination(struct sockaddr_storage const& addr, Port const& 
       return;
     }
   }
-  
+
   fDests = createNewDestRecord(addr, port, 255, sessionId, fDests);
 }
 
@@ -317,7 +319,7 @@ Boolean Groupsock::handleRead(unsigned char* buffer, unsigned bufferMaxSize,
 Boolean Groupsock::wasLoopedBackFromUs(UsageEnvironment& env,
 				       struct sockaddr_storage const& fromAddressAndPort) {
   if (fromAddressAndPort.ss_family != AF_INET) return False; // later update for IPv6
-  
+
   struct sockaddr_in const& fromAddressAndPort4 = (struct sockaddr_in const&)fromAddressAndPort;
   if (fromAddressAndPort4.sin_addr.s_addr == ourIPv4Address(env) ||
       fromAddressAndPort4.sin_addr.s_addr == 0x7F000001/*127.0.0.1*/) {

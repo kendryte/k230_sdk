@@ -8,7 +8,13 @@ top_role="slave"
 ipcm_irq=109
 max_nodes=2
 cdev=y
+virt_tty=y
 sharefs=y
+
+virt_tty_role="client"
+virt_tty_server_id=0
+virt_tty_phys=0x1f9000
+virt_tty_size=0x4000
 
 shm_phys_1to0=0x100000
 shm_size_1to0=0x80000

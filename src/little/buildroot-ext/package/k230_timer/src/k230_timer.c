@@ -40,12 +40,13 @@ int main(int argc, char* argv[])
    unsigned int timeout;
    int cnt = 0;
 
-   if (argc < 2)
+   if (argc < 3)
       return -1;
 
-   timeout = atoi(argv[1]);
+   char *dev = argv[1];
+   timeout = atoi(argv[2]);
 
-   fd = open("/dev/timer5", O_RDONLY);
+   fd = open(dev, O_RDONLY);
    if (fd == -1) {
       perror("Failed to open device file");
       return 1;      

@@ -285,7 +285,7 @@ static long ipcm_dev_ioctl(struct file *file,
 			if (ret) {
 				ipcm_trace(TRACE_MSG, "connect handle[%d:%d] failed!",
 						attr.target, attr.port);
-				return 1;
+				return ret;
 			}
 			break;
 		case _IOC_NR(K_IPCM_IOC_DISCONNECT):

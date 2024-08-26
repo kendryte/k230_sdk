@@ -21,6 +21,7 @@ static int g_work_mode = 0;
 static int g_frame_rate = 30;
 static int g_sensor_type0 = 20;
 static int g_sensor_type1 = 19;
+static int g_dma_ro = DEGREE_90;
 
 static DWORD g_yuv_data_start_time = 0;
 static DWORD g_rgb_data_start_time = 0;
@@ -89,20 +90,20 @@ static int save_rgb_packet( uint8_t* data, int size)
 	return 0;
 }
 
-static int save_yuv_packet(uvc_data_type type,uint8_t* data, int size,int cnt)
+static int save_yuv_packet(uvc_data_type type,uint8_t* data, unsigned long long pts, int size,int cnt)
 {
 	char sFilename[256];
 	if (type == KD_UVC_IR_DATA_TYPE)
 	{
-		sprintf(sFilename, "./data/test%d_ir.yuv", cnt);
+		sprintf(sFilename, "./data/test%d_ir_%lld.yuv", cnt,pts);
 	}
 	else if (type == KD_UVC_RGB_DATA_TYPE)
 	{
-		sprintf(sFilename, "./data/test%d_rgb.yuv", cnt);
+		sprintf(sFilename, "./data/test%d_rgb_%lld.yuv", cnt,pts);
 	}
 	else if (type == KD_UVC_SPECKLE_DATA_TYPE)
 	{
-		sprintf(sFilename, "./data/test%d_speckle.yuv", cnt);
+		sprintf(sFilename, "./data/test%d_speckle_%lld.yuv", cnt,pts);
 	}
 	FILE* fp = fopen(sFilename, "wb");
 	fwrite(data, size, 1, fp);
@@ -133,8 +134,8 @@ static void print_data_log(uvc_data_type data_type, unsigned int frame_number, u
 		}
 
 		{
-			//sprintf(slog, "Grab_dep_cnt:%d,PTS:%lld(%llu_%d),Data_len:%d,temperature:%f\n", frame_number,pts, g_frame_recv_timestamp, g_frame_recv_timestamp - pts, data_len, temperature);
-			sprintf(slog, "Grab_dep_cnt:%d,PTS:%llu,Data_len:%d,temperature:%f\n", frame_number, pts, data_len, temperature);
+			sprintf(slog, "Grab_dep_cnt:%d,PTS:%lld(%llu_%d),Data_len:%d,temperature:%f\n", frame_number,pts, g_frame_recv_timestamp, g_frame_recv_timestamp - pts, data_len, temperature);
+			//sprintf(slog, "Grab_dep_cnt:%d,PTS:%llu,Data_len:%d,temperature:%f\n", frame_number, pts, data_len, temperature);
 			fwrite(slog, strlen(slog)+1, 1, g_log_fp);
 		}	
 
@@ -142,8 +143,8 @@ static void print_data_log(uvc_data_type data_type, unsigned int frame_number, u
 		{
 			if (frame_number % 30 == 0)
 			{
-				//printf("Grab_dep_cnt:%d,Average FrameRate = %.2f Fps,PTS:%lld(%llu_%d),Data_len:%d,temperature:%f\n", frame_number, frame_number * 1000.0 / (GetTickCount() - g_rgb_data_start_time), pts, g_frame_recv_timestamp, g_frame_recv_timestamp -pts, data_len, temperature);
-				printf("Grab_dep_cnt:%d,Average FrameRate = %.2f Fps,PTS:%llu,Data_len:%d,temperature:%f\n", frame_number, frame_number * 1000.0 / (GetTickCount() - g_rgb_data_start_time), pts,  data_len, temperature);
+				printf("Grab_dep_cnt:%d,Average FrameRate = %.2f Fps,PTS:%lld(%llu_%d),Data_len:%d,temperature:%f\n", frame_number, frame_number * 1000.0 / (GetTickCount() - g_rgb_data_start_time), pts, g_frame_recv_timestamp, g_frame_recv_timestamp -pts, data_len, temperature);
+				//printf("Grab_dep_cnt:%d,Average FrameRate = %.2f Fps,PTS:%llu,Data_len:%d,temperature:%f\n", frame_number, frame_number * 1000.0 / (GetTickCount() - g_rgb_data_start_time), pts,  data_len, temperature);
 			}
 		}
 
@@ -156,8 +157,8 @@ static void print_data_log(uvc_data_type data_type, unsigned int frame_number, u
 		}
 
 		{
-			//sprintf(slog, "Grab_yuv_cnt:%d,PTS:%lld(%llu_%d),Data_len:%d,temperature:%f\n", frame_number,pts, g_frame_recv_timestamp, g_frame_recv_timestamp - pts, data_len, temperature);
-			sprintf(slog, "Grab_yuv_cnt:%d,PTS:%llu,Data_len:%d,temperature:%f\n", frame_number, pts,data_len, temperature);
+			sprintf(slog, "Grab_yuv_cnt:%d,PTS:%lld(%llu_%d),Data_len:%d,temperature:%f\n", frame_number,pts, g_frame_recv_timestamp, g_frame_recv_timestamp - pts, data_len, temperature);
+			//sprintf(slog, "Grab_yuv_cnt:%d,PTS:%llu,Data_len:%d,temperature:%f\n", frame_number, pts,data_len, temperature);
 			fwrite(slog, strlen(slog) + 1, 1, g_log_fp);
 		}
 
@@ -165,8 +166,8 @@ static void print_data_log(uvc_data_type data_type, unsigned int frame_number, u
 		{
 			if (frame_number % 30 == 0)
 			{
-				//printf("Grab_yuv_cnt:%d,Average FrameRate = %.2f Fps,PTS:%lld(%llu_%d),Data_len:%d,temperature:%f\n", frame_number, frame_number * 1000.0 / (GetTickCount() - g_yuv_data_start_time), pts, g_frame_recv_timestamp, g_frame_recv_timestamp - pts, data_len, temperature);
-				printf("Grab_yuv_cnt:%d,Average FrameRate = %.2f Fps,PTS:%llu,Data_len:%d,temperature:%f\n", frame_number, frame_number * 1000.0 / (GetTickCount() - g_yuv_data_start_time), pts,  data_len, temperature);
+				printf("Grab_yuv_cnt:%d,Average FrameRate = %.2f Fps,PTS:%lld(%llu_%d),Data_len:%d,temperature:%f\n", frame_number, frame_number * 1000.0 / (GetTickCount() - g_yuv_data_start_time), pts, g_frame_recv_timestamp, g_frame_recv_timestamp - pts, data_len, temperature);
+				//printf("Grab_yuv_cnt:%d,Average FrameRate = %.2f Fps,PTS:%llu,Data_len:%d,temperature:%f\n", frame_number, frame_number * 1000.0 / (GetTickCount() - g_yuv_data_start_time), pts,  data_len, temperature);
 			}
 		}
 	}
@@ -178,7 +179,8 @@ static void print_data_log(uvc_data_type data_type, unsigned int frame_number, u
 		}
 
 		{
-			sprintf(slog, "Grab_ir_cnt:%d,PTS:%llu,Data_len:%d,temperature:%f\n", frame_number, pts, data_len, temperature);
+			sprintf(slog, "Grab_ir _cnt:%d,PTS:%lld(%llu_%d),Data_len:%d,temperature:%f\n", frame_number, pts, g_frame_recv_timestamp, g_frame_recv_timestamp - pts, data_len, temperature);
+			//sprintf(slog, "Grab_ir_cnt:%d,PTS:%llu,Data_len:%d,temperature:%f\n", frame_number, pts, data_len, temperature);
 			fwrite(slog, strlen(slog) + 1, 1, g_log_fp);
 		}
 
@@ -186,7 +188,8 @@ static void print_data_log(uvc_data_type data_type, unsigned int frame_number, u
 		{
 			if (frame_number % 30 == 0)
 			{
-				printf("Grab_ir_cnt:%d,Average FrameRate = %.2f Fps,PTS:%llu,Data_len:%d,temperature:%f\n", frame_number, frame_number * 1000.0 / (GetTickCount() - g_ir_data_start_time), pts, data_len, temperature);
+				//printf("Grab_ir_cnt:%d,Average FrameRate = %.2f Fps,PTS:%llu,Data_len:%d,temperature:%f\n", frame_number, frame_number * 1000.0 / (GetTickCount() - g_ir_data_start_time), pts, data_len, temperature);
+				printf("Grab_ir_cnt:%d,Average FrameRate = %.2f Fps,PTS:%lld(%llu_%d),Data_len:%d,temperature:%f\n", frame_number, frame_number * 1000.0 / (GetTickCount() - g_ir_data_start_time), pts, g_frame_recv_timestamp, g_frame_recv_timestamp - pts, data_len, temperature);
 			}
 		}
 
@@ -199,7 +202,9 @@ static void print_data_log(uvc_data_type data_type, unsigned int frame_number, u
 		}
 
 		{
-			sprintf(slog, "Grab_speckle_cnt:%d,PTS:%llu,Data_len:%d,temperature:%f\n", frame_number, pts, data_len, temperature);
+			//sprintf(slog, "Grab_speckle_cnt:%d,PTS:%llu,Data_len:%d,temperature:%f\n", frame_number, pts, data_len, temperature);
+			sprintf(slog, "Grab_speckle_cnt:%d,PTS:%lld(%llu_%d),Data_len:%d,temperature:%f\n", frame_number, pts, g_frame_recv_timestamp, g_frame_recv_timestamp - pts, data_len, temperature);
+
 			fwrite(slog, strlen(slog) + 1, 1, g_log_fp);
 		}
 
@@ -207,12 +212,14 @@ static void print_data_log(uvc_data_type data_type, unsigned int frame_number, u
 		{
 			if (frame_number % 30 == 0)
 			{
-				printf("Grab_speckle_cnt:%d,Average FrameRate = %.2f Fps,PTS:%llu,Data_len:%d,temperature:%f\n", frame_number, frame_number * 1000.0 / (GetTickCount() - g_speckle_data_start_time), pts, data_len, temperature);
+				//printf("Grab_speckle_cnt:%d,Average FrameRate = %.2f Fps,PTS:%llu,Data_len:%d,temperature:%f\n", frame_number, frame_number * 1000.0 / (GetTickCount() - g_speckle_data_start_time), pts, data_len, temperature);
+				printf("Grab_speckle_cnt:%d,Average FrameRate = %.2f Fps,PTS:%lld(%llu_%d),Data_len:%d,temperature:%f\n", frame_number, frame_number * 1000.0 / (GetTickCount() - g_speckle_data_start_time), pts, g_frame_recv_timestamp, g_frame_recv_timestamp - pts, data_len, temperature);
 			}
 		}
 	}
 }
 
+#if 1
 static void uvc_grab_frame_cb(uvc_grab_all_frame_info* pframe_info)
 {
 	g_frame_recv_timestamp = get_system_time_microsecond();
@@ -229,38 +236,21 @@ static void uvc_grab_frame_cb(uvc_grab_all_frame_info* pframe_info)
 		//printf("depth frame:width:%d,height:%d,tx:%.2f\n", pframe_info->frame_depth->width, pframe_info->frame_depth->height, pframe_info->temperature);
 	}
 
+
 	//image
-	if (g_grab_image_mode == GRAB_IMAGE_MODE_IR_DEPTH)
+	if (pframe_info->frame_rgb != nullptr)
 	{
-		//IR from RGB
-		if (pframe_info->frame_rgb != nullptr)
+		print_data_log(KD_UVC_RGB_DATA_TYPE, g_rgb_frame_number++/*pframe_info->frame_rgb->frame_number*/, pframe_info->frame_rgb->pts, pframe_info->frame_rgb->data_len, pframe_info->temperature);
+
+		if (g_save_file)
 		{
-			print_data_log(KD_UVC_IR_DATA_TYPE, g_rgb_frame_number++/*pframe_info->frame_rgb->frame_number*/, pframe_info->frame_rgb->pts, pframe_info->frame_rgb->data_len, pframe_info->temperature);
-
-			if (g_save_file)
-			{
-				//save_rgb_packet(uvc_data, data_len);
-				save_yuv_packet(KD_UVC_IR_DATA_TYPE, pframe_info->frame_rgb->uvc_data, pframe_info->frame_rgb->data_len, pframe_info->frame_rgb->frame_number);
-			}
-
-			//printf("rgb frame:width:%d,height:%d,tx:%.2f\n", pframe_info->frame_rgb->width, pframe_info->frame_rgb->height, pframe_info->temperature);
+			//save_rgb_packet(uvc_data, data_len);
+			save_yuv_packet(KD_UVC_RGB_DATA_TYPE, pframe_info->frame_rgb->uvc_data, pframe_info->frame_rgb->pts, pframe_info->frame_rgb->data_len, pframe_info->frame_rgb->frame_number);
 		}
-	}
-	else
-	{
-		if (pframe_info->frame_rgb != nullptr)
-		{
-			print_data_log(KD_UVC_RGB_DATA_TYPE, g_rgb_frame_number++/*pframe_info->frame_rgb->frame_number*/, pframe_info->frame_rgb->pts, pframe_info->frame_rgb->data_len, pframe_info->temperature);
 
-			if (g_save_file)
-			{
-				//save_rgb_packet(uvc_data, data_len);
-				save_yuv_packet(KD_UVC_RGB_DATA_TYPE, pframe_info->frame_rgb->uvc_data, pframe_info->frame_rgb->data_len, pframe_info->frame_rgb->frame_number);
-			}
-
-			//printf("rgb frame:width:%d,height:%d,tx:%.2f\n", pframe_info->frame_rgb->width, pframe_info->frame_rgb->height, pframe_info->temperature);
-		}
+		//printf("rgb frame:width:%d,height:%d,tx:%.2f\n", pframe_info->frame_rgb->width, pframe_info->frame_rgb->height, pframe_info->temperature);
 	}
+
 
 	//ir
 	if (pframe_info->frame_ir != nullptr)
@@ -270,7 +260,7 @@ static void uvc_grab_frame_cb(uvc_grab_all_frame_info* pframe_info)
 		if (g_save_file)
 		{
 			//save_rgb_packet(uvc_data, data_len);
-			save_yuv_packet(KD_UVC_IR_DATA_TYPE,pframe_info->frame_ir->uvc_data, pframe_info->frame_ir->data_len, pframe_info->frame_ir->frame_number);
+			save_yuv_packet(KD_UVC_IR_DATA_TYPE,pframe_info->frame_ir->uvc_data, pframe_info->frame_ir->pts, pframe_info->frame_ir->data_len, pframe_info->frame_ir->frame_number);
 		}
 		//printf("ir frame:width:%d,height:%d,tx:%.2f\n", pframe_info->frame_ir->width, pframe_info->frame_ir->height, pframe_info->temperature);
 	}
@@ -283,11 +273,33 @@ static void uvc_grab_frame_cb(uvc_grab_all_frame_info* pframe_info)
 		if (g_save_file)
 		{
 			//save_rgb_packet(uvc_data, data_len);
-			save_yuv_packet(KD_UVC_SPECKLE_DATA_TYPE,pframe_info->frame_speckle->uvc_data, pframe_info->frame_speckle->data_len, pframe_info->frame_speckle->frame_number);
+			save_yuv_packet(KD_UVC_SPECKLE_DATA_TYPE,pframe_info->frame_speckle->uvc_data, pframe_info->frame_speckle->pts, pframe_info->frame_speckle->data_len, pframe_info->frame_speckle->frame_number);
 		}
 		//printf("speckle frame:width:%d,height:%d,tx:%.2f\n", pframe_info->frame_speckle->width, pframe_info->frame_speckle->height, pframe_info->temperature);
 	}
 }
+#else
+static void uvc_grab_frame_cb(uvc_grab_all_frame_info* pframe_info)
+{
+	static char slog[256];
+	if (pframe_info->frame_rgb != nullptr && pframe_info->frame_depth != nullptr)
+	{
+		snprintf(slog, 256, "cnt:%-5d ,%s%-20lld,  %s%-20lld, %s%-10d\n", pframe_info->frame_rgb->frame_number, "yuv:", pframe_info->frame_rgb->pts, "depth:", pframe_info->frame_depth->pts, "diff:", pframe_info->frame_rgb->pts - pframe_info->frame_depth->pts);
+		fwrite(slog, strlen(slog) + 1, 1, g_log_fp);
+	}
+	else if (pframe_info->frame_rgb != nullptr && pframe_info->frame_ir != nullptr)
+	{
+		snprintf(slog, 256, "cnt:%-5d ,%s%-20lld,  %s%-20lld, %s%-10d\n", pframe_info->frame_rgb->frame_number, "yuv:", pframe_info->frame_rgb->pts, "ir:", pframe_info->frame_ir->pts, "diff:", pframe_info->frame_rgb->pts - pframe_info->frame_ir->pts);
+		fwrite(slog, strlen(slog) + 1, 1, g_log_fp);
+	}
+	else if (pframe_info->frame_rgb != nullptr && pframe_info->frame_speckle != nullptr)
+	{
+		snprintf(slog, 256, "cnt:%-5d ,%s%-20lld,  %s%-20lld, %s%-10d\n", pframe_info->frame_rgb->frame_number, "yuv:", pframe_info->frame_rgb->pts, "speckle:", pframe_info->frame_speckle->pts, "diff:", pframe_info->frame_rgb->pts - pframe_info->frame_speckle->pts);
+		fwrite(slog, strlen(slog) + 1, 1, g_log_fp);
+	}
+
+}
+#endif 
 
 static void uvc_snap_frame_cb(uvc_grab_all_frame_info* pframe_info)
 {
@@ -303,7 +315,7 @@ static void uvc_snap_frame_cb(uvc_grab_all_frame_info* pframe_info)
 	{
 		if (g_save_file)
 		{
-			save_yuv_packet(KD_UVC_RGB_DATA_TYPE,pframe_info->frame_rgb->uvc_data, pframe_info->frame_rgb->data_len, pframe_info->frame_rgb->frame_number);
+			save_yuv_packet(KD_UVC_RGB_DATA_TYPE,pframe_info->frame_rgb->uvc_data, pframe_info->frame_rgb->pts, pframe_info->frame_rgb->data_len, pframe_info->frame_rgb->frame_number);
 		}
 	}
 
@@ -311,7 +323,7 @@ static void uvc_snap_frame_cb(uvc_grab_all_frame_info* pframe_info)
 	{
 		if (g_save_file)
 		{
-			save_yuv_packet(KD_UVC_IR_DATA_TYPE, pframe_info->frame_ir->uvc_data, pframe_info->frame_ir->data_len, pframe_info->frame_ir->frame_number);
+			save_yuv_packet(KD_UVC_IR_DATA_TYPE, pframe_info->frame_ir->uvc_data, pframe_info->frame_ir->pts, pframe_info->frame_ir->data_len, pframe_info->frame_ir->frame_number);
 		}
 	}
 
@@ -319,13 +331,13 @@ static void uvc_snap_frame_cb(uvc_grab_all_frame_info* pframe_info)
 	{
 		if (g_save_file)
 		{
-			save_yuv_packet(KD_UVC_SPECKLE_DATA_TYPE, pframe_info->frame_speckle->uvc_data, pframe_info->frame_speckle->data_len, pframe_info->frame_speckle->frame_number);
+			save_yuv_packet(KD_UVC_SPECKLE_DATA_TYPE, pframe_info->frame_speckle->uvc_data, pframe_info->frame_speckle->pts, pframe_info->frame_speckle->data_len, pframe_info->frame_speckle->frame_number);
 		}
 	}
 }
 
 
-static int _grab_uvc_data(int frame_rate)
+static int _grab_uvc_data(int frame_rate,char* serialNumber)
 {
 	char sFilename[256];
 	sprintf(sFilename, "./data/data.txt");
@@ -334,11 +346,16 @@ static int _grab_uvc_data(int frame_rate)
 	kd_uvc_dev* p_uvc_dev = kd_create_uvc_dev();
 	grabber_init_param init_param;
 	init_param.init_param.camera_fps = frame_rate;
-	init_param.init_param.overwrite_file = false;
+	init_param.init_param.overwrite_file = true;
 	init_param.init_param.sensor_type[0] = g_sensor_type0;
 	init_param.init_param.sensor_type[1] = g_sensor_type1;
-	init_param.init_param.grab_mode = g_grab_image_mode;
-	sprintf(init_param.init_param.serialNumber, "%s", "0701");
+	init_param.init_param.grab_mode = g_grab_image_mode; 
+	init_param.init_param.dma_ro = g_dma_ro;
+
+	if (serialNumber != nullptr)
+	{
+		sprintf(init_param.init_param.serialNumber, "%s", serialNumber);//modify
+	}
 
 	sprintf(init_param.init_param.cfg_file_path_name, "%s", g_cfg_file_path_name);
 
@@ -455,6 +472,8 @@ static void usage(const char* argv0)
 	printf("-r <fps>: set fps.\n");
 	printf("-a <sensor type0>:sensor type0,default is 20.\n");
 	printf("-b <sensor type1>:sensor type1,default is 19.\n");
+	printf("-n <init serialnumber>:init seialnumber,default is 0701.\n");
+	printf("-d <gdma ro>:0: Rotate 0, 1: Rotate 90, 2: Rotate 180, 3:Rotate 270\n");
 }
 
 extern int test_file_decrpt();
@@ -470,8 +489,9 @@ int main(int argc, char* argv[])
 	int opt;
 	char* transfer_filename = nullptr;
 	char* dst_filename = nullptr;
+	char* serialNumber = (char*)"0701";
 	
-	while ((opt = getopt(argc, argv, (char*)"hs:m:i:o:f:t:r:a:b:")) != -1)
+	while ((opt = getopt(argc, argv, (char*)"hs:m:i:o:f:t:r:a:b:n:d:")) != -1)
 	{
 		switch (opt)
 		{
@@ -505,6 +525,12 @@ int main(int argc, char* argv[])
 			case 'b':
 				g_sensor_type1 = atoi(optarg);
 				break;
+			case 'n':
+				serialNumber = optarg;
+				break;
+			case 'd':
+				g_dma_ro = atoi(optarg);
+				break;
 			default:
 				printf("Invalid option '-%c'\n", opt);
 				usage(argv[0]);
@@ -514,8 +540,8 @@ int main(int argc, char* argv[])
 
 	if (g_work_mode == 0)
 	{
-		printf("work mode:%d,save file %d,ref/cfg file:%s,grab image mode:%d,framerate:%d,sensor type0:%d,sensor type1:%d\n", g_work_mode, g_save_file, g_cfg_file_path_name, g_grab_image_mode,g_frame_rate, g_sensor_type0, g_sensor_type1);
-		_grab_uvc_data(g_frame_rate);
+		printf("work mode:%d,save file %d,ref/cfg file:%s,grab image mode:%d,framerate:%d,sensor type0:%d,sensor type1:%d,serialNumber:%s\n", g_work_mode, g_save_file, g_cfg_file_path_name, g_grab_image_mode,g_frame_rate, g_sensor_type0, g_sensor_type1, serialNumber);
+		_grab_uvc_data(g_frame_rate, serialNumber);
 	}
 	else if (g_work_mode == 1)
 	{

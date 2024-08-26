@@ -680,6 +680,11 @@ static struct mtd_info *get_mtd_by_name(const char *name)
 	return mtd;
 }
 
+static bool mtd_is_aligned_with_block_size(struct mtd_info *mtd, u64 size)
+{
+	return !do_div(size, mtd->erasesize);
+}
+
 static int k230_load_sys_from_spi_nand( en_boot_sys_t sys, ulong buff)
 {
     //g_bootmod
@@ -716,7 +721,7 @@ static int k230_load_sys_from_spi_nand( en_boot_sys_t sys, ulong buff)
 	io_op.oobbuf = NULL;
     end = off+len;
 	while (off < end) {
-		if (mtd_block_isbad(mtd, off)) {
+		if (mtd_is_aligned_with_block_size(mtd, off) && mtd_block_isbad(mtd, off)) {
 			off += blocksize;
 		} else {
 			io_op.datbuf = &buf[amount_loaded];
@@ -739,7 +744,7 @@ static int k230_load_sys_from_spi_nand( en_boot_sys_t sys, ulong buff)
     {
         end = off+pfh->length - (mtd->writesize - sizeof(*pfh));
         while (off < end) {
-            if (mtd_block_isbad(mtd, off)) {
+            if (mtd_is_aligned_with_block_size(mtd, off) && mtd_block_isbad(mtd, off)) {
                 off += blocksize;
             } else {
                 io_op.datbuf = &buf[amount_loaded];

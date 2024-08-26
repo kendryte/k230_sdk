@@ -116,37 +116,38 @@ rt_inline int next_signal(lwp_sigset_t *pending, lwp_sigset_t *mask)
     return sig;
 }
 
+rt_inline int lwp_thread_signal_check(rt_thread_t thread, lwp_sigset_t *set)
+{
+    lwp_sigset_t valid_signal;
+
+    valid_signal.sig[0] = thread->signal.sig[0] & ~thread->signal_mask.sig[0];
+
+    if (set)
+        set->sig[0] = valid_signal.sig[0];
+
+    return valid_signal.sig[0] != 0;
+}
+
 int lwp_suspend_sigcheck(rt_thread_t thread, int suspend_flag)
 {
-    struct rt_lwp *lwp = (struct rt_lwp*)thread->lwp;
-    int ret = 0;
+    lwp_sigset_t set;
+    int ret = 1;
 
     switch (suspend_flag)
     {
         case RT_INTERRUPTIBLE:
-            if (!lwp_sigisemptyset(&thread->signal))
-            {
-                break;
-            }
-            if (thread->lwp && !lwp_sigisemptyset(&lwp->signal))
-            {
-                break;
-            }
-            ret = 1;
-            break;
         case RT_KILLABLE:
-            if (lwp_sigismember(&thread->signal, SIGKILL))
+            if (lwp_thread_signal_check(thread, &set) == 0)
             {
                 break;
             }
-            if (thread->lwp && lwp_sigismember(&lwp->signal, SIGKILL))
+            if (suspend_flag == RT_KILLABLE && !lwp_sigismember(&set, SIGKILL))
             {
                 break;
             }
-            ret = 1;
+            ret = 0;
             break;
         case RT_UNINTERRUPTIBLE:
-            ret = 1;
             break;
         default:
             RT_ASSERT(0);
@@ -159,38 +160,15 @@ int lwp_signal_check(void)
 {
     rt_base_t level;
     struct rt_thread *thread;
-    struct rt_lwp *lwp;
-    uint32_t have_signal = 0;
+    int have_signal;
 
     level = rt_hw_interrupt_disable();
 
     thread = rt_thread_self();
+    have_signal = lwp_thread_signal_check(thread, NULL);
 
-    if (thread->signal_in_process)
-    {
-        goto out;
-    }
-
-    lwp = (struct rt_lwp*)thread->lwp;
-
-    if (lwp->signal_in_process)
-    {
-        goto out;
-    }
-
-    have_signal = !lwp_sigisemptyset(&thread->signal);
-    if (have_signal)
-    {
-        thread->signal_in_process = 1;
-        goto out;
-    }
-    have_signal = !lwp_sigisemptyset(&lwp->signal);
-    if (have_signal)
-    {
-        lwp->signal_in_process = 1;
-    }
-out:
     rt_hw_interrupt_enable(level);
+
     return have_signal;
 }
 
@@ -199,35 +177,26 @@ int lwp_signal_backup(void *user_sp, void *user_pc, void* user_flag)
     rt_base_t level;
     struct rt_thread *thread;
     struct rt_lwp *lwp;
+    lwp_sigset_t set;
     int signal;
 
     level = rt_hw_interrupt_disable();
     thread = rt_thread_self();
-    if (thread->signal_in_process)
-    {
-        thread->user_ctx.sp = user_sp;
-        thread->user_ctx.pc = user_pc;
-        thread->user_ctx.flag = user_flag;
+    lwp_thread_signal_check(thread, &set);
 
-        signal = next_signal(&thread->signal, &thread->signal_mask);
-        RT_ASSERT(signal != 0);
+    signal = __builtin_ffsll(set.sig[0]);
+    if (signal)
+    {
+        thread->user_ctx[thread->signal_in_process].sp = user_sp;
+        thread->user_ctx[thread->signal_in_process].pc = user_pc;
+        thread->user_ctx[thread->signal_in_process].flag = user_flag;
+
+        thread->signal_mask_bak[thread->signal_in_process] = thread->signal_mask;
+        thread->signal_in_process++;
         lwp_sigaddset(&thread->signal_mask, signal);
-        thread->signal_mask_bak = signal;
         lwp_sigdelset(&thread->signal, signal);
     }
-    else
-    {
-        lwp = (struct rt_lwp*)thread->lwp;
-        lwp->user_ctx.sp = user_sp;
-        lwp->user_ctx.pc = user_pc;
-        lwp->user_ctx.flag = user_flag;
 
-        signal = next_signal(&lwp->signal, &lwp->signal_mask);
-        RT_ASSERT(signal != 0);
-        lwp_sigaddset(&lwp->signal_mask, signal);
-        lwp->signal_mask_bak = signal;
-        lwp_sigdelset(&lwp->signal, signal);
-    }
     rt_hw_interrupt_enable(level);
     return signal;
 }
@@ -236,28 +205,15 @@ struct rt_user_context *lwp_signal_restore(void)
 {
     rt_base_t level;
     struct rt_thread *thread;
-    struct rt_lwp *lwp;
     struct rt_user_context *ctx;
 
     level = rt_hw_interrupt_disable();
     thread = rt_thread_self();
     if (thread->signal_in_process)
     {
-        ctx = &thread->user_ctx;
-        thread->signal_in_process = 0;
-
-        lwp_sigdelset(&thread->signal_mask, thread->signal_mask_bak);
-        thread->signal_mask_bak = 0;
-    }
-    else
-    {
-        lwp = (struct rt_lwp*)thread->lwp;
-        ctx = &lwp->user_ctx;
-        RT_ASSERT(lwp->signal_in_process != 0);
-        lwp->signal_in_process = 0;
-
-        lwp_sigdelset(&lwp->signal_mask, lwp->signal_mask_bak);
-        lwp->signal_mask_bak = 0;
+        thread->signal_in_process--;
+        ctx = &thread->user_ctx[thread->signal_in_process];
+        thread->signal_mask = thread->signal_mask_bak[thread->signal_in_process];
     }
     rt_hw_interrupt_enable(level);
     return ctx;
@@ -302,7 +258,7 @@ lwp_sighandler_t lwp_sighandler_get(int sig)
         {
             goto out;
         }
-        if (lwp->signal_in_process)
+        if (thread->signal_in_process)
         {
             lwp_terminate(lwp);
         }
@@ -420,6 +376,22 @@ rt_inline void sigandsets(lwp_sigset_t *dset, const lwp_sigset_t *set0, const lw
     }
 }
 
+rt_inline void signotsets(lwp_sigset_t *dset, const lwp_sigset_t *set)
+{
+    switch (_LWP_NSIG_WORDS)
+    {
+        case 4:
+            dset->sig[3] = ~set->sig[3];
+            dset->sig[2] = ~set->sig[2];
+        case 2:
+            dset->sig[1] = ~set->sig[1];
+        case 1:
+            dset->sig[0] = ~set->sig[0];
+        default:
+            return;
+    }
+}
+
 int lwp_sigprocmask(int how, const lwp_sigset_t *sigset, lwp_sigset_t *oset)
 {
     int ret = -1;
@@ -449,7 +421,8 @@ int lwp_sigprocmask(int how, const lwp_sigset_t *sigset, lwp_sigset_t *oset)
                 sigorsets(&newset, &lwp->signal_mask, sigset);
                 break;
             case SIG_UNBLOCK:
-                sigandsets(&newset, &lwp->signal_mask, sigset);
+                signotsets(&newset, sigset);
+                sigandsets(&newset, &lwp->signal_mask, &newset);
                 break;
             case SIG_SETMASK:
                 newset = *sigset;
@@ -492,7 +465,8 @@ int lwp_thread_sigprocmask(int how, const lwp_sigset_t *sigset, lwp_sigset_t *os
                 sigorsets(&newset, &thread->signal_mask, sigset);
                 break;
             case SIG_UNBLOCK:
-                sigandsets(&newset, &thread->signal_mask, sigset);
+                signotsets(&newset, sigset);
+                sigandsets(&newset, &thread->signal_mask, &newset);
                 break;
             case SIG_SETMASK:
                 newset = *sigset;
@@ -543,6 +517,7 @@ int lwp_kill(pid_t pid, int sig)
     rt_base_t level;
     struct rt_lwp *lwp;
     int ret = -1;
+    rt_list_t *list;
     rt_thread_t thread;
 
     if (sig < 0 || sig >= _LWP_NSIG)
@@ -559,12 +534,15 @@ int lwp_kill(pid_t pid, int sig)
     }
     if (sig)
     {
-        /* check main thread */
-        thread = rt_list_entry(lwp->t_grp.prev, struct rt_thread, sibling);
-        if (!lwp_sigismember(&lwp->signal_mask, sig)) /* if signal masked */
+        for (list = lwp->t_grp.prev; list != &lwp->t_grp; list = list->prev)
         {
-            lwp_sigaddset(&lwp->signal, sig);
-            _do_signal_wakeup(thread, sig);
+            thread = rt_list_entry(list, struct rt_thread, sibling);
+            if (!lwp_sigismember(&thread->signal_mask, sig)) /* if signal masked */
+            {
+                lwp_sigaddset(&thread->signal, sig);
+                _do_signal_wakeup(thread, sig);
+                break;
+            }
         }
     }
     ret = 0;
@@ -594,9 +572,9 @@ int lwp_thread_kill(rt_thread_t thread, int sig)
         rt_set_errno(EPERM);
         goto out;
     }
+    lwp_sigaddset(&thread->signal, sig);
     if (!lwp_sigismember(&thread->signal_mask, sig)) /* if signal masked */
     {
-        lwp_sigaddset(&thread->signal, sig);
         _do_signal_wakeup(thread, sig);
     }
     ret = 0;

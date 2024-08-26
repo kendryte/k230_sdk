@@ -43,8 +43,6 @@ static void *sec_base_addr = RT_NULL;
 static int sm4_hardlock;
 static rt_uint8_t pufs_buffer[BUFFER_SIZE];
 static pufs_ka_slot_t g_keyslot;
-static void *in_kvirt;
-static void *out_kvirt;
 struct sm4_context sm4_ctx = { .op = SP38A_AVAILABLE };
 
 //----------------------BASE FUNCTION ----------------------------------------//
@@ -265,9 +263,8 @@ static void dma_write_rwcfg(const rt_uint8_t *out, const rt_uint8_t *in, rt_uint
         writel((uintptr_t)out, sec_base_addr + DMA_DSC_CFG_1_OFFSET);
     else
     {
-        rt_hw_cpu_dcache_clean_flush(out_buff, len);
+        rt_hw_cpu_dcache_clean(out_buff, len);
         out_pa = virt_to_phys((void*)out_buff);
-        rt_hw_cpu_dcache_clean_flush((void *)out_pa, len);
         writel(out_pa, sec_base_addr + DMA_DSC_CFG_1_OFFSET);
     }
 
@@ -277,9 +274,8 @@ static void dma_write_rwcfg(const rt_uint8_t *out, const rt_uint8_t *in, rt_uint
     {
         rt_memcpy(in_buff, (void *)in, len);
 
-        rt_hw_cpu_dcache_clean_flush(in_buff, len);
+        rt_hw_cpu_dcache_clean(in_buff, len);
         in_pa = virt_to_phys(in_buff);
-        rt_hw_cpu_dcache_clean_flush((void *)in_pa, len);
         writel(in_pa, sec_base_addr + DMA_DSC_CFG_0_OFFSET);
     }
 }
@@ -734,81 +730,53 @@ static pufs_status_t _ctx_update(struct sm4_context* sm4_ctx,
     
     dma_write_config_0(RT_FALSE, RT_FALSE, RT_FALSE);
     dma_write_data_block_config(sm4_ctx->start ? RT_FALSE : RT_TRUE, last, RT_TRUE, RT_TRUE, 0);
-
-    if(inlen > 448)
-    {
-        rt_uint8_t *in_buff = RT_NULL;
-        rt_uint8_t *out_buff = RT_NULL;
-        rt_uint8_t array[2*inlen + 16];
-        rt_memset(array, 0, 2*inlen + 16);
-        in_buff = array;
-        out_buff = (array + inlen);
-        dma_write_rwcfg(out, in, inlen, in_buff, out_buff);
-
-        if ((check = sp38a_prepare(sm4_ctx)) != SUCCESS)
-            return check;
-
-        dma_write_start();
-        while (dma_check_busy_status(&val32));
-    
-        if (val32 != 0)
-        {
-            rt_kprintf("[ERROR] DMA status 0: 0x%08x\n", val32);
-            return E_ERROR;
-        }
-
-        val32 = readl(sec_base_addr + SP38A_STAT_OFFSET);
-        if ((val32 & SP38A_STATUS_ERROR_MASK) != 0)
-        {
-            rt_kprintf("[ERROR] SM4 status 0: 0x%08x\n", val32);
-            return E_ERROR;
-        }
-
-        // post-processing
-        if (last == RT_FALSE)
-            sp38a_postproc(sm4_ctx);
-
-        // rt_memcpy(out, out_kvirt, inlen);
-        rt_memcpy(out, out_buff, inlen);
-        *outlen = inlen;
+    void *in_kvirt, *out_kvirt;
+    in_kvirt = rt_malloc_align(inlen, 64);
+    out_kvirt = rt_malloc_align(inlen, 64);
+    if (!in_kvirt || !out_kvirt) {
+        rt_kprintf("%s malloc fail!\n", __func__);
+        check = E_ERROR;
+        goto error;
     }
-    else
+    dma_write_rwcfg(out, in, inlen, in_kvirt, out_kvirt);
+
+    if ((check = sp38a_prepare(sm4_ctx)) != SUCCESS)
+        goto error;
+
+    dma_write_start();
+    while (dma_check_busy_status(&val32));
+
+    if (val32 != 0)
     {
-        rt_uint8_t *in_buff = (rt_uint8_t*)in_kvirt;
-        rt_uint8_t *out_buff = (rt_uint8_t*)out_kvirt;
-        dma_write_rwcfg(out, in, inlen, in_buff, out_buff);
-
-        if ((check = sp38a_prepare(sm4_ctx)) != SUCCESS)
-            return check;
-
-        dma_write_start();
-        while (dma_check_busy_status(&val32));
-    
-        if (val32 != 0)
-        {
-            rt_kprintf("[ERROR] DMA status 0: 0x%08x\n", val32);
-            return E_ERROR;
-        }
-
-        val32 = readl(sec_base_addr + SP38A_STAT_OFFSET);
-        if ((val32 & SP38A_STATUS_ERROR_MASK) != 0)
-        {
-            rt_kprintf("[ERROR] SM4 status 0: 0x%08x\n", val32);
-            return E_ERROR;
-        }
-
-        // post-processing
-        if (last == RT_FALSE)
-            sp38a_postproc(sm4_ctx);
-
-        // rt_memcpy(out, out_kvirt, inlen);
-        rt_memcpy(out, out_buff, inlen);
-        *outlen = inlen;
+        rt_kprintf("[ERROR] DMA status 0: 0x%08x\n", val32);
+        check = E_ERROR;
+        goto error;
     }
 
+    val32 = readl(sec_base_addr + SP38A_STAT_OFFSET);
+    if ((val32 & SP38A_STATUS_ERROR_MASK) != 0)
+    {
+        rt_kprintf("[ERROR] SM4 status 0: 0x%08x\n", val32);
+        check = E_ERROR;
+        goto error;
+    }
+
+    // post-processing
+    if (last == RT_FALSE)
+        sp38a_postproc(sm4_ctx);
+
+    *outlen = inlen;
+    rt_hw_cpu_dcache_invalidate(out_kvirt, inlen);
+    rt_memcpy(out, out_kvirt, inlen);
     debug_func("out", (void*)out, inlen);
 
-    return SUCCESS;
+error:
+    if (in_kvirt)
+        rt_free_align(in_kvirt);
+    if (out_kvirt)
+        rt_free_align(out_kvirt);
+
+    return check;
 }
 
 
@@ -1196,16 +1164,6 @@ static rt_err_t sm4_control(rt_device_t dev, int cmd, void *args)
         return -RT_EINVAL;
     }
 
-    // alloc global buffer for store val from PUF-DMA
-    in_kvirt = rt_malloc(_inlen + 16);
-    out_kvirt = rt_malloc(_inlen + 16);
-    if(!in_kvirt || !out_kvirt)
-    {
-        rt_kprintf("%s malloc fail!\n", __func__);
-        ret = -RT_ERROR;
-        return ret;
-    }
-
     switch(cmd)
     {
         case RT_SM4_ENC:
@@ -1225,7 +1183,7 @@ static rt_err_t sm4_control(rt_device_t dev, int cmd, void *args)
             while(0 != kd_hardlock_lock(sm4_hardlock));
             if((check = pufs_import_plaintext_key(SSKEY, g_keyslot, (const rt_uint8_t *)_key, _keybits)) != SUCCESS) {
                 ret = -RT_ERROR;
-                return ret;
+                goto release_lock;
             }
 
             // do encrypt
@@ -1236,24 +1194,23 @@ static rt_err_t sm4_control(rt_device_t dev, int cmd, void *args)
                                     (const rt_uint8_t *)_iv, _mode)) != SUCCESS)
             {
                 ret = -RT_ERROR;
-                return ret;
+                goto release_lock;
             }
-            
+
             // clear key from hardware
             if((check = pufs_clear_key(SSKEY, g_keyslot, _keybits) != SUCCESS) || (_outlen != _toutlen))
             {
                 ret = -RT_ERROR;
-                return ret;
+                goto release_lock;
             }
             kd_hardlock_unlock(sm4_hardlock);
 
             // debug
             debug_func("out", _out, _outlen);
-            
+
             // output result
             config_args->outlen = _outlen;
             lwp_put_to_user(config_args->out, _out, _outlen);
-            
             break;
         }
         case RT_SM4_DEC:
@@ -1272,7 +1229,7 @@ static rt_err_t sm4_control(rt_device_t dev, int cmd, void *args)
             while(0 != kd_hardlock_lock(sm4_hardlock));
             if((check = pufs_import_plaintext_key(SSKEY, g_keyslot, (const rt_uint8_t *)_key, _keybits)) != SUCCESS) {
                 ret = -RT_ERROR;
-                return ret;
+                goto release_lock;
             }
 
             // do decrypt
@@ -1283,35 +1240,36 @@ static rt_err_t sm4_control(rt_device_t dev, int cmd, void *args)
                                     (const rt_uint8_t *)_iv, _mode)) != SUCCESS)
             {
                 ret = -RT_ERROR;
-                return ret;
+                goto release_lock;
             }
-            
+
             // clear key from hardware
             if((check = pufs_clear_key(SSKEY, g_keyslot, _keybits) != SUCCESS) || (_outlen != _inlen))
             {
                 ret = -RT_ERROR;
-                return ret;
+                goto release_lock;
             }
             kd_hardlock_unlock(sm4_hardlock);
 
             // debug
             debug_func("out", _out, _outlen);
-            
+
             // output result
             config_args->outlen = _outlen;
             lwp_put_to_user(config_args->out, _out, _outlen);
-            
             break;
         }
 
         default:
-            return -RT_EINVAL;
+            ret = -RT_EINVAL;
+            goto release_lock;
     }
-    rt_free(total);
-    // release global buffer
-    rt_free(in_kvirt);
-    rt_free(out_kvirt);
 
+    rt_free(total);
+    return ret;
+release_lock:
+    rt_free(total);
+    kd_hardlock_unlock(sm4_hardlock);
     return ret;
 }
 

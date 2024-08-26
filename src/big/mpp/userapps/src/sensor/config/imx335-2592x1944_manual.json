@@ -2,16 +2,15 @@
   "ARCH": "ISP8000_V2201.Manual_ext",
   "root": [
     {
+      "nr_reloc" : true,
       "driver": [
         {
           "base_frame": 0,
-          "bls": [0, 0, 0, 0],
           "bls_out": [0, 0, 0, 0],
           "bypass": true,
           "bypass_select": 0,
           "class": "CHdrv2",
           "color_weight": [255, 0, 1],
-          "driver_load": true,
           "enable": true,
           "extend_bit": [-1, -1],
           "ratio": [16, 16],
@@ -19,21 +18,20 @@
           "stitching_mode": 0,
           "trans_range": [
             [0.85, 0.95],
-            [0.9, 0.95],
+            [0.95, 0.99],
             [0, 0.1],
-            [0, 0.1],
-            [0.75, 0.95],
+            [0, 0.01],
+            [0.85, 0.95],
             [0, 0.1]
           ]
         },
         {
           "class": "CGreenEqu",
-          "driver_load": true,
+          "enable": true,
           "threshold": 2.5
         },
         {
           "bit" : 12,
-          "bls" : [ 64, 64, 64, 64 ],
           "ccmatrix" : [ 1.0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 1.0, 0 ],
           "class" : "CRgbIR",
           "dpcc_mid_th" : [ 4095, 4095, 4095, 4095 ],
@@ -47,7 +45,7 @@
         },
         {
           "class": "CManualWb",
-          "driver_load": true,
+          "enable": true,
           "gain": [2.211, 1.0, 1.0, 1.755]
         },
         {
@@ -59,7 +57,7 @@
           ],
           "ccoffset": [0, 0, 0],
           "class": "CCcm",
-          "driver_load": true
+          "enable": true
         },
         {
           "class": "CDgain",
@@ -67,12 +65,9 @@
           "digital_gain_gb": 1,
           "digital_gain_gr": 1,
           "digital_gain_r": 1,
-          "driver_load": true
+          "enable": true
         },
         {
-          "bit": 20,
-          "bls": [64, 64, 64, 64],
-          "bls_enable": true,
           "class": "CCpdv1",
           "compress_curve_x": [
             21, 20, 18, 14, 20, 18, 14, 13, 20, 18, 14, 13, 20, 18, 14, 20, 18,
@@ -113,6 +108,10 @@
           "expand_enable": false,
           "expand_use_out_y_curve": false
         },
+		{
+          "class" : "Bls",
+          "bls" : [ 64, 64, 64, 64]
+        },
         {
           "class": "CGamma64",
           "curve": [
@@ -122,7 +121,7 @@
             827, 836, 845, 854, 863, 872, 881, 889, 898, 906, 915, 923, 931,
             939, 947, 955, 963, 971, 979, 986, 994, 1001, 1009, 1016, 1023
           ],
-          "driver_load": true,
+          "enable": true,
           "standard": true,
           "standard_val": 2.2
         },
@@ -169,7 +168,7 @@
         },
         {
           "class": "CDpf",
-          "div": 0,
+          "div": 16,
           "enable": true,
           "gain": 24,
           "gradient": 2,
@@ -366,9 +365,9 @@
           "strength": 128
         },
         {
-          "blend_motion": 80,
+          "blend_motion": 95,
           "blend_slope": 2,
-          "blend_static": 20,
+          "blend_static": 95,
           "class": "C3dnrv3_1",
           "dialte_h": 7,
           "enable": true,
@@ -377,28 +376,26 @@
           "motion_dilate_en": true,
           "motion_erode_en": true,
           "nlm_en": true,
-          "noise_level": 128,
+          "noise_level": 16,
           "noisemodel_a": 16.49220085144043,
           "noisemodel_b": 785.5836181640625,
           "pregamma_en": true,
           "preweight": 8,
           "range_h": 7,
           "range_v": 7,
-          "sadweight": 16,
-          "sigma": 4,
-          "strength": 110,
-          "thr_motion_slope": 16,
-          "tnr_en": false
+          "sadweight": 8,
+          "sigma": 2,
+          "strength": 32,
+          "thr_motion_slope": 8,
+          "tnr_en": true
         },
         {
           "bright": 0,
-          "chroma_out": 2,
           "class": "CCproc",
+          "yuvRange": 2,
           "contrast": 1,
-          "driver_load": true,
+          "enable": true,
           "hue": 0,
-          "luma_in": 2,
-          "luma_out": 2,
           "saturation": 1.35
         },
         {
@@ -421,7 +418,7 @@
             656, 672, 688, 704, 720, 736, 752, 768, 784, 800, 816, 832, 848,
             864, 880, 896, 912, 928, 944, 960, 976, 992, 1008, 1023
           ],
-          "dci_en": true,
+          "dci_en": false,
           "ee_edge_gain": 2000,
           "ee_src_strength": 1,
           "ee_strength": 100,
@@ -486,8 +483,7 @@
           "dmsc_skin_cr_thr_min": 0,
           "dmsc_skin_enable": false,
           "dmsc_skin_y_thr_max": 0,
-          "dmsc_skin_y_thr_min": 0,
-          "enable": true
+          "dmsc_skin_y_thr_min": 0
         }
       ]
     }

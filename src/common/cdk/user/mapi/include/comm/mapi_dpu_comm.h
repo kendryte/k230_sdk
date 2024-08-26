@@ -39,6 +39,7 @@
 #include "k_vo_comm.h"
 #include "k_vicap_comm.h"
 #include "k_venc_comm.h"
+#include "k_dma_comm.h"
 
 #ifdef __cplusplus
 extern "C"{
@@ -105,12 +106,14 @@ typedef enum
 
 typedef enum
 {
-    IMAGE_MODE_RGB_DEPTH=0,  /*sensor 0: RGB,  sensor 1: speckle*/
-    IMAGE_MODE_RGB_IR,       /*sensor 0: RGB,  sensor 1: IR*/
-    IMAGE_MODE_IR_DEPTH,     /*sensor 0: IR,   sensor 1: speckle*/
-    IMAGE_MODE_NONE_SPECKLE, /*sensor 0: none, sensor 1: speckle*/
-    IMAGE_MODE_NONE_IR,      /*sensor 0: none, sensor 1: IR*/
-    IMAGE_MODE_NONE_DEPTH,   /*sensor 0: none, sensor 1: speckle*/
+    IMAGE_MODE_RGB_DEPTH = 0,  /*sensor 0: RGB,  sensor 1: speckle*/
+	IMAGE_MODE_RGB_IR,       /*sensor 0: RGB,  sensor 1: IR*/
+	IMAGE_MODE_IR_DEPTH,     /*sensor 0: IR,   sensor 1: speckle*/
+	IMAGE_MODE_NONE_SPECKLE, /*sensor 0: none, sensor 1: speckle*/
+	IMAGE_MODE_NONE_IR,      /*sensor 0: none, sensor 1: IR*/
+	IMAGE_MODE_NONE_DEPTH,   /*sensor 0: none, sensor 1: speckle*/
+	IMAGE_MODE_RGB_SPECKLE,  /*sensor 0: RGB,  sensor 1: speckle*/
+	IMAGE_MODE_RGB_NONE,     /*sensor 0: RGB,  sensor 1: none*/
     IMAGE_MODE_BUTT,
 } k_dpu_image_mode;
 
@@ -147,10 +150,12 @@ typedef struct
     k_u32 dpu_buf_cnt;
     k_u32 dma_buf_cnt;
     k_bool adc_en;
+    k_u32 adc_ch;
     k_dpu_temperature_t temperature;
     k_dpu_image_mode mode;
     k_u32 delay_ms;   /*3d_mode_crtl delay time*/
     k_dpu_mode_e dpu_bind;
+    k_gdma_rotation_e dma_ro;
 } k_dpu_info_t;
 
 typedef struct

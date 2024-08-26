@@ -1,0 +1,7 @@
+config BR2_PACKAGE_BLUEZ_INC
+	bool "bluez inc"
+	help
+	  bluez inc for test
+
+
+

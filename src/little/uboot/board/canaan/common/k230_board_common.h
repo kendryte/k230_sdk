@@ -31,7 +31,7 @@
     +0x6100000=0xe100000  16MB@97MB uboot
     +0x4100000=0xc100000  32MB@65MB  plaint  2/3
     +0x2100000=0xa1000000 32MB@33MB  cipher  1/3
-0x8000000                 kernel 
+0x8000000                 kernel
 */
 unsigned long get_CONFIG_CIPHER_ADDR(void);
 unsigned long get_CONFIG_PLAIN_ADDR(void);
@@ -55,7 +55,7 @@ typedef struct __firmware_head_st
     uint32_t length; // 从存储介质读到SRAM的数据量
     crypto_type_e crypto_type; // 支持国密或国际加密算法，或支持不加密启动(otp可以控制是否支持)。
     // 设想这样一个场景，如果固件只使用对称加密，在工厂批量生产的时候，解密密钥必然会泄露给工厂。如果使用非对称加密就可以这种问题了，只需要把公钥交给工厂。
-    union verify_{ 
+    union verify_{
         struct rsa_{
             uint8_t n[256];// 非对称加密的验签，防止固件被篡改。同时其HASH值会被烧录到otp。
             uint32_t e;
@@ -78,15 +78,15 @@ typedef struct __firmware_head_st
 
 
 typedef enum _en___boot_type{
-	BOOT_SYS_LINUX,  
-	BOOT_SYS_RTT, 
+	BOOT_SYS_LINUX,
+	BOOT_SYS_RTT,
     BOOT_QUICK_BOOT_CFG,
     BOOT_FACE_DB,
     BOOT_SENSOR_CFG,
     BOOT_AI_MODE,
     BOOT_SPECKLE,
-    BOOT_RTAPP, 
-	BOOT_SYS_UBOOT,  
+    BOOT_RTAPP,
+	BOOT_SYS_UBOOT,
     BOOT_SYS_ADDR,
     BOOT_SYS_AUTO
 } en_boot_sys_t;
@@ -121,4 +121,5 @@ int k230_img_load_boot_sys(en_boot_sys_t sys);
 // int k230_img_load_sys_from_dev(en_boot_sys_t sys, ulong buff);
 int k230_img_boot_sys_bin(firmware_head_s * fhBUff);
 extern sysctl_boot_mode_e g_bootmod;
-#endif 
+int k230_gpio(char opt, int pin, char *value);
+#endif

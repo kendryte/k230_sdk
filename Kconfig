@@ -26,6 +26,11 @@ config LINUX_RUN_CORE_ID
         help  
            support linux  on core num;
            
+config MPP_MIDDLEWARE
+        bool  "make mpp  middleware "
+        default n
+        help  
+           make mpp middleware ;
 ####################debug /realse version begain {
 choice 
 	prompt "build debug/release version"

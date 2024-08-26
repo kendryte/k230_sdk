@@ -798,123 +798,245 @@ void video_proc_01(char *argv[])
         hd.post_process(results);
 
         cv::Mat osd_frame(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-        cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
 
-        float max_area_hand = 0;
-        int max_id_hand = -1;
-        for (int i = 0; i < results.size(); ++i)
+        #if defined(STUDIO_HDMI)
         {
-            float area_i = (results[i].x2 - results[i].x1) * (results[i].y2 - results[i].y1);
-            if (area_i > max_area_hand)
+            float max_area_hand = 0;
+            int max_id_hand = -1;
+            for (int i = 0; i < results.size(); ++i)
             {
-                max_area_hand = area_i;
-                max_id_hand = i;
-            }
-        }
-
-        if (max_id_hand != -1)
-        {
-            std::string text = hd.labels_[results[max_id_hand].label] + ":" + std::to_string(round(results[max_id_hand].score * 100) / 100.0);
-
-            int w = results[max_id_hand].x2 - results[max_id_hand].x1 + 1;
-            int h = results[max_id_hand].y2 - results[max_id_hand].y1 + 1;
-            
-            int length = std::max(w,h)/2;
-            int cx = (results[max_id_hand].x1+results[max_id_hand].x2)/2;
-            int cy = (results[max_id_hand].y1+results[max_id_hand].y2)/2;
-            int ratio_num = 1.26*length;
-
-            int x1_1 = std::max(0,cx-ratio_num);
-            int y1_1 = std::max(0,cy-ratio_num);
-            int x2_1 = std::min(SENSOR_WIDTH-1, cx+ratio_num);
-            int y2_1 = std::min(SENSOR_HEIGHT-1, cy+ratio_num);
-            int w_1 = x2_1 - x1_1 + 1;
-            int h_1 = y2_1 - y1_1 + 1;
-            
-            struct Bbox bbox = {x:x1_1,y:y1_1,w:w_1,h:h_1};
-            hk.pre_process(bbox);
-
-            hk.inference();
-
-            {
-                ScopedTiming st("osd draw", atoi(argv[5]));
-                hk.draw_keypoints(osd_frame, text, bbox, false, two_point);
-            }
-        }
-
-        if(max_id_hand != -1)
-        {
-            if(first_start)
-            {
-                if(two_point[0] > 0 && two_point[0] < SENSOR_WIDTH && two_point[2] > 0 && two_point[2] < SENSOR_WIDTH && two_point[1] > 0 && two_point[1] < SENSOR_HEIGHT && two_point[3] > 0 && two_point[3] < SENSOR_HEIGHT)
+                float area_i = (results[i].x2 - results[i].x1) * (results[i].y2 - results[i].y1);
+                if (area_i > max_area_hand)
                 {
-                    two_point_mean_w = std::sqrt(std::pow((two_point[0] - two_point[2]),2) + std::pow((two_point[1] - two_point[3]),2))*0.8;
-                    two_point_mean_h = std::sqrt(std::pow((two_point[0] - two_point[2]),2) + std::pow((two_point[1] - two_point[3]),2))*0.8;
-                    first_start = false;
+                    max_area_hand = area_i;
+                    max_id_hand = i;
                 }
             }
-            else
+
+            if (max_id_hand != -1)
             {
-                if(two_point[0] > 0 && two_point[0] < SENSOR_WIDTH && two_point[2] > 0 && two_point[2] < SENSOR_WIDTH && two_point[1] > 0 && two_point[1] < SENSOR_HEIGHT && two_point[3] > 0 && two_point[3] < SENSOR_HEIGHT)
+                std::string text = hd.labels_[results[max_id_hand].label] + ":" + std::to_string(round(results[max_id_hand].score * 100) / 100.0);
+
+                int w = results[max_id_hand].x2 - results[max_id_hand].x1 + 1;
+                int h = results[max_id_hand].y2 - results[max_id_hand].y1 + 1;
+                
+                int length = std::max(w,h)/2;
+                int cx = (results[max_id_hand].x1+results[max_id_hand].x2)/2;
+                int cy = (results[max_id_hand].y1+results[max_id_hand].y2)/2;
+                int ratio_num = 1.26*length;
+
+                int x1_1 = std::max(0,cx-ratio_num);
+                int y1_1 = std::max(0,cy-ratio_num);
+                int x2_1 = std::min(SENSOR_WIDTH-1, cx+ratio_num);
+                int y2_1 = std::min(SENSOR_HEIGHT-1, cy+ratio_num);
+                int w_1 = x2_1 - x1_1 + 1;
+                int h_1 = y2_1 - y1_1 + 1;
+                
+                struct Bbox bbox = {x:x1_1,y:y1_1,w:w_1,h:h_1};
+                hk.pre_process(bbox);
+
+                hk.inference();
+
                 {
-                    two_point_left_x = std::max((two_point[0] + two_point[2]) / 2 - two_point_mean_w / 2, 0);
-                    two_point_top_y = std::max((two_point[1] + two_point[3]) / 2 - two_point_mean_h / 2, 0);
-                    two_point_crop_w = std::min(std::min((two_point[0] + two_point[2]) / 2 - two_point_mean_w / 2 + two_point_mean_w , two_point_mean_w), SENSOR_WIDTH - ((two_point[0] + two_point[2]) / 2 - two_point_mean_w / 2));
-                    two_point_crop_h = std::min(std::min((two_point[1] + two_point[3]) / 2 - two_point_mean_h / 2 + two_point_mean_h , two_point_mean_h), SENSOR_HEIGHT - ((two_point[1] + two_point[3]) / 2 - two_point_mean_h / 2));
+                    ScopedTiming st("osd draw", atoi(argv[5]));
+                    hk.draw_keypoints(osd_frame, text, bbox, false, two_point);
+                }
+            }
 
-                    ori_new_ratio = std::sqrt(std::pow((two_point[0] - two_point[2]),2) + std::pow((two_point[1] - two_point[3]),2))*0.8 / two_point_mean_w;
-
-                    new_resize_w = two_point_crop_w * ori_new_ratio / SENSOR_WIDTH * osd_frame.cols;
-                    new_resize_h = two_point_crop_h * ori_new_ratio / SENSOR_HEIGHT * osd_frame.rows;
-
-                    new_resize_w = new_resize_w < max_new_resize_w  ? new_resize_w : max_new_resize_w;
-                    new_resize_h = new_resize_h < max_new_resize_h ? new_resize_h : max_new_resize_h;
-
-                    Bbox bbox_crop = {two_point_left_x,two_point_top_y,two_point_crop_w,two_point_crop_h};
-
-                    std::unique_ptr<ai2d_builder> ai2d_builder_crop;
-                    dims_t in_shape_crop{1, SENSOR_CHANNEL, SENSOR_HEIGHT, SENSOR_WIDTH};
-                    dims_t out_shape_crop{1, 3, new_resize_h, new_resize_w};
-
-                    runtime_tensor ai2d_in_tensor_crop = hrt::create(typecode_t::dt_uint8, in_shape_crop, hrt::pool_shared).expect("create ai2d input tensor failed");
-                    runtime_tensor ai2d_out_tensor_crop = hrt::create(typecode_t::dt_uint8, out_shape_crop, hrt::pool_shared).expect("create ai2d input tensor failed");
-
-                    size_t isp_size = SENSOR_CHANNEL * SENSOR_HEIGHT * SENSOR_WIDTH;
-                    auto buf = ai2d_in_tensor_crop.impl()->to_host().unwrap()->buffer().as_host().unwrap().map(map_access_::map_write).unwrap().buffer();
-                    memcpy(reinterpret_cast<char *>(buf.data()), (void *)vaddr, isp_size);
-                    hrt::sync(ai2d_in_tensor_crop, sync_op_t::sync_write_back, true).expect("sync write_back failed");
-
-                    Utils::crop_resize(bbox_crop, ai2d_builder_crop, ai2d_in_tensor_crop, ai2d_out_tensor_crop);
-
-                    auto vaddr_out_buf = ai2d_out_tensor_crop.impl()->to_host().unwrap()->buffer().as_host().unwrap().map(map_access_::map_read).unwrap().buffer();
-                    unsigned char *output = reinterpret_cast<unsigned char *>(vaddr_out_buf.data());
-
-                    crop_area = new_resize_h*new_resize_w;
-                    for(uint32_t hh = 0; hh < new_resize_h; hh++)
+            if(max_id_hand != -1)
+            {
+                if(first_start)
+                {
+                    if(two_point[0] > 0 && two_point[0] < SENSOR_WIDTH && two_point[2] > 0 && two_point[2] < SENSOR_WIDTH && two_point[1] > 0 && two_point[1] < SENSOR_HEIGHT && two_point[3] > 0 && two_point[3] < SENSOR_HEIGHT)
                     {
-                        for(uint32_t ww = 0; ww < new_resize_w; ww++)
-                        {
-                            int new_hh = (hh + two_point_top_y * 1.0 / SENSOR_HEIGHT * osd_frame.rows);
-                            int new_ww = (ww + two_point_left_x * 1.0 / SENSOR_WIDTH * osd_frame.cols);
-                            int osd_channel_index = (new_hh * osd_frame.cols + new_ww) * 4;
-                            if(osd_frame.data[osd_channel_index + 0] == 0)                        
-                            {
-                                int ori_pix_index = hh * new_resize_w + ww;
-                                osd_frame.data[osd_channel_index + 0] = 255;
-                                osd_frame.data[osd_channel_index + 1] =  output[ori_pix_index];
-                                osd_frame.data[osd_channel_index + 2] =  output[ori_pix_index + crop_area];
-                                osd_frame.data[osd_channel_index + 3] =  output[ori_pix_index + crop_area * 2]; 
-                            }                        
-                        }
+                        two_point_mean_w = std::sqrt(std::pow((two_point[0] - two_point[2]),2) + std::pow((two_point[1] - two_point[3]),2))*0.8;
+                        two_point_mean_h = std::sqrt(std::pow((two_point[0] - two_point[2]),2) + std::pow((two_point[1] - two_point[3]),2))*0.8;
+                        first_start = false;
                     }
+                }
+                else
+                {
+                    if(two_point[0] > 0 && two_point[0] < SENSOR_WIDTH && two_point[2] > 0 && two_point[2] < SENSOR_WIDTH && two_point[1] > 0 && two_point[1] < SENSOR_HEIGHT && two_point[3] > 0 && two_point[3] < SENSOR_HEIGHT)
+                    {
+                        two_point_left_x = std::max((two_point[0] + two_point[2]) / 2 - two_point_mean_w / 2, 0);
+                        two_point_top_y = std::max((two_point[1] + two_point[3]) / 2 - two_point_mean_h / 2, 0);
+                        two_point_crop_w = std::min(std::min((two_point[0] + two_point[2]) / 2 - two_point_mean_w / 2 + two_point_mean_w , two_point_mean_w), SENSOR_WIDTH - ((two_point[0] + two_point[2]) / 2 - two_point_mean_w / 2));
+                        two_point_crop_h = std::min(std::min((two_point[1] + two_point[3]) / 2 - two_point_mean_h / 2 + two_point_mean_h , two_point_mean_h), SENSOR_HEIGHT - ((two_point[1] + two_point[3]) / 2 - two_point_mean_h / 2));
 
-                    rect_frame_x = two_point_left_x * 1.0 / SENSOR_WIDTH * osd_frame.cols;
-                    rect_frame_y = two_point_top_y * 1.0 / SENSOR_HEIGHT * osd_frame.rows;
-                    cv::rectangle(osd_frame, cv::Rect(rect_frame_x, rect_frame_y , new_resize_w, new_resize_h), cv::Scalar( 255,0, 255, 255), 2, 2, 0);
+                        ori_new_ratio = std::sqrt(std::pow((two_point[0] - two_point[2]),2) + std::pow((two_point[1] - two_point[3]),2))*0.8 / two_point_mean_w;
+
+                        new_resize_w = two_point_crop_w * ori_new_ratio / SENSOR_WIDTH * osd_frame.cols;
+                        new_resize_h = two_point_crop_h * ori_new_ratio / SENSOR_HEIGHT * osd_frame.rows;
+
+                        new_resize_w = new_resize_w < max_new_resize_w  ? new_resize_w : max_new_resize_w;
+                        new_resize_h = new_resize_h < max_new_resize_h ? new_resize_h : max_new_resize_h;
+
+                        Bbox bbox_crop = {two_point_left_x,two_point_top_y,two_point_crop_w,two_point_crop_h};
+
+                        std::unique_ptr<ai2d_builder> ai2d_builder_crop;
+                        dims_t in_shape_crop{1, SENSOR_CHANNEL, SENSOR_HEIGHT, SENSOR_WIDTH};
+                        dims_t out_shape_crop{1, 3, new_resize_h, new_resize_w};
+
+                        runtime_tensor ai2d_in_tensor_crop = hrt::create(typecode_t::dt_uint8, in_shape_crop, hrt::pool_shared).expect("create ai2d input tensor failed");
+                        runtime_tensor ai2d_out_tensor_crop = hrt::create(typecode_t::dt_uint8, out_shape_crop, hrt::pool_shared).expect("create ai2d input tensor failed");
+
+                        size_t isp_size = SENSOR_CHANNEL * SENSOR_HEIGHT * SENSOR_WIDTH;
+                        auto buf = ai2d_in_tensor_crop.impl()->to_host().unwrap()->buffer().as_host().unwrap().map(map_access_::map_write).unwrap().buffer();
+                        memcpy(reinterpret_cast<char *>(buf.data()), (void *)vaddr, isp_size);
+                        hrt::sync(ai2d_in_tensor_crop, sync_op_t::sync_write_back, true).expect("sync write_back failed");
+
+                        Utils::crop_resize(bbox_crop, ai2d_builder_crop, ai2d_in_tensor_crop, ai2d_out_tensor_crop);
+
+                        auto vaddr_out_buf = ai2d_out_tensor_crop.impl()->to_host().unwrap()->buffer().as_host().unwrap().map(map_access_::map_read).unwrap().buffer();
+                        unsigned char *output = reinterpret_cast<unsigned char *>(vaddr_out_buf.data());
+
+                        crop_area = new_resize_h*new_resize_w;
+                        for(uint32_t hh = 0; hh < new_resize_h; hh++)
+                        {
+                            for(uint32_t ww = 0; ww < new_resize_w; ww++)
+                            {
+                                int new_hh = (hh + two_point_top_y * 1.0 / SENSOR_HEIGHT * osd_frame.rows);
+                                int new_ww = (ww + two_point_left_x * 1.0 / SENSOR_WIDTH * osd_frame.cols);
+                                int osd_channel_index = (new_hh * osd_frame.cols + new_ww) * 4;
+                                if(osd_frame.data[osd_channel_index + 0] == 0)                        
+                                {
+                                    int ori_pix_index = hh * new_resize_w + ww;
+                                    osd_frame.data[osd_channel_index + 0] = 255;
+                                    osd_frame.data[osd_channel_index + 1] =  output[ori_pix_index];
+                                    osd_frame.data[osd_channel_index + 2] =  output[ori_pix_index + crop_area];
+                                    osd_frame.data[osd_channel_index + 3] =  output[ori_pix_index + crop_area * 2]; 
+                                }                        
+                            }
+                        }
+
+                        rect_frame_x = two_point_left_x * 1.0 / SENSOR_WIDTH * osd_frame.cols;
+                        rect_frame_y = two_point_top_y * 1.0 / SENSOR_HEIGHT * osd_frame.rows;
+                        cv::rectangle(osd_frame, cv::Rect(rect_frame_x, rect_frame_y , new_resize_w, new_resize_h), cv::Scalar( 255,0, 255, 255), 2, 2, 0);
+                    }
                 }
             }
         }
-        cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+        #else
+        {
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+
+            float max_area_hand = 0;
+            int max_id_hand = -1;
+            for (int i = 0; i < results.size(); ++i)
+            {
+                float area_i = (results[i].x2 - results[i].x1) * (results[i].y2 - results[i].y1);
+                if (area_i > max_area_hand)
+                {
+                    max_area_hand = area_i;
+                    max_id_hand = i;
+                }
+            }
+
+            if (max_id_hand != -1)
+            {
+                std::string text = hd.labels_[results[max_id_hand].label] + ":" + std::to_string(round(results[max_id_hand].score * 100) / 100.0);
+
+                int w = results[max_id_hand].x2 - results[max_id_hand].x1 + 1;
+                int h = results[max_id_hand].y2 - results[max_id_hand].y1 + 1;
+                
+                int length = std::max(w,h)/2;
+                int cx = (results[max_id_hand].x1+results[max_id_hand].x2)/2;
+                int cy = (results[max_id_hand].y1+results[max_id_hand].y2)/2;
+                int ratio_num = 1.26*length;
+
+                int x1_1 = std::max(0,cx-ratio_num);
+                int y1_1 = std::max(0,cy-ratio_num);
+                int x2_1 = std::min(SENSOR_WIDTH-1, cx+ratio_num);
+                int y2_1 = std::min(SENSOR_HEIGHT-1, cy+ratio_num);
+                int w_1 = x2_1 - x1_1 + 1;
+                int h_1 = y2_1 - y1_1 + 1;
+                
+                struct Bbox bbox = {x:x1_1,y:y1_1,w:w_1,h:h_1};
+                hk.pre_process(bbox);
+
+                hk.inference();
+
+                {
+                    ScopedTiming st("osd draw", atoi(argv[5]));
+                    hk.draw_keypoints(osd_frame, text, bbox, false, two_point);
+                }
+            }
+
+            if(max_id_hand != -1)
+            {
+                if(first_start)
+                {
+                    if(two_point[0] > 0 && two_point[0] < SENSOR_WIDTH && two_point[2] > 0 && two_point[2] < SENSOR_WIDTH && two_point[1] > 0 && two_point[1] < SENSOR_HEIGHT && two_point[3] > 0 && two_point[3] < SENSOR_HEIGHT)
+                    {
+                        two_point_mean_w = std::sqrt(std::pow((two_point[0] - two_point[2]),2) + std::pow((two_point[1] - two_point[3]),2))*0.8;
+                        two_point_mean_h = std::sqrt(std::pow((two_point[0] - two_point[2]),2) + std::pow((two_point[1] - two_point[3]),2))*0.8;
+                        first_start = false;
+                    }
+                }
+                else
+                {
+                    if(two_point[0] > 0 && two_point[0] < SENSOR_WIDTH && two_point[2] > 0 && two_point[2] < SENSOR_WIDTH && two_point[1] > 0 && two_point[1] < SENSOR_HEIGHT && two_point[3] > 0 && two_point[3] < SENSOR_HEIGHT)
+                    {
+                        two_point_left_x = std::max((two_point[0] + two_point[2]) / 2 - two_point_mean_w / 2, 0);
+                        two_point_top_y = std::max((two_point[1] + two_point[3]) / 2 - two_point_mean_h / 2, 0);
+                        two_point_crop_w = std::min(std::min((two_point[0] + two_point[2]) / 2 - two_point_mean_w / 2 + two_point_mean_w , two_point_mean_w), SENSOR_WIDTH - ((two_point[0] + two_point[2]) / 2 - two_point_mean_w / 2));
+                        two_point_crop_h = std::min(std::min((two_point[1] + two_point[3]) / 2 - two_point_mean_h / 2 + two_point_mean_h , two_point_mean_h), SENSOR_HEIGHT - ((two_point[1] + two_point[3]) / 2 - two_point_mean_h / 2));
+
+                        ori_new_ratio = std::sqrt(std::pow((two_point[0] - two_point[2]),2) + std::pow((two_point[1] - two_point[3]),2))*0.8 / two_point_mean_w;
+
+                        new_resize_w = two_point_crop_w * ori_new_ratio / SENSOR_WIDTH * osd_frame.cols;
+                        new_resize_h = two_point_crop_h * ori_new_ratio / SENSOR_HEIGHT * osd_frame.rows;
+
+                        new_resize_w = new_resize_w < max_new_resize_w  ? new_resize_w : max_new_resize_w;
+                        new_resize_h = new_resize_h < max_new_resize_h ? new_resize_h : max_new_resize_h;
+
+                        Bbox bbox_crop = {two_point_left_x,two_point_top_y,two_point_crop_w,two_point_crop_h};
+
+                        std::unique_ptr<ai2d_builder> ai2d_builder_crop;
+                        dims_t in_shape_crop{1, SENSOR_CHANNEL, SENSOR_HEIGHT, SENSOR_WIDTH};
+                        dims_t out_shape_crop{1, 3, new_resize_h, new_resize_w};
+
+                        runtime_tensor ai2d_in_tensor_crop = hrt::create(typecode_t::dt_uint8, in_shape_crop, hrt::pool_shared).expect("create ai2d input tensor failed");
+                        runtime_tensor ai2d_out_tensor_crop = hrt::create(typecode_t::dt_uint8, out_shape_crop, hrt::pool_shared).expect("create ai2d input tensor failed");
+
+                        size_t isp_size = SENSOR_CHANNEL * SENSOR_HEIGHT * SENSOR_WIDTH;
+                        auto buf = ai2d_in_tensor_crop.impl()->to_host().unwrap()->buffer().as_host().unwrap().map(map_access_::map_write).unwrap().buffer();
+                        memcpy(reinterpret_cast<char *>(buf.data()), (void *)vaddr, isp_size);
+                        hrt::sync(ai2d_in_tensor_crop, sync_op_t::sync_write_back, true).expect("sync write_back failed");
+
+                        Utils::crop_resize(bbox_crop, ai2d_builder_crop, ai2d_in_tensor_crop, ai2d_out_tensor_crop);
+
+                        auto vaddr_out_buf = ai2d_out_tensor_crop.impl()->to_host().unwrap()->buffer().as_host().unwrap().map(map_access_::map_read).unwrap().buffer();
+                        unsigned char *output = reinterpret_cast<unsigned char *>(vaddr_out_buf.data());
+
+                        crop_area = new_resize_h*new_resize_w;
+                        for(uint32_t hh = 0; hh < new_resize_h; hh++)
+                        {
+                            for(uint32_t ww = 0; ww < new_resize_w; ww++)
+                            {
+                                int new_hh = (hh + two_point_top_y * 1.0 / SENSOR_HEIGHT * osd_frame.rows);
+                                int new_ww = (ww + two_point_left_x * 1.0 / SENSOR_WIDTH * osd_frame.cols);
+                                int osd_channel_index = (new_hh * osd_frame.cols + new_ww) * 4;
+                                if(osd_frame.data[osd_channel_index + 0] == 0)                        
+                                {
+                                    int ori_pix_index = hh * new_resize_w + ww;
+                                    osd_frame.data[osd_channel_index + 0] = 255;
+                                    osd_frame.data[osd_channel_index + 1] =  output[ori_pix_index];
+                                    osd_frame.data[osd_channel_index + 2] =  output[ori_pix_index + crop_area];
+                                    osd_frame.data[osd_channel_index + 3] =  output[ori_pix_index + crop_area * 2]; 
+                                }                        
+                            }
+                        }
+
+                        rect_frame_x = two_point_left_x * 1.0 / SENSOR_WIDTH * osd_frame.cols;
+                        rect_frame_y = two_point_top_y * 1.0 / SENSOR_HEIGHT * osd_frame.rows;
+                        cv::rectangle(osd_frame, cv::Rect(rect_frame_x, rect_frame_y , new_resize_w, new_resize_h), cv::Scalar( 255,0, 255, 255), 2, 2, 0);
+                    }
+                }
+            }
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+        }
+        #endif
 
         {
             ScopedTiming st("osd copy", atoi(argv[5]));

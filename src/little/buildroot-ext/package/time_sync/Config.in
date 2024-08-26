@@ -1,0 +1,7 @@
+config BR2_PACKAGE_TIME_SYNC
+	bool "time sync"
+	help
+	  k230 time sync
+
+
+

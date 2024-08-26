@@ -197,7 +197,7 @@ int main(int argc, char *argv[]) {
 
     strcpy(jpeg_out_path, sample_context.out_path);
 
-    printf("mapi sample_venc...\n");
+    printf("mapi start sample_venc...\n");
 
     ret = kd_mapi_sys_init();
     if (ret != K_SUCCESS) {

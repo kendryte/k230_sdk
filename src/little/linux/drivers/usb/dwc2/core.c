@@ -552,8 +552,6 @@ int dwc2_core_reset(struct dwc2_hsotg *hsotg, bool skip_wait)
 		return -EBUSY;
 	}
 
-	dwc2_writel(hsotg, 0, GRSTCTL);
-
 	if (wait_for_host_mode && !skip_wait)
 		dwc2_wait_for_mode(hsotg, true);
 

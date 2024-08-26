@@ -11,7 +11,7 @@
          gc2053
       </sensor_name>
       <sample_name index="1" type="char" size="[1 6]">
-         5MP_03
+         2MP_03
       </sample_name>
       <generator_version index="1" type="char" size="[1 6]">
          v2.1.4
@@ -118,7 +118,7 @@
                   D50
                </awb_clip_outdoor>
                <K_Factor index="1" type="double" size="[1 1]">
-                  [ 240.0]
+                  [ 109.86]
                </K_Factor>
                <afFade2 index="1" type="double" size="[1 6]">
                   [0.75 1.28836 1.77672 2.164 2.6 3.0618]
@@ -214,10 +214,10 @@
                   </cell>
                </aLSC>
                <manualWB index="1" type="double" size="[1 4]">
-                  [0.92388 1 1 3.06239]
+                  [0.951171875 1.0 1.0 2.952148438]
                </manualWB>
                <manualccMatrix index="1" type="double" size="[3 3]">
-                  [1.4604 -0.056407 -0.403999 -0.628237 1.752593 -0.1243558 -0.317008 -1.484024 2.80103]
+                  [1.171875 0.2109375 -0.3828125 -0.1875 1.3125 -0.125 -0.0234375 -0.6640625 1.6875]
                </manualccMatrix>
                <manualccOffsets index="1" type="double" size="[1 3]">
                   [0 0 0]
@@ -279,10 +279,10 @@
                   </cell>
                </aLSC>
                <manualWB index="1" type="double" size="[1 4]">
-                  [1.37275 1 1 2.0072]
+                  [1.390625 1.0 1.0 1.943359375]
                </manualWB>
                <manualccMatrix index="1" type="double" size="[3 3]">
-                  [1.54881 -0.302536 -0.246278 -0.401881 1.721999 -0.320118 -0.06073 -0.904509 1.965239]
+                  [1.0625 0.1796875 -0.2421875 -0.109375 1.2578125 -0.1484375 0.078125 -0.2578125 1.1796875]
                </manualccMatrix>
                <manualccOffsets index="1" type="double" size="[1 3]">
                   [0 0 0]
@@ -344,10 +344,10 @@
                   </cell>
                </aLSC>
                <manualWB index="1" type="double" size="[1 4]">
-                  [1.542768 1 1 1.77532]
+                  [1.559570313 1.0 1.0 1.715820313]
                </manualWB>
                <manualccMatrix index="1" type="double" size="[3 3]">
-                  [1.56472 -0.444445 -0.12028 -0.311254 1.542553 -0.231299 -0.009654 -0.779863 1.789518]
+                  [1.0546875 0.0234375 -0.078125 -0.1015625 1.265625 -0.1640625 0.046875 -0.0078125 0.9609375]
                </manualccMatrix>
                <manualccOffsets index="1" type="double" size="[1 3]">
                   [0 0 0]
@@ -409,10 +409,10 @@
                   </cell>
                </aLSC>
                <manualWB index="1" type="double" size="[1 4]">
-                  [1.31183 1 1 2.34909]
+                  [1.288085938 1.0 1.0 2.265625]
                </manualWB>
                <manualccMatrix index="1" type="double" size="[3 3]">
-                  [1.890737 -0.715667 -0.17507 -0.429375 1.602495 -0.17312 -0.171111 -0.944527 2.115639]
+                  [1.0859375 0.0234375 -0.109375 -0.1875 1.265625 -0.078125 0.0625 -0.21875 1.15625]
                </manualccMatrix>
                <manualccOffsets index="1" type="double" size="[1 3]">
                   [0 0 0]
@@ -474,10 +474,10 @@
                   </cell>
                </aLSC>
                <manualWB index="1" type="double" size="[1 4]">
-                  [1.04349 1 1 2.9918]
+                  [1.0234375 1.0 1.0 2.85546875]
                </manualWB>
                <manualccMatrix index="1" type="double" size="[3 3]">
-                  [1.753242 -0.62494 -0.128299 -0.516275 1.3450643 0.17121 -0.116658 -1.179173 2.295831]
+                  [1.0546875 0.078125 -0.1328125 -0.2734375 1.3515625 -0.078125 0.015625 -0.4296875 1.4140625]
                </manualccMatrix>
                <manualccOffsets index="1" type="double" size="[1 3]">
                   [0 0 0]
@@ -1380,13 +1380,13 @@
                [ 100]
             </saturation>
             <ccMatrix index="1" type="double" size="[3 3]">
-               [1.4604 -0.056407 -0.403999 -0.628237 1.752593 -0.1243558 -0.317008 -1.484024 2.80103]
+               [1.171875 0.2109375 -0.3828125 -0.1875 1.3125 -0.125 -0.0234375 -0.6640625 1.6875]
             </ccMatrix>
             <ccOffsets index="1" type="double" size="[1 3]">
                [0 0 0]
             </ccOffsets>
             <wb index="1" type="double" size="[1 4]">
-               [0.92388 1 1 3.06239]
+               [0.951171875 1.0 1.0 2.952148438]
             </wb>
          </cell>
          <cell index="2" type="struct" size="[1 1]">
@@ -1397,13 +1397,13 @@
                [ 100]
             </saturation>
             <ccMatrix index="1" type="double" size="[3 3]">
-               [1.54881 -0.302536 -0.246278 -0.401881 1.721999 -0.320118 -0.06073 -0.904509 1.965239]
+               [1.0625 0.1796875 -0.2421875 -0.109375 1.2578125 -0.1484375 0.078125 -0.2578125 1.1796875]
             </ccMatrix>
             <ccOffsets index="1" type="double" size="[1 3]">
                [0 0 0]
             </ccOffsets>
             <wb index="1" type="double" size="[1 4]">
-               [1.37275 1 1 2.0072]
+               [1.390625 1.0 1.0 1.943359375]
             </wb>
          </cell>
          <cell index="3" type="struct" size="[1 1]">
@@ -1414,13 +1414,13 @@
                [ 100]
             </saturation>
             <ccMatrix index="1" type="double" size="[3 3]">
-               [1.56472 -0.444445 -0.12028 -0.311254 1.542553 -0.231299 -0.009654 -0.779863 1.789518]
+               [1.0546875 0.0234375 -0.078125 -0.1015625 1.265625 -0.1640625 0.046875 -0.0078125 0.9609375]
             </ccMatrix>
             <ccOffsets index="1" type="double" size="[1 3]">
                [0 0 0]
             </ccOffsets>
             <wb index="1" type="double" size="[1 4]">
-               [1.542768 1 1 1.77532]
+               [1.559570313 1.0 1.0 1.715820313]
             </wb>
          </cell>
          <cell index="4" type="struct" size="[1 1]">
@@ -1431,13 +1431,13 @@
                [ 100]
             </saturation>
             <ccMatrix index="1" type="double" size="[3 3]">
-               [1.890737 -0.715667 -0.17507 -0.429375 1.602495 -0.17312 -0.171111 -0.944527 2.115639]	
+               [1.0859375 0.0234375 -0.109375 -0.1875 1.265625 -0.078125 0.0625 -0.21875 1.15625]
             </ccMatrix>
             <ccOffsets index="1" type="double" size="[1 3]">
                [0 0 0]
             </ccOffsets>
             <wb index="1" type="double" size="[1 4]">
-               [1.31183 1 1 2.34909]
+               [1.288085938 1.0 1.0 2.265625]
             </wb>
          </cell>
          <cell index="5" type="struct" size="[1 1]">
@@ -1448,13 +1448,13 @@
                [ 100]
             </saturation>
             <ccMatrix index="1" type="double" size="[3 3]">
-               [1.753242 -0.62494 -0.128299 -0.516275 1.3450643 0.17121 -0.116658 -1.179173 2.295831]
+               [1.0546875 0.078125 -0.1328125 -0.2734375 1.3515625 -0.078125 0.015625 -0.4296875 1.4140625]
             </ccMatrix>
             <ccOffsets index="1" type="double" size="[1 3]">
                [0 0 0]
             </ccOffsets>
             <wb index="1" type="double" size="[1 4]">
-               [1.04349 1 1 2.9918]
+               [1.0234375 1.0 1.0 2.85546875]
             </wb>
          </cell>         
       </CC>
@@ -1617,7 +1617,7 @@
                1920x1080
             </resolution>
             <blsData index="1" type="double" size="[1 4]">
-               [256 256 256 256]
+               [64 64 64 64]
             </blsData>
          </cell>
       </BLS>

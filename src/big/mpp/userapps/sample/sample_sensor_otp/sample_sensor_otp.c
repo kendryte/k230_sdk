@@ -14,7 +14,7 @@
 
 static void usage(void)
 {
-    printf("usage: ./sample_sensor_otp.elf -sensor 34 -id zxcvbnmpoiuytre\n");
+    printf("usage: ./sample_sensor_otp.elf -sensor 34 -id zxcvbnmpoiuytre \n");
     printf("Options:\n");
     printf(" -sensor:  ov9286 canmv support :34 ov9286 evb support : 18 \n");
     printf(" -id: serial number for sensor otp \n");
@@ -29,19 +29,20 @@ int main(int argc, char *argv[])
     int i = 0;
     size_t len = 0;
     int ret = 0;
-
-    if(argc < 3)
-    {
-        printf("parameters err \n");
-        exit(1);
-    }
+    int only_read = 0;
+    // if(argc < 3)
+    // {
+    //     printf("parameters err \n");
+    //     exit(1);
+    // }
 
     for (i = 1; i < argc; i += 2)
     {
         if (strcmp(argv[i], "-help") == 0)
         {
             usage();
-        }
+            return 0;
+        } 
         else if (strcmp(argv[i], "-sensor") == 0)
         {
             if ((i + 1) >= argc) {
@@ -68,14 +69,31 @@ int main(int argc, char *argv[])
                             printf("ov9286 only suppor 15 serial number \n");
                             exit(1);
                         }
-                            
+                         
                     }
                     memcpy(sensor_opt_id, argv[i + 1], len);
                 }
+                else if(strcmp(argv[i], "-read") == 0)
+                {
+                    only_read = 1;
+                    break;
+                }
+                else
+                {
+                    printf("id parameters err \n");
+                    return 0;
+                }
             }
+        }
+        else
+        {
+            printf("sensor parameters err \n");
+            return 0;
         }
     }
     printf("sensor_opt_id is %s sensor type is %d len is %ld \n", sensor_opt_id, sensor_type, len);
+
+
 
     k_s32 sensor_fd = -1;
     k_sensor_mode mode;
@@ -147,17 +165,20 @@ int main(int argc, char *argv[])
 
 
 #if WRITE_OTP_DATE
-    otp_date.otp_type = 0;
-    memcpy(&set_otp_date.otp_date, sensor_opt_id, len);
+    if(only_read == 0)
+    {
+        otp_date.otp_type = 0;
+        memcpy(&set_otp_date.otp_date, sensor_opt_id, len);
 
-    ret = kd_mpi_sensor_otpdata_set(sensor_fd, &set_otp_date);
-    if (ret == K_ERR_VICAP_OPT_ALREADY_WRITE) {
-        printf("%s, sensor opt already  write .\n", __func__);
-        kd_mpi_sensor_stream_enable(sensor_fd, K_FALSE);
-        return -1;
+        ret = kd_mpi_sensor_otpdata_set(sensor_fd, &set_otp_date);
+        if (ret == K_ERR_VICAP_OPT_ALREADY_WRITE) {
+            printf("%s, sensor opt already  write .\n", __func__);
+            kd_mpi_sensor_stream_enable(sensor_fd, K_FALSE);
+            // return -1;
+        }
+        else
+            printf("WRITE_OTP_DATE  success\n");
     }
-    else
-        printf("WRITE_OTP_DATE  success\n");
     // getchar();
 #endif
 

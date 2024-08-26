@@ -77,6 +77,29 @@ static int pwm_stop(kd_pwm_t *reg, int channel)
 
 static rt_err_t kd_pwm_get(kd_pwm_t *reg, rt_uint8_t channel, struct rt_pwm_configuration *configuration)
 {
+    int ret;
+    uint64_t pulse, period;
+    uint32_t pwm_pclock, pwmscale;
+
+    ret = check_channel(channel);
+    if (ret < 0)
+        return ret;
+
+    pwm_pclock = sysctl_clk_get_leaf_freq(SYSCTL_CLK_PWM_PCLK_GATE);
+
+    if (channel > 2)
+        reg = (kd_pwm_t *)((void*)reg + 0x40);
+
+    pwmscale = reg->pwmcfg & 0xf;
+    pwm_pclock >>= pwmscale;
+    period = reg->pwmcmp0;
+    period = period * NSEC_PER_SEC / pwm_pclock;
+    pulse = *((&reg->pwmcmp1) + (channel % 3));
+    pulse = pulse * NSEC_PER_SEC / pwm_pclock;
+
+    configuration->period = period;
+    configuration->pulse = pulse;
+
     return RT_EOK;
 }
 
@@ -85,64 +108,35 @@ static int kd_pwm_set(kd_pwm_t *reg, int channel, struct rt_pwm_configuration *c
     int ret;
     uint64_t pulse, period, pwmcmpx_max;
     uint32_t pwm_pclock, pwmscale = 0;
-    uint32_t val = 0;
+
     ret = check_channel(channel);
     if (ret < 0)
         return ret;
 
     pwm_pclock = sysctl_clk_get_leaf_freq(SYSCTL_CLK_PWM_PCLK_GATE);
-    pulse = (float)(configuration->pulse) * (float)pwm_pclock / (float)NSEC_PER_SEC;
-    period = (float)(configuration->period) * (float)pwm_pclock / (float)NSEC_PER_SEC;
-    if (pulse > period) 
-    {
+    pulse = (uint64_t)configuration->pulse * pwm_pclock / NSEC_PER_SEC;
+    period = (uint64_t)configuration->period * pwm_pclock / NSEC_PER_SEC;
+    if (pulse > period)
         return -RT_EINVAL; 
-    }
 
     if (channel > 2)
         reg = (kd_pwm_t *)((void*)reg + 0x40);
 
     /* 计算占空比 */
     pwmcmpx_max = (1 << 16) - 1;
-    if(period > ((1 << (15 + 16)) - 1LL))
-    {
+    if (period > ((1 << (15 + 16)) - 1LL))
         return -RT_EINVAL; 
-    }
+
     while ((period >> pwmscale) > pwmcmpx_max)
-    {
         pwmscale++;
-    }
-    if(pwmscale > 0xf)
-    {
+    if (pwmscale > 0xf)
         return -RT_EINVAL;
-    }
 
     reg->pwmcfg |= (1 << 9);  //default always mode
+    reg->pwmcfg &= (~0xf);
     reg->pwmcfg |= pwmscale;  //scale
     reg->pwmcmp0 = (period >> pwmscale);
-
-    switch(channel)
-    {
-    case 0:
-        reg->pwmcmp1 = (reg->pwmcmp0 - (pulse >> pwmscale));
-        break;
-    case 1:
-        reg->pwmcmp2 = (reg->pwmcmp0 - (pulse >> pwmscale));
-        break;
-    case 2:
-        reg->pwmcmp3 = (reg->pwmcmp0 - (pulse >> pwmscale));
-        break;
-    case 3:
-        reg->pwmcmp1 = (reg->pwmcmp0 - (pulse >> pwmscale));
-        break;
-    case 4:
-        reg->pwmcmp2 = (reg->pwmcmp0 - (pulse >> pwmscale));
-        break;
-    case 5:
-        reg->pwmcmp3 = (reg->pwmcmp0 - (pulse >> pwmscale));
-        break;
-    default:
-        break;
-    }
+    *((&reg->pwmcmp1) + (channel % 3)) = reg->pwmcmp0 - (pulse >> pwmscale);
 
     return RT_EOK;
 }

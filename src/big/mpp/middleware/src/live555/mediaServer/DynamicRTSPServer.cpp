@@ -27,11 +27,14 @@ DynamicRTSPServer::createNew(UsageEnvironment& env, Port ourPort,
 			     UserAuthenticationDatabase* authDatabase,
 			     unsigned reclamationTestSeconds) {
   int ourSocketIPv4 = setUpOurSocket(env, ourPort, AF_INET);
-  int ourSocketIPv6 = setUpOurSocket(env, ourPort, AF_INET6);
+  //int ourSocketIPv6 = setUpOurSocket(env, ourPort, AF_INET6);
+  int ourSocketIPv6 = -1;
   if (ourSocketIPv4 < 0 && ourSocketIPv6 < 0) return NULL;
 
-  return new DynamicRTSPServer(env, ourSocketIPv4, ourSocketIPv6, ourPort,
+  DynamicRTSPServer*p = new DynamicRTSPServer(env, ourSocketIPv4, ourSocketIPv6, ourPort,
 			       authDatabase, reclamationTestSeconds);
+
+  return p;
 }
 
 DynamicRTSPServer::DynamicRTSPServer(UsageEnvironment& env, int ourSocketIPv4, int ourSocketIPv6,
@@ -68,15 +71,15 @@ void DynamicRTSPServer
 
     sms = NULL;
   } else {
-    if (smsExists && isFirstLookupInSession) { 
+    if (smsExists && isFirstLookupInSession) {
       // Remove the existing "ServerMediaSession" and create a new one, in case the underlying
       // file has changed in some way:
-      removeServerMediaSession(sms); 
+      removeServerMediaSession(sms);
       sms = NULL;
-    } 
+    }
 
     if (sms == NULL) {
-      sms = createNewSMS(envir(), streamName, fid); 
+      sms = createNewSMS(envir(), streamName, fid);
       addServerMediaSession(sms);
     }
 
@@ -145,7 +148,9 @@ static ServerMediaSession* createNewSMS(UsageEnvironment& env,
   } else if (strcmp(extension, ".264") == 0) {
     // Assumed to be a H.264 Video Elementary Stream file:
     NEW_SMS("H.264 Video");
-    OutPacketBuffer::maxSize = 100000; // allow for some possibly large H.264 frames
+   // OutPacketBuffer::maxSize = 100000; // allow for some possibly large H.264 frames
+    OutPacketBuffer::maxSize = 1024 * 1024;
+    //printf("======264  OutPacketBuffer::maxSize:%d\n", OutPacketBuffer::maxSize);
     sms->addSubsession(H264VideoFileServerMediaSubsession::createNew(env, fileName, reuseSource));
   } else if (strcmp(extension, ".265") == 0) {
     // Assumed to be a H.265 Video Elementary Stream file:

@@ -513,9 +513,15 @@ function modify_big_code()
         cp ${RTSMART_SRC_DIR}/kernel/bsp/maix3/configs/common_rttlinux.config ${RT_SMART_CONFIG}
         if [  "$CONFIG_SUPPORT_LINUX" != "y"  -a   "$CONFIG_SDCAED"  = "y" ] ;then 
             cp ${RTSMART_SRC_DIR}/kernel/bsp/maix3/configs/common_rttonly.config ${RT_SMART_CONFIG}
-            if [ "${CONFIG_BOARD_K230D_CANMV}" = "y" ]; then 
-                cp ${RTSMART_SRC_DIR}/kernel/bsp/maix3/configs/k230d_canmv_only_rtt.config ${RT_SMART_CONFIG} 
+            if [ "${CONFIG_BOARD_K230_CANMV}" = "y" ]; then
+                cp ${RTSMART_SRC_DIR}/kernel/bsp/maix3/configs/k230_canmv_only_rtt.config ${RT_SMART_CONFIG}
             fi;
+            if [ "${CONFIG_BOARD_K230D_CANMV}" = "y" ]; then
+                cp ${RTSMART_SRC_DIR}/kernel/bsp/maix3/configs/k230d_canmv_only_rtt.config ${RT_SMART_CONFIG}
+            fi;
+        fi
+        if [ -f "${RTSMART_SRC_DIR}/kernel/bsp/maix3/configs/${CONFIG_RTTHREAD_DEFCONFIG}.config" ];then
+            cp ${RTSMART_SRC_DIR}/kernel/bsp/maix3/configs/${CONFIG_RTTHREAD_DEFCONFIG}.config ${RT_SMART_CONFIG}
         fi
     }
 }

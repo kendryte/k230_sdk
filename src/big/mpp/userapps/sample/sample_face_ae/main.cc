@@ -576,11 +576,13 @@ int sample_vivcap_init( void )
     chn_attr.out_win.width = ISP_CHN0_WIDTH;
     chn_attr.out_win.height = ISP_CHN0_HEIGHT;
 
-    // chn_attr.crop_win = dev_attr.acq_win;
+    chn_attr.crop_win = dev_attr.acq_win;
     chn_attr.crop_win.h_start = ISP_CROP_W_OFFSET;
     chn_attr.crop_win.v_start = ISP_CROP_H_OFFSET;
     chn_attr.crop_win.width = ISP_CHN0_WIDTH;
     chn_attr.crop_win.height = ISP_CHN0_HEIGHT;
+
+    // chn_attr.crop_win = dev_attr.acq_win;
 
     chn_attr.scale_win = chn_attr.out_win;
     chn_attr.crop_enable = K_FALSE;
@@ -625,7 +627,7 @@ int sample_vivcap_init( void )
         return ret;
     }
     // set to header file database parse mode
-    ret = kd_mpi_vicap_set_database_parse_mode(vicap_dev, VICAP_DATABASE_PARSE_HEADER);
+    ret = kd_mpi_vicap_set_database_parse_mode(vicap_dev, VICAP_DATABASE_PARSE_XML_JSON);
     if (ret) {
         printf("sample_vicap, kd_mpi_vicap_set_database_parse_mode failed.\n");
         return ret;

@@ -407,7 +407,8 @@ void sys_exit(int value)
     {
         lwp_terminate(lwp);
         lwp_wait_subthread_exit();
-        lwp->lwp_ret = value;
+        if (value)
+            lwp->lwp_ret = value;
     }
 #else
     main_thread = rt_list_entry(lwp->t_grp.prev, struct rt_thread, sibling);
@@ -439,6 +440,18 @@ void sys_exit(int value)
 /* exit group */
 void sys_exit_group(int status)
 {
+    rt_base_t level;
+    rt_thread_t tid;
+    struct rt_lwp *lwp;
+
+    tid = rt_thread_self();
+    lwp = (struct rt_lwp *)tid->lwp;
+
+    level = rt_hw_interrupt_disable();
+    lwp_terminate(lwp);
+    lwp->lwp_ret = status;
+    rt_hw_interrupt_enable(level);
+
     return;
 }
 
@@ -4488,7 +4501,7 @@ const static void* func_table[] =
     SYSCALL_SIGN(sys_notimpl),    //rt_wqueue_wakeup,
     SYSCALL_SIGN(sys_thread_mdelay),
     SYSCALL_SIGN(sys_sigaction),
-    SYSCALL_SIGN(sys_sigprocmask),
+    SYSCALL_SIGN(sys_thread_sigprocmask),
     SYSCALL_SIGN(sys_tkill),             /* 105 */
     SYSCALL_SIGN(sys_thread_sigprocmask),
 #ifdef ARCH_MM_MMU

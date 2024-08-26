@@ -543,44 +543,88 @@ void video_proc_01(char *argv[])
         cv::merge(sensor_rgb, ori_img);
 
         cv::Mat osd_frame(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-        cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
 
-        for(int i = 0; i < results_det.size(); i++)
+
+        #if defined(STUDIO_HDMI)
         {
-            vector<Point> ori_vec;
-            vector<Point2f> sort_vtd(4);
-            ori_vec.clear();
-            for(int j = 0; j < 4; j++)
+            for(int i = 0; i < results_det.size(); i++)
             {
-                ori_vec.push_back(results_det[i].vertices[j]);
+                vector<Point> ori_vec;
+                vector<Point2f> sort_vtd(4);
+                ori_vec.clear();
+                for(int j = 0; j < 4; j++)
+                {
+                    ori_vec.push_back(results_det[i].vertices[j]);
+                }
+                cv::RotatedRect rect = cv::minAreaRect(ori_vec);
+                cv::Point2f ver[4];
+                rect.points(ver);
+
+                cv::Mat crop;
+                Utils::warppersp(ori_img, crop, results_det[i], sort_vtd);
+                cv::Mat crop_gray;
+                cv::cvtColor(crop, crop_gray, COLOR_BGR2GRAY);
+
+                licenceReco.pre_process(crop_gray);
+                licenceReco.inference();
+
+                vector<unsigned char> results_reco;
+                licenceReco.post_process(results_reco);
+
+                {
+                    ScopedTiming st("osd_draw_text", atoi(argv[6]));
+                    Utils::draw_text(float(sort_vtd[3].x), float(sort_vtd[3].y),osd_frame,results_reco,{osd_frame.cols, osd_frame.rows}, {SENSOR_WIDTH, SENSOR_HEIGHT});
+                }
             }
-            cv::RotatedRect rect = cv::minAreaRect(ori_vec);
-            cv::Point2f ver[4];
-            rect.points(ver);
 
-            cv::Mat crop;
-            Utils::warppersp(ori_img, crop, results_det[i], sort_vtd);
-            cv::Mat crop_gray;
-            cv::cvtColor(crop, crop_gray, COLOR_BGR2GRAY);
-
-            licenceReco.pre_process(crop_gray);
-            licenceReco.inference();
-
-            vector<unsigned char> results_reco;
-            licenceReco.post_process(results_reco);
 
             {
-                ScopedTiming st("osd_draw_text", atoi(argv[6]));
-                Utils::draw_text(float(sort_vtd[3].x), float(sort_vtd[3].y),osd_frame,results_reco,{osd_frame.cols, osd_frame.rows}, {SENSOR_WIDTH, SENSOR_HEIGHT});
+                ScopedTiming st("osd draw_detections", atoi(argv[6]));
+                Utils::draw_detections(osd_frame, results_det, {osd_frame.cols, osd_frame.rows}, {SENSOR_WIDTH, SENSOR_HEIGHT});
             }
         }
-
-
+        #else
         {
-            ScopedTiming st("osd draw_detections", atoi(argv[6]));
-            Utils::draw_detections(osd_frame, results_det, {osd_frame.cols, osd_frame.rows}, {SENSOR_WIDTH, SENSOR_HEIGHT});
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+
+            for(int i = 0; i < results_det.size(); i++)
+            {
+                vector<Point> ori_vec;
+                vector<Point2f> sort_vtd(4);
+                ori_vec.clear();
+                for(int j = 0; j < 4; j++)
+                {
+                    ori_vec.push_back(results_det[i].vertices[j]);
+                }
+                cv::RotatedRect rect = cv::minAreaRect(ori_vec);
+                cv::Point2f ver[4];
+                rect.points(ver);
+
+                cv::Mat crop;
+                Utils::warppersp(ori_img, crop, results_det[i], sort_vtd);
+                cv::Mat crop_gray;
+                cv::cvtColor(crop, crop_gray, COLOR_BGR2GRAY);
+
+                licenceReco.pre_process(crop_gray);
+                licenceReco.inference();
+
+                vector<unsigned char> results_reco;
+                licenceReco.post_process(results_reco);
+
+                {
+                    ScopedTiming st("osd_draw_text", atoi(argv[6]));
+                    Utils::draw_text(float(sort_vtd[3].x), float(sort_vtd[3].y),osd_frame,results_reco,{osd_frame.cols, osd_frame.rows}, {SENSOR_WIDTH, SENSOR_HEIGHT});
+                }
+            }
+
+
+            {
+                ScopedTiming st("osd draw_detections", atoi(argv[6]));
+                Utils::draw_detections(osd_frame, results_det, {osd_frame.cols, osd_frame.rows}, {SENSOR_WIDTH, SENSOR_HEIGHT});
+            }
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
         }
-        cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+        #endif
 
         {
             ScopedTiming st("osd copy", atoi(argv[6]));

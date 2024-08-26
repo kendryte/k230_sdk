@@ -129,12 +129,17 @@ void rt_hw_board_init(void)
     rt_hw_interrupt_init();
 
     /* initialize hardware interrupt */
-    rt_hw_uart_init();
+
     rt_hw_tick_init();
 
 #ifdef RT_USING_CONSOLE
-    /* set console device */
-    rt_console_set_device(RT_CONSOLE_DEVICE_NAME);
+    if(!rt_strcmp(RT_CONSOLE_DEVICE_NAME, "uart"))
+        rt_hw_uart_init();
+#ifdef RT_USING_IPCM
+extern int rt_virt_tty_device_init();;
+    if(!rt_strcmp(RT_CONSOLE_DEVICE_NAME, "virt-tty"))
+        rt_virt_tty_device_init();
+#endif
 #endif /* RT_USING_CONSOLE */
 
 #ifdef RT_USING_COMPONENTS_INIT

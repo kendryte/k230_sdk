@@ -131,7 +131,9 @@
 #define RT_USING_RTC
 // #define RT_USING_RTC_PMU
 #define RT_USING_I2C
+// #define RT_USING_I2C_SLAVE_EEPROM
 #define RT_USING_I2C0
+// #define RT_USING_I2C0_SLAVE
 #define RT_USING_I2C1
 #define RT_USING_I2C3
 #define RT_USING_I2C4
@@ -154,12 +156,13 @@
 #define RT_SDIO_STACK_SIZE 512
 #define RT_SDIO_THREAD_PRIORITY 15
 #define RT_MMCSD_STACK_SIZE 4096
-#define RT_MMCSD_THREAD_PREORITY 22
+#define RT_MMCSD_THREAD_PRIORITY 22
 #define RT_MMCSD_MAX_PARTITION 16
 #define RT_USING_DEV_BUS
 #define RT_USING_REGULATOR
 /* canaan uart driver for uart1 uart2 uart4 */
 // #define RT_USING_CANAAN_UART
+// #define RT_USING_PDMA
 // #define RT_USING_UART1
 // #define RT_USING_UART2
 // #define RT_USING_UART4

@@ -24,6 +24,7 @@ obj-$(CONFIG_WLAN_VENDOR_QUANTENNA) += quantenna/
 obj-$(CONFIG_BCMDHD) += bcmdhd/
 obj-$(CONFIG_RTL8821CS) += rtl8821cs/
 obj-$(CONFIG_RTL8189FS) += rtl8189fs/
+obj-$(CONFIG_RTL8723DU) += rtl8723du/
 obj-$(CONFIG_RTL8188FU) += rtl8188fu/
 
 # 16-bit wireless PCMCIA client drivers

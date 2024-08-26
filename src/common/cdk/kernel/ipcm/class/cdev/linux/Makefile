@@ -30,8 +30,8 @@ all:
 	touch ${build_dir}/Makefile
 	make -C ${KERNEL_DIR} M=${build_dir} src=$(shell pwd) ARCH=${arch_type} CROSS_COMPILE=${CROSS_COMPILE} modules O=$(LINUX_BUILD_DIR)
 	cp ${build_dir}/k_ipcm.ko $(MODULE_DIR)/out/node_$(LOCAL_ID)
-	-find ${MODULE_DIR} -name "*.o" | xargs rm
-	-find ${MODULE_DIR} -name "*.mod.c" | xargs rm
+	-find ${build_dir} -name "*.o" | xargs rm
+	-find ${build_dir} -name "*.mod.c" | xargs rm
 
 clean:
 	echo "${build_dir}/Makefile clean"

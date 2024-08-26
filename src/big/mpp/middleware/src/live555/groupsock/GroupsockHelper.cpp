@@ -105,6 +105,7 @@ static int createSocket(int domain, int type) {
 #ifdef FD_CLOEXEC
   if (sock != -1) fcntl(sock, F_SETFD, FD_CLOEXEC);
 #endif
+  printf("=========createSocket:%d\n",sock);
   return sock;
 }
 
@@ -132,28 +133,28 @@ int setupDatagramSocket(UsageEnvironment& env, Port port, int domain) {
 #if defined(__WIN32__) || defined(_WIN32)
   // Windoze doesn't properly handle SO_REUSEPORT or IP_MULTICAST_LOOP
 #else
-#ifdef SO_REUSEPORT
-  if (setsockopt(newSocket, SOL_SOCKET, SO_REUSEPORT,
-		 (const char*)&reuseFlag, sizeof reuseFlag) < 0) {
-    socketErr(env, "setsockopt(SO_REUSEPORT) error: ");
-    closeSocket(newSocket);
-    return -1;
-  }
-#endif
+// #ifdef SO_REUSEPORT
+//   if (setsockopt(newSocket, SOL_SOCKET, SO_REUSEPORT,
+// 		 (const char*)&reuseFlag, sizeof reuseFlag) < 0) {
+//     socketErr(env, "setsockopt(SO_REUSEPORT) error: ");
+//     closeSocket(newSocket);
+//     return -1;
+//   }
+// #endif
 
-#ifdef IP_MULTICAST_LOOP
-  const u_int8_t loop = 1;
-  if (setsockopt(newSocket,
-		 domain == AF_INET ? IPPROTO_IP : IPPROTO_IPV6,
-		 domain == AF_INET ? IP_MULTICAST_LOOP : IPV6_MULTICAST_LOOP,
-		 (const char*)&loop, sizeof loop) < 0) {
-    if (domain == AF_INET) { // For some unknown reason, this might not work for IPv6
-      socketErr(env, "setsockopt(IP_MULTICAST_LOOP) error: ");
-      closeSocket(newSocket);
-      return -1;
-    }
-  }
-#endif
+// #ifdef IP_MULTICAST_LOOP
+//   const u_int8_t loop = 1;
+//   if (setsockopt(newSocket,
+// 		 domain == AF_INET ? IPPROTO_IP : IPPROTO_IPV6,
+// 		 domain == AF_INET ? IP_MULTICAST_LOOP : IPV6_MULTICAST_LOOP,
+// 		 (const char*)&loop, sizeof loop) < 0) {
+//     if (domain == AF_INET) { // For some unknown reason, this might not work for IPv6
+//       socketErr(env, "setsockopt(IP_MULTICAST_LOOP) error: ");
+//       closeSocket(newSocket);
+//       return -1;
+//     }
+//   }
+// #endif
 #endif
 
   if (domain == AF_INET) {
@@ -374,7 +375,7 @@ int setupStreamSocket(UsageEnvironment& env, Port port, int domain,
     }
   }
 
-  // Set the keep alive mechanism for the TCP socket, to avoid "ghost sockets" 
+  // Set the keep alive mechanism for the TCP socket, to avoid "ghost sockets"
   //    that remain after an interrupted communication.
   if (setKeepAlive) {
     if (!setSocketKeepAlive(newSocket)) {
@@ -440,7 +441,7 @@ Boolean writeSocket(UsageEnvironment& env,
       return False;
     }
   }
-  
+
   return writeSocket(env, socket, addressAndPort, buffer, bufferSize);
 }
 
@@ -457,7 +458,7 @@ Boolean writeSocket(UsageEnvironment& env,
       socketErr(env, tmpBuf);
       break;
     }
-    
+
     return True;
   } while (0);
 
@@ -481,17 +482,23 @@ static unsigned getBufferSize(UsageEnvironment& env, int bufOptName,
   SOCKLEN_T sizeSize = sizeof curSize;
   if (getsockopt(socket, SOL_SOCKET, bufOptName,
 		 (char*)&curSize, (socklen_t *)&sizeSize) < 0) {
-    socketErr(env, "getBufferSize() error: ");
+      char sBuf[1024];
+      sprintf(sBuf,"getBufferSize() error:%d ",bufOptName);
+    socketErr(env, sBuf);
     return 0;
   }
 
   return curSize;
 }
 unsigned getSendBufferSize(UsageEnvironment& env, int socket) {
-  return getBufferSize(env, SO_SNDBUF, socket);
+  //return 8196;
+  return 50*1024;
+  //return getBufferSize(env, SO_SNDBUF, socket);
 }
 unsigned getReceiveBufferSize(UsageEnvironment& env, int socket) {
-  return getBufferSize(env, SO_RCVBUF, socket);
+  //return 8196;
+  return 50*1024;
+  //return getBufferSize(env, SO_RCVBUF, socket);
 }
 
 static unsigned setBufferTo(UsageEnvironment& env, int bufOptName,
@@ -515,6 +522,8 @@ static unsigned increaseBufferTo(UsageEnvironment& env, int bufOptName,
 				 int socket, unsigned requestedSize) {
   // First, get the current buffer size.  If it's already at least
   // as big as what we're requesting, do nothing.
+
+#if 0
   unsigned curSize = getBufferSize(env, bufOptName, socket);
 
   // Next, try to increase the buffer to the requested size,
@@ -530,6 +539,9 @@ static unsigned increaseBufferTo(UsageEnvironment& env, int bufOptName,
   }
 
   return getBufferSize(env, bufOptName, socket);
+#else
+  return 50*1024;//RT_LWIP_TCP_SND_BUF
+#endif
 }
 unsigned increaseSendBufferTo(UsageEnvironment& env,
 			      int socket, unsigned requestedSize) {
@@ -769,7 +781,7 @@ static Boolean isBadIPv6AddressForUs(ipv6AddressBits addr) {
   //   - the first 10 bits are 0xFE8, indicating a link-local or site-local address, or
   //   - the first 15 bytes are 0, and the 16th byte is 0 (unspecified) or 1 (loopback)
   if (addr[0] == 0xFE) return (addr[1]&0x80) != 0;
-  
+
   for (unsigned i = 0; i < 15; ++i) {
     if (addr[i] != 0) return False;
   }
@@ -802,19 +814,21 @@ static Boolean isBadAddressForUs(NetAddress const& addr) {
 }
 
 static void getOurIPAddresses(UsageEnvironment& env); // forward
+static void getOurIPAddresses_EX(UsageEnvironment& env); // forward
+
 
 static ipv4AddressBits _ourIPv4Address = 0;
 #define _weHaveAnIPv4Address (_ourIPv4Address != 0)
 
 ipv4AddressBits ourIPv4Address(UsageEnvironment& env) {
   if (ReceivingInterfaceAddr != INADDR_ANY) {
-    // Hack: If we were told to receive on a specific interface address, then 
+    // Hack: If we were told to receive on a specific interface address, then
     // define this to be our ip address:
     _ourIPv4Address = ReceivingInterfaceAddr;
   }
 
   if (!_weHaveAnIPv4Address) {
-    getOurIPAddresses(env);
+    getOurIPAddresses_EX(env);
   }
 
   return _ourIPv4Address;
@@ -825,7 +839,7 @@ static Boolean _weHaveAnIPv6Address = False;
 
 ipv6AddressBits const& ourIPv6Address(UsageEnvironment& env) {
   if (!_weHaveAnIPv6Address) {
-    getOurIPAddresses(env);
+    getOurIPAddresses_EX(env);
   }
 
   return _ourIPv6Address;
@@ -834,28 +848,28 @@ ipv6AddressBits const& ourIPv6Address(UsageEnvironment& env) {
 Boolean weHaveAnIPv4Address(UsageEnvironment& env) {
   if (_weHaveAnIPv4Address || _weHaveAnIPv6Address) return _weHaveAnIPv4Address;
 
-  getOurIPAddresses(env);
+  getOurIPAddresses_EX(env);
   return _weHaveAnIPv4Address;
 }
 
 Boolean weHaveAnIPv6Address(UsageEnvironment& env) {
   if (_weHaveAnIPv4Address || _weHaveAnIPv6Address) return _weHaveAnIPv6Address;
 
-  getOurIPAddresses(env);
+  getOurIPAddresses_EX(env);
   return _weHaveAnIPv6Address;
 }
 
 Boolean weHaveAnIPAddress(UsageEnvironment& env) {
   if (_weHaveAnIPv4Address || _weHaveAnIPv6Address) return True;
 
-  getOurIPAddresses(env);
+  getOurIPAddresses_EX(env);
   return _weHaveAnIPv4Address || _weHaveAnIPv6Address;
 }
 
 static void copyAddress(struct sockaddr_storage& to, struct sockaddr const* from) {
   // Copy a "struct sockaddr" to a "struct sockaddr_storage" (assumed to be large enough)
   if (from == NULL) return;
-  
+
   switch (from->sa_family) {
     case AF_INET: {
 #ifdef HAVE_SOCKADDR_LEN
@@ -880,6 +894,36 @@ static void copyAddress(struct sockaddr_storage& to, struct sockaddr const* from
   }
 }
 
+
+#include <net/if.h>
+#include <sys/ioctl.h>
+void getOurIPAddresses_EX(UsageEnvironment& env)
+{
+  int sock_get_ip;
+  struct   sockaddr_in *sin;
+  struct   ifreq ifr_ip;
+  if ((sock_get_ip=socket(AF_INET, SOCK_STREAM, 0)) == -1)
+  {
+      printf("socket create failse...GetLocalIp!/n");
+      return ;
+  }
+
+  memset(&ifr_ip, 0, sizeof(ifr_ip));
+  strncpy(ifr_ip.ifr_name, "eth0", sizeof(ifr_ip.ifr_name) - 1);
+
+  if( ioctl( sock_get_ip, SIOCGIFADDR, &ifr_ip) < 0 )
+  {
+      printf("SIOCGIFADDR failed\n");
+      return ;
+  }
+
+  sin = (struct sockaddr_in *)&ifr_ip.ifr_addr;
+
+  _ourIPv4Address = sin->sin_addr.s_addr;
+
+  close( sock_get_ip );
+}
+
 void getOurIPAddresses(UsageEnvironment& env) {
   // We use two methods to (try to) get our IP addresses.
   // First, we use "getifaddrs()".  But if that doesn't work
@@ -892,7 +936,8 @@ void getOurIPAddresses(UsageEnvironment& env) {
 #ifndef NO_GETIFADDRS
   struct ifaddrs* ifap;
 
-  if (getifaddrs(&ifap) == 0) {
+  int ret = getifaddrs(&ifap);
+  if (ret == 0) {
     // Look through all interfaces:
     for (struct ifaddrs* p = ifap; p != NULL; p = p->ifa_next) {
       // Ignore an interface if it's not up, or is a loopback interface:
@@ -900,7 +945,7 @@ void getOurIPAddresses(UsageEnvironment& env) {
 
       // Also ignore the interface if the address is considered 'bad' for us:
       if (p->ifa_addr == NULL || isBadAddressForUs(*p->ifa_addr)) continue;
-      
+
       // We take the first IPv4 and first IPv6 addresses:
       if (p->ifa_addr->sa_family == AF_INET && addressIsNull(foundIPv4Address)) {
 	copyAddress(foundIPv4Address, p->ifa_addr);
@@ -921,10 +966,12 @@ void getOurIPAddresses(UsageEnvironment& env) {
       char hostname[100];
       hostname[0] = '\0';
       int result = gethostname(hostname, sizeof hostname);
-      if (result != 0 || hostname[0] == '\0') {
+      printf("========result:%d,hostname:%s\n",result,hostname);
+      if (result != 0 /*|| hostname[0] == '\0'*/) {
 	env.setResultErrMsg("initial gethostname() failed");
 	break;
       }
+
 
       // Try to resolve "hostname" to one or more IP addresses:
       NetAddressList addresses(hostname);
@@ -1013,7 +1060,7 @@ char const* timestampString() {
 // For Windoze, we need to implement our own gettimeofday()
 
 // used to make sure that static variables in gettimeofday() aren't initialized simultaneously by multiple threads
-static LONG initializeLock_gettimeofday = 0;  
+static LONG initializeLock_gettimeofday = 0;
 
 #if !defined(_WIN32_WCE)
 #include <sys/timeb.h>
@@ -1031,7 +1078,7 @@ int gettimeofday(struct timeval* tp, int* /*tz*/) {
 #else
   tickNow.QuadPart = GetTickCount();
 #endif
- 
+
   if (!isInitialized) {
     if(1 == InterlockedIncrement(&initializeLock_gettimeofday)) {
 #if !defined(_WIN32_WCE)
@@ -1067,13 +1114,13 @@ int gettimeofday(struct timeval* tp, int* /*tz*/) {
 
       // resolution of GetTickCounter() is always milliseconds
       tickFrequency.QuadPart = 1000;
-#endif     
+#endif
       // compute an offset to add to subsequent counter times, so we get a proper epoch:
       epochOffset.QuadPart
           = tp->tv_sec * tickFrequency.QuadPart + (tp->tv_usec * tickFrequency.QuadPart) / 1000000L - tickNow.QuadPart;
-      
+
       // next caller can use ticks for time calculation
-      isInitialized = True; 
+      isInitialized = True;
       return 0;
     } else {
         InterlockedDecrement(&initializeLock_gettimeofday);

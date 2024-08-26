@@ -59,6 +59,7 @@ typedef enum {
     MSG_CMD_MEDIA_VICAP_TUNING,
     MSG_CMD_MEDIA_VICAP_INIT,
     MSG_CMD_MEDIA_VICAP_START_STREAM,
+    MSG_CMD_MEDIA_VICAP_SET_3D_MODE_EN,
 } msg_media_vicap_cmd_t;
 
 typedef struct
@@ -118,6 +119,7 @@ typedef struct {
 
 typedef struct {
     const char *sensor_name;
+    const char *database_name;
     k_u16 width;
     k_u16 height;
     k_vicap_csi_num csi_num;  /**< CSI NUM that the sensor connects to*/
@@ -131,8 +133,10 @@ typedef struct {
     k_vicap_vi_flash_mode flash_mode;
     k_vicap_vi_first_frame_sel first_frame;
     k_u16 glitch_filter;
+    k_u16 fps;
     k_vicap_sensor_type sensor_type;
 } msg_vicap_sensor_info_t;
+
 
 typedef struct
 {

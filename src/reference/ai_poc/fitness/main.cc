@@ -428,17 +428,34 @@ void video_proc_01(char *argv[])
         bool find_ = pd.post_process(result,params);
 
         cv::Mat osd_frame(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-        cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
-        float thres_conf = atof(argv[2]);
-        if(find_)
+
+        #if defined(STUDIO_HDMI)
         {
-            Utils::DrawPred_video(osd_frame,{SENSOR_WIDTH,SENSOR_HEIGHT}, result, SKELETON, KPS_COLORS, LIMB_COLORS,thres_conf);
+            float thres_conf = atof(argv[2]);
+            if(find_)
+            {
+                Utils::DrawPred_video(osd_frame,{SENSOR_WIDTH,SENSOR_HEIGHT}, result, SKELETON, KPS_COLORS, LIMB_COLORS,thres_conf);
+            }
+            else 
+            {
+                cout << "not find!\n";
+            }
         }
-        else 
+        #else
         {
-            cout << "not find!\n";
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+            float thres_conf = atof(argv[2]);
+            if(find_)
+            {
+                Utils::DrawPred_video(osd_frame,{SENSOR_WIDTH,SENSOR_HEIGHT}, result, SKELETON, KPS_COLORS, LIMB_COLORS,thres_conf);
+            }
+            else 
+            {
+                cout << "not find!\n";
+            }
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
         }
-        cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+        #endif
 
         {
             ScopedTiming st("osd copy", atoi(argv[5]));

@@ -713,7 +713,12 @@ int main(int argc, char *argv[])
         #if defined(CONFIG_BOARD_K230D_CANMV)
             std::thread thread_isp(video_proc_K230D_CANMV, argv);
         #elif defined(CONFIG_BOARD_K230_CANMV_01STUDIO)
-            std::thread thread_isp(video_proc_CANMV_01STUDIO, argv);
+        
+            #if defined(STUDIO_HDMI)
+                std::thread thread_isp(video_proc, argv);
+            #else
+                std::thread thread_isp(video_proc_CANMV_01STUDIO, argv);
+            #endif  
         #else
             std::thread thread_isp(video_proc, argv);
         #endif

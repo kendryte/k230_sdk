@@ -759,88 +759,109 @@ void video_proc_01(char *argv[])
         hd.post_process(hand_results);
 
         cv::Mat osd_frame(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-        cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
-
-        float max_area_face = 0;
-        int max_id_face = -1;
-        for (int i = 0; i < face_results.size(); ++i)
-        {
-            float area_i = face_results[i].bbox.w * face_results[i].bbox.h;
-            if (area_i > max_area_face)
-            {
-                max_area_face = area_i;
-                max_id_face = i;
-            }
-        }
-
-        float max_area_hand = 0;
-        int max_id_hand = -1;
-        for (int i = 0; i < hand_results.size(); ++i)
-        {
-            float area_i = (hand_results[i].x2 - hand_results[i].x1) * (hand_results[i].y2 - hand_results[i].y1);
-            if (area_i > max_area_hand)
-            {
-                max_area_hand = area_i;
-                max_id_hand = i;
-            }
-        }
         
-        string text_dms_call = "Calling : No ";
-        string text_dms_smoke_drink = "Smoking or Drinking : No ";
-        if (max_id_face != -1 && max_id_hand != -1)
+
+        #if defined(STUDIO_HDMI)
         {
-            float face_x = face_results[max_id_face].bbox.x + (face_results[max_id_face].bbox.w / 2.0);
-            float face_y = face_results[max_id_face].bbox.y + (face_results[max_id_face].bbox.h / 2.0);
-            float hand_x = (hand_results[max_id_hand].x1 + hand_results[max_id_hand].x2) / 2.0;
-            float hand_y = (hand_results[max_id_hand].y1 + hand_results[max_id_hand].y2) / 2.0;
-
-            now_area = max_area_face;
-            now_len = sqrt(pow(face_x - hand_x, 2) + pow(face_y - hand_y, 2));
-
-            if (now_len < (now_area / init_area) * init_len)
+            float max_area_face = 0;
+            int max_id_face = -1;
+            for (int i = 0; i < face_results.size(); ++i)
             {
-                if (face_y < hand_y && (abs(face_y - hand_y) / abs(face_x - hand_x)) > 1)
+                float area_i = face_results[i].bbox.w * face_results[i].bbox.h;
+                if (area_i > max_area_face)
                 {
-                    warning_count_smk_drk += 1;
-                    warning_count_drk = 0;
-                    warning_count_call = 0;
+                    max_area_face = area_i;
+                    max_id_face = i;
                 }
-                else if (face_y > hand_y && (abs(face_y - hand_y) / abs(face_x - hand_x)) > 0.8)
+            }
+
+            float max_area_hand = 0;
+            int max_id_hand = -1;
+            for (int i = 0; i < hand_results.size(); ++i)
+            {
+                float area_i = (hand_results[i].x2 - hand_results[i].x1) * (hand_results[i].y2 - hand_results[i].y1);
+                if (area_i > max_area_hand)
                 {
-                    warning_count_smk_drk = 0;
-                    warning_count_drk += 1;
-                    warning_count_call = 0;
+                    max_area_hand = area_i;
+                    max_id_hand = i;
+                }
+            }
+            
+            string text_dms_call = "Calling : No ";
+            string text_dms_smoke_drink = "Smoking or Drinking : No ";
+            if (max_id_face != -1 && max_id_hand != -1)
+            {
+                float face_x = face_results[max_id_face].bbox.x + (face_results[max_id_face].bbox.w / 2.0);
+                float face_y = face_results[max_id_face].bbox.y + (face_results[max_id_face].bbox.h / 2.0);
+                float hand_x = (hand_results[max_id_hand].x1 + hand_results[max_id_hand].x2) / 2.0;
+                float hand_y = (hand_results[max_id_hand].y1 + hand_results[max_id_hand].y2) / 2.0;
+
+                now_area = max_area_face;
+                now_len = sqrt(pow(face_x - hand_x, 2) + pow(face_y - hand_y, 2));
+
+                if (now_len < (now_area / init_area) * init_len)
+                {
+                    if (face_y < hand_y && (abs(face_y - hand_y) / abs(face_x - hand_x)) > 1)
+                    {
+                        warning_count_smk_drk += 1;
+                        warning_count_drk = 0;
+                        warning_count_call = 0;
+                    }
+                    else if (face_y > hand_y && (abs(face_y - hand_y) / abs(face_x - hand_x)) > 0.8)
+                    {
+                        warning_count_smk_drk = 0;
+                        warning_count_drk += 1;
+                        warning_count_call = 0;
+                    }
+                    else
+                    {
+                        warning_count_smk_drk = 0;
+                        warning_count_drk = 0;
+                        warning_count_call += 1;
+                    }
+
+                    if (warning_count_smk_drk > warning_amount)
+                    {
+                        text_dms_smoke_drink = "Smoking or Drinking : Yes ";
+                        cv::putText(osd_frame, text_dms_call, cv::Point(20,50),cv::FONT_HERSHEY_COMPLEX, 1.5, cv::Scalar(255, 0, 255, 0), 2, 4, 0);
+                        cv::putText(osd_frame, text_dms_smoke_drink, cv::Point(20,100),cv::FONT_HERSHEY_COMPLEX, 1.5, cv::Scalar(255, 255, 0, 0), 2, 4, 0);
+                    }
+                    else if (warning_count_drk > warning_amount)
+                    {
+                        text_dms_smoke_drink = "Drinking : Yes ";
+                        cv::putText(osd_frame, text_dms_call, cv::Point(20,50),cv::FONT_HERSHEY_COMPLEX, 1.5, cv::Scalar(255, 0, 255, 0), 2, 4, 0);
+                        cv::putText(osd_frame, text_dms_smoke_drink, cv::Point(20,100),cv::FONT_HERSHEY_COMPLEX, 1.5, cv::Scalar(255, 255, 0, 0), 2, 4, 0);
+                    }
+                    else if (warning_count_call > warning_amount)
+                    {
+                        text_dms_call = "Calling : Yes ";
+                        cv::putText(osd_frame, text_dms_call, cv::Point(20,50),cv::FONT_HERSHEY_COMPLEX, 1.5, cv::Scalar(255, 255, 0, 0), 2, 4, 0);
+                        cv::putText(osd_frame, text_dms_smoke_drink, cv::Point(20,100),cv::FONT_HERSHEY_COMPLEX, 1.5, cv::Scalar(255, 0, 255, 0), 2, 4, 0);
+                    }
+                    else
+                    {
+                        cv::putText(osd_frame, text_dms_call, cv::Point(20,50),cv::FONT_HERSHEY_COMPLEX, 1.5, cv::Scalar(255, 0, 255, 0), 2, 4, 0);
+                        cv::putText(osd_frame, text_dms_smoke_drink, cv::Point(20,100),cv::FONT_HERSHEY_COMPLEX, 1.5, cv::Scalar(255, 0, 255, 0), 2, 4, 0);
+                    }
                 }
                 else
                 {
                     warning_count_smk_drk = 0;
                     warning_count_drk = 0;
-                    warning_count_call += 1;
+                    warning_count_call = 0;
+                    cv::putText(osd_frame, text_dms_call, cv::Point(20,50),cv::FONT_HERSHEY_COMPLEX, 1.5, cv::Scalar(255, 0, 255, 0), 2, 4, 0);
+                    cv::putText(osd_frame, text_dms_smoke_drink, cv::Point(20,100),cv::FONT_HERSHEY_COMPLEX, 1.5, cv::Scalar(255, 0, 255, 0), 2, 4, 0);
                 }
 
-                if (warning_count_smk_drk > warning_amount)
-                {
-                    text_dms_smoke_drink = "Smoking or Drinking : Yes ";
-                    cv::putText(osd_frame, text_dms_call, cv::Point(20,50),cv::FONT_HERSHEY_COMPLEX, 1.5, cv::Scalar(255, 0, 255, 0), 2, 4, 0);
-                    cv::putText(osd_frame, text_dms_smoke_drink, cv::Point(20,100),cv::FONT_HERSHEY_COMPLEX, 1.5, cv::Scalar(255, 255, 0, 0), 2, 4, 0);
-                }
-                else if (warning_count_drk > warning_amount)
-                {
-                    text_dms_smoke_drink = "Drinking : Yes ";
-                    cv::putText(osd_frame, text_dms_call, cv::Point(20,50),cv::FONT_HERSHEY_COMPLEX, 1.5, cv::Scalar(255, 0, 255, 0), 2, 4, 0);
-                    cv::putText(osd_frame, text_dms_smoke_drink, cv::Point(20,100),cv::FONT_HERSHEY_COMPLEX, 1.5, cv::Scalar(255, 255, 0, 0), 2, 4, 0);
-                }
-                else if (warning_count_call > warning_amount)
-                {
-                    text_dms_call = "Calling : Yes ";
-                    cv::putText(osd_frame, text_dms_call, cv::Point(20,50),cv::FONT_HERSHEY_COMPLEX, 1.5, cv::Scalar(255, 255, 0, 0), 2, 4, 0);
-                    cv::putText(osd_frame, text_dms_smoke_drink, cv::Point(20,100),cv::FONT_HERSHEY_COMPLEX, 1.5, cv::Scalar(255, 0, 255, 0), 2, 4, 0);
-                }
-                else
-                {
-                    cv::putText(osd_frame, text_dms_call, cv::Point(20,50),cv::FONT_HERSHEY_COMPLEX, 1.5, cv::Scalar(255, 0, 255, 0), 2, 4, 0);
-                    cv::putText(osd_frame, text_dms_smoke_drink, cv::Point(20,100),cv::FONT_HERSHEY_COMPLEX, 1.5, cv::Scalar(255, 0, 255, 0), 2, 4, 0);
-                }
+
+                int w = hand_results[max_id_hand].x2 - hand_results[max_id_hand].x1 + 1;
+                int h = hand_results[max_id_hand].y2 - hand_results[max_id_hand].y1 + 1;
+                
+                int rect_x = hand_results[max_id_hand].x1/ SENSOR_WIDTH * osd_frame.cols;
+                int rect_y = hand_results[max_id_hand].y1/ SENSOR_HEIGHT * osd_frame.rows;
+                int rect_w = (float)w / SENSOR_WIDTH * osd_frame.cols;
+                int rect_h = (float)h / SENSOR_HEIGHT  * osd_frame.rows;
+                cv::rectangle(osd_frame, cv::Rect(rect_x, rect_y , rect_w, rect_h), cv::Scalar( 255, 0, 255, 255), 6, 2, 0);
             }
             else
             {
@@ -850,26 +871,122 @@ void video_proc_01(char *argv[])
                 cv::putText(osd_frame, text_dms_call, cv::Point(20,50),cv::FONT_HERSHEY_COMPLEX, 1.5, cv::Scalar(255, 0, 255, 0), 2, 4, 0);
                 cv::putText(osd_frame, text_dms_smoke_drink, cv::Point(20,100),cv::FONT_HERSHEY_COMPLEX, 1.5, cv::Scalar(255, 0, 255, 0), 2, 4, 0);
             }
-
-
-            int w = hand_results[max_id_hand].x2 - hand_results[max_id_hand].x1 + 1;
-            int h = hand_results[max_id_hand].y2 - hand_results[max_id_hand].y1 + 1;
-            
-            int rect_x = hand_results[max_id_hand].x1/ SENSOR_WIDTH * osd_frame.cols;
-            int rect_y = hand_results[max_id_hand].y1/ SENSOR_HEIGHT * osd_frame.rows;
-            int rect_w = (float)w / SENSOR_WIDTH * osd_frame.cols;
-            int rect_h = (float)h / SENSOR_HEIGHT  * osd_frame.rows;
-            cv::rectangle(osd_frame, cv::Rect(rect_x, rect_y , rect_w, rect_h), cv::Scalar( 255, 0, 255, 255), 6, 2, 0);
         }
-        else
+        #else
         {
-            warning_count_smk_drk = 0;
-            warning_count_drk = 0;
-            warning_count_call = 0;
-            cv::putText(osd_frame, text_dms_call, cv::Point(20,50),cv::FONT_HERSHEY_COMPLEX, 1.5, cv::Scalar(255, 0, 255, 0), 2, 4, 0);
-            cv::putText(osd_frame, text_dms_smoke_drink, cv::Point(20,100),cv::FONT_HERSHEY_COMPLEX, 1.5, cv::Scalar(255, 0, 255, 0), 2, 4, 0);
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+
+            float max_area_face = 0;
+            int max_id_face = -1;
+            for (int i = 0; i < face_results.size(); ++i)
+            {
+                float area_i = face_results[i].bbox.w * face_results[i].bbox.h;
+                if (area_i > max_area_face)
+                {
+                    max_area_face = area_i;
+                    max_id_face = i;
+                }
+            }
+
+            float max_area_hand = 0;
+            int max_id_hand = -1;
+            for (int i = 0; i < hand_results.size(); ++i)
+            {
+                float area_i = (hand_results[i].x2 - hand_results[i].x1) * (hand_results[i].y2 - hand_results[i].y1);
+                if (area_i > max_area_hand)
+                {
+                    max_area_hand = area_i;
+                    max_id_hand = i;
+                }
+            }
+            
+            string text_dms_call = "Calling : No ";
+            string text_dms_smoke_drink = "Smoking or Drinking : No ";
+            if (max_id_face != -1 && max_id_hand != -1)
+            {
+                float face_x = face_results[max_id_face].bbox.x + (face_results[max_id_face].bbox.w / 2.0);
+                float face_y = face_results[max_id_face].bbox.y + (face_results[max_id_face].bbox.h / 2.0);
+                float hand_x = (hand_results[max_id_hand].x1 + hand_results[max_id_hand].x2) / 2.0;
+                float hand_y = (hand_results[max_id_hand].y1 + hand_results[max_id_hand].y2) / 2.0;
+
+                now_area = max_area_face;
+                now_len = sqrt(pow(face_x - hand_x, 2) + pow(face_y - hand_y, 2));
+
+                if (now_len < (now_area / init_area) * init_len)
+                {
+                    if (face_y < hand_y && (abs(face_y - hand_y) / abs(face_x - hand_x)) > 1)
+                    {
+                        warning_count_smk_drk += 1;
+                        warning_count_drk = 0;
+                        warning_count_call = 0;
+                    }
+                    else if (face_y > hand_y && (abs(face_y - hand_y) / abs(face_x - hand_x)) > 0.8)
+                    {
+                        warning_count_smk_drk = 0;
+                        warning_count_drk += 1;
+                        warning_count_call = 0;
+                    }
+                    else
+                    {
+                        warning_count_smk_drk = 0;
+                        warning_count_drk = 0;
+                        warning_count_call += 1;
+                    }
+
+                    if (warning_count_smk_drk > warning_amount)
+                    {
+                        text_dms_smoke_drink = "Smoking or Drinking : Yes ";
+                        cv::putText(osd_frame, text_dms_call, cv::Point(20,50),cv::FONT_HERSHEY_COMPLEX, 1.5, cv::Scalar(255, 0, 255, 0), 2, 4, 0);
+                        cv::putText(osd_frame, text_dms_smoke_drink, cv::Point(20,100),cv::FONT_HERSHEY_COMPLEX, 1.5, cv::Scalar(255, 255, 0, 0), 2, 4, 0);
+                    }
+                    else if (warning_count_drk > warning_amount)
+                    {
+                        text_dms_smoke_drink = "Drinking : Yes ";
+                        cv::putText(osd_frame, text_dms_call, cv::Point(20,50),cv::FONT_HERSHEY_COMPLEX, 1.5, cv::Scalar(255, 0, 255, 0), 2, 4, 0);
+                        cv::putText(osd_frame, text_dms_smoke_drink, cv::Point(20,100),cv::FONT_HERSHEY_COMPLEX, 1.5, cv::Scalar(255, 255, 0, 0), 2, 4, 0);
+                    }
+                    else if (warning_count_call > warning_amount)
+                    {
+                        text_dms_call = "Calling : Yes ";
+                        cv::putText(osd_frame, text_dms_call, cv::Point(20,50),cv::FONT_HERSHEY_COMPLEX, 1.5, cv::Scalar(255, 255, 0, 0), 2, 4, 0);
+                        cv::putText(osd_frame, text_dms_smoke_drink, cv::Point(20,100),cv::FONT_HERSHEY_COMPLEX, 1.5, cv::Scalar(255, 0, 255, 0), 2, 4, 0);
+                    }
+                    else
+                    {
+                        cv::putText(osd_frame, text_dms_call, cv::Point(20,50),cv::FONT_HERSHEY_COMPLEX, 1.5, cv::Scalar(255, 0, 255, 0), 2, 4, 0);
+                        cv::putText(osd_frame, text_dms_smoke_drink, cv::Point(20,100),cv::FONT_HERSHEY_COMPLEX, 1.5, cv::Scalar(255, 0, 255, 0), 2, 4, 0);
+                    }
+                }
+                else
+                {
+                    warning_count_smk_drk = 0;
+                    warning_count_drk = 0;
+                    warning_count_call = 0;
+                    cv::putText(osd_frame, text_dms_call, cv::Point(20,50),cv::FONT_HERSHEY_COMPLEX, 1.5, cv::Scalar(255, 0, 255, 0), 2, 4, 0);
+                    cv::putText(osd_frame, text_dms_smoke_drink, cv::Point(20,100),cv::FONT_HERSHEY_COMPLEX, 1.5, cv::Scalar(255, 0, 255, 0), 2, 4, 0);
+                }
+
+
+                int w = hand_results[max_id_hand].x2 - hand_results[max_id_hand].x1 + 1;
+                int h = hand_results[max_id_hand].y2 - hand_results[max_id_hand].y1 + 1;
+                
+                int rect_x = hand_results[max_id_hand].x1/ SENSOR_WIDTH * osd_frame.cols;
+                int rect_y = hand_results[max_id_hand].y1/ SENSOR_HEIGHT * osd_frame.rows;
+                int rect_w = (float)w / SENSOR_WIDTH * osd_frame.cols;
+                int rect_h = (float)h / SENSOR_HEIGHT  * osd_frame.rows;
+                cv::rectangle(osd_frame, cv::Rect(rect_x, rect_y , rect_w, rect_h), cv::Scalar( 255, 0, 255, 255), 6, 2, 0);
+            }
+            else
+            {
+                warning_count_smk_drk = 0;
+                warning_count_drk = 0;
+                warning_count_call = 0;
+                cv::putText(osd_frame, text_dms_call, cv::Point(20,50),cv::FONT_HERSHEY_COMPLEX, 1.5, cv::Scalar(255, 0, 255, 0), 2, 4, 0);
+                cv::putText(osd_frame, text_dms_smoke_drink, cv::Point(20,100),cv::FONT_HERSHEY_COMPLEX, 1.5, cv::Scalar(255, 0, 255, 0), 2, 4, 0);
+            }
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
         }
-        cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+        #endif
 
         {
             ScopedTiming st("osd copy", atoi(argv[10]));

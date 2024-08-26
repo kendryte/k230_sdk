@@ -108,17 +108,32 @@ void FaceMesh::post_process(FrameSize frame_size,vector<float>& vertices,bool pi
     recon_vers(roi, vertices);
 }
 
-void FaceMesh::get_mesh(cv::Mat &src_img, vector<float>& vertices,bool pic_mode)
+void FaceMesh::get_mesh(cv::Mat &src_img, vector<float>& vertices,bool pic_mode,bool lcd_mode)
 {
     int x,y;
-    for(int ver_index =0;ver_index < post_ver_dim_;ver_index = ver_index + 6)
+    if (lcd_mode)
     {
-        x = vertices[ver_index];
-        y = vertices[ver_index + post_ver_dim_];
-        if(pic_mode)
-            cv::circle(src_img, cv::Point(x, y), 1, cv::Scalar(255, 0, 0), 1);  
-        else
-            cv::circle(src_img, cv::Point(x, y), 2, cv::Scalar(200, 0, 0, 255), 4); 
+        for(int ver_index =0;ver_index < post_ver_dim_;ver_index = ver_index + 12)
+        {
+            x = vertices[ver_index];
+            y = vertices[ver_index + post_ver_dim_];
+            if(pic_mode)
+                cv::circle(src_img, cv::Point(x, y), 1, cv::Scalar(255, 0, 0), 1);  
+            else
+                cv::circle(src_img, cv::Point(x, y), 2, cv::Scalar(200, 0, 0, 255), 4); 
+        }
+    }
+    else
+    {
+        for(int ver_index =0;ver_index < post_ver_dim_;ver_index = ver_index + 6)
+        {
+            x = vertices[ver_index];
+            y = vertices[ver_index + post_ver_dim_];
+            if(pic_mode)
+                cv::circle(src_img, cv::Point(x, y), 1, cv::Scalar(255, 0, 0), 1);  
+            else
+                cv::circle(src_img, cv::Point(x, y), 2, cv::Scalar(200, 0, 0, 255), 4); 
+        }
     }
 }
 

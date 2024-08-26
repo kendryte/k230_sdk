@@ -365,6 +365,9 @@ int rt_hw_uart_init(void)
                               RT_DEVICE_FLAG_STREAM | RT_DEVICE_FLAG_RDWR | RT_DEVICE_FLAG_INT_RX,
                               uart);
     }
+    
+    /* set console device */
+    rt_console_set_device(RT_CONSOLE_DEVICE_NAME);
 
     return 0;
 }

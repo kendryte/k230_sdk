@@ -16,17 +16,17 @@ void pr(const char *fmt, ...)
 
 void *__memcpy__(void *dest, const void *src, unsigned int n)
 {
-	return memcpy(dest, src, n);
+	return rt_memcpy(dest, src, n);
 }
 
 void *__memset__(void *s, int c, unsigned int n)
 {
-	return memset(s, c, n);
+	return rt_memset(s, c, n);
 }
 
 unsigned int __strlen__(const char *s)
 {
-	return strlen(s);
+	return rt_strlen(s);
 }
 
 int __interrupt_context__(void)
@@ -37,14 +37,14 @@ int __interrupt_context__(void)
 void *__ipcm_mem_alloc__(int size)
 {
 	if (size > 0)
-		return malloc(size);
+		return rt_malloc(size);
 	else
 		return NULL;
 }
 
 void __ipcm_mem_free__(void *mem)
 {
-	free(mem);
+	rt_free(mem);
 	mem = NULL;
 }
 
@@ -131,7 +131,7 @@ void __ipcm_lock_free__(struct ipcm_lock *ilock)
 
 void *__ipcm_io_mapping__(unsigned long addr, unsigned int sz)
 {
-	return rt_ioremap_nocache((void *)addr, sz);
+	return rt_ioremap_wt((void *)addr, sz);
 }
 
 void __ipcm_io_unmapping__(void *addr)
@@ -159,7 +159,7 @@ struct ipcm_task *__ipcm_thread_create__(char *name,
 		return NULL;
 	}
 	memset(ptask, 0, sizeof(struct ipcm_task));
-	los_task = rt_thread_create(name, (void (*)(void *))fn, RT_NULL, IPCM_THREAD_STACK_SIZE,
+	los_task = rt_thread_create(name, (void (*)(void *))fn, data, IPCM_THREAD_STACK_SIZE,
 				IPCM_THREAD_PRIORITY, IPCM_THREAD_TIMESLICE);
 	if(!los_task) {
 		free(ptask);
@@ -258,9 +258,8 @@ void __ipcm_event_free__(struct ipcm_event *ievent)
 int __ipcm_wait_event__(struct ipcm_event *ievent)
 {
 	rt_event_t event = (rt_event_t)(ievent->os_wait);
-	rt_event_recv(event, 0x01, RT_EVENT_FLAG_OR | RT_EVENT_FLAG_CLEAR,
-				RT_WAITING_FOREVER, NULL);
-	return 0;
+	return rt_event_recv_interruptible(event, 0x01, RT_EVENT_FLAG_OR
+		| RT_EVENT_FLAG_CLEAR, RT_WAITING_FOREVER, NULL);
 }
 
 void __ipcm_wakeup_event__(struct ipcm_event *ievent)

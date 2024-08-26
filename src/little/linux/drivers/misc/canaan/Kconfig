@@ -1,0 +1,8 @@
+    config K230_AMP_DRIVER
+        tristate "K230 amp driver"
+        help
+          Say Y for enabling the K230 amp driver
+
+          To compile this support as a module, choose M here:
+          If unsure, say N.
+

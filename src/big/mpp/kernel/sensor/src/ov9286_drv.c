@@ -909,26 +909,6 @@ static int ov9286_power_rest(k_s32 on)
     return 0;
 }
 
-static k_s32 ov9286_sensor_get_chip_id(void *ctx, k_u32 *chip_id)
-{
-    k_s32 ret = 0;
-    k_u16 id_high = 0;
-    k_u16 id_low = 0;
-    struct sensor_driver_dev *dev = ctx;
-    pr_info("%s enter\n", __func__);
-
-    ret = sensor_reg_read(&dev->i2c_info, OV9286_REG_CHIP_ID_H, &id_high);
-    ret |= sensor_reg_read(&dev->i2c_info, OV9286_REG_CHIP_ID_L, &id_low);
-    if (ret) {
-        pr_err("%s error\n", __func__);
-        return -1;
-    }
-
-    *chip_id = (id_high << 8) | id_low;
-    pr_info("%s chip_id[0x%08X]\n", __func__, *chip_id);
-    return ret;
-}
-
 
 static int ov9286_i2c_init(k_sensor_i2c_info *i2c_info)
 {
@@ -943,6 +923,28 @@ static int ov9286_i2c_init(k_sensor_i2c_info *i2c_info)
 }
 
 
+static k_s32 ov9286_sensor_get_chip_id(void *ctx, k_u32 *chip_id)
+{
+    k_s32 ret = 0;
+    k_u16 id_high = 0;
+    k_u16 id_low = 0;
+    struct sensor_driver_dev *dev = ctx;
+    pr_info("%s enter\n", __func__);
+
+    ov9286_i2c_init(&dev->i2c_info);
+
+    ret = sensor_reg_read(&dev->i2c_info, OV9286_REG_CHIP_ID_H, &id_high);
+    ret |= sensor_reg_read(&dev->i2c_info, OV9286_REG_CHIP_ID_L, &id_low);
+    if (ret) {
+        // pr_err("%s error\n", __func__);
+        return -1;
+    }
+
+    *chip_id = (id_high << 8) | id_low;
+    pr_info("%s chip_id[0x%08X]\n", __func__, *chip_id);
+    return ret;
+}
+
 
 static k_s32 ov9286_sensor_power_on(void *ctx, k_s32 on)
 {
@@ -955,7 +957,11 @@ static k_s32 ov9286_sensor_power_on(void *ctx, k_s32 on)
             ov9286_power_rest(on);
             ov9286_i2c_init(&dev->i2c_info);
         }
-        ov9286_sensor_get_chip_id(ctx, &chip_id);
+        ret = ov9286_sensor_get_chip_id(ctx, &chip_id);
+        if(ret < 0)
+        {
+            pr_err("%s, iic read chip id err \n", __func__);
+        }
     } else {
         ov9286_init_flag = K_FALSE;
         ov9286_power_rest(on);
@@ -1531,6 +1537,9 @@ k_s32 ov9286_sensor_get_otp_data(void *ctx, void *data)
     sensor_reg_write(&dev->i2c_info, 0x3d81, 0x01);
     rt_thread_mdelay(15);
 
+    ret = sensor_reg_read(&dev->i2c_info,  0x3d10, &reg_data);
+    rt_kprintf("0x3d10 val is %x \n", reg_data);
+
     if(otp_date.otp_type == 1)
     {
         for(int i = 0; i < 17; i++)
@@ -1569,16 +1578,34 @@ k_s32 ov9286_sensor_set_otp_data(void *ctx, void *data)
 
     // for(int i = 0; i < 15; i++)
     // {
-    //     rt_kprintf("read otp tpye is %d read reg(%d) val is %x \n", otp_date.otp_type, i, otp_date.otp_date[i]);
+    //     rt_kprintf("set otp tpye is %d read reg(%d) val is %x \n", otp_date.otp_type, i, otp_date.otp_date[i]);
     // }
 
     rt_kprintf("read otp tpye   char val is %s  \n", otp_date.otp_date);
+
+    ret = sensor_reg_read(&dev->i2c_info,  0x3d10, &reg_data);
+    if(reg_data == 0x01)
+    {
+        read_otp_date.otp_type = 0;
+        ov9286_sensor_get_otp_data(ctx, &read_otp_date);
+        // compare date 
+        rt_kprintf("otp alredy write %s \n", read_otp_date.otp_date);
+        return K_ERR_VICAP_OPT_ALREADY_WRITE;
+    }
+        
 #if 1
     // clear otp blank
     for(int i = 0; i < 32; i++)
     {
+        if(0x3d00 + i == 0x3d10)
+            continue;
         sensor_reg_write(&dev->i2c_info, 0x3d00 + i, 0x00);
+        // ret = sensor_reg_read(&dev->i2c_info,  0x3d00 + i, &reg_data);
+        // // if(reg_data != 0x0)
+        // //     rt_kprintf("i is %x val is %x \n", 0x3d00 + i, reg_data);
+        
     }
+
     // write reg 
     data_len = strlen(otp_date.otp_date);
     if(data_len > 15)
@@ -1587,8 +1614,12 @@ k_s32 ov9286_sensor_set_otp_data(void *ctx, void *data)
     {
         sensor_reg_write(&dev->i2c_info, 0x3d11 + i, otp_date.otp_date[i]);
     }
+
+    sensor_reg_write(&dev->i2c_info, 0x3d10, 0x01);
     sensor_reg_write(&dev->i2c_info, 0x3d80, 0x01);
-    rt_thread_mdelay(30);
+    
+
+    rt_thread_mdelay(100);
 
     // read opt date 
     read_otp_date.otp_type = 0;

@@ -42,6 +42,7 @@ public:
 	virtual bool      kd_uvc_stop_grab();
 
 	virtual bool      kd_uvc_snap();
+	virtual kd_uvc_camera_info      kd_uvc_get_camera_information();
 
 	virtual bool      kd_uvc_get_all_uvc_dev_info(bool bfilter_k230, UVC_DEV_INFO_LIST& lst_dev_uvc_info);
 
@@ -61,6 +62,7 @@ protected:
 	int               _kd_uvc_transfer_control_cmd(char* serialNumber, UVC_TRANSFER_CONTROL_CMD cmd,bool usb_init);
 private:
 	grabber_init_param   m_uvc_param;
+	bool                 m_brgb_mode_only;
 	uvc_grab_init_parameters_ex m_uvc_grab_init_parameters;
 	UVC_UTILS_DEVICE     m_uvc_device;
 
@@ -96,6 +98,8 @@ private:
 	int                             m_conf_file_data_len;
 
 	char                            m_uvc_serialNumber[64];
+
+	kd_uvc_camera_info              m_uvc_camera_info;
 
 };
 

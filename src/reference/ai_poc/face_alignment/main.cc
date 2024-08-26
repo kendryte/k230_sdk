@@ -117,7 +117,7 @@ void video_proc(char *argv[])
             face_align.pre_process(det_results[i].bbox);
             face_align.inference();
             vector<float> vertices;
-            face_align.post_process({osd_width, osd_height},vertices,false); 
+            face_align.post_process({ISP_CHN0_WIDTH, ISP_CHN0_HEIGHT},vertices,false); 
             #if defined(CONFIG_BOARD_K230D_CANMV)
             {
                 ScopedTiming st("osd draw", atoi(argv[8]));
@@ -130,13 +130,25 @@ void video_proc(char *argv[])
             }
             #elif defined(CONFIG_BOARD_K230_CANMV_01STUDIO)
             {
-                ScopedTiming st("osd draw", atoi(argv[8]));
-                cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
-                if(output_mode == "depth")
-                    face_align.get_depth(osd_frame, vertices);
-                else if(output_mode == "pncc")
-                    face_align.get_pncc(osd_frame, vertices);
-                cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+                #if defined(STUDIO_HDMI)
+                {
+                    ScopedTiming st("osd draw", atoi(argv[8]));
+                    if(output_mode == "depth")
+                        face_align.get_depth(osd_frame, vertices);
+                    else if(output_mode == "pncc")
+                        face_align.get_pncc(osd_frame, vertices);
+                }
+                #else
+                {
+                    ScopedTiming st("osd draw", atoi(argv[8]));
+                    cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+                    if(output_mode == "depth")
+                        face_align.get_depth(osd_frame, vertices);
+                    else if(output_mode == "pncc")
+                        face_align.get_pncc(osd_frame, vertices);
+                    cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+                }
+                #endif
             }
             #else
             {

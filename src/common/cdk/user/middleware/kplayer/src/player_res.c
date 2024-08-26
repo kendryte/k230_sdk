@@ -363,6 +363,7 @@ k_s32 ao_open(k_s32 s32SampleRate, k_s32 s32ChanNum,k_payload_type audio_dec_typ
         return K_FAILED;
     }
     k_aio_dev_attr aio_dev_attr;
+    memset(&aio_dev_attr,0,sizeof(aio_dev_attr));
     aio_dev_attr.audio_type = KD_AUDIO_OUTPUT_TYPE_I2S;
     aio_dev_attr.avsync = avsync;
     aio_dev_attr.kd_audio_attr.i2s_attr.sample_rate = s32SampleRate;

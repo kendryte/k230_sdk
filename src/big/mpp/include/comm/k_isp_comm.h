@@ -136,6 +136,7 @@ typedef enum {
  *
  */
 typedef enum {
+#if 0 
     ISP_PIX_FMT_YUV422SP = 0,               /**< ISP output format: YUV422 Semi-Planar */
     ISP_PIX_FMT_YUV422I,                    /**< ISP output format: YUV422 Interleaved */
     ISP_PIX_FMT_YUV420SP,                   /**< ISP output format: YUV420 Semi-Planar */
@@ -156,6 +157,38 @@ typedef enum {
     ISP_PIX_FMT_RAW14_ALIGNED_MODE1,        /**< ISP output format: Raw 14bit in align mode 1 */
     ISP_PIX_FMT_RAW16,                      /**< ISP output format: Raw 16-bit */
     ISP_PIX_FMT_MAX                         /**< Total number of output formats */
+#else
+    ISP_PIX_FMT_YUV422SP = 0,               /**< ISP output format: YUV422 Semi-Planar */
+    ISP_PIX_FMT_YUV422SP_ALIGNED_MODE0,     /**< ISP output format: YUV422 Semi-Planar in align mode 0*/
+    ISP_PIX_FMT_YUV422SP_ALIGNED_MODE1,     /**< ISP output format: YUV422 Semi-Planar in align mode 1*/
+    ISP_PIX_FMT_YUV422I,                    /**< ISP output format: YUV422 Interleaved */
+    ISP_PIX_FMT_YUV422I_ALIGNED_MODE1,      /**< ISP output format: YUV422 Interleaved in align mode 1*/
+    ISP_PIX_FMT_YUV420SP,                   /**< ISP output format: YUV420 Semi-Planar */
+    ISP_PIX_FMT_YUV420SP_ALIGNED_MODE0,     /**< ISP output format: YUV420 Semi-Planar in align mode 0*/
+    ISP_PIX_FMT_YUV420SP_ALIGNED_MODE1,     /**< ISP output format: YUV420 Semi-Planar in align mode 1*/
+    ISP_PIX_FMT_YUV444P,                    /**< ISP output format: YUV444 Planar */
+    ISP_PIX_FMT_YUV444I,                    /**< ISP output format: YUV444 Interleaved */
+    ISP_PIX_FMT_YUV444I_ALIGNED_MODE0,      /**< ISP output format: YUV444 Interleaved in align mode 0*/
+    ISP_PIX_FMT_YUV400,                     /**< ISP output format: YUV400 Y only format */
+    ISP_PIX_FMT_YUV400_ALIGNED_MODE0,       /**< ISP output format: YUV400 Y only format in align mode 0*/
+    ISP_PIX_FMT_YUV400_ALIGNED_MODE1,       /**< ISP output format: YUV400 Y only format in align mode 1*/
+    ISP_PIX_FMT_RGB888,                     /**< ISP output format: RGB888 Raster Scan*/
+    ISP_PIX_FMT_RGB888_ALIGNED_MODE0,       /**< ISP output format: RGB888 Raster Scan in align mode 0*/
+    ISP_PIX_FMT_RGB888P,                    /**< ISP output format: RGB888 Planar */
+    ISP_PIX_FMT_RAW8,                       /**< ISP output format: Raw 8-bit */
+    ISP_PIX_FMT_RAW10,                      /**< ISP output format: Raw 10-bit */
+    ISP_PIX_FMT_RAW10_ALIGNED_MODE0,        /**< ISP output format: Raw 10-bit in align mode 0 */
+    ISP_PIX_FMT_RAW10_ALIGNED_MODE1,        /**< ISP output format: Raw 10-bit in align mode 1 */
+    ISP_PIX_FMT_RAW12,                      /**< ISP output format: Raw 12-bit */
+    ISP_PIX_FMT_RAW12_ALIGNED_MODE0,        /**< ISP output format: Raw 12-bit in align mode 0 */
+    ISP_PIX_FMT_RAW12_ALIGNED_MODE1,        /**< ISP output format: Raw 12-bit in align mode 1 */
+    ISP_PIX_FMT_RAW14,                      /**< ISP output format: Raw 14-bit */
+    ISP_PIX_FMT_RAW14_ALIGNED_MODE0,        /**< ISP output format: Raw 14-bit in align mode 0 */
+    ISP_PIX_FMT_RAW14_ALIGNED_MODE1,        /**< ISP output format: Raw 14-bit in align mode 1 */
+    ISP_PIX_FMT_RAW16,                      /**< ISP output format: Raw 16-bit */
+    ISP_PIX_FMT_RAW24,                      /**< ISP output format: Raw 24-bit */
+    ISP_PIX_FMT_MAX                         /**< Total number of output formats */
+#endif
 } k_isp_output_pix_format;
 
 /**
@@ -483,6 +516,7 @@ typedef struct {
     k_sensor_mode sensor_mode;
     k_s32 sensor_fd;
     char sensor_name[32];
+    char database_name[64];
     k_bool dw_enable;
     k_bool dev_enable;
     k_u32 buffer_num;

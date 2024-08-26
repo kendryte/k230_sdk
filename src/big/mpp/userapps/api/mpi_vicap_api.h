@@ -338,6 +338,19 @@ k_s32 kd_mpi_vicap_set_slave_attr(k_vicap_slave_id id, k_vicap_slave_info *info)
 k_s32 kd_mpi_vicap_3d_mode_crtl(k_bool enable);
 
 
+/**
+ * @brief vicap set sensor mlk
+ *
+ * @param [in] enable mclk config
+ * @return k_s32
+ * @retval 0 success
+ * @retval "not 0" see err code
+ * @see K_ERR_CODE_E
+ * @note
+ */
+k_s32 kd_mpi_vicap_sensor_set_mclk(k_sensor_mclk sensor_mclk);
+
+k_s32 kd_mpi_vicap_sensor_disable_mclk(k_sensor_mclk sensor_mclk);
 /** @} */ /** <!-- ==== VICAP End ==== */
 
 #ifdef __cplusplus

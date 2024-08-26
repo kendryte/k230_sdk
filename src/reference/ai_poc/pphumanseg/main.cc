@@ -375,12 +375,23 @@ void video_proc_01(char *argv[])
         cv::Mat mask = seg.post_process( );
 
         cv::Mat osd_frame(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-        cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
 
-        cv::resize(mask, mask, cv::Size(osd_frame.cols, osd_frame.rows), 0, 0);
-        osd_frame.setTo(cv::Scalar(255,255, 255, 255), mask);
+        #if defined(STUDIO_HDMI)
+        {
+            cv::resize(mask, mask, cv::Size(osd_frame.cols, osd_frame.rows), 0, 0);
+            osd_frame.setTo(cv::Scalar(255,255, 255, 255), mask);
+        }
+        #else
+        {            
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
 
-        cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+            cv::resize(mask, mask, cv::Size(osd_frame.cols, osd_frame.rows), 0, 0);
+            osd_frame.setTo(cv::Scalar(255,255, 255, 255), mask);
+
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+        }
+        #endif
+
         {
             ScopedTiming st("osd copy", atoi(argv[3]));
             memcpy(pic_vaddr, osd_frame.data, osd_width * osd_height * 4);

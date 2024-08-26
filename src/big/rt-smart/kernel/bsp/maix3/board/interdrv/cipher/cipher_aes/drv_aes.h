@@ -28,12 +28,10 @@
 #include <stdint.h>
 
 #define K230_AES_NAME               "aes"
-#define RT_AES_GCM_ENC              _IOWR('G', 0, int)
-#define RT_AES_GCM_DEC              _IOWR('G', 1, int)
-#define RT_AES_GCM_UPDATE           _IOWR('G', 2, int)
-#define RT_AES_GCM_FINISH           _IOWR('G', 3, int)
+#define RT_AES_INIT                 _IOWR('G', 0, int)
+#define RT_AES_UPDATE               _IOWR('G', 1, int)
+#define RT_AES_FINAL                _IOWR('G', 2, int)
 #define AES_BLOCK_SIZE              16
-// #define ULLONG_MAX                  (~0ULL)
 #define IV_MAXLEN                   16
 #define SW_KEY_MAXLEN               64
 #define DGST_INT_STATE_LEN          64
@@ -143,34 +141,29 @@ typedef enum {
     E_ERROR,     ///< Unspecific error.
 } pufs_status_t;
 
-/*
-* Encryption case:
-*  INPUT  =   Assocdata  ||   Plaintext
-*           <-  aadlen ->   <-  pclen  -> <- taglen=0 ->
-*
-*  OUTPUT =   Assocdata  ||   Ciphertext  ||   Tag
-*           <-  aadlen ->    <- outlen ->    <- taglen ->
-*
-* Decryption case:
-*  INPUT  =   Assocdata  ||  Ciphertext  ||     Tag
-*          <- aadlen ->    <------- pclen ------------>
-*                                          <- taglen ->
-*
-*  OUTPUT =   Assocdata  ||  Plaintext
-*            <- aadlen -> <- outlen -> <- taglen=0 ->
-*/
-struct rt_aes_config_args
-{
-    void *key;
-    void *iv;
-    void *in;
-    void *out;
-    rt_uint32_t keybits;
-    rt_uint32_t ivlen;
-    rt_uint32_t pclen;
-    rt_uint32_t aadlen;
-    rt_uint32_t taglen;
-    rt_uint32_t outlen;
+union rt_aes_control_args {
+    struct {
+        uint8_t mode;
+        uint8_t encrypt;
+        uint8_t keytype;
+        uint8_t keyslot;
+        uint8_t *key;
+        uint8_t *iv;
+        uint32_t keylen;
+        uint32_t ivlen;
+    } init;
+    struct {
+        uint8_t *out;
+        uint32_t *outlen;
+        uint8_t *in;
+        uint32_t inlen;
+    } update;
+    struct {
+        uint8_t *out;
+        uint32_t *outlen;
+        uint8_t *tag;
+        uint32_t taglen;
+    } final;
 };
 
 typedef enum {
@@ -214,15 +207,54 @@ typedef enum {
     N_KA_SLOT_T, ///< keep in the last one
 } pufs_ka_slot_t;
 
-typedef struct
-{
+typedef enum {
+    // PUF slots
+    PUFSLOT_0,  ///< PUF slot 0, 256 bits
+    PUFSLOT_1,  ///< PUF slot 1, 256 bits
+    PUFSLOT_2,  ///< PUF slot 2, 256 bits
+    PUFSLOT_3,  ///< PUF slot 3, 256 bits
+    // OTP key slots
+    OTPKEY_0,   ///< OTP key slot 0, 256 bits
+    OTPKEY_1,   ///< OTP key slot 1, 256 bits
+    OTPKEY_2,   ///< OTP key slot 2, 256 bits
+    OTPKEY_3,   ///< OTP key slot 3, 256 bits
+    OTPKEY_4,   ///< OTP key slot 4, 256 bits
+    OTPKEY_5,   ///< OTP key slot 5, 256 bits
+    OTPKEY_6,   ///< OTP key slot 6, 256 bits
+    OTPKEY_7,   ///< OTP key slot 7, 256 bits
+    OTPKEY_8,   ///< OTP key slot 8, 256 bits
+    OTPKEY_9,   ///< OTP key slot 9, 256 bits
+    OTPKEY_10,  ///< OTP key slot 10, 256 bits
+    OTPKEY_11,  ///< OTP key slot 11, 256 bits
+    OTPKEY_12,  ///< OTP key slot 12, 256 bits
+    OTPKEY_13,  ///< OTP key slot 13, 256 bits
+    OTPKEY_14,  ///< OTP key slot 14, 256 bits
+    OTPKEY_15,  ///< OTP key slot 15, 256 bits
+    OTPKEY_16,  ///< OTP key slot 16, 256 bits
+    OTPKEY_17,  ///< OTP key slot 17, 256 bits
+    OTPKEY_18,  ///< OTP key slot 18, 256 bits
+    OTPKEY_19,  ///< OTP key slot 19, 256 bits
+    OTPKEY_20,  ///< OTP key slot 20, 256 bits
+    OTPKEY_21,  ///< OTP key slot 21, 256 bits
+    OTPKEY_22,  ///< OTP key slot 22, 256 bits
+    OTPKEY_23,  ///< OTP key slot 23, 256 bits
+    OTPKEY_24,  ///< OTP key slot 24, 256 bits
+    OTPKEY_25,  ///< OTP key slot 25, 256 bits
+    OTPKEY_26,  ///< OTP key slot 26, 256 bits
+    OTPKEY_27,  ///< OTP key slot 27, 256 bits
+    OTPKEY_28,  ///< OTP key slot 28, 256 bits
+    OTPKEY_29,  ///< OTP key slot 29, 256 bits
+    OTPKEY_30,  ///< OTP key slot 30, 256 bits
+    OTPKEY_31,  ///< OTP key slot 31, 256 bits
+} pufs_rt_slot_t;
+
+typedef struct {
     rt_bool_t process;
     const rt_uint8_t* addr;
     rt_uint32_t len;
 } k_segstr;
 
-typedef struct
-{
+typedef struct {
     rt_uint32_t nsegs;
     k_segstr seg[3];
 } k_blsegs;
@@ -256,8 +288,7 @@ typedef enum {
     GCM_GMAC_OP,
 } gcm_op;
 
-struct aes_context
-{
+struct aes_context {
     rt_uint64_t aadlen;
     rt_uint64_t inlen;
     rt_uint8_t buff[AES_BLOCK_SIZE];
@@ -275,6 +306,7 @@ struct aes_context
     pufs_cipher_t cipher;
     rt_bool_t encrypt;
     rt_bool_t start;
+    rt_bool_t busy;
 };
 
-#endif  /*__DRV_AES__*/
+#endif /*__DRV_AES__*/

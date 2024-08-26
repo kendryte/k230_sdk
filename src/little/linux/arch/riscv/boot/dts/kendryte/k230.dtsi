@@ -608,6 +608,9 @@
 				};
 			};
 		};
-
+		amp: amp {
+			status              = "disabled";
+			compatible          = "canaan,k230-amp";
+		};
 	};
 };

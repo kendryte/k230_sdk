@@ -189,13 +189,13 @@ static k_s32 kd_sample_vicap_set_dev_attr(k_vicap_dev_set_info dev_info)
     /* dev attr */
     if (dev_info.vicap_dev >= VICAP_DEV_ID_MAX || dev_info.vicap_dev < VICAP_DEV_ID_0)
     {
-        printf("kd_mapi_vicap_set_dev_attr failed, dev_num %d out of range\n", dev_info.vicap_dev);
+        printf("kd_mpi_vicap_set_dev_attr failed, dev_num %d out of range\n", dev_info.vicap_dev);
         return K_FAILED;
     }
 
     if (dev_info.sensor_type > SENSOR_TYPE_MAX || dev_info.sensor_type < OV_OV9732_MIPI_1280X720_30FPS_10BIT_LINEAR)
     {
-        printf("kd_mapi_vicap_set_dev_attr failed, sensor_type %d out of range\n", dev_info.sensor_type);
+        printf("kd_mpi_vicap_set_dev_attr failed, sensor_type %d out of range\n", dev_info.sensor_type);
         return K_FAILED;
     }
 
@@ -277,7 +277,7 @@ int KdMedia::Impl::Init(const KdMediaInputConfig &config)
             int ret = kd_mpi_vicap_get_sensor_info(config.sensor_type, &sensor_info);
             if (ret != K_SUCCESS)
             {
-                std::cout << "KdMedia::Init() kd_mapi_vicap_get_sensor_info failed, ret = " << ret << std::endl;
+                std::cout << "KdMedia::Init() kd_mpi_vicap_get_sensor_info failed, ret = " << ret << std::endl;
                 return ret;
             }
             vb_config.comm_pool[4].blk_cnt = 6;
@@ -307,7 +307,7 @@ int KdMedia::Impl::Init(const KdMediaInputConfig &config)
         ret = kd_sample_vicap_set_dev_attr(vcap_dev_info_);
         if (ret != K_SUCCESS)
         {
-            std::cout << "KdMedia::Init() kd_mapi_vicap_set_dev_attr failed, ret = " << ret << std::endl;
+            std::cout << "KdMedia::Init() kd_mpi_vicap_set_dev_attr failed, ret = " << ret << std::endl;
             ret = kd_mpi_vb_exit();
             return ret;
         }
@@ -369,7 +369,7 @@ int KdMedia::Impl::CreateAiAEnc(IOnAEncData *on_aenc_data)
     aio_dev_attr.kd_audio_attr.i2s_attr.i2s_type = K_AIO_I2STYPE_INNERCODEC;
     if (K_SUCCESS != kd_mpi_ai_set_pub_attr(ai_dev_, &aio_dev_attr))
     {
-        std::cout << "kd_mapi_ai_init failed." << std::endl;
+        std::cout << "kd_mpi_ai_init failed." << std::endl;
         return -1;
     }
 
@@ -379,7 +379,7 @@ int KdMedia::Impl::CreateAiAEnc(IOnAEncData *on_aenc_data)
     ps_param.semitones = config_.pitch_shift_semitones;
     if (K_SUCCESS != kd_mpi_ai_set_pitch_shift_attr(ai_dev_, ai_chn_, &ps_param))
     {
-        std::cout << "kd_mapi_ai_init kd_mapi_ai_set_pitch_shift_attr." << std::endl;
+        std::cout << "kd_mpi_ai_init kd_mpi_ai_set_pitch_shift_attr." << std::endl;
         return -1;
     }
 
@@ -390,8 +390,8 @@ int KdMedia::Impl::CreateAiAEnc(IOnAEncData *on_aenc_data)
     aenc_chn_attr.type = K_PT_G711U;
     if (K_SUCCESS != kd_mpi_aenc_create_chn(aenc_handle_, &aenc_chn_attr))
     {
-        std::cout << "kd_mapi_aenc_init failed." << std::endl;
-        // kd_mapi_ai_deinit(ai_handle_);
+        std::cout << "kd_mpi_aenc_init failed." << std::endl;
+        // kd_mpi_ai_deinit(ai_handle_);
         return -1;
     }
 
@@ -732,14 +732,14 @@ int KdMedia::Impl::StartADecAo()
     ret = kd_sample_ao_start(ao_dev_, ao_chn_);
     if (ret != K_SUCCESS)
     {
-        printf("kd_mapi_ao_start failed\n");
+        printf("kd_mpi_ao_start failed\n");
         return -1;
     }
 
     ret = kd_sample_adec_bind_ao(ao_dev_, ao_chn_, adec_handle_);
     if (ret != K_SUCCESS)
     {
-        printf("kd_mapi_adec_bind_ao error: %x\n", ret);
+        printf("kd_mpi_adec_bind_ao error: %x\n", ret);
         return -1;
     }
     return 0;
@@ -871,7 +871,7 @@ int KdMedia::Impl::SendAudioData(const uint8_t *data, size_t size, uint64_t time
 
 k_s32 KdMedia::Impl::kd_sample_venc_init(k_u32 chn_num, k_venc_chn_attr *pst_venc_attr)
 {
-    printf("kd_mapi_venc_init start %d\n", chn_num);
+    printf("kd_mpi_venc_init start %d\n", chn_num);
     memset(&venc_output_arr[chn_num], 0, sizeof(venc_output_pthread));
 
     k_s32 ret;
@@ -896,7 +896,7 @@ k_s32 KdMedia::Impl::kd_sample_venc_init(k_u32 chn_num, k_venc_chn_attr *pst_ven
         return K_FAILED;
     }
 
-    printf("kd_mapi_venc_init end \n");
+    printf("kd_mpi_venc_init end \n");
     return K_SUCCESS;
 }
 
@@ -949,13 +949,13 @@ static k_s32 kd_sample_vicap_set_chn_attr(k_vicap_chn_set_info chn_info)
     k_s32 ret = 0;
     if (chn_info.vicap_dev >= VICAP_DEV_ID_MAX || chn_info.vicap_dev < VICAP_DEV_ID_0)
     {
-        printf("kd_mapi_vicap_set_dev_attr failed, dev_num %d out of range\n", chn_info.vicap_dev);
+        printf("kd_mpi_vicap_set_dev_attr failed, dev_num %d out of range\n", chn_info.vicap_dev);
         return K_FAILED;
     }
 
     if (chn_info.vicap_chn >= VICAP_CHN_ID_MAX || chn_info.vicap_chn < VICAP_CHN_ID_0)
     {
-        printf("kd_mapi_vicap_set_attr failed, chn_num %d out of range\n", chn_info.vicap_chn);
+        printf("kd_mpi_vicap_set_attr failed, chn_num %d out of range\n", chn_info.vicap_chn);
         return K_FAILED;
     }
 
@@ -965,13 +965,13 @@ static k_s32 kd_sample_vicap_set_chn_attr(k_vicap_chn_set_info chn_info)
     /* chn attr */
     if (!chn_info.out_height && chn_info.out_width)
     {
-        printf("kd_mapi_vicap_set_attr, failed, out_width: %d, out_height: %d error\n", chn_info.out_width, chn_info.out_height);
+        printf("kd_mpi_vicap_set_attr, failed, out_width: %d, out_height: %d error\n", chn_info.out_width, chn_info.out_height);
         return K_FAILED;
     }
 
     if (chn_info.pixel_format > PIXEL_FORMAT_BUTT || chn_info.pixel_format < PIXEL_FORMAT_RGB_444)
     {
-        printf("kd_mapi_vicap_set_attr, failed, pixel_formatr: %d out of range\n", chn_info.pixel_format);
+        printf("kd_mpi_vicap_set_attr, failed, pixel_formatr: %d out of range\n", chn_info.pixel_format);
         return K_FAILED;
     }
 
@@ -1114,6 +1114,7 @@ int KdMedia::Impl::CreateVcapVEnc(IOnVEncData *on_venc_data)
     vi_chn_attr_info.pixel_format = PIXEL_FORMAT_YUV_SEMIPLANAR_420;
     vi_chn_attr_info.vicap_dev = vi_dev_id_;
     vi_chn_attr_info.buffer_num = 6;
+    vi_chn_attr_info.alignment = 12;
     vi_chn_attr_info.vicap_chn = (k_vicap_chn)venc_chn_id_;
     if (!vcap_dev_info_.dw_en)
         vi_chn_attr_info.buf_size = VI_ALIGN_UP(VI_ALIGN_UP(config_.venc_width, 16) * config_.venc_height * 3 / 2, 0x100);
@@ -1143,7 +1144,7 @@ static k_s32 kd_sample_venc_bind_vi(k_s32 src_dev, k_s32 src_chn, k_s32 chn_num)
 {
     if (chn_num >= VENC_MAX_CHN_NUMS)
     {
-        printf("kd_mapi_venc_bind_vi chn_num:%d error\n", chn_num);
+        printf("kd_mpi_venc_bind_vi chn_num:%d error\n", chn_num);
         return -1;
     }
 
@@ -1166,7 +1167,7 @@ static k_s32 kd_sample_vicap_start(k_vicap_dev vicap_dev)
     k_s32 ret = 0;
     if (vicap_dev > VICAP_DEV_ID_MAX || vicap_dev < VICAP_DEV_ID_0)
     {
-        printf("kd_mapi_vicap_start failed, dev_num %d out of range\n", vicap_dev);
+        printf("kd_mpi_vicap_start failed, dev_num %d out of range\n", vicap_dev);
         return K_FAILED;
     }
     ret = kd_mpi_vicap_init(vicap_dev);
@@ -1274,7 +1275,7 @@ static k_s32 kd_sample_vicap_stop(k_vicap_dev vicap_dev)
     k_s32 ret = 0;
     if (vicap_dev > VICAP_DEV_ID_MAX || vicap_dev < VICAP_DEV_ID_0)
     {
-        printf("kd_mapi_vicap_stop failed, dev_num %d out of range\n", vicap_dev);
+        printf("kd_mpi_vicap_stop failed, dev_num %d out of range\n", vicap_dev);
         return K_FAILED;
     }
     ret = kd_mpi_vicap_stop_stream(vicap_dev);
@@ -1459,7 +1460,7 @@ int KdMedia::Impl::StopVDecVo()
             k_s32 ret = kd_mpi_vdec_query_status(vdec_chn_id_, &status);
             if (ret != K_SUCCESS)
             {
-                printf("KdMedia::StopVDecVo() : kd_mapi_vdec_query_status failed, ret = %d\n", ret);
+                printf("KdMedia::StopVDecVo() : kd_mpi_vdec_query_status failed, ret = %d\n", ret);
                 return -1;
             }
             if (status.end_of_stream)
@@ -1547,7 +1548,7 @@ int KdMedia::Impl::SendVideoData(const uint8_t *data, size_t size, uint64_t time
     kd_sample_sys_release_vb_block(stream.phy_addr, vdec_params_.input_buf_size);
     if (ret != K_SUCCESS)
     {
-        printf("KdMedia::SendVideoData() : kd_mapi_vdec_send_stream failed, ret = %d\n", ret);
+        printf("KdMedia::SendVideoData() : kd_mpi_vdec_send_stream failed, ret = %d\n", ret);
         return -1;
     }
     if (data && size)

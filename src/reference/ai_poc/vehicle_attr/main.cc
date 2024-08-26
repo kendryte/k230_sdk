@@ -522,50 +522,100 @@ void video_proc_01(char *argv[])
         od.post_process({SENSOR_WIDTH, SENSOR_HEIGHT}, results);
 
         cv::Mat osd_frame(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-        cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
-        std::string text;
-        cv::Point origin;
-        Bbox crop_box;
-        std::string attr_results;
-        float fontScale=2;
-        int width = 50;
 
-
-        for (auto r : results)
+        #if defined(STUDIO_HDMI)
         {
-            ScopedTiming st("draw boxes", atoi(argv[8]));
-            text = od.labels[r.label] + ":" + std::to_string(round(r.score * 100) / 100).substr(0,4);
+            std::string text;
+            cv::Point origin;
+            Bbox crop_box;
+            std::string attr_results;
+            float fontScale=2;
+            int width = 50;
 
-            int x1 =   r.x1 / SENSOR_WIDTH * osd_frame.cols;
-            int y1 =  r.y1 / SENSOR_HEIGHT  * osd_frame.rows;
 
-            int w = (r.x2-r.x1) / SENSOR_WIDTH * osd_frame.cols;
-            int h = (r.y2-r.y1) / SENSOR_HEIGHT  * osd_frame.rows;
+            for (auto r : results)
+            {
+                ScopedTiming st("draw boxes", atoi(argv[8]));
+                text = od.labels[r.label] + ":" + std::to_string(round(r.score * 100) / 100).substr(0,4);
 
-            origin.x = x1 + w;
-            origin.y = y1 + 20;
+                int x1 =   r.x1 / SENSOR_WIDTH * osd_frame.cols;
+                int y1 =  r.y1 / SENSOR_HEIGHT  * osd_frame.rows;
 
-            cv::rectangle(osd_frame, cv::Rect( x1,y1,w,h ), cv::Scalar(255, 255,0, 0), 2, 2, 0); // ARGB
-            
-            crop_box = { r.x1,r.y1,(r.x2-r.x1),(r.y2-r.y1) };
-            pul.pre_process( crop_box );
-            pul.inference();
-            attr_results = pul.post_process();
+                int w = (r.x2-r.x1) / SENSOR_WIDTH * osd_frame.cols;
+                int h = (r.y2-r.y1) / SENSOR_HEIGHT  * osd_frame.rows;
 
-            std::string color = pul.GetColor();
-            origin.y += 2*width;
-            cv::putText(osd_frame, color, origin, cv::FONT_HERSHEY_COMPLEX, fontScale, cv::Scalar( 255,0, 255, 255), 1, 8, 0);
+                origin.x = x1 + w;
+                origin.y = y1 + 20;
 
-            std::string type = pul.GetType();
-            origin.y += width;
-            cv::putText(osd_frame, type, origin, cv::FONT_HERSHEY_COMPLEX, fontScale, cv::Scalar( 255,0, 255, 255), 1, 8, 0);
+                cv::rectangle(osd_frame, cv::Rect( x1,y1,w,h ), cv::Scalar(255, 255,0, 0), 2, 2, 0); // ARGB
+                
+                crop_box = { r.x1,r.y1,(r.x2-r.x1),(r.y2-r.y1) };
+                pul.pre_process( crop_box );
+                pul.inference();
+                attr_results = pul.post_process();
 
-            attr_results = color +  "\n"  + type;
+                std::string color = pul.GetColor();
+                origin.y += 2*width;
+                cv::putText(osd_frame, color, origin, cv::FONT_HERSHEY_COMPLEX, fontScale, cv::Scalar( 255,0, 255, 255), 1, 8, 0);
 
-            
+                std::string type = pul.GetType();
+                origin.y += width;
+                cv::putText(osd_frame, type, origin, cv::FONT_HERSHEY_COMPLEX, fontScale, cv::Scalar( 255,0, 255, 255), 1, 8, 0);
 
+                attr_results = color +  "\n"  + type;
+
+                
+
+            }
         }
-        cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+        #else
+        {
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+            std::string text;
+            cv::Point origin;
+            Bbox crop_box;
+            std::string attr_results;
+            float fontScale=2;
+            int width = 50;
+
+
+            for (auto r : results)
+            {
+                ScopedTiming st("draw boxes", atoi(argv[8]));
+                text = od.labels[r.label] + ":" + std::to_string(round(r.score * 100) / 100).substr(0,4);
+
+                int x1 =   r.x1 / SENSOR_WIDTH * osd_frame.cols;
+                int y1 =  r.y1 / SENSOR_HEIGHT  * osd_frame.rows;
+
+                int w = (r.x2-r.x1) / SENSOR_WIDTH * osd_frame.cols;
+                int h = (r.y2-r.y1) / SENSOR_HEIGHT  * osd_frame.rows;
+
+                origin.x = x1 + w;
+                origin.y = y1 + 20;
+
+                cv::rectangle(osd_frame, cv::Rect( x1,y1,w,h ), cv::Scalar(255, 255,0, 0), 2, 2, 0); // ARGB
+                
+                crop_box = { r.x1,r.y1,(r.x2-r.x1),(r.y2-r.y1) };
+                pul.pre_process( crop_box );
+                pul.inference();
+                attr_results = pul.post_process();
+
+                std::string color = pul.GetColor();
+                origin.y += 2*width;
+                cv::putText(osd_frame, color, origin, cv::FONT_HERSHEY_COMPLEX, fontScale, cv::Scalar( 255,0, 255, 255), 1, 8, 0);
+
+                std::string type = pul.GetType();
+                origin.y += width;
+                cv::putText(osd_frame, type, origin, cv::FONT_HERSHEY_COMPLEX, fontScale, cv::Scalar( 255,0, 255, 255), 1, 8, 0);
+
+                attr_results = color +  "\n"  + type;
+
+                
+
+            }
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+        }
+        #endif
 
 
         {

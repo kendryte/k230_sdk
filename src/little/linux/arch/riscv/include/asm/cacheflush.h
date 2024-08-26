@@ -45,6 +45,10 @@ void flush_icache_mm(struct mm_struct *mm, bool local);
 void dma_wbinv_range(unsigned long start, unsigned long end);
 void dma_wb_range(unsigned long start, unsigned long end);
 void dma_inv_range(unsigned long start, unsigned long end);
+void dcache_wb_range(unsigned long start, unsigned long end) __attribute__((optimize("O0")));
+void dcache_inv_range(unsigned long start, unsigned long end) __attribute__((optimize("O0")));
+void dcache_wbinv_range(unsigned long start, unsigned long end) __attribute__((optimize("O0")));
+
 /*
  * Bits in sys_riscv_flush_icache()'s flags argument.
  */

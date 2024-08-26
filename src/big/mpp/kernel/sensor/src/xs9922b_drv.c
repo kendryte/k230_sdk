@@ -1287,7 +1287,7 @@ static const k_sensor_reg xs9922b_mipi4lane_720p_30fps_linear[] = {
 static k_sensor_mode xs9922b_mode_info[] = {
     {
         .index = 0,
-        .sensor_type = XS9922B_MIPI_CSI0_1280X720_30FPS_YUV422_DOL3,
+        .sensor_type = XS9950_MIPI_CSI2_1280X720_30FPS_YUV422, //XS9922B_MIPI_CSI0_1280X720_30FPS_YUV422_DOL3,
         .size = {
             .bounds_width = 1280,
             .bounds_height = 720,
@@ -1334,26 +1334,6 @@ static int xs9922b_power_rest(k_s32 on)
     return 0;
 }
 
-static k_s32 xs9922b_sensor_get_chip_id(void *ctx, k_u32 *chip_id)
-{
-    k_s32 ret = 0;
-    k_u16 id_high = 0;
-    k_u16 id_low = 0;
-    struct sensor_driver_dev *dev = ctx;
-    pr_info("%s enter\n", __func__);
-
-    ret = sensor_reg_read(&dev->i2c_info, XS9922B_REG_CHIP_ID_H, &id_high);
-    ret |= sensor_reg_read(&dev->i2c_info, XS9922B_REG_CHIP_ID_L, &id_low);
-    if (ret) {
-        pr_err("%s error\n", __func__);
-        return -1;
-    }
-
-    *chip_id = (id_high << 8) | id_low;
-    rt_kprintf("%s chip_id[0x%08X]\n", __func__, *chip_id);
-    return ret;
-}
-
 
 static int xs9922b_i2c_init(k_sensor_i2c_info *i2c_info)
 {
@@ -1367,6 +1347,30 @@ static int xs9922b_i2c_init(k_sensor_i2c_info *i2c_info)
     return 0;
 }
 
+
+static k_s32 xs9922b_sensor_get_chip_id(void *ctx, k_u32 *chip_id)
+{
+    k_s32 ret = 0;
+    k_u16 id_high = 0;
+    k_u16 id_low = 0;
+    struct sensor_driver_dev *dev = ctx;
+    pr_info("%s enter\n", __func__);
+
+    xs9922b_i2c_init(&dev->i2c_info);
+
+    ret = sensor_reg_read(&dev->i2c_info, XS9922B_REG_CHIP_ID_H, &id_high);
+    ret |= sensor_reg_read(&dev->i2c_info, XS9922B_REG_CHIP_ID_L, &id_low);
+    if (ret) {
+        // pr_err("%s error\n", __func__);
+        return -1;
+    }
+
+    *chip_id = (id_high << 8) | id_low;
+    rt_kprintf("%s chip_id[0x%08X]\n", __func__, *chip_id);
+    return ret;
+}
+
+
 static k_s32 xs9922b_sensor_power_on(void *ctx, k_s32 on)
 {
     k_s32 ret = 0;
@@ -1378,7 +1382,11 @@ static k_s32 xs9922b_sensor_power_on(void *ctx, k_s32 on)
             xs9922b_power_rest(on);
             xs9922b_i2c_init(&dev->i2c_info);
         // }
-        xs9922b_sensor_get_chip_id(ctx, &chip_id);
+        ret = xs9922b_sensor_get_chip_id(ctx, &chip_id);
+        if(ret < 0)
+        {
+            pr_err("%s, iic read chip id err \n", __func__);
+        }
     } else {
         xs9922b_init_flag = K_FALSE;
         xs9922b_power_rest(on);

@@ -179,21 +179,23 @@ void GenericMediaServer::cleanup() {
 
 int GenericMediaServer::setUpOurSocket(UsageEnvironment& env, Port& ourPort, int domain) {
   int ourSocket = -1;
-
-  do {
+    do {
     // The following statement is enabled by default.
     // Don't disable it (by defining ALLOW_SERVER_PORT_REUSE) unless you know what you're doing.
 #if !defined(ALLOW_SERVER_PORT_REUSE) && !defined(ALLOW_RTSP_SERVER_PORT_REUSE)
     // ALLOW_RTSP_SERVER_PORT_REUSE is for backwards-compatibility #####
     NoReuse dummy(env); // Don't use this socket if there's already a local server using it
 #endif
-
     ourSocket = setupStreamSocket(env, ourPort, domain, True, True);
         // later fix to support IPv6
     if (ourSocket < 0) break;
 
-    // Make sure we have a big send buffer:
-    if (!increaseSendBufferTo(env, ourSocket, 50*1024)) break;
+    //Make sure we have a big send buffer:
+    if (!increaseSendBufferTo(env, ourSocket, 50*1024))
+    {
+      printf("========increaseSendBufferTo failed\n");
+      break;
+    }
 
     // Allow multiple simultaneous connections:
     if (listen(ourSocket, LISTEN_BACKLOG_SIZE) < 0) {
@@ -245,6 +247,7 @@ void GenericMediaServer::incomingConnectionHandlerOnSocket(int serverSocket) {
   struct sockaddr_storage clientAddr;
   SOCKLEN_T clientAddrLen = sizeof clientAddr;
   int clientSocket = accept(serverSocket, (struct sockaddr*)&clientAddr, (socklen_t *)&clientAddrLen);
+  printf("rtsp server socket:%d,client socket:%d\n",serverSocket,clientSocket);
   if (clientSocket < 0) {
     int err = envir().getErrno();
     if (err != EWOULDBLOCK) {

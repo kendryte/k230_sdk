@@ -6,7 +6,7 @@ prepare:
 	chmod +x makeprepare.sh
 	./makeprepare.sh ${CFG} ${PLATFORM}
 
-all: prepare ipcm sharefs
+all: prepare ipcm sharefs virt_tty rtt_ctrl
 	@echo "ipcm make all..."
 
 ipcm: prepare
@@ -16,12 +16,26 @@ ipcm_clean:
 	@echo "ipcm make clean"
 	make -f do_make_module ipcm_clean
 
+virt_tty: prepare
+	@echo "virt_tty making..."
+	make -f do_make_module virt_tty || exit 1
+virt_tty_clean:
+	@echo "virt_tty make clean"
+	make -f do_make_module virt_tty_clean
+	
 sharefs: prepare
 	@echo "sharefs making..."
 	make -f do_make_module sharefs || exit 1
 sharefs_clean:
 	@echo "sharefs make clean"
 	make -f do_make_module sharefs_clean
+	
+rtt_ctrl: prepare
+	@echo "rtt_ctrl making..."
+	make -f do_make_module rtt_ctrl || exit 1
+rtt_ctrl_clean:
+	@echo "rtt_ctrl make clean"
+	make -f do_make_module rtt_ctrl_clean
 
 clean:
 	@echo "make clean"

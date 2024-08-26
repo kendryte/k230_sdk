@@ -503,27 +503,6 @@ static int ov9732_power_rest(k_s32 on)
     return 0;
 }
 
-static k_s32 ov9732_sensor_get_chip_id(void *ctx, k_u32 *chip_id)
-{
-    k_s32 ret = 0;
-    k_u16 id_high = 0;
-    k_u16 id_low = 0;
-    struct sensor_driver_dev *dev = ctx;
-    pr_info("%s enter\n", __func__);
-
-    ret = sensor_reg_read(&dev->i2c_info, OV9732_REG_CHIP_ID_H, &id_high);
-    ret |= sensor_reg_read(&dev->i2c_info, OV9732_REG_CHIP_ID_L, &id_low);
-    if (ret) {
-        rt_kprintf("%s error\n", __func__);;
-        return -1;
-    }
-
-    *chip_id = (id_high << 8) | id_low;
-    pr_info("%s chip_id[0x%08X]\n", __func__, *chip_id);
-    return ret;
-}
-
-
 static int ov9732_i2c_init(k_sensor_i2c_info *i2c_info)
 {
     i2c_info->i2c_bus = rt_i2c_bus_device_find(i2c_info->i2c_name);
@@ -536,6 +515,33 @@ static int ov9732_i2c_init(k_sensor_i2c_info *i2c_info)
     return 0;
 }
 
+static k_s32 ov9732_sensor_get_chip_id(void *ctx, k_u32 *chip_id)
+{
+    k_s32 ret = 0;
+    k_u16 id_high = 0;
+    k_u16 id_low = 0;
+    struct sensor_driver_dev *dev = ctx;
+    pr_info("%s enter\n", __func__);
+
+    ov9732_i2c_init(&dev->i2c_info);
+    
+    ret = sensor_reg_read(&dev->i2c_info, OV9732_REG_CHIP_ID_H, &id_high);
+    ret |= sensor_reg_read(&dev->i2c_info, OV9732_REG_CHIP_ID_L, &id_low);
+    if (ret) {
+        // rt_kprintf("%s error\n", __func__);;
+        return -1;
+    }
+
+    *chip_id = (id_high << 8) | id_low;
+
+    if(*chip_id != 0x9732)
+        return -1 ;
+
+    // rt_kprintf("%s chip_id[0x%08X]\n", __func__, *chip_id);
+    return ret;
+}
+
+
 static k_s32 ov9732_sensor_power_on(void *ctx, k_s32 on)
 {
     k_s32 ret = 0;
@@ -545,7 +551,11 @@ static k_s32 ov9732_sensor_power_on(void *ctx, k_s32 on)
     if (on) {
         ov9732_power_rest(on);
         ov9732_i2c_init(&dev->i2c_info);
-        ov9732_sensor_get_chip_id(ctx, &chip_id);
+        ret = ov9732_sensor_get_chip_id(ctx, &chip_id);
+        if(ret < 0)
+        {
+            pr_err("%s, iic read chip id err \n", __func__);
+        }
     } else {
         ov9732_power_rest(on);
     }
@@ -588,7 +598,7 @@ static k_s32 ov9732_sensor_init(void *ctx, k_sensor_mode mode)
         current_mode->ae_info.gain_accuracy = 1024;
 
         current_mode->ae_info.min_gain = 1.0;
-        current_mode->ae_info.max_gain = 63.9375;
+        current_mode->ae_info.max_gain = 15.9375;
 
         current_mode->ae_info.int_time_delay_frame = 2;
         current_mode->ae_info.gain_delay_frame = 2;
@@ -842,8 +852,8 @@ k_s32 ov9732_sensor_set_again(void *ctx, k_sensor_gain gain)
         again = (k_u16)(gain.gain[SENSOR_LINEAR_PARAS] * 16 + 0.5);
         if(current_mode->sensor_again !=again)
         {
-	        ret = sensor_reg_write(&dev->i2c_info, OV9732_REG_LONG_AGAIN_H,(again & 0x0300)>>8);
-	        ret |= sensor_reg_write(&dev->i2c_info, OV9732_REG_LONG_AGAIN_L,(again & 0xff));
+	         ret = sensor_reg_write(&dev->i2c_info, OV9732_REG_LONG_AGAIN_H,(again & 0x0300)>>8);
+	         ret |= sensor_reg_write(&dev->i2c_info, OV9732_REG_LONG_AGAIN_L,(again & 0xff));
 	        current_mode->sensor_again = again;
         }
         current_mode->ae_info.cur_again = (float)current_mode->sensor_again/16.0f;
@@ -1126,3 +1136,4 @@ struct sensor_driver_dev ov9732_sensor_drv = {
         .sensor_mirror_set = ov9732_sensor_mirror_set,
     },
 };
+

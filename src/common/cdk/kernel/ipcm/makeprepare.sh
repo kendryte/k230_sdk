@@ -111,6 +111,37 @@ do
 done < $config_file
 }
 
+function parsing_virt_tty_config()
+{
+while read LINE
+do
+  case "$LINE" in
+    platform*)
+      echo "## case platform"
+      echo -e "#define __platform_${LINE#platform=}__    1\n">>$virt_tty_header
+      ;;
+  virt_tty_role*)
+      echo "## case virt_tty role"
+      echo -e "export VIRT_TTY_ROLE${LINE#virt_tty_role}">> $build_config
+      echo -e "#define VIRT_TTY_ROLE    ${LINE#*=}" >> $virt_tty_header
+      echo -e "#define VIRT_TTY_NAME    $node_name" >> $virt_tty_header
+      ;;
+  virt_tty_phys*)
+      echo "## case virt_tty phys"
+      echo -e "#define VIRT_TTY_PHYS    ${LINE#*=}" >> $virt_tty_header
+      ;;
+  virt_tty_size*)
+      echo "## case virt_tty size"
+      echo -e "#define VIRT_TTY_SIZE    ${LINE#*=}" >> $virt_tty_header
+      ;;
+  virt_tty_server_id*)
+      echo "## case virt_tty server id"
+      echo -e "#define VIRT_TTY_SERVER_ID    ${LINE#*=}" >> $virt_tty_header
+      ;;
+  esac
+done < $config_file
+}
+
 echo "prepare start..."
 #[ $# -ne 2 ] && { usage; exit 1; }
 [ $1 == "clean" ] && { echo -e "prepare clean"; cleanup; exit 0; }
@@ -130,6 +161,24 @@ _ACEOF
 parsing_config >> config.log
 
 cat >> $device_header << _ACEOF
+
+#endif
+_ACEOF
+
+
+echo "generating virt_tty config headers..."
+cat >> $virt_tty_header << _ACEOF
+/*
+ * This is an auto generated header, please do not edit it.
+ */
+#ifndef __AUTO_GENERATED_VIRT_TTY_HEADER__
+#define __AUTO_GENERATED_VIRT_TTY_HEADER__
+
+_ACEOF
+
+parsing_virt_tty_config >> config.log
+
+cat >> $virt_tty_header << _ACEOF
 
 #endif
 _ACEOF

@@ -43,6 +43,11 @@ config BOARD_K230_CANMV_DONGSHANPI
        bool "K230 CANMV(DONGSHANPI)"
         help 
            "CANMV(DONGSHANPI)";
+   
+config BOARD_K230D_CANMV_BPI
+       bool "K230 CANMV(BPI)"
+        help 
+           "CANMV(k230d bpi)";		   
 endchoice
 
 config BOARD_NAME
@@ -79,6 +84,17 @@ config LINUX_DTB
         help  
                 linux  dtb name ;
         default BOARD_NAME
+
+config BUILDROOT_DEFCONFIG
+        string "buildroot defconfig  "
+        help  
+                buildroot defconfig ;
+        default BOARD_NAME
+
+config RTTHREAD_DEFCONFIG
+        string "rtthread defconfig  "
+        help  
+                rtthread defconfig ;
 
 config REMOTE_TEST_PLATFORM
         bool "config REMOTE_TEST_PLATFORM"

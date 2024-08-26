@@ -193,7 +193,7 @@ void RTPInterface::removeStreamSocket(int sockNum,
   // Remove - from our list of 'TCP streams' - the record of the (sockNum,streamChannelId) pair.
   // (However "streamChannelId" == 0xFF is a special case, meaning remove all
   //  (sockNum,*) pairs.)
-  
+
   while (1) {
     tcpStreamRecord** streamsPtr = &fTCPStreams;
 
@@ -232,6 +232,8 @@ void RTPInterface::clearServerRequestAlternativeByteHandler(UsageEnvironment& en
 }
 
 Boolean RTPInterface::sendPacket(unsigned char* packet, unsigned packetSize) {
+
+  //printf("========RTPInterface::sendPacket datasize:%d,fTCPStreams:%d\n",packetSize,fTCPStreams==NULL);
   Boolean success = True; // we'll return False instead if any of the sends fail
 
   // Normal case: Send as a UDP packet:
@@ -294,7 +296,7 @@ Boolean RTPInterface::handleRead(unsigned char* buffer, unsigned bufferMaxSize,
     fromAddress.ss_family = AF_INET;
     ((sockaddr_in&)fromAddress).sin_addr.s_addr = 0;
     ((sockaddr_in&)fromAddress).sin_port = 0;
-    
+
     while ((curBytesRead = (fNextTCPReadTLSState != NULL && fNextTCPReadTLSState->isNeeded)
 	    ? fNextTCPReadTLSState->read(&buffer[bytesRead], curBytesToRead)
 	    : readSocket(envir(), fNextTCPReadStreamSocketNum,
@@ -343,6 +345,8 @@ void RTPInterface::stopNetworkReading() {
 Boolean RTPInterface::sendRTPorRTCPPacketOverTCP(u_int8_t* packet, unsigned packetSize,
 						 int socketNum, unsigned char streamChannelId,
 						 TLSState* tlsState) {
+//printf("sendRTPorRTCPPacketOverTCP before,socknum:%d\n",socketNum);
+
 #ifdef DEBUG_SEND
   fprintf(stderr, "sendRTPorRTCPPacketOverTCP: %d bytes over channel %d (socket %d)\n",
 	  packetSize, streamChannelId, socketNum); fflush(stderr);
@@ -358,19 +362,30 @@ Boolean RTPInterface::sendRTPorRTCPPacketOverTCP(u_int8_t* packet, unsigned pack
     framingHeader[1] = streamChannelId;
     framingHeader[2] = (u_int8_t) ((packetSize&0xFF00)>>8);
     framingHeader[3] = (u_int8_t) (packetSize&0xFF);
-    if (!sendDataOverTCP(socketNum, tlsState, framingHeader, 4, False)) break;
+    if (!sendDataOverTCP(socketNum, tlsState, framingHeader, 4,True))
+    {
+      printf("=========sendDataOverTCP 0 failed\n");
+      break;
+    }
 
-    if (!sendDataOverTCP(socketNum, tlsState, packet, packetSize, True)) break;
+    if (!sendDataOverTCP(socketNum, tlsState, packet, packetSize, True))
+    {
+      printf("=========sendDataOverTCP 1 failed\n");
+      break;
+    }
+
 #ifdef DEBUG_SEND
     fprintf(stderr, "sendRTPorRTCPPacketOverTCP: completed\n"); fflush(stderr);
 #endif
-
+    //printf("sendRTPorRTCPPacketOverTCP end0\n");
     return True;
   } while (0);
 
 #ifdef DEBUG_SEND
   fprintf(stderr, "sendRTPorRTCPPacketOverTCP: failed! (errno %d)\n", envir().getErrno()); fflush(stderr);
 #endif
+
+  printf("sendRTPorRTCPPacketOverTCP end1\n");
   return False;
 }
 
@@ -378,7 +393,8 @@ Boolean RTPInterface::sendRTPorRTCPPacketOverTCP(u_int8_t* packet, unsigned pack
 #define RTPINTERFACE_BLOCKING_WRITE_TIMEOUT_MS 500
 #endif
 
-Boolean RTPInterface::sendDataOverTCP(int socketNum, TLSState* tlsState,
+#if 0
+Boolean RTPInterface::sendDataOverTCP_ex(int socketNum, TLSState* tlsState,
 				      u_int8_t const* data, unsigned dataSize,
 				      Boolean forceSendToSucceed) {
   int sendResult = (tlsState != NULL && tlsState->isNeeded)
@@ -425,6 +441,47 @@ Boolean RTPInterface::sendDataOverTCP(int socketNum, TLSState* tlsState,
   }
 
   return True;
+}
+#endif
+
+static int loopsend(int sock, u_int8_t const* buf, unsigned int sndsize)
+{
+  int remian = sndsize;
+  int sendlen = 0;
+  int ret = 0;
+  while(remian > 0)
+  {
+    ret=send(sock,buf+sendlen,remian,0);
+    if(ret <= 0)
+    {
+      printf("ret = %d\n",ret);
+      return ret;
+    }
+    sendlen += ret;
+    remian -= ret;
+  }
+  return sndsize;
+}
+Boolean RTPInterface::sendDataOverTCP(int socketNum, TLSState* tlsState,
+				      u_int8_t const* data, unsigned dataSize,
+				      Boolean forceSendToSucceed)
+{
+  printf("==========loopsend size before:%d,socknumber:%d\n",dataSize,socketNum);
+   makeSocketBlocking(socketNum,500);
+  int sendSuccess = loopsend(socketNum,data,dataSize);
+  makeSocketNonBlocking(socketNum);
+    if(sendSuccess == dataSize)
+    {
+     // printf("==========loopsend size end:%d\n",dataSize);
+      return True;
+    }
+    else
+    {
+      printf("send false...........\n");
+      return False;
+    }
+
+    return True;
 }
 
 SocketDescriptor::SocketDescriptor(UsageEnvironment& env, int socketNum, TLSState* tlsState)
@@ -525,7 +582,7 @@ Boolean SocketDescriptor::tcpReadHandler1(int mask) {
   //   a 2-byte packet size (in network byte order)
   //   the packet data.
   // However, because the socket is being read asynchronously, this data might arrive in pieces.
-  
+
   u_int8_t c;
   struct sockaddr_storage dummy; // not used
   if (fTCPReadingState != AWAITING_PACKET_DATA) {
@@ -584,7 +641,7 @@ Boolean SocketDescriptor::tcpReadHandler1(int mask) {
     case AWAITING_SIZE2: {
       // The byte that we read is the second (low) byte of the 16-bit RTP or RTCP packet 'size'.
       unsigned short size = (fSizeByte1<<8)|c;
-      
+
       // Record the information about the packet data that will be read next:
       RTPInterface* rtpInterface = lookupRTPInterface(fStreamChannelId);
       if (rtpInterface != NULL) {

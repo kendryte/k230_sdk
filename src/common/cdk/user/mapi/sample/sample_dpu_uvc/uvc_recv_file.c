@@ -88,12 +88,12 @@ static int _do_cfg(char* pdata, int len)
     memcpy(&g_grab_init_param,pdata,sizeof(g_grab_init_param));
 
     uvc_grab_init_parameters_ex * grab_init_param = &g_grab_init_param;
-	printf("grab param:mode:%d,sensor type0:%d,sensor type1:%d,adc_enable:%d,overwrite:%d,serial_num:%s, width:%d,height:%d,fps:%d,distance:%d,adc_enable:%d,t_ref:%f,t_cx:%f,t_cy:%f,kx:%.2f,ky:%.2f\n",
+	printf("grab param:mode:%d,sensor type0:%d,sensor type1:%d,adc_enable:%d,overwrite:%d,serial_num:%s, width:%d,height:%d,fps:%d,distance:%d,adc_enable:%d,t_ref:%f,t_cx:%f,t_cy:%f,kx:%.2f,ky:%.2f,dma_ro:0x%x\n",
 			grab_init_param->grab_mode, grab_init_param->sensor_type[0], grab_init_param->sensor_type[1], grab_init_param->adc_enable,
 			grab_init_param->overwrite_file, grab_init_param->serialNumber,
 			grab_init_param->camera_width, grab_init_param->camera_height, grab_init_param->camera_fps, grab_init_param->depth_maximum_distance, grab_init_param->adc_enable,
 			grab_init_param->temperature.temperature_ref, grab_init_param->temperature.temperature_cx, grab_init_param->temperature.temperature_cy,
-			grab_init_param->temperature.kxppt, grab_init_param->temperature.kyppt);
+			grab_init_param->temperature.kxppt, grab_init_param->temperature.kyppt,grab_init_param->dma_ro);
 
 
     //update serial_number

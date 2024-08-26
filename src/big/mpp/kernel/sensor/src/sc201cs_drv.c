@@ -399,10 +399,12 @@ static k_s32 sc201cs_sensor_get_chip_id(void* ctx, k_u32* chip_id)
     struct sensor_driver_dev* dev = ctx;
     pr_info("%s enter\n", __func__);
 
+    sc201cs_i2c_init(&dev->i2c_info);
+
     ret = sensor_reg_read(&dev->i2c_info, SC201CS_REG_ID, &id_high);
     ret |= sensor_reg_read(&dev->i2c_info, SC201CS_REG_ID + 1, &id_low);
     if (ret) {
-        rt_kprintf("%s error\n", __func__);
+        // rt_kprintf("%s error\n", __func__);
         return -1;
     }
 
@@ -420,7 +422,11 @@ static k_s32 sc201cs_sensor_power_on(void* ctx, k_s32 on)
     if (on) {
         sc201cs_power_reset(1);
         sc201cs_i2c_init(&dev->i2c_info);
-        sc201cs_sensor_get_chip_id(ctx, &chip_id);
+        ret = sc201cs_sensor_get_chip_id(ctx, &chip_id);
+        if(ret < 0)
+        {
+            pr_err("%s, iic read chip id err \n", __func__);
+        }
     } else {
         sc201cs_power_reset(0);
     }

@@ -1,0 +1,14 @@
+prefix=/home/sunxiaopeng/src/work/k230/k230_sdk/src/big/mpp/middleware/src/ffmpeg/ffmpeg-4.3.1/ffmpeg_lib
+exec_prefix=${prefix}
+libdir=/home/sunxiaopeng/src/work/k230/k230_sdk/src/big/mpp/middleware/src/ffmpeg/ffmpeg-4.3.1/ffmpeg_lib/lib
+includedir=/home/sunxiaopeng/src/work/k230/k230_sdk/src/big/mpp/middleware/src/ffmpeg/ffmpeg-4.3.1/ffmpeg_lib/include
+
+Name: libswscale
+Description: FFmpeg image rescaling library
+Version: 5.7.100
+Requires: libavutil >= 56.51.100
+Requires.private: 
+Conflicts:
+Libs: -L${libdir}  -lswscale -lm
+Libs.private: 
+Cflags: -I${includedir}

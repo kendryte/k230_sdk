@@ -12,31 +12,30 @@
 #include <stdio.h>
 #include <string.h>
 #include <dfs_fs.h>
-#ifdef PKG_CHERRYUSB_HOST
-#include "usbh_core.h"
+#include "msh.h"
+
+#ifndef RT_SHELL_PATH
+#define RT_SHELL_PATH "/bin/init.sh"
 #endif
 
 int main(void)
 {
+    int result;
+    struct statfs buffer;
     printf("RT-SMART Hello RISC-V.\n");
 
-#ifdef PKG_CHERRYUSB_HOST
-    char *usb_base = NULL;
-#ifdef CHERRYUSB_HOST_USING_USB1
-    usb_base = (char *)rt_ioremap((void *)0x91540000UL, 0x10000);
-#else
-    usb_base = (char *)rt_ioremap((void *)0x91500000UL, 0x10000);
-#endif
-    usbh_initialize(0, (uint32_t)usb_base);
-#endif
+    char path[64];
+    strcpy(path, RT_SHELL_PATH);
+    strrchr(path, '/')[0] = 0;
+    if(!strcmp(path, "/sdcard") || !strcmp(path, "/sharefs"))
+    {
+        while(dfs_statfs(path, &buffer) != 0)
+        {
+            rt_thread_delay(RT_TICK_PER_SECOND);
+        }
+    }
 
-#ifdef RT_USING_SDIO
-    while (mmcsd_wait_cd_changed(100) != MMCSD_HOST_PLUGED);
-    if (dfs_mount("sd", "/sdcard", "elm", 0, 0) != 0)
-        rt_kprintf("Dir /sdcard mount failed!\n");
-#endif
-
-    msh_exec("/bin/init.sh", 13);
+    msh_exec(RT_SHELL_PATH, strlen(RT_SHELL_PATH)+1);
 
     return 0;
 }

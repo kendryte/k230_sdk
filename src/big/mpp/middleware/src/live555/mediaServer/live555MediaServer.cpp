@@ -23,6 +23,7 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 #include <GroupsockHelper.hh> // for "weHaveAnIPv*Address()"
 
 int main(int argc, char** argv) {
+
   // Begin by setting up our usage environment:
   TaskScheduler* scheduler = BasicTaskScheduler::createNew();
   UsageEnvironment* env = BasicUsageEnvironment::createNew(*scheduler);
@@ -40,6 +41,7 @@ int main(int argc, char** argv) {
   // and then with the alternative port number (8554):
   RTSPServer* rtspServer;
   portNumBits rtspServerPortNum = 554;
+
   rtspServer = DynamicRTSPServer::createNew(*env, rtspServerPortNum, authDB);
   if (rtspServer == NULL) {
     rtspServerPortNum = 8554;
@@ -56,6 +58,7 @@ int main(int argc, char** argv) {
        << LIVEMEDIA_LIBRARY_VERSION_STRING << ").\n";
 
   *env << "Play streams from this server using the URL\n";
+
   if (weHaveAnIPv4Address(*env)) {
     char* rtspURLPrefix = rtspServer->ipv4rtspURLPrefix();
     *env << "\t" << rtspURLPrefix << "<filename>\n";
@@ -92,11 +95,13 @@ int main(int argc, char** argv) {
   // Try first with the default HTTP port (80), and then with the alternative HTTP
   // port numbers (8000 and 8080).
 
+#if 0
   if (rtspServer->setUpTunnelingOverHTTP(80) || rtspServer->setUpTunnelingOverHTTP(8000) || rtspServer->setUpTunnelingOverHTTP(8080)) {
     *env << "(We use port " << rtspServer->httpServerPortNum() << " for optional RTSP-over-HTTP tunneling).)\n";
   } else {
     *env << "(RTSP-over-HTTP tunneling is not available.)\n";
   }
+#endif
 
   env->taskScheduler().doEventLoop(); // does not return
 

@@ -123,10 +123,20 @@ void video_proc(char *argv[])
             }
             #elif defined(CONFIG_BOARD_K230_CANMV_01STUDIO)
             {
-                ScopedTiming st("osd draw", atoi(argv[6]));
-                cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
-                eye_gaze.draw_result(osd_frame,det_results[i].bbox,gaze_result,false);
-                cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+                #if defined(STUDIO_HDMI)
+                {
+                    ScopedTiming st("osd draw", atoi(argv[6]));
+                    eye_gaze.draw_result(osd_frame,det_results[i].bbox,gaze_result,false);
+                }
+                #else
+                {
+                    ScopedTiming st("osd draw", atoi(argv[6]));
+                    cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+                    eye_gaze.draw_result(osd_frame,det_results[i].bbox,gaze_result,false);
+                    cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+                }
+                #endif
+                
             }
             #else
             {

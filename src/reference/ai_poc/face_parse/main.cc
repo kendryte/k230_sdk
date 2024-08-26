@@ -118,10 +118,19 @@ void video_proc(char *argv[])
             }
             #elif defined(CONFIG_BOARD_K230_CANMV_01STUDIO)
             {
-                ScopedTiming st("osd draw", atoi(argv[6]));
-                cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
-                fpa.post_process(osd_frame,det_results[i].bbox,false);
-                cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+                #if defined(STUDIO_HDMI)
+                {
+                    ScopedTiming st("osd draw", atoi(argv[6]));
+                    fpa.post_process(osd_frame,det_results[i].bbox,false);
+                }
+                #else
+                {
+                    ScopedTiming st("osd draw", atoi(argv[6]));
+                    cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+                    fpa.post_process(osd_frame,det_results[i].bbox,false);
+                    cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+                }
+                #endif
             }
             #else
             {

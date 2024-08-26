@@ -445,7 +445,7 @@ int dfs_sharefs_read(struct dfs_fd *fd, void *buf, size_t count)
 			count = (size_t)resp_read->size;
 		/* need invalidate here to make sure the data be right */
 		rt_hw_cpu_dcache_ops(RT_HW_CACHE_INVALIDATE, virt_addr, align_len);
-		memcpy(buf, (void *)virt_addr, count);
+		__memcpy__(buf, (void *)virt_addr, count);
 		ret = count;
 		fd->pos += count;
 	} else if (resp_read->size < 0) {
@@ -499,7 +499,7 @@ int dfs_sharefs_write(struct dfs_fd *fd, const void *buf, size_t count)
 	req_write->write_size = count;
 	req_write->fd = ((struct sfs_open_point *)(fd->data))->fd;
 
-	memcpy(virt_addr, buf, count);
+	__memcpy__(virt_addr, buf, count);
 	rt_hw_cpu_dcache_ops(RT_HW_CACHE_FLUSH, virt_addr, align_len);
 	resp_cmd = sfs_client_request(req_cmd, cmd_len);
 	if (!resp_cmd) {
@@ -710,7 +710,7 @@ int dfs_sharefs_getdents(struct dfs_fd *fd, struct dirent *dir, uint32_t count)
 	if (!resp_readdir->ret) {
 		if (resp_readdir->d_name_len >= MAX_DIR_NAME_LEN)
 			resp_readdir->d_name_len = MAX_DIR_NAME_LEN - 1;
-		memcpy(d->d_name, resp_readdir->d_name, resp_readdir->d_name_len);
+		__memcpy__(d->d_name, resp_readdir->d_name, resp_readdir->d_name_len);
 		d->d_name[resp_readdir->d_name_len] = '\0';
 		d->d_type = resp_readdir->d_type;
 		d->d_namlen = resp_readdir->d_name_len;
@@ -785,7 +785,7 @@ int dfs_sharefs_statfs(struct dfs_filesystem *fs, struct statfs *buf)
 	memset(req_cmd, 0, cmd_len);
 	req_cmd->cmd = SFS_CMD_STATFS;
 	req_statfs = (struct sfs_request_statfs *)req_cmd->request;
-	memcpy(req_statfs->path, mount_point->mount_path,
+	__memcpy__(req_statfs->path, mount_point->mount_path,
 			strlen(mount_point->mount_path));
 	resp_cmd = sfs_client_request(req_cmd, cmd_len);
 	if (resp_cmd) {
@@ -1116,7 +1116,7 @@ static struct sfs_response *sfs_client_request(struct sfs_request *req_cmd, int 
 	if (cursor != &g_recv_cmd) {
 		resp_cmd = malloc(cursor->resp_len);
 		if (resp_cmd) {
-			rt_memcpy(resp_cmd, cursor->response, cursor->resp_len);
+			__memcpy__(resp_cmd, cursor->response, cursor->resp_len);
 		} else {
 			sfs_error("no memory for request:[%d,%lu]",
 					req_cmd->cmd, req_cmd->id);
@@ -1139,7 +1139,7 @@ void sfs_client_response(void *buf, int count)
 		sfs_error("maloc for response failed");
 		return;
 	}
-	rt_memcpy(insert->response, buf, count);
+	__memcpy__(insert->response, buf, count);
 	insert->resp_len = count;
 
 	rt_mutex_take(g_cmd_list_mutex, RT_WAITING_FOREVER);

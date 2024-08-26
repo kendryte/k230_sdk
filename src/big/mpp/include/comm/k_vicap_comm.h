@@ -366,6 +366,7 @@ typedef union {
  */
 typedef struct {
     const char *sensor_name;
+    const char *database_name;
     k_u16 width;
     k_u16 height;
     k_vicap_csi_num csi_num;  /**< CSI NUM that the sensor connects to*/
@@ -379,6 +380,7 @@ typedef struct {
     k_vicap_vi_flash_mode flash_mode;
     k_vicap_vi_first_frame_sel first_frame;
     k_u16 glitch_filter;
+    k_u16 fps;
     k_vicap_sensor_type sensor_type;
 } k_vicap_sensor_info;
 
@@ -617,6 +619,22 @@ typedef struct
     k_u32 timeout_ms;
     k_video_frame_info info;
 } k_vicap_mcm_chn_vf_info;
+
+typedef struct {
+    k_u32 adapt_id[16];
+    k_u32 adapt_len;
+}k_vicap_adapt_id;
+
+
+typedef struct {
+    k_u32 csi_num;
+    k_u32 width;
+    k_u32 height;
+    k_u32 fps;
+    k_u32 mirror; /* default mirror setting */
+    k_u8  sensor_name[32];
+} k_vicap_probe_config;
+
 
 #define K_ERR_VICAP_INVALID_DEVID     K_DEF_ERR(K_ID_VICAP, K_ERR_LEVEL_ERROR, K_ERR_INVALID_DEVID)
 #define K_ERR_VICAP_INVALID_CHNID     K_DEF_ERR(K_ID_VICAP, K_ERR_LEVEL_ERROR, K_ERR_INVALID_CHNID)

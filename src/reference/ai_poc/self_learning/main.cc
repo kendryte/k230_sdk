@@ -755,10 +755,22 @@ void video_proc_01(char *argv[])
     crop_wh.height = std::max(int(crop_wh.height),(SENSOR_HEIGHT - 5)/2);
 
     Bbox crop_box_osd;
-    crop_box_osd.x = osd_height / 2.0 - float(crop_wh.width) / SENSOR_WIDTH * osd_height / 2.0;
-    crop_box_osd.y = osd_width / 2.0 - float(crop_wh.height) / SENSOR_HEIGHT * osd_width / 2.0;
-    crop_box_osd.w = float(crop_wh.width) / SENSOR_WIDTH * osd_height;
-    crop_box_osd.h = float(crop_wh.height) / SENSOR_HEIGHT * osd_width;
+    #if defined(STUDIO_HDMI)
+    {
+        crop_box_osd.x = osd_width / 2.0 - float(crop_wh.width) / SENSOR_WIDTH * osd_width / 2.0;
+        crop_box_osd.y = osd_height / 2.0 - float(crop_wh.height) / SENSOR_HEIGHT * osd_height / 2.0;
+        crop_box_osd.w = float(crop_wh.width) / SENSOR_WIDTH * osd_width;
+        crop_box_osd.h = float(crop_wh.height) / SENSOR_HEIGHT * osd_height;
+    }
+    #else
+    {
+        crop_box_osd.x = osd_height / 2.0 - float(crop_wh.width) / SENSOR_WIDTH * osd_height / 2.0;
+        crop_box_osd.y = osd_width / 2.0 - float(crop_wh.height) / SENSOR_HEIGHT * osd_width / 2.0;
+        crop_box_osd.w = float(crop_wh.width) / SENSOR_WIDTH * osd_height;
+        crop_box_osd.h = float(crop_wh.height) / SENSOR_HEIGHT * osd_width;
+    }
+    #endif
+
 
 
     if (!isFolderExist("features"))
@@ -803,86 +815,171 @@ void video_proc_01(char *argv[])
         }
 
         cv::Mat osd_frame(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-        cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
-        cv::rectangle(osd_frame, cv::Rect(crop_box_osd.x, crop_box_osd.y , crop_box_osd.w, crop_box_osd.h), cv::Scalar(255, 255, 255), 2, 2, 0);
-
-        self_learning.pre_process();
-        self_learning.inference();
-
-        char ch;    
-        if (read(STDIN_FILENO, &ch, 1) > 0)
+        #if defined(STUDIO_HDMI)
         {
-            if (ch == 'i')      //for i key
+            cv::rectangle(osd_frame, cv::Rect(crop_box_osd.x, crop_box_osd.y , crop_box_osd.w, crop_box_osd.h), cv::Scalar(255, 255, 255), 2, 2, 0);
+
+            self_learning.pre_process();
+            self_learning.inference();
+
+            char ch;    
+            if (read(STDIN_FILENO, &ch, 1) > 0)
             {
-                set_terminal_mode(true);
-                set_read_block_mode(true);
+                if (ch == 'i')      //for i key
+                {
+                    set_terminal_mode(true);
+                    set_read_block_mode(true);
 
-                std::cout << "<<< input: n -> create new category feature, d -> delete one category feature >>>" << std::endl;
-                std::string input_;
-                getline(std::cin, input_);
+                    std::cout << "<<< input: n -> create new category feature, d -> delete one category feature >>>" << std::endl;
+                    std::string input_;
+                    getline(std::cin, input_);
 
+                    std::vector<std::string> features;
+                    getFileNames("features", features);
+                    std::string features_out = "Already have : ";
+                    for (int i = 0; i < features.size(); i++)
+                    {
+                        features_out += " | " + std::to_string(i) + "->" + features[i];
+                    }
+                    std::cout << features_out << std::endl;
+
+                    if (input_ == "n")
+                    {
+                        std::cout << "Please enter one filename. format : {category}_{index}.bin  eg: apple_0.bin" << std::endl;
+                        std::string input_feature;
+                        getline(std::cin, input_feature);
+                        int len_;
+                        float *output = self_learning.get_kpu_output(&len_);
+                        dump_binary_file(("features/" + input_feature).c_str(), (char *)output, (const size_t) len_ * sizeof(float));
+                        std::cout << "Successfully created " + input_feature + " feature." << std::endl;
+                    }
+                    else if (input_ == "d")
+                    {
+                        std::cout << "Please enter one feature index." << std::endl;
+                        std::string str_index;
+                        getline(std::cin, str_index);
+                        int index = str_index[0] - 48;
+                        if (index < 0 || index >= features.size())
+                        {
+                            std::cout << "Fail to delete." << std::endl;
+                        }
+                        else
+                        {
+                            remove(("features/" + features[index]).c_str());
+                            std::cout << "Successfully deleted " + features[index] + "." << std::endl;
+                        }
+                    }
+
+                    set_read_block_mode(false);
+                    set_terminal_mode(false);
+                }
+                else if(ch == 27)         //for ESC key
+                {
+                    reg_stop = true;
+                }
+            }
+            else
+            {
+                std::vector<Evec> results;
                 std::vector<std::string> features;
                 getFileNames("features", features);
-                std::string features_out = "Already have : ";
-                for (int i = 0; i < features.size(); i++)
+                self_learning.post_process(features, results);
+                cv::Point origin;
+                origin.x = 200;
+                origin.y = 100;
+                for (int i = 0; i < results.size(); i++)
                 {
-                    features_out += " | " + std::to_string(i) + "->" + features[i];
-                }
-                std::cout << features_out << std::endl;
 
-                if (input_ == "n")
-                {
-                    std::cout << "Please enter one filename. format : {category}_{index}.bin  eg: apple_0.bin" << std::endl;
-                    std::string input_feature;
-                    getline(std::cin, input_feature);
-                    int len_;
-                    float *output = self_learning.get_kpu_output(&len_);
-                    dump_binary_file(("features/" + input_feature).c_str(), (char *)output, (const size_t) len_ * sizeof(float));
-                    std::cout << "Successfully created " + input_feature + " feature." << std::endl;
+                    origin.y += 50;
+                    std::string text = results[i].category + " " + std::to_string(results[i].score);
+                    cv::putText(osd_frame, text, origin, cv::FONT_HERSHEY_COMPLEX, 2, cv::Scalar(255,255, 0, 0), 4, 8, 0);
                 }
-                else if (input_ == "d")
-                {
-                    std::cout << "Please enter one feature index." << std::endl;
-                    std::string str_index;
-                    getline(std::cin, str_index);
-                    int index = str_index[0] - 48;
-                    if (index < 0 || index >= features.size())
-                    {
-                        std::cout << "Fail to delete." << std::endl;
-                    }
-                    else
-                    {
-                        remove(("features/" + features[index]).c_str());
-                        std::cout << "Successfully deleted " + features[index] + "." << std::endl;
-                    }
-                }
-
-                set_read_block_mode(false);
-                set_terminal_mode(false);
-            }
-            else if(ch == 27)         //for ESC key
-            {
-                reg_stop = true;
             }
         }
-        else
+        #else
         {
-            std::vector<Evec> results;
-            std::vector<std::string> features;
-            getFileNames("features", features);
-            self_learning.post_process(features, results);
-            cv::Point origin;
-            origin.x = 200;
-            origin.y = 100;
-            for (int i = 0; i < results.size(); i++)
-            {
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+            cv::rectangle(osd_frame, cv::Rect(crop_box_osd.x, crop_box_osd.y , crop_box_osd.w, crop_box_osd.h), cv::Scalar(255, 255, 255), 2, 2, 0);
 
-                origin.y += 50;
-                std::string text = results[i].category + " " + std::to_string(results[i].score);
-                cv::putText(osd_frame, text, origin, cv::FONT_HERSHEY_COMPLEX, 2, cv::Scalar(255,255, 0, 0), 4, 8, 0);
+            self_learning.pre_process();
+            self_learning.inference();
+
+            char ch;    
+            if (read(STDIN_FILENO, &ch, 1) > 0)
+            {
+                if (ch == 'i')      //for i key
+                {
+                    set_terminal_mode(true);
+                    set_read_block_mode(true);
+
+                    std::cout << "<<< input: n -> create new category feature, d -> delete one category feature >>>" << std::endl;
+                    std::string input_;
+                    getline(std::cin, input_);
+
+                    std::vector<std::string> features;
+                    getFileNames("features", features);
+                    std::string features_out = "Already have : ";
+                    for (int i = 0; i < features.size(); i++)
+                    {
+                        features_out += " | " + std::to_string(i) + "->" + features[i];
+                    }
+                    std::cout << features_out << std::endl;
+
+                    if (input_ == "n")
+                    {
+                        std::cout << "Please enter one filename. format : {category}_{index}.bin  eg: apple_0.bin" << std::endl;
+                        std::string input_feature;
+                        getline(std::cin, input_feature);
+                        int len_;
+                        float *output = self_learning.get_kpu_output(&len_);
+                        dump_binary_file(("features/" + input_feature).c_str(), (char *)output, (const size_t) len_ * sizeof(float));
+                        std::cout << "Successfully created " + input_feature + " feature." << std::endl;
+                    }
+                    else if (input_ == "d")
+                    {
+                        std::cout << "Please enter one feature index." << std::endl;
+                        std::string str_index;
+                        getline(std::cin, str_index);
+                        int index = str_index[0] - 48;
+                        if (index < 0 || index >= features.size())
+                        {
+                            std::cout << "Fail to delete." << std::endl;
+                        }
+                        else
+                        {
+                            remove(("features/" + features[index]).c_str());
+                            std::cout << "Successfully deleted " + features[index] + "." << std::endl;
+                        }
+                    }
+
+                    set_read_block_mode(false);
+                    set_terminal_mode(false);
+                }
+                else if(ch == 27)         //for ESC key
+                {
+                    reg_stop = true;
+                }
             }
+            else
+            {
+                std::vector<Evec> results;
+                std::vector<std::string> features;
+                getFileNames("features", features);
+                self_learning.post_process(features, results);
+                cv::Point origin;
+                origin.x = 200;
+                origin.y = 100;
+                for (int i = 0; i < results.size(); i++)
+                {
+
+                    origin.y += 50;
+                    std::string text = results[i].category + " " + std::to_string(results[i].score);
+                    cv::putText(osd_frame, text, origin, cv::FONT_HERSHEY_COMPLEX, 2, cv::Scalar(255,255, 0, 0), 4, 8, 0);
+                }
+            }
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
         }
-        cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+        #endif
 
         {
             ScopedTiming st("osd copy", atoi(argv[6]));

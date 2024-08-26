@@ -1,4 +1,4 @@
-#AP6212A_NVRAM_V1.0.2_20191121
+#K016-CW43-SW_20211022
 # 2.4 GHz, 20 MHz BW mode
 
 # The following parameter values are just placeholders, need to be updated.
@@ -16,7 +16,8 @@ xtalfreq=26000
 nocrc=1
 ag0=255
 aa2g=1
-ccode=ALL
+ccode=CN
+regrev=38
 
 pa0itssit=0x20
 extpagain2g=0
@@ -27,11 +28,11 @@ AvVmid_c0=0x0,0xc8
 cckpwroffset0=5
 
 # PPR params
-maxp2ga0=80
+maxp2ga0=84
 txpwrbckof=6
 cckbw202gpo=0x6666
 legofdmbw202gpo=0xaaaaaaaa
-mcsbw202gpo=0xbbbbbbbb
+mcsbw202gpo=0xcccccccc
 
 # OFDM IIR :
 ofdmdigfilttype=18
@@ -48,9 +49,12 @@ hostrdy=0x41
 usbrdy=0x03
 usbrdydelay=100
 deadman_to=0xffffffff
+
+ed_thresh2g=-54
+eu_edthresh2g=-54
+
 # muxenab: 0x1 for UART enable, 0x10 for Host awake
 muxenab=0x10
 # CLDO PWM voltage settings - 0x4 - 1.1 volt
 #cldo_pwm=0x4
 glitch_based_crsmin=1
-noccpwrlmt=1

@@ -13,6 +13,7 @@ RTSMART_CFLAGS = -I$(RTSMART_SRC_DIR)/kernel/rt-thread/include \
 		-I$(RTSMART_SRC_DIR)/kernel/rt-thread/components/dfs/filesystems/devfs \
 		-I$(RTSMART_SRC_DIR)/kernel/rt-thread/components/dfs/filesystems/romfs \
 		-I$(RTSMART_SRC_DIR)/kernel/rt-thread/components/drivers/include \
+		-I$(RTSMART_SRC_DIR)/kernel/rt-thread/components/drivers/wlan \
 		-I$(RTSMART_SRC_DIR)/kernel/rt-thread/components/drivers/tty/include \
 		-I$(RTSMART_SRC_DIR)/kernel/rt-thread/components/finsh \
 		-I$(RTSMART_SRC_DIR)/kernel/rt-thread/components/libc/compilers/musl \

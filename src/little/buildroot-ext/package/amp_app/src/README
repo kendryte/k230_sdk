@@ -1,0 +1,18 @@
+该app实现功能:
+小核linux控制大核重启
+
+执行:
+killall sharefs
+rmmod k_ipcm
+amp_test /dev/mtd6
+cd /mnt
+insmod k_ipcm.ko
+./sharefs &
+这样重启大核之后sharefs还可以正常工作
+/dev/mtd6 为大核固件的磁盘分区
+
+实现:
+linux驱动源码:src/little/linux/drivers/misc/canaan/k230-amp.c
+
+提供mmap接口,映射rtthread的运行内存地址到用户态虚拟地址.用户态就可以把固件写到这个地址。
+提供ioctl接口,控制大核重启.传递虚拟地址,底层包括刷cache和配置sysctl大核复位操作。

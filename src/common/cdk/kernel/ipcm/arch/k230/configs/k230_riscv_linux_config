@@ -8,7 +8,10 @@ top_role="master"
 ipcm_irq=109
 max_nodes=2
 cdev=y
+virt_tty=y
 sharefs=y
+
+virt_tty_role = "server"
 
 shm_phys_1to0=0x00
 shm_size_1to0=0x00

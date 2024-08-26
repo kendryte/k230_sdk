@@ -44,6 +44,8 @@ struct SessionInfo {
 
 static std::mutex session_info_map_mutex_;
 static std::map<std::string, SessionInfo> session_info_map_;
+typedef std::map<std::string, std::string> SessionUrlMap;
+static SessionUrlMap session_url_map_;
 
 void OnBackChannel::OnData(unsigned char const* data, unsigned size, struct timeval presentationTime) {
     if (back_channel_) {
@@ -63,6 +65,7 @@ class KdRtspServer::Impl {
 
     int CreateSession(const std::string &session_name, const SessionAttr &session_attr);
     int DestroySession(const std::string &session_name);
+    char* GetRtspUrl(const std::string &session_name);
     void Start();
     void Stop();
 
@@ -211,12 +214,21 @@ int KdRtspServer::Impl::DestroySession(const std::string &session_name) {
     return 0;
 }
 
+char* KdRtspServer::Impl::GetRtspUrl(const std::string &session_name) {
+    if (session_url_map_.find(session_name) != session_url_map_.end()) {
+        return strdup(session_url_map_[session_name].c_str());
+    }
+    return nullptr;
+}
+
 void KdRtspServer::Impl::Start() {
+#if 0
     if (rtspServer_->setUpTunnelingOverHTTP(80) || rtspServer_->setUpTunnelingOverHTTP(8000) || rtspServer_->setUpTunnelingOverHTTP(8080)) {
         *env_ << "\n(We use port " << rtspServer_->httpServerPortNum() << " for optional RTSP-over-HTTP tunneling.)\n";
     } else {
         *env_ << "\n(RTSP-over-HTTP tunneling is not available.)\n";
     }
+#endif
 
     watchVariable_ = 0;
     server_loop_ = std::thread([this]() {
@@ -244,6 +256,7 @@ void KdRtspServer::Impl::Stop() {
 
 void KdRtspServer::Impl::announceStream(ServerMediaSession* sms, char const* streamName) {
     char* url = rtspServer_->rtspURL(sms);
+    session_url_map_[streamName] = url;
     UsageEnvironment& env = rtspServer_->envir();
     env << "\n\"" << streamName << "\" stream " << "\n";
     env << "Play this stream using the URL \"" << url << "\"\n";
@@ -297,7 +310,12 @@ int KdRtspServer::CreateSession(const std::string &session_name, const SessionAt
 }
 
 int KdRtspServer::DestroySession(const std::string &session_name) {
+    session_url_map_.erase(session_name);
     return impl_->DestroySession(session_name);
+}
+
+char* KdRtspServer::GetRtspUrl(const std::string &session_name) {
+    return impl_->GetRtspUrl(session_name);
 }
 
 void KdRtspServer::Start() {

@@ -117,6 +117,7 @@ static k_s32 _deinit_ai(k_handle ai_hdl)
 static k_s32 _init_ao(k_audio_bit_width bit_width, k_u32 sample_rate,k_u32 channels, k_i2s_work_mode i2s_work_mode,k_handle* ao_hdl)
 {
     k_aio_dev_attr aio_dev_attr;
+    memset(&aio_dev_attr,0,sizeof(aio_dev_attr));
     aio_dev_attr.audio_type = KD_AUDIO_OUTPUT_TYPE_I2S;
     aio_dev_attr.kd_audio_attr.i2s_attr.sample_rate = sample_rate;
     aio_dev_attr.kd_audio_attr.i2s_attr.bit_width = bit_width;
@@ -229,6 +230,7 @@ static k_s32 _enable_audio_talk(k_u32 sample_rate,k_u32 channels,k_bool enable_a
 
     //i2s out 2 channel enable
     k_aio_dev_attr ao_dev_attr;
+    memset(&ao_dev_attr,0,sizeof(ao_dev_attr));
     ao_dev_attr.audio_type = KD_AUDIO_OUTPUT_TYPE_I2S;
     ao_dev_attr.kd_audio_attr.i2s_attr.sample_rate = sample_rate;
     ao_dev_attr.kd_audio_attr.i2s_attr.bit_width = KD_AUDIO_BIT_WIDTH_16;

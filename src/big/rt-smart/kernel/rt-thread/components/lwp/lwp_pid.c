@@ -814,15 +814,15 @@ long list_process(void)
 }
 MSH_CMD_EXPORT(list_process, list process);
 
-static void cmd_kill(int argc, char** argv)
+static int cmd_kill(int argc, char** argv)
 {
     int pid;
-    int sig = 0;
+    int sig = SIGTERM;
 
     if (argc < 2)
     {
         rt_kprintf("kill pid or kill pid -s signal\n");
-        return;
+        return -EINVAL;
     }
 
     pid = atoi(argv[1]);
@@ -834,25 +834,52 @@ static void cmd_kill(int argc, char** argv)
         }
     }
     lwp_kill(pid, sig);
+    return 0;
 }
 MSH_CMD_EXPORT_ALIAS(cmd_kill, kill, send a signal to a process);
 
-static void cmd_killall(int argc, char** argv)
+static int cmd_killall(int argc, char** argv)
 {
     int pid;
+    int sig = SIGTERM;
     if (argc < 2)
     {
-        rt_kprintf("killall processes_name\n");
-        return;
+        rt_kprintf("killall processes_name or killall processes_name -s signal\n");
+        return -EINVAL;
+    }
+    if (argc >= 4)
+    {
+        if (argv[2][0] == '-' && argv[2][1] == 's')
+        {
+            sig = atoi(argv[3]);
+        }
     }
 
-    while((pid = lwp_name2pid(argv[1])) > 0)
-    {
-        lwp_kill(pid, SIGKILL);
-        rt_thread_mdelay(100);
-    }
+    pid = lwp_name2pid(argv[1]);
+    if (pid <= 0)
+        return -ESRCH;
+    lwp_kill(pid, sig);
+    return 0;
 }
 MSH_CMD_EXPORT_ALIAS(cmd_killall, killall, kill processes by name);
+
+static int cmd_pidof(int argc, char** argv)
+{
+    int pid;
+
+    if (argc < 2)
+    {
+        rt_kprintf("pidof processes_name\n");
+        return -EINVAL;
+    }
+
+    pid = lwp_name2pid(argv[1]);
+    if (pid > 0)
+        return 0;
+    else
+        return -ESRCH;
+}
+MSH_CMD_EXPORT_ALIAS(cmd_pidof, pidof, find the process ID of a running program);
 
 #endif
 
@@ -977,7 +1004,7 @@ void lwp_terminate(struct rt_lwp *lwp)
         }
         if ((thread->stat & RT_THREAD_SUSPEND_MASK) == RT_THREAD_SUSPEND_MASK)
         {
-            thread->error = RT_EINTR;
+            thread->error = -RT_EINTR;
             rt_hw_dsb();
             rt_thread_wakeup(thread);
         }

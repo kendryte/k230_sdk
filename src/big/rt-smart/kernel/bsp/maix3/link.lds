@@ -143,6 +143,7 @@ SECTIONS
         *(.bss.*)
         *(.dynbss)
         *(COMMON)
+        . = ALIGN(64);
     __bss_end = .;
     } > SRAM
 

@@ -437,10 +437,12 @@ static k_s32 sc035hgs_sensor_get_chip_id(void* ctx, k_u32* chip_id)
     struct sensor_driver_dev* dev = ctx;
     pr_info("%s enter\n", __func__);
 
+    sc035hgs_i2c_init(&dev->i2c_info);
+
     ret = sensor_reg_read(&dev->i2c_info, SC035HGS_REG_CHIP_ID_H, &id_high);
     ret |= sensor_reg_read(&dev->i2c_info, SC035HGS_REG_CHIP_ID_L, &id_low);
     if (ret) {
-        rt_kprintf("%s error\n", __func__);
+        // rt_kprintf("%s error\n", __func__);
         return -1;
     }
 
@@ -458,7 +460,11 @@ static k_s32 sc035hgs_sensor_power_on(void* ctx, k_s32 on)
     if (on) {
         sc035hgs_power_reset(on);
         sc035hgs_i2c_init(&dev->i2c_info);
-        sc035hgs_sensor_get_chip_id(ctx, &chip_id);
+        ret = sc035hgs_sensor_get_chip_id(ctx, &chip_id);
+        if(ret < 0)
+        {
+            pr_err("%s, iic read chip id err \n", __func__);
+        }
     } else {
         sc035hgs_power_reset(on);
     }

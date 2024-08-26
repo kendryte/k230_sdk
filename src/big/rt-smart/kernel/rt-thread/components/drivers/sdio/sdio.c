@@ -236,7 +236,8 @@ rt_inline rt_uint32_t sdio_max_block_size(struct rt_sdio_function *func)
     rt_uint32_t size = MIN(func->card->host->max_seg_size,
                            func->card->host->max_blk_size);
     size = MIN(size, func->max_blk_size);
-
+    if (func->cur_blk_size)
+        size = MIN(size, func->cur_blk_size);
     return MIN(size, 512u); /* maximum size for byte mode */
 }
 
@@ -961,17 +962,17 @@ rt_int32_t init_sdio(struct rt_mmcsd_host *host, rt_uint32_t ocr)
 
     RT_ASSERT(host != RT_NULL);
 
-    if (ocr & 0x7F) 
-    {
-        LOG_W("Card ocr below the defined voltage rang.");
-        ocr &= ~0x7F;
-    }
+    // if (ocr & 0x7F)
+    // {
+    //     LOG_W("Card ocr below the defined voltage rang.");
+    //     ocr &= ~0x7F;
+    // }
 
-    if (ocr & VDD_165_195) 
-    {
-        LOG_W("Can't support the low voltage SDIO card.");
-        ocr &= ~VDD_165_195;
-    }
+    // if (ocr & VDD_165_195)
+    // {
+    //     LOG_W("Can't support the low voltage SDIO card.");
+    //     ocr &= ~VDD_165_195;
+    // }
 
     current_ocr = mmcsd_select_voltage(host, ocr);
 

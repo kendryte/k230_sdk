@@ -114,7 +114,13 @@ void video_proc(char *argv[])
         }
         #elif defined(CONFIG_BOARD_K230_CANMV_01STUDIO)
         {
-            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+            #if defined(STUDIO_HDMI)
+            {}
+            #else
+            {
+                cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+            }
+            #endif
         }
         #else
         {
@@ -164,15 +170,31 @@ void video_proc(char *argv[])
             }
             #elif defined(CONFIG_BOARD_K230_CANMV_01STUDIO)
             {
-                int rect_x = r.x1/ SENSOR_WIDTH * osd_height;
-                int rect_y = r.y1/ SENSOR_HEIGHT * osd_width;
-                int rect_w = (float)w / SENSOR_WIDTH * osd_height;
-                int rect_h = (float)h / SENSOR_HEIGHT  * osd_width;
+                #if defined(STUDIO_HDMI)
+                {
+                    int rect_x = r.x1/ SENSOR_WIDTH * osd_width;
+                    int rect_y = r.y1/ SENSOR_HEIGHT * osd_height;
+                    int rect_w = (float)w / SENSOR_WIDTH * osd_width;
+                    int rect_h = (float)h / SENSOR_HEIGHT  * osd_height;
 
-                cv::rectangle(osd_frame, cv::Rect(rect_x, rect_y , rect_w, rect_h), cv::Scalar( 255,255, 255, 255), 2, 2, 0);
-                std::string text1 = "Gesture: " + gesture;
-                cv::putText(osd_frame, text1, cv::Point(rect_x,rect_y),cv::FONT_HERSHEY_COMPLEX, 1, cv::Scalar(255, 255, 195, 0), 2);
-                cv::putText(osd_frame, text1, cv::Point(rect_x,rect_y),cv::FONT_HERSHEY_COMPLEX, 1, cv::Scalar(255, 0, 150, 255), 2);
+                    cv::rectangle(osd_frame, cv::Rect(rect_x, rect_y , rect_w, rect_h), cv::Scalar( 255,255, 255, 255), 2, 2, 0);
+                    std::string text1 = "Gesture: " + gesture;
+                    cv::putText(osd_frame, text1, cv::Point(rect_x,rect_y),cv::FONT_HERSHEY_COMPLEX, 1, cv::Scalar(255, 255, 195, 0), 2);
+                    cv::putText(osd_frame, text1, cv::Point(rect_x,rect_y),cv::FONT_HERSHEY_COMPLEX, 1, cv::Scalar(255, 0, 150, 255), 2);
+                }
+                #else
+                {
+                    int rect_x = r.x1/ SENSOR_WIDTH * osd_height;
+                    int rect_y = r.y1/ SENSOR_HEIGHT * osd_width;
+                    int rect_w = (float)w / SENSOR_WIDTH * osd_height;
+                    int rect_h = (float)h / SENSOR_HEIGHT  * osd_width;
+
+                    cv::rectangle(osd_frame, cv::Rect(rect_x, rect_y , rect_w, rect_h), cv::Scalar( 255,255, 255, 255), 2, 2, 0);
+                    std::string text1 = "Gesture: " + gesture;
+                    cv::putText(osd_frame, text1, cv::Point(rect_x,rect_y),cv::FONT_HERSHEY_COMPLEX, 1, cv::Scalar(255, 255, 195, 0), 2);
+                    cv::putText(osd_frame, text1, cv::Point(rect_x,rect_y),cv::FONT_HERSHEY_COMPLEX, 1, cv::Scalar(255, 0, 150, 255), 2);
+                }
+                #endif
             }
             #else
             {
@@ -200,7 +222,13 @@ void video_proc(char *argv[])
         }
         #elif defined(CONFIG_BOARD_K230_CANMV_01STUDIO)
         {
-            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+            #if defined(STUDIO_HDMI)
+            {}
+            #else
+            {
+                cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+            }
+            #endif
         }
         #else
         {

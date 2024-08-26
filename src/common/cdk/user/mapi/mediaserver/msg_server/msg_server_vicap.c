@@ -422,6 +422,32 @@ k_s32 msg_vicap_tuning(k_s32 id, k_ipcmsg_message_t *msg)
     return K_SUCCESS;
 }
 
+
+k_s32 msg_vicap_set_3d_mode_ctl(k_s32 id, k_ipcmsg_message_t *msg)
+{
+    k_s32 ret;
+    k_ipcmsg_message_t *resp_msg;
+    k_u8 *enable = msg->pBody;
+
+    ret = kd_mapi_vicap_3d_mode_crtl(*enable);
+    if(ret != K_SUCCESS) {
+        mapi_vicap_error_trace("kd_mapi_vicap_set_mclk failed:0x%x\n", ret);
+    }
+
+    resp_msg = kd_ipcmsg_create_resp_message(msg, ret, NULL, 0);
+    if(resp_msg == NULL) {
+        mapi_vicap_error_trace("kd_ipcmsg_create_resp_message failed\n");
+        return K_FAILED;
+    }
+
+    ret = kd_ipcmsg_send_async(id, resp_msg, NULL);
+    if(ret != K_SUCCESS) {
+        mapi_vicap_error_trace(" kd_ipcmsg_send_async failed:%x\n", ret);
+    }
+    kd_ipcmsg_destroy_message(resp_msg);
+    return K_SUCCESS;
+}
+
 static msg_module_cmd_t g_module_cmd_table[] = {
     {MSG_CMD_MEDIA_VICAP_GET_SENSOR_FD,   msg_vicap_get_sensor_fd},
     {MSG_CMD_MEDIA_VICAP_DUMP_FRAME,      msg_vicap_dump_frame},
@@ -436,6 +462,7 @@ static msg_module_cmd_t g_module_cmd_table[] = {
     {MSG_CMD_MEDIA_VICAP_TUNING,          msg_vicap_tuning},
     {MSG_CMD_MEDIA_VICAP_INIT,            msg_vicap_init},
     {MSG_CMD_MEDIA_VICAP_START_STREAM,    msg_vicap_start_stream},
+    {MSG_CMD_MEDIA_VICAP_SET_3D_MODE_EN,  msg_vicap_set_3d_mode_ctl},
 };
 
 msg_server_module_t g_module_vicap = {

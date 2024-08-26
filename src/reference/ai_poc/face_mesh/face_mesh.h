@@ -118,9 +118,10 @@ public:
      * @param img                   展示的图片或图层
      * @param vertices              后处理后3d点
      * @param pic_mode              ture(原图片)，false(osd)
+     * @param lcd_mode              ture(hdmi显示)，false(lcd显示)
      * @return None
      */
-    void get_mesh(cv::Mat &img, vector<float>& vertices, bool pic_mode);
+    void get_mesh(cv::Mat &img, vector<float>& vertices, bool pic_mode,bool lcd_mode=false);
 private:
 
     /**

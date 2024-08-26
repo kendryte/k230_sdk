@@ -366,9 +366,19 @@ void video_proc_01(char *argv[])
         seg.inference();
 
         cv::Mat osd_frame(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-        cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
-        seg.post_process_video( osd_frame );
-        cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+
+        #if defined(STUDIO_HDMI)
+        {
+            seg.post_process_video( osd_frame );
+        }
+        #else
+        {
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+            seg.post_process_video( osd_frame );
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+        }
+        #endif
+
 
         {
             ScopedTiming st("osd copy", atoi(argv[3]));

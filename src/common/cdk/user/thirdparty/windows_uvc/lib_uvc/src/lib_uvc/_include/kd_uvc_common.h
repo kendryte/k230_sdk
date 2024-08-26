@@ -86,10 +86,12 @@ typedef struct tag_uvc_grab_init_parameters_ex
 	int sensor_type[2];
 	bool adc_enable;
 	bool overwrite_file;
-	int  reverse[11];
+	int  reverse[10];
+	int  dma_ro;
 	//from file
 	char serialNumber[64];
 	k_dpu_temperature temperature;
+	
 
 	tag_uvc_grab_init_parameters_ex()
 	{
@@ -97,6 +99,7 @@ typedef struct tag_uvc_grab_init_parameters_ex
 		depth_maximum_distance = 40000;
 		camera_width = 1280;
 		camera_height = 720;
+		dma_ro = DEGREE_90;
 	}
 
 }uvc_grab_init_parameters_ex;

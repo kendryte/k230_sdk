@@ -194,14 +194,6 @@ void dma_write_data_block_config(rt_bool_t head, rt_bool_t tail, rt_bool_t dn_in
 void dma_write_rwcfg(const rt_uint8_t *out, const rt_uint8_t *in, rt_uint32_t len)
 {
     rt_uint64_t pa;
-    void *tmp_kvirt;
-    tmp_kvirt = rt_malloc(len);
-    if(!tmp_kvirt)
-    {
-        rt_kprintf("%s malloc fail!\n", __func__);
-        return;
-    }
-    rt_memcpy(tmp_kvirt, (void*)in, len);
 
     writel(len, sec_base_addr + DMA_DSC_CFG_2_OFFSET);
     writel((uintptr_t)out, sec_base_addr + DMA_DSC_CFG_1_OFFSET);
@@ -210,9 +202,8 @@ void dma_write_rwcfg(const rt_uint8_t *out, const rt_uint8_t *in, rt_uint32_t le
         writel((uintptr_t)in, sec_base_addr + DMA_DSC_CFG_0_OFFSET);
     else    // virtual to physical
     {
-        rt_hw_cpu_dcache_clean_flush(tmp_kvirt, len);
-        pa = virt_to_phys(tmp_kvirt);
-        rt_hw_cpu_dcache_clean_flush((void *)pa, len);
+        rt_hw_cpu_dcache_clean(in, len);
+        pa = virt_to_phys(in);
         writel(pa, sec_base_addr + DMA_DSC_CFG_0_OFFSET);
     }
 }
@@ -316,8 +307,7 @@ k_blsegs segment(rt_uint8_t * buf, rt_uint32_t buflen, const rt_uint8_t* in, rt_
 static rt_err_t ctx_update(struct hash_context *hash_ctx, k_pufs_dgst_st *md, const rt_uint8_t *msg, rt_uint32_t msglen, rt_bool_t last)
 {
     rt_uint32_t val32;
-    rt_int32_t i;
-    rt_err_t ret;
+    rt_err_t ret = RT_EOK;
 
     if(last && (md == RT_NULL))
         return -RT_ERROR;
@@ -327,7 +317,14 @@ static rt_err_t ctx_update(struct hash_context *hash_ctx, k_pufs_dgst_st *md, co
 
     dma_write_config_0(RT_FALSE, RT_FALSE, RT_FALSE);
     dma_write_data_block_config(hash_ctx->start ? RT_FALSE : RT_TRUE, last, RT_TRUE, RT_TRUE, 0);
-    dma_write_rwcfg(RT_NULL, msg, msglen);
+    void *in_kvirt;
+    in_kvirt = rt_malloc_align(msglen, 64);
+    if (!in_kvirt) {
+        rt_kprintf("%s malloc fail!\n", __func__);
+        return -RT_ERROR;
+    }
+    rt_memcpy(in_kvirt, (void *)msg, msglen);
+    dma_write_rwcfg(RT_NULL, in_kvirt, msglen);
     dma_write_key_config_0(hash_ctx->keytype, ALGO_TYPE_HMAC, (hash_ctx->keybits < 512) ? hash_ctx->keybits : 512, get_key_slot_idx(hash_ctx->keytype, hash_ctx->keyslot));
 
     if (hash_ctx->start)
@@ -342,14 +339,16 @@ static rt_err_t ctx_update(struct hash_context *hash_ctx, k_pufs_dgst_st *md, co
     if (val32 != 0)
     {
         rt_kprintf("[ERROR] DMA status 0: 0x%08x\n", val32);
-        return -RT_ERROR;
+        ret = -RT_ERROR;
+        goto error;
     }
 
     val32 = readl(sec_base_addr + HASH_STATUS_OFFSET);
     if (val32 != 0)
     {
         rt_kprintf("[ERROR] HMAC status: 0x%08x\n", val32);
-        return -RT_ERROR;
+        ret = -RT_ERROR;
+        goto error;
     }
 
     if (!last)
@@ -357,8 +356,9 @@ static rt_err_t ctx_update(struct hash_context *hash_ctx, k_pufs_dgst_st *md, co
         crypto_read_dgest(hash_ctx->state, DGST_INT_STATE_LEN);
         hash_ctx->curlen = readl(sec_base_addr + HASH_ALEN_OFFSET);
     }
-
-    return RT_EOK;
+error:
+    rt_free_align(in_kvirt);
+    return ret;
 }
 
 static rt_err_t ctx_finish(struct hash_context *hash_ctx, k_pufs_dgst_st *md)
@@ -471,18 +471,9 @@ rt_err_t pufs_hash(k_pufs_dgst_st *md, const rt_uint8_t *msg, rt_uint32_t msglen
 static rt_err_t hash_control(rt_device_t dev, int cmd, void *args)
 {
     struct rt_hash_config_args *config_args = (struct rt_hash_config_args *)args;
-    void *msg = RT_NULL;
-    k_pufs_dgst_st md;
-    rt_uint32_t msglen = RT_NULL;
     rt_err_t ret = RT_EOK;
 
     RT_ASSERT(dev != RT_NULL);
-
-    msglen = config_args->msglen;
-    msg = rt_malloc(msglen);
-    if(!msg)
-        return -RT_ENOMEM;
-    lwp_get_from_user(msg, config_args->msg, msglen);
 
     switch(cmd)
     {
@@ -493,21 +484,31 @@ static rt_err_t hash_control(rt_device_t dev, int cmd, void *args)
 
             if((ret = sha256_init(&hash_ctx)) != RT_EOK)
                 goto release_lock;
-            
             break;
         }
 
         case RT_HWHASH_CTRL_UPDATE:
         {
-            if((ret = sha256_update(&hash_ctx, msg, msglen)) != RT_EOK)
+            rt_uint32_t msglen = config_args->msglen;
+            void *msg = rt_malloc(msglen);
+            if (!msg) {
+                ret = -RT_ENOMEM;
                 goto release_lock;
-            
+            }
+            lwp_get_from_user(msg, config_args->msg, msglen);
+
+            if ((ret = sha256_update(&hash_ctx, msg, msglen)) != RT_EOK) {
+                rt_free(msg);
+                goto release_lock;
+            }
+            rt_free(msg);
             break;
         }
 
         case RT_HWHASH_CTRL_FINISH:
         {
-            if((ret = sha256_finish(&hash_ctx, &md)) != RT_EOK)
+            k_pufs_dgst_st md;
+            if ((ret = sha256_finish(&hash_ctx, &md)) != RT_EOK)
                 goto release_lock;
 
             lwp_put_to_user(config_args->dgst, md.dgst, md.dlen);
@@ -518,7 +519,8 @@ static rt_err_t hash_control(rt_device_t dev, int cmd, void *args)
         }
 
         default:
-            return RT_EINVAL;
+            ret = -RT_EINVAL;
+            goto release_lock;
     }
 
 ret_hash:
@@ -527,7 +529,7 @@ ret_hash:
 release_lock:
     if(ret != RT_EOK)
         kd_hardlock_unlock(hash_hardlock);
-    goto ret_hash;
+    return ret;
 }
 
 static rt_err_t hash_open(rt_device_t dev, rt_uint16_t oflag)

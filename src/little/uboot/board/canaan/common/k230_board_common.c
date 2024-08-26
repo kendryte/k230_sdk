@@ -316,7 +316,7 @@ static int do_k230_dfu(struct cmd_tbl *cmdtp, int flag, int argc, char *const ar
             has_firmware = true;
             alt_info_len = sprintf(pInfo, "%s raw 0x%x 0x%x", item->altName, item->address / sector, (item->size+sector-1) / sector);
             pInfo += alt_info_len;
-            // if(i != (cfg->cfgCount - 1)) 
+            // if(i != (cfg->cfgCount - 1))
             {
                 pInfo[0] = ';';
                 pInfo ++;
@@ -361,4 +361,80 @@ U_BOOT_CMD(
 	"k230 burntool enter dfu",
 	"k230 burntool enter dfu"
 );
+
+#define K230_SET_BIT(val, bit) ((val) | (1 << (bit)))
+#define K230_CLER_BIT(val, bit) ((val) & ~(1 << (bit)))
+#define K230_GET_BIT(val, bit) (((val) >> (bit)) & 1)
+
+int k230_gpio(char opt, int pin, char *value)
+{
+    int ret = 0;
+
+    volatile u32 * gpio_dr = (volatile int *)(GPIO_BASE_ADDR0 + pin/32*0x1000);
+    volatile u32 * gpio_ddr = (volatile int *)(gpio_dr+1);
+    volatile u32 * gpio_ctrl = (volatile int *)(gpio_dr+2);
+    u32 reg_org, reg_set;
+
+    printf("pin=%d  org reg gpio_dr%x=%x gpio_ddr=%x %x\n", pin,  gpio_dr,*gpio_dr, *gpio_ddr, *gpio_ctrl);
+
+    if(pin > 71)
+        return -1;
+
+    if(opt == 's') {
+        if(value == NULL) {
+            printf("value is NULL\n");
+            return -1;
+        }
+        reg_org =  *gpio_dr;
+        if(*value == 0) {
+            *gpio_dr = K230_CLER_BIT(reg_org, pin % 32);
+
+        } else{
+            *gpio_dr = K230_SET_BIT(reg_org, pin % 32);
+        }
+    } else if(opt == 'g') {
+        reg_org = *gpio_dr;
+        *value = K230_GET_BIT(reg_org, pin % 32);
+    } else if(opt == 'i') { //set 0;
+        reg_org = *gpio_ddr;
+        *gpio_ddr = K230_CLER_BIT(reg_org, pin % 32);
+    } else if(opt == 'o') {
+        reg_org = *gpio_ddr;
+        *gpio_ddr = K230_SET_BIT(reg_org, pin % 32);
+        if( value && (*value) ) {
+            *gpio_dr = K230_SET_BIT(reg_org, pin % 32);
+        } else  if( value && (*value == 0)) {
+            *gpio_dr = K230_CLER_BIT(reg_org, pin % 32);
+        }
+    } else {
+        printf("opt %c is invalid\n", opt);
+        return -1;
+    }
+    printf("pin=%d  after reg gpio_dr=%x gpio_ddr=%x ctl%x\n", pin,  *gpio_dr, *gpio_ddr, *gpio_ctrl);
+    return ret;
+
+}
+static int do_k230_gpio(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+{
+    int ret = 0;
+    if(argc < 2) {
+        printf("usage: k230_gpio set/get/in/out pin [value]\n");
+        return -1;
+    }
+
+    int pin = simple_strtoul(argv[2], NULL, 0);
+    char value=0;
+    if(argc > 3) {
+        value = simple_strtoul(argv[3], NULL, 0);
+    }
+    ret = k230_gpio(argv[1][0], pin, &value);
+    printf("%c pin %d value %d \n", argv[1][0], pin, value);
+    return ret;
+}
+U_BOOT_CMD(
+	k230_gpio, CONFIG_SYS_MAXARGS, 0, do_k230_gpio,
+	"k230_gpio set/get/in/out pin [value]",
+	"k230_gpio set/get/in/out pin [value]"
+);
+
 #endif

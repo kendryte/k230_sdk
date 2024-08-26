@@ -1576,7 +1576,7 @@ void rt_assert_handler(const char *ex_string, const char *func, rt_size_t line)
 RTM_EXPORT(rt_assert_handler);
 #endif /* RT_DEBUG */
 
-#if !defined (RT_USING_NEWLIB) && defined (RT_USING_MINILIBC) && defined (__GNUC__)
+#if !defined (RT_USING_NEWLIB) && (defined (RT_USING_MINILIBC) || defined(RT_USING_MUSL))  && defined (__GNUC__)
 #include <sys/types.h>
 void *memcpy(void *dest, const void *src, size_t n) __attribute__((weak, alias("rt_memcpy")));
 void *memset(void *s, int c, size_t n) __attribute__((weak, alias("rt_memset")));

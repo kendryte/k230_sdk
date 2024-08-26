@@ -234,7 +234,7 @@ static void st7701_power_reset(k_s32 on)
     // rt_kprintf("rst_gpio is %d \n",rst_gpio);
 
     kd_pin_mode(rst_gpio, GPIO_DM_OUTPUT);
-    
+
     if (on)
         kd_pin_write(rst_gpio, GPIO_PV_HIGH); // GPIO_PV_LOW  GPIO_PV_HIGH
     else
@@ -245,6 +245,9 @@ static void st7701_power_reset(k_s32 on)
 static void st7701_set_backlight(k_s32 on)
 {
     k_u8 backlight_gpio;
+
+    if(DISPLAY_LCD_BACKLIGHT_EN == 255) // unused
+        return;
 
     backlight_gpio = DISPLAY_LCD_BACKLIGHT_EN;
 
@@ -267,8 +270,8 @@ static k_s32 st7701_power_on(void* ctx, k_s32 on)
     k230_display_rst();
 
     if (on) {
-        
-        // rst st7701 
+
+        // rst st7701
         st7701_power_reset(1);
         rt_thread_mdelay(g_blacklight_delay_ms);
         st7701_power_reset(0);
@@ -281,7 +284,7 @@ static k_s32 st7701_power_on(void* ctx, k_s32 on)
     } else {
         st7701_set_backlight(0);
     }
-    
+
     return ret;
 }
 
@@ -304,7 +307,7 @@ static k_s32 st7701_set_phy_freq(k_connectori_phy_attr *phy_attr)
 
 
 static k_s32 st7701_dsi_resolution_init(k_connector_info *info)
-{   
+{
     k_vo_dsi_attr attr;
     k_vo_display_resolution resolution;
 
@@ -336,7 +339,7 @@ static k_s32 st7701_dsi_resolution_init(k_connector_info *info)
 
     if(info->dsi_test_mode == 1)
         connector_set_dsi_test_mode();
-        
+
     return 0;
 }
 
@@ -359,7 +362,7 @@ static k_s32 st7701_vo_resolution_init(k_vo_display_resolution *resolution, k_u3
 
     return 0;
 }
-   
+
 
 k_s32 st7701_init(void *ctx, k_connector_info *info)
 {

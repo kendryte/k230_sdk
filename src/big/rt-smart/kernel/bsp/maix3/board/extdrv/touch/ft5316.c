@@ -23,8 +23,11 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "rtdef.h"
 #include <rtthread.h>
 #include <touch.h>
+#include <lwp_user_mm.h>
+
 #define DBG_TAG          "ft5316"
 #ifdef RT_DEBUG
 #define DBG_LVL          DBG_LOG
@@ -117,6 +120,12 @@ static rt_size_t ft5316_read_point(struct rt_touch_device *touch, void *buf, rt_
 
 static rt_err_t ft5316_control(struct rt_touch_device *touch, int cmd, void *arg)
 {
+    if(RT_TOUCH_CTRL_GET_INFO == cmd) {
+        struct rt_touch_info *info = (struct rt_touch_info*)arg;
+        lwp_put_to_user(info, &touch->info, sizeof(*info));
+        return RT_EOK;
+    }
+
     return -RT_ENOSYS;
 }
 
@@ -126,8 +135,8 @@ static struct rt_touch_ops touch_ops = {
 };
 
 static struct ft5316_dev ft5316_dev0 = {
-    .i2c_name = "i2c3",
-    .i2c_addr = 0x38,
+    .i2c_name = FT5316_I2C_DEV,
+    .i2c_addr = FT5316_I2C_ADDR,
 };
 
 static int ft5316_register(struct rt_touch_config *cfg)

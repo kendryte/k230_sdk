@@ -636,47 +636,96 @@ void video_proc_01(char *argv[])
         pd.post_process({SENSOR_WIDTH, SENSOR_HEIGHT}, results);
 
         cv::Mat osd_frame(osd_height, osd_width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
-        cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
-        std::string text;
-        cv::Point origin;
 
-        for (auto res : results)
-        {
-            ScopedTiming st("results transfer ", atoi(argv[5]));
-            
-            Object obj{ {res.x1,res.y1,res.x2- res.x1,res.y2- res.y1},res.label,res.score };
-            objects.push_back(obj);
 
-        }
-        
-        std::vector<STrack> output_stracks;
-        {
-            ScopedTiming st("tracker.update ", atoi(argv[5]));
-            output_stracks = tracker.update(objects);
-        }
 
-        for (int i = 0; i < output_stracks.size(); i++)
+        #if defined(STUDIO_HDMI)
         {
-            ScopedTiming st("draw boxes", atoi(argv[5]));
-            std::vector<float> tlwh = output_stracks[i].tlwh;
-            bool vertical = tlwh[2] / tlwh[3] > 1.6;
-            if (tlwh[2] * tlwh[3] > 20 && !vertical)
+            std::string text;
+            cv::Point origin;
+
+            for (auto res : results)
             {
-                Scalar s = tracker.get_color(output_stracks[i].track_id);
-
-                int x1 =  tlwh[0] / SENSOR_WIDTH * osd_frame.cols;
-                int y1 =  tlwh[1] / SENSOR_HEIGHT  * osd_frame.rows;
-
-                int w = tlwh[2] / SENSOR_WIDTH * osd_frame.cols;
-                int h = tlwh[3] / SENSOR_HEIGHT  * osd_frame.rows;
+                ScopedTiming st("results transfer ", atoi(argv[5]));
                 
-                cv::putText(osd_frame, format("%d", output_stracks[i].track_id), Point(x1, y1 + 5), 0, 2, Scalar(255,255, 0, 0), 2, LINE_AA);
-                cv::rectangle(osd_frame, Rect(x1,y1,w,h), s, 2);
+                Object obj{ {res.x1,res.y1,res.x2- res.x1,res.y2- res.y1},res.label,res.score };
+                objects.push_back(obj);
 
-                
+            }
+            
+            std::vector<STrack> output_stracks;
+            {
+                ScopedTiming st("tracker.update ", atoi(argv[5]));
+                output_stracks = tracker.update(objects);
+            }
+
+            for (int i = 0; i < output_stracks.size(); i++)
+            {
+                ScopedTiming st("draw boxes", atoi(argv[5]));
+                std::vector<float> tlwh = output_stracks[i].tlwh;
+                bool vertical = tlwh[2] / tlwh[3] > 1.6;
+                if (tlwh[2] * tlwh[3] > 20 && !vertical)
+                {
+                    Scalar s = tracker.get_color(output_stracks[i].track_id);
+
+                    int x1 =  tlwh[0] / SENSOR_WIDTH * osd_frame.cols;
+                    int y1 =  tlwh[1] / SENSOR_HEIGHT  * osd_frame.rows;
+
+                    int w = tlwh[2] / SENSOR_WIDTH * osd_frame.cols;
+                    int h = tlwh[3] / SENSOR_HEIGHT  * osd_frame.rows;
+                    
+                    cv::putText(osd_frame, format("%d", output_stracks[i].track_id), Point(x1, y1 + 5), 0, 2, Scalar(255,255, 0, 0), 2, LINE_AA);
+                    cv::rectangle(osd_frame, Rect(x1,y1,w,h), s, 2);
+
+                    
+                }
             }
         }
-        cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+        #else
+        {
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_COUNTERCLOCKWISE);
+            std::string text;
+            cv::Point origin;
+
+            for (auto res : results)
+            {
+                ScopedTiming st("results transfer ", atoi(argv[5]));
+                
+                Object obj{ {res.x1,res.y1,res.x2- res.x1,res.y2- res.y1},res.label,res.score };
+                objects.push_back(obj);
+
+            }
+            
+            std::vector<STrack> output_stracks;
+            {
+                ScopedTiming st("tracker.update ", atoi(argv[5]));
+                output_stracks = tracker.update(objects);
+            }
+
+            for (int i = 0; i < output_stracks.size(); i++)
+            {
+                ScopedTiming st("draw boxes", atoi(argv[5]));
+                std::vector<float> tlwh = output_stracks[i].tlwh;
+                bool vertical = tlwh[2] / tlwh[3] > 1.6;
+                if (tlwh[2] * tlwh[3] > 20 && !vertical)
+                {
+                    Scalar s = tracker.get_color(output_stracks[i].track_id);
+
+                    int x1 =  tlwh[0] / SENSOR_WIDTH * osd_frame.cols;
+                    int y1 =  tlwh[1] / SENSOR_HEIGHT  * osd_frame.rows;
+
+                    int w = tlwh[2] / SENSOR_WIDTH * osd_frame.cols;
+                    int h = tlwh[3] / SENSOR_HEIGHT  * osd_frame.rows;
+                    
+                    cv::putText(osd_frame, format("%d", output_stracks[i].track_id), Point(x1, y1 + 5), 0, 2, Scalar(255,255, 0, 0), 2, LINE_AA);
+                    cv::rectangle(osd_frame, Rect(x1,y1,w,h), s, 2);
+
+                    
+                }
+            }
+            cv::rotate(osd_frame, osd_frame, cv::ROTATE_90_CLOCKWISE);
+        }
+        #endif
 
         {
             ScopedTiming st("osd copy", atoi(argv[5]));

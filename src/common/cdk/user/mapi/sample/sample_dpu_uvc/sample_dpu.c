@@ -825,9 +825,17 @@ static void do_transfer_frame_data(unsigned char* pdata,int len,unsigned int fra
                     else
                     {
                         printf("get_node_from_queue failed cnt:%d\n",get_node_failed_cnt++);
-                        if (get_node_failed_cnt > 100)
+                        if (get_node_failed_cnt > 10)
                         {
                             printf("restart the system ...\n");
+                            kd_mapi_vicap_3d_mode_crtl(0);
+                            printf("kd_mapi_vicap_3d_mode_crtl:%d\n",0);
+                            for(int j = 0 ; j <= 1; j++)
+                            {
+
+	                            kd_mapi_vicap_stop((k_vicap_dev)j);
+                                printf("kd_mapi_vicap_stop:%d\n",j);
+                            }
                             system("reboot");
                         }
                         return;
@@ -949,8 +957,28 @@ k_s32 dpu_get_img(k_u32 dev_num, kd_dpu_data_s* p_dpu_data, k_u8 *p_private_data
     }
 
     //p_dpu_data->dpu_result.img_result.pts = get_system_time_microsecond();
-    g_rgb_frame_number = p_dpu_data->dpu_result.img_result.time_ref;
-    get_img(g_rgb_frame_number,_do_sync_frame_timestamp(em_sync_clock_rgb,p_dpu_data->dpu_result.img_result.pts),p_dpu_data,g_uvc_rgb_data_start_code, p_private_data);
+    if (g_dpu_info.mode == IMAGE_MODE_IR_DEPTH)
+    {
+        g_ir_frame_number = p_dpu_data->dpu_result.img_result.time_ref;
+        get_img(g_ir_frame_number,_do_sync_frame_timestamp(em_sync_clock_ir,p_dpu_data->dpu_result.img_result.pts),p_dpu_data,g_uvc_ir_data_start_code, p_private_data);
+    }
+    else
+    {
+        if (g_dpu_info.mode == IMAGE_MODE_RGB_NONE)
+        {
+            if (g_cur_frame_keep_time > 0)
+            {
+                if (0 == _discard_frame(g_origin_frame_rgb_time,&g_send_frame_rgb_cnt))
+                {
+                    return 0;
+                }
+            }
+        }
+
+        g_rgb_frame_number = p_dpu_data->dpu_result.img_result.time_ref;
+        get_img(g_rgb_frame_number,_do_sync_frame_timestamp(em_sync_clock_rgb,p_dpu_data->dpu_result.img_result.pts),p_dpu_data,g_uvc_rgb_data_start_code, p_private_data);
+    }
+
     return K_SUCCESS;
 }
 
@@ -1024,7 +1052,7 @@ k_s32 dpu_get_depth(k_u32 dev_num, kd_dpu_data_s* p_dpu_data, k_u8 *p_private_da
             get_img(g_speckle_frame_number,_do_sync_frame_timestamp(em_sync_clock_speckle,p_dpu_data->dpu_result.img_result.pts), p_dpu_data, g_uvc_speckle_data_start_code,p_private_data);
 
         }
-        else if (g_dpu_info.mode == IMAGE_MODE_RGB_IR)
+        else if (g_dpu_info.mode == IMAGE_MODE_RGB_IR || g_dpu_info.mode == IMAGE_MODE_RGB_SPECKLE)
         {
             if (GRAB_IMAGE_MODE_RGB_SPECKLE == g_grab_init_param.grab_mode)
             {
@@ -1134,6 +1162,20 @@ static k_s32 sample_dpu_startup(void)
 
     parse_pramas(&g_vicap_init, g_dev_obj);
 
+    if(g_grab_init_param.grab_mode == GRAB_IMAGE_MODE_NONE_SPECKLE ||
+	    g_grab_init_param.grab_mode == GRAB_IMAGE_MODE_NONE_IR ||
+	    g_grab_init_param.grab_mode == GRAB_IMAGE_MODE_NONE_DEPTH)
+    {
+        g_dev_obj[0].dev_enable = K_FALSE;
+        printf("vicap dev 0 is disabled\n");
+    }
+
+    if(g_grab_init_param.grab_mode == GRAB_IMAGE_MODE_RGB_NONE)
+    {
+        g_dev_obj[1].dev_enable = K_FALSE;
+        printf("vicap dev 1 is disabled\n");
+    }
+
     ret = sample_dpu_get_sensor_info(g_dev_obj);
     if(ret != K_SUCCESS)
     {
@@ -1179,23 +1221,17 @@ static k_s32 sample_dpu_startup(void)
     g_dpu_info.mode = IMAGE_MODE_RGB_DEPTH;*/
 
     g_dpu_info.adc_en = g_grab_init_param.adc_enable;
+    g_dpu_info.adc_ch = (g_grab_init_param.dma_ro>>8)&0xff;
     g_dpu_info.temperature.ref = g_grab_init_param.temperature.temperature_ref;
     g_dpu_info.temperature.cx = g_grab_init_param.temperature.temperature_cx;
     g_dpu_info.temperature.cy = g_grab_init_param.temperature.temperature_cy;
     g_dpu_info.temperature.kx = g_grab_init_param.temperature.kxppt;
     g_dpu_info.temperature.ky = g_grab_init_param.temperature.kyppt;
 
-    //rgb_speckle and rgb_ir is the same
-    if (GRAB_IMAGE_MODE_RGB_SPECKLE == g_grab_init_param.grab_mode)
-    {
-        g_dpu_info.mode = IMAGE_MODE_RGB_IR;
-    }
-    else
-    {
-        g_dpu_info.mode = (k_dpu_image_mode)g_grab_init_param.grab_mode;
-    }
+    g_dpu_info.mode = (k_dpu_image_mode)g_grab_init_param.grab_mode;
 
     g_dpu_info.delay_ms = 5;
+    g_dpu_info.dma_ro = (k_gdma_rotation_e)(g_grab_init_param.dma_ro&0xff);
 
     ret = kd_mapi_dpu_init(&g_dpu_info);
     if(ret != K_SUCCESS)

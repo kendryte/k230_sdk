@@ -198,7 +198,7 @@ void openURL(UsageEnvironment& env, char const* progName, char const* rtspURL) {
   // Next, send a RTSP "DESCRIBE" command, to get a SDP description for the stream.
   // Note that this command - like all RTSP commands - is sent asynchronously; we do not block, waiting for a response.
   // Instead, the following function call returns immediately, and we handle the RTSP response later, from within the event loop:
-  rtspClient->sendDescribeCommand(continueAfterDESCRIBE); 
+  rtspClient->sendDescribeCommand(continueAfterDESCRIBE);
 }
 
 
@@ -247,7 +247,7 @@ void continueAfterDESCRIBE(RTSPClient* rtspClient, int resultCode, char* resultS
 void setupNextSubsession(RTSPClient* rtspClient) {
   UsageEnvironment& env = rtspClient->envir(); // alias
   StreamClientState& scs = ((ourRTSPClient*)rtspClient)->scs; // alias
-  
+
   scs.subsession = scs.iter->next();
   if (scs.subsession != NULL) {
     if (!scs.subsession->initiate()) {
@@ -263,7 +263,7 @@ void setupNextSubsession(RTSPClient* rtspClient) {
       env << ")\n";
 
       // Continue setting up this subsession, by sending a RTSP "SETUP" command:
-      rtspClient->sendSetupCommand(*scs.subsession, continueAfterSETUP, False, REQUEST_STREAMING_OVER_TCP);
+      rtspClient->sendSetupCommand(*scs.subsession, continueAfterSETUP, False, False/*REQUEST_STREAMING_OVER_TCP*/);
     }
     return;
   }
@@ -299,18 +299,18 @@ void continueAfterSETUP(RTSPClient* rtspClient, int resultCode, char* resultStri
     // Having successfully setup the subsession, create a data sink for it, and call "startPlaying()" on it.
     // (This will prepare the data sink to receive data; the actual flow of data from the client won't start happening until later,
     // after we've sent a RTSP "PLAY" command.)
-        
+
     if (scs.subsession->getFlag() == FLAG_RECVONLY) {
        scs.subsession->sink = DummySink::createNew(env, *scs.subsession, rtspClient->url());
           // perhaps use your own custom "MediaSink" subclass instead
        // scs.subsession->sink = FileSink::createNew(env, "back.pcm");
-       
+
        if (scs.subsession->sink == NULL) {
           env << *rtspClient << "Failed to create a data sink for the \"" << *scs.subsession
 	      << "\" subsession: " << env.getResultMsg() << "\n";
           break;
        }
-            
+
        env << *rtspClient << "Created a data sink for the \"" << *scs.subsession << "\" subsession\n";
        scs.subsession->miscPtr = rtspClient; // a hack to let subsession handle functions get the "RTSPClient" from the subsession
        scs.subsession->sink->startPlaying(*(scs.subsession->readSource()),
@@ -387,10 +387,10 @@ void continueAfterSETUP(RTSPClient* rtspClient, int resultCode, char* resultStri
       }
     } else {
        //scs.subsession->sink is equal to scs.subsession->fRTPSink;
-            
+
        env << *rtspClient << "Created a data sink for the \"" << *scs.subsession << "\" subsession\n";
        scs.subsession->miscPtr = rtspClient; // a hack to let subsession handle functions get the "RTSPClient" from the subsession
-            
+
        // This sink is created by function MediaSubsession::createBackChannelObjects
        env << *rtspClient << "sink  = " << scs.subsession->sink << "\n";
        env << *rtspClient << "source  = " << scs.subsession->readSource() << "\n";
@@ -512,7 +512,7 @@ void shutdownStream(RTSPClient* rtspClient, int exitCode) {
   StreamClientState& scs = ((ourRTSPClient*)rtspClient)->scs; // alias
 
   // First, check whether any subsessions have still to be closed:
-  if (scs.session != NULL) { 
+  if (scs.session != NULL) {
     Boolean someSubsessionsWereActive = False;
     MediaSubsessionIterator iter(*scs.session);
     MediaSubsession* subsession;
@@ -773,7 +773,7 @@ Boolean DummySink::continuePlaying() {
   return True;
 }
 
-} //namespace 
+} //namespace
 
 class KdRtspClient::Impl {
   public:

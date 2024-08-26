@@ -68,6 +68,11 @@ define BUILD_IMAGE
 
 endef
 
+ifeq ($(CONFIG_MPP_MIDDLEWARE),y)
+	MPP_MIDDLEWARE = mpp-middleware
+	MPP_MIDDLEWARE_CLEAN = mpp-middleware-clean
+endif
+
 #include .config
 
 .PHONY: all
@@ -112,8 +117,8 @@ prepare_sourcecode:prepare_toolchain
 #ai
 	@echo "download nncase sdk"
 	@rm -rf src/big/utils/; rm -rf src/big/ai;
-	@wget -q --show-progress $(DOWNLOAD_URL)/downloads/kmodel/kmodel_v2.8.3.tgz -O - | tar -xzC src/big/
-	@wget -q --show-progress $(DOWNLOAD_URL)/downloads/nncase/nncase_k230_v2.8.3.tgz -O - | tar -xzC src/big/
+	@wget -q --show-progress $(DOWNLOAD_URL)/downloads/kmodel/kmodel_v2.9.0.tgz -O - | tar -xzC src/big/
+	@wget -q --show-progress $(DOWNLOAD_URL)/downloads/nncase/nncase_k230_rtos_v2.9.0.tgz -O - | tar -xzC src/big/
 
 #big utils
 	@echo "download big utils"
@@ -233,12 +238,6 @@ mpp-apps-clean:
 	make clean -C userapps/sample; \
 	cd -;
 
-.PHONY: mpp
-mpp: mpp-kernel mpp-apps
-
-.PHONY: mpp-clean
-mpp-clean: mpp-kernel-clean mpp-apps-clean
-
 .PHONY: mpp-middleware
 mpp-middleware:
 	@export PATH=$(RTT_EXEC_PATH):$(PATH); \
@@ -254,6 +253,14 @@ mpp-middleware-clean:
 	cd $(MPP_SRC_DIR); \
 	make clean -C middleware; \
 	cd -;
+
+.PHONY: mpp
+mpp: mpp-kernel mpp-apps $(MPP_MIDDLEWARE)
+
+.PHONY: mpp-clean
+mpp-clean: mpp-kernel-clean mpp-apps-clean $(MPP_MIDDLEWARE_CLEAN)
+	echo "hello mpp-clen"
+	echo $(MPP_MIDDLEWARE_CLEAN)
 
 .PHONY: poc
 poc:check_src
@@ -496,6 +503,11 @@ uboot: defconfig prepare_memory check_src
 	@export PATH=$(LINUX_EXEC_PATH):$(PATH);export CROSS_COMPILE=$(LINUX_CC_PREFIX);export ARCH=riscv; \
 	cd $(UBOOT_SRC_PATH); \
 	make $(UBOOT_DEFCONFIG) O=$(UBOOT_BUILD_DIR) || exit $?;make -C $(UBOOT_BUILD_DIR) || exit $?; \
+	cd -
+burntool:
+	@export PATH=$(LINUX_EXEC_PATH):$(PATH);export CROSS_COMPILE=$(LINUX_CC_PREFIX);export ARCH=riscv; \
+	cd $(UBOOT_SRC_PATH); \
+	make $(BURNTOOL_DEFCONFIG) O=$(BURNTOOL_BUILD_DIR) || exit $?;make -C $(BURNTOOL_BUILD_DIR) || exit $?; \
 	cd -
 
 .PHONY: uboot-rebuild

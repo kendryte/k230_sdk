@@ -353,3 +353,19 @@ k_s32 kd_mapi_vicap_tuning(char* string, k_u32 size, char** response, k_u32* res
     memcpy(*response, buffer_virt, *response_len);
     return ret;
 }
+
+k_s32 kd_mapi_vicap_3d_mode_crtl(k_u8 mode_en)
+{
+    k_s32 ret = 0;
+    k_u8 en ;
+
+    en = mode_en;
+
+    ret = mapi_send_sync(MODFD(K_MAPI_MOD_VICAP, 0, 0), MSG_CMD_MEDIA_VICAP_SET_3D_MODE_EN,
+            &en, sizeof(k_u8), NULL);
+
+    if(ret != K_SUCCESS) {
+        mapi_vicap_error_trace("mapi_send_sync failed\n");
+    }
+    return ret;
+}

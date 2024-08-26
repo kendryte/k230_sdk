@@ -45,7 +45,7 @@
 
 &iomux {
 	pinctrl-names = "default";
-	pinctrl-0 = <&drops_pins>;
+	pinctrl-0 = <&drop_pins>;
 
 //	Please pay attention to the bank voltage! will damage the chip.
 	drop_pins: drop_pins {

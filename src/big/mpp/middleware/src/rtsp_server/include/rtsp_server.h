@@ -35,6 +35,7 @@ class KdRtspServer {
 
     int CreateSession(const std::string &session_name, const SessionAttr &session_attr);
     int DestroySession(const std::string &session_name);
+    char* GetRtspUrl(const std::string &session_name);
     void Start();
     void Stop();
 
