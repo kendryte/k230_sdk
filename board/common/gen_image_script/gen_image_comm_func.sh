@@ -6,7 +6,7 @@ gz_file_add_ver()
 {
 	[ $# -lt 1 ] && return
 	local f="$1"
-	
+
 	local sdk_ver="v0.0.0";
 	local nncase_ver="0.0.0";
 
@@ -15,14 +15,16 @@ gz_file_add_ver()
 
 	local storage="$(echo "$f" | sed -nE "s#[^-]*-([^\.]*).*#\1#p")"
 	local conf_name="${CONF%%_defconfig}"
+	local canaan_site_name="${CONFIG_CANAAN_SITE_IMG_NAME_PREFIX}"
+	[ "${canaan_site_name}" = "" ]  &&  canaan_site_name="${conf_name}"
 
 	cat ${sdk_ver_file} | grep v | cut -d- -f 1 > /dev/null && \
 	 	sdk_ver=$(cat ${sdk_ver_file} | grep v | cut -d- -f 1)
 
 	cat ${nncase_ver_file} | grep NNCASE_VERSION -w | cut -d\" -f 2 > /dev/null && \
 		 nncase_ver=$(cat ${nncase_ver_file} | grep NNCASE_VERSION -w | cut -d\" -f 2)
-	rm -rf  ${conf_name}_${storage}_${sdk_ver}_nncase_v${nncase_ver}.img.gz;
-	ln -s  $f ${conf_name}_${storage}_${sdk_ver}_nncase_v${nncase_ver}.img.gz;
+	rm -rf  ${canaan_site_name}_${storage}_${sdk_ver}_nncase_v${nncase_ver}.img.gz;
+	ln -s  $f ${canaan_site_name}_${storage}_${sdk_ver}_nncase_v${nncase_ver}.img.gz;
 }
 
 
@@ -58,8 +60,8 @@ copye_file_to_images()
 
 		rm ${BUILD_DIR}/images/little-core/rootfs -rf
 		mkdir -p ${BUILD_DIR}/images/little-core/rootfs
-		cd ${BUILD_DIR}/images/little-core/rootfs; 
-		fakeroot -- cpio -idm < ../rootfs.cpio ; 
+		cd ${BUILD_DIR}/images/little-core/rootfs;
+		fakeroot -- cpio -idm < ../rootfs.cpio ;
 
 		cp -rf ${K230_SDK_ROOT}/tools/ota/ota_public.pem  	${BUILD_DIR}/images/little-core/rootfs/etc/
 		cp -rf ${K230_SDK_ROOT}/tools/ota/fw_env.config  	${BUILD_DIR}/images/little-core/rootfs/etc/
@@ -68,7 +70,7 @@ copye_file_to_images()
 
 		if [ -d "${K230_SDK_ROOT}/board/${CONFIG_BOARD_NAME}/post_copy_rootfs" ]; then
 			cp -rf ${K230_SDK_ROOT}/board/${CONFIG_BOARD_NAME}/post_copy_rootfs/*  	${BUILD_DIR}/images/little-core/rootfs/
-		else 
+		else
 			cp -rf ${K230_SDK_ROOT}/board/common/post_copy_rootfs/*         ${BUILD_DIR}/images/little-core/rootfs/
 		fi
 		fakeroot -- cp -rf ${BUILD_DIR}/images/little-core/ko-apps/* ${BUILD_DIR}/images/little-core/rootfs/
@@ -96,21 +98,21 @@ gen_version()
 
 	cat ${nncase_ver_file} | grep NNCASE_VERSION -w | cut -d\" -f 2 > /dev/null && \
 		 nncase_ver=$(cat ${nncase_ver_file} | grep NNCASE_VERSION -w | cut -d\" -f 2)
-	
 
-	cd  "${BUILD_DIR}/images/little-core/rootfs" ; 
+
+	cd  "${BUILD_DIR}/images/little-core/rootfs" ;
 	mkdir -p etc/version/
 
 
 	set +e; commitid=$(awk -F- '/^[^#]/ { print $6}' ${post_copy_rootfs_dir}/${ver_file});set -e;
 	set +e; last_tag=$(awk -F- '/^[^#]/ { print $1}' ${post_copy_rootfs_dir}/${ver_file} | head -1 ) ;set -e;
-	 
-	
+
+
 
 	[ "${commitid}" != "" ] || commitid="unkonwn"
 	[ "${last_tag}" != "" ] || last_tag="unkonwn"
 
-	git rev-parse --short HEAD  &&  commitid=$(git rev-parse --short HEAD) 
+	git rev-parse --short HEAD  &&  commitid=$(git rev-parse --short HEAD)
 	git describe --tags `git rev-list --tags --max-count=1` && last_tag=$(git describe --tags `git rev-list --tags --max-count=1`)
 	git describe --tags --exact-match  && last_tag=$(git describe --tags --exact-match)
 
@@ -133,20 +135,20 @@ add_dev_firmware()
 	local dev_firmware="etc/firmware"
 
 	mkdir -p ${BUILD_DIR}/images/little-core/rootfs/${dev_firmware}/
-	if [ "${CONFIG_AP6212A}" = "y" ] ; then 
+	if [ "${CONFIG_AP6212A}" = "y" ] ; then
 		cp -f ${K230_SDK_ROOT}/board/common/dev_firmware/ap6212a/* ${BUILD_DIR}/images/little-core/rootfs/${dev_firmware}/
 	fi
-	
-	if [ "${CONFIG_AP6256}" = "y" ] ; then 
+
+	if [ "${CONFIG_AP6256}" = "y" ] ; then
 		cp -f ${K230_SDK_ROOT}/board/common/dev_firmware/ap6256/* ${BUILD_DIR}/images/little-core/rootfs/${dev_firmware}/
 	fi
 
-    if [ "${CONFIG_RTL8188FU}" = "y" ] ; then 
+    if [ "${CONFIG_RTL8188FU}" = "y" ] ; then
         mkdir -p ${BUILD_DIR}/images/little-core/rootfs/lib/firmware/rtlwifi/
         cp -f ${K230_SDK_ROOT}/board/common/dev_firmware/rtl8188fu/* ${BUILD_DIR}/images/little-core/rootfs/lib/firmware/rtlwifi/
     fi
-    
-    if [ "${CONFIG_RTL8723DU}" = "y" ] ; then 
+
+    if [ "${CONFIG_RTL8723DU}" = "y" ] ; then
         mkdir -p ${BUILD_DIR}/images/little-core/rootfs/lib/firmware/
         cp -rf ${K230_SDK_ROOT}/board/common/dev_firmware/rtl8723du/* ${BUILD_DIR}/images/little-core/rootfs/lib/firmware/
     fi
@@ -158,10 +160,10 @@ add_firmHead()
 {
 	local filename="$1"
 	local firmware_gen="${K230_SDK_ROOT}/tools/firmware_gen.py"
-	if [ $# -ge 2 ]; then 
+	if [ $# -ge 2 ]; then
 		firmArgs="$2" #add k230 firmware head
 		cp ${filename} ${filename}.t; 					python3  ${firmware_gen}   -i ${filename}.t -o f${firmArgs##-}${filename} ${firmArgs};
-	else 
+	else
 		 #add k230 firmware head
 		firmArgs="-n"; cp ${filename} ${filename}.t;  	python3  ${firmware_gen}   -i ${filename}.t -o f${firmArgs##-}_${filename} ${firmArgs};
 
@@ -183,9 +185,9 @@ k230_gzip()
 	sed -i -e "1s/\x08/\x09/"  ${filename}.gz
 }
 
-# "-O linux -T firmware  -a ${add} -e ${add} -n ${name}"  
+# "-O linux -T firmware  -a ${add} -e ${add} -n ${name}"
 # "-n/-a/-s"
-#file_gzip_ubootHead_firmHead ${quick_boot_cfg_data_file}  "-O linux -T firmware  -a ${add} -e ${add} -n ${name}"   "-n" 
+#file_gzip_ubootHead_firmHead ${quick_boot_cfg_data_file}  "-O linux -T firmware  -a ${add} -e ${add} -n ${name}"   "-n"
 #output fn_ug_xx fa_ug_xx fs_ug_xx;
 bin_gzip_ubootHead_firmHead()
 {
@@ -201,12 +203,12 @@ bin_gzip_ubootHead_firmHead()
 
 	k230_gzip ${filename}
 
-	#add uboot head 
-	${mkimage} -A riscv -C gzip  ${mkimgArgs} -d ${filename}.gz  ug_${filename} # ${filename}.gzu; 
+	#add uboot head
+	${mkimage} -A riscv -C gzip  ${mkimgArgs} -d ${filename}.gz  ug_${filename} # ${filename}.gzu;
 
 	add_firmHead ug_${filename}
 	rm -rf ${filename}  ${filename}.gz ug_${filename}
-} 
+}
 
 gen_uboot_bin()
 {
@@ -215,14 +217,14 @@ gen_uboot_bin()
     fi;
 	mkdir -p "${BUILD_DIR}/images/little-core/uboot"
 	cd ${BUILD_DIR}/images/little-core/uboot;
-	# "-O linux -T firmware  -a ${add} -e ${add} -n ${name}"  
-	# "-n/-a/-s"  "-n/-a/-s"   
-	#fn_ug_xxx  
+	# "-O linux -T firmware  -a ${add} -e ${add} -n ${name}"
+	# "-n/-a/-s"  "-n/-a/-s"
+	#fn_ug_xxx
 	bin_gzip_ubootHead_firmHead  ${BUILD_DIR}/little/uboot/u-boot.bin   \
-					"-O u-boot -T firmware  -a ${CONFIG_MEM_LINUX_SYS_BASE} -e ${CONFIG_MEM_LINUX_SYS_BASE} -n uboot" 
+					"-O u-boot -T firmware  -a ${CONFIG_MEM_LINUX_SYS_BASE} -e ${CONFIG_MEM_LINUX_SYS_BASE} -n uboot"
 
-	
-	cp ${BUILD_DIR}/little/uboot/spl/u-boot-spl.bin  . 
+
+	cp ${BUILD_DIR}/little/uboot/spl/u-boot-spl.bin  .
 	add_firmHead  u-boot-spl.bin #
 	${K230_SDK_ROOT}/src/little/uboot/tools/endian-swap.py   fn_u-boot-spl.bin  swap_fn_u-boot-spl.bin
 
@@ -236,10 +238,10 @@ gen_linux_bin ()
 	local mkimage="${UBOOT_BUILD_DIR}/tools/mkimage"
 	local LINUX_SRC_PATH="src/little/linux"
 	local LINUX_DTS_PATH="src/little/linux/arch/riscv/boot/dts/kendryte/${CONFIG_LINUX_DTB}.dts"
-	
-	cd  "${BUILD_DIR}/images/little-core/" ; 
+
+	cd  "${BUILD_DIR}/images/little-core/" ;
 	cpp -nostdinc -I ${K230_SDK_ROOT}/${LINUX_SRC_PATH}/include -I ${K230_SDK_ROOT}/${LINUX_SRC_PATH}/arch  -undef -x assembler-with-cpp ${K230_SDK_ROOT}/${LINUX_DTS_PATH}  hw/k230.dts.txt
-	
+
 
 	ROOTFS_BASE=`cat hw/k230.dts.txt | grep initrd-start | awk -F " " '{print $4}' | awk -F ">" '{print $1}'`
 	ROOTFS_SIZE=`ls -lt rootfs-final.cpio.gz | awk '{print $5}'`
@@ -247,12 +249,12 @@ gen_linux_bin ()
 	ROOTFS_END=`printf "0x%x" $ROOTFS_END`
 	sed -i "s/linux,initrd-end = <0x0 .*/linux,initrd-end = <0x0 $ROOTFS_END>;/g" hw/k230.dts.txt
 
-	${LINUX_BUILD_DIR}/scripts/dtc/dtc -I dts -q -O dtb hw/k230.dts.txt  >k230.dtb;		
+	${LINUX_BUILD_DIR}/scripts/dtc/dtc -I dts -q -O dtb hw/k230.dts.txt  >k230.dtb;
 	k230_gzip fw_payload.bin;
 	echo a>rd;
 	${mkimage} -A riscv -O linux -T multi -C gzip -a ${CONFIG_MEM_LINUX_SYS_BASE} -e ${CONFIG_MEM_LINUX_SYS_BASE} -n linux -d fw_payload.bin.gz:rd:k230.dtb  ulinux.bin;
 
-	add_firmHead  ulinux.bin 
+	add_firmHead  ulinux.bin
 	mv fn_ulinux.bin  linux_system.bin
 	[ -f fa_ulinux.bin ] && mv fa_ulinux.bin  linux_system_aes.bin
 	[ -f fs_ulinux.bin ] && mv fs_ulinux.bin  linux_system_sm.bin
@@ -263,7 +265,7 @@ gen_linux_bin ()
 gen_final_ext2 ()
 {
 	local mkfs="${BUILDROOT_BUILD_DIR}/host/sbin/mkfs.ext4"
-	cd  "${BUILD_DIR}/images/little-core/" ; 
+	cd  "${BUILD_DIR}/images/little-core/" ;
 	rm -rf rootfs.ext*
 	rm -rf rootfs/dev/console
 	rm -rf rootfs/dev/null
@@ -276,17 +278,17 @@ gen_final_ext2 ()
 gen_rtt_bin()
 {
 	local filename="fw_payload.bin"
-	cd "${BUILD_DIR}/images/big-core/" ; 
+	cd "${BUILD_DIR}/images/big-core/" ;
 	bin_gzip_ubootHead_firmHead "${BUILD_DIR}/common/big-opensbi/platform/kendryte/fpgac908/firmware/${filename}"  \
 			 "-O opensbi -T multi  -a ${CONFIG_MEM_RTT_SYS_BASE} -e ${CONFIG_MEM_RTT_SYS_BASE} -n rtt"
-	
+
 	mv fn_ug_${filename}  rtt_system.bin
 	[ -f fa_ug_${filename} ] && mv fa_ug_${filename}  rtt_system_aes.bin
 	[ -f fs_ug_${filename} ] && mv fs_ug_${filename}  rtt_system_sm.bin
 	chmod a+r rtt_system.bin;
 }
 #cfg_quick_boot,
-#gen_part_bin quick_boot_cfg_data_file     name 0x80000 
+#gen_part_bin quick_boot_cfg_data_file     name 0x80000
 gen_cfg_part_bin()
 {
 	local file_full_path="$1"
@@ -299,13 +301,13 @@ gen_cfg_part_bin()
 	[ -f ${file_full_path} ] || (echo ${filename} >${file_full_path} )
 
 	bin_gzip_ubootHead_firmHead  ${file_full_path}   "-O linux -T firmware -a ${add} -e ${add} -n ${name}"
-	
-	rm -rf ${filename} 
+
+	rm -rf ${filename}
 }
 
 
 #生成sd卡镜像文件
-gen_image() 
+gen_image()
 {
 
 	local genimage="${K230_SDK_ROOT}/tools/genimage "
@@ -316,7 +318,7 @@ gen_image()
 	${genimage}   	--rootpath "little-core/rootfs/"  --tmppath "${GENIMAGE_TMP}"    \
 					--inputpath "$(pwd)"  	--outputpath "$(pwd)"	--config "${cfg}"
 
-	rm -rf "${GENIMAGE_TMP}"  
+	rm -rf "${GENIMAGE_TMP}"
 	gzip -k -f ${image_name}
 	chmod a+rw ${image_name} ${image_name}.gz;
 	gz_file_add_ver ${image_name}.gz
@@ -329,23 +331,23 @@ gen_image_spinor_proc_ai_mode()
 	local start="0"
 
 	cd ${BUILD_DIR}/images/big-core/; #cp  root/bin/test.kmodel   root/bin/test1.kmodel;
-	rm -rf ai_mode ai_mode.bin; mkdir -p ai_mode; 
-	if $(ls root/bin/*.kmodel >/dev/null 2>&1 )  ; then 
-		cp  root/bin/*.kmodel ai_mode; 
+	rm -rf ai_mode ai_mode.bin; mkdir -p ai_mode;
+	if $(ls root/bin/*.kmodel >/dev/null 2>&1 )  ; then
+		cp  root/bin/*.kmodel ai_mode;
 		cd ai_mode;
-		for file in $(ls *.kmodel) ; do 
+		for file in $(ls *.kmodel) ; do
 			truncate -s %128 ${file};
 			cat ${file} >> ../ai_mode.bin
 			all_kmode="${all_kmode} ${file}";
 			size=$(du -sb ${file} | cut -f1 )
 			echo "${file%%\.*}_start=\"${start}\"" >>file_size.txt;
 			echo "${file%%\.*}_size=\"${size}\"" >>file_size.txt;
-			start=$((${start}+${size}))		
+			start=$((${start}+${size}))
 		done
-	else 
+	else
 		cd ai_mode;
 	fi;
-	
+
 	echo "all_kmode=\"${all_kmode}\""  >>file_size.txt
 	echo "all_size=\"${start}\""  >>file_size.txt
 }
@@ -356,7 +358,7 @@ gen_image_spinor_proc_ai_mode_replace()
 	local fsize=""
 
 	for f in ${all_kmode};
-	do 
+	do
 		eval fstart="\${${f%%\.*}_start}"
 		eval fsize="\${${f%%\.*}_size}"
 		fstart=$(printf "0x%x" $((${fstart} + ${CONFIG_MEM_AI_MODEL_BASE})))
@@ -371,21 +373,21 @@ gen_image_spinor()
 	cd ${BUILD_DIR}/images/big-core/;
 	gen_image_spinor_proc_ai_mode;
 	source ${BUILD_DIR}/images/big-core/ai_mode/file_size.txt
-	
 
-	#${K230_SDK_ROOT}/tools/genromfs -V ai -v -a 32 -f ai_mode.bin -d binbak/ 
+
+	#${K230_SDK_ROOT}/tools/genromfs -V ai -v -a 32 -f ai_mode.bin -d binbak/
 
 	#rtapp and ai mode
 	cd ${BUILD_DIR}/images/big-core/root/bin/;
 	if [ -f  fastboot_app.elf ];then  fasb_app_size=$(du -sb fastboot_app.elf | cut -f1) ; cp  fastboot_app.elf ${BUILD_DIR}/images/big-core/;else fasb_app_size="0";fi
-	# find . -type f  -not -name init.sh   | xargs rm -rf ; 
+	# find . -type f  -not -name init.sh   | xargs rm -rf ;
 	echo a>fastboot_app.elf ; for file in ${all_kmode} ;do echo k>${file} ;done
 	cd ${RTSMART_SRC_DIR}/userapps/; python3 ../tools/mkromfs.py ${BUILD_DIR}/images/big-core/root/  ${RTSMART_SRC_DIR}/kernel/bsp/maix3/applications/romfs.c;
-	
+
 	sed -i "s/_bin_fastboot_app_elf,/(char*)${CONFIG_MEM_RTAPP_BASE},/g" ${RTSMART_SRC_DIR}/kernel/bsp/maix3/applications/romfs.c
 	sed -i "s/sizeof(_bin_fastboot_app_elf)/${fasb_app_size}/g" ${RTSMART_SRC_DIR}/kernel/bsp/maix3/applications/romfs.c
 	gen_image_spinor_proc_ai_mode_replace
-	
+
 
 
 	#rtapp and ai_mode mount
@@ -401,13 +403,13 @@ gen_image_spinor()
 	cd ${K230_SDK_ROOT};make rtt_update_romfs;
 	cd "${BUILD_DIR}/images/big-core/"
 	cp ${BUILD_DIR}/big/rt-smart/rtthread.* .;
-	
+
 	bin_gzip_ubootHead_firmHead  ${BUILD_DIR}/common/big-opensbi/platform/kendryte/fpgac908/firmware/fw_payload.bin \
 		   "-O opensbi -T multi -a ${CONFIG_MEM_RTT_SYS_BASE} -e ${CONFIG_MEM_RTT_SYS_BASE} -n rtt"
 	mv  fn_ug_fw_payload.bin rtt_system.bin ;
 
 
-	#gen_part_bin quick_boot_cfg_data_file     name 0x80000 
+	#gen_part_bin quick_boot_cfg_data_file     name 0x80000
 	gen_cfg_part_bin ${quick_boot_cfg_data_file}   quick_boot_cfg  ${CONFIG_MEM_QUICK_BOOT_CFG_BASE}
 	gen_cfg_part_bin ${face_database_data_file}   face_db  ${CONFIG_MEM_FACE_DATA_BASE}
 	gen_cfg_part_bin ${sensor_cfg_data_file}   sensor_cfg  ${CONFIG_MEM_SENSOR_CFG_BASE}
@@ -425,7 +427,7 @@ gen_image_spinor()
 shrink_rootfs_common()
 {
 	#裁剪小核rootfs
-	cd ${BUILD_DIR}/images/little-core/rootfs/; 
+	cd ${BUILD_DIR}/images/little-core/rootfs/;
 	rm -rf lib/modules/;
 	rm -rf lib/libstdc++*;
 	rm -rf usr/bin/fio;
@@ -441,7 +443,7 @@ shrink_rootfs_common()
 	rm -rf usr/bin/gpio_keys_demo
 	rm -rf mnt/*;
 	rm -rf app/;
-	rm -rf lib/tuning-server;	
+	rm -rf lib/tuning-server;
 	rm -rf usr/sbin/wpa_supplicant usr/sbin/hostapd;
 	rm -rf usr/bin/stress-ng  bin/bash usr/sbin/sshd usr/bin/trace-cmd usr/bin/lvgl_demo_widgets;
 	rm -rf usr/bin/ssh  etc/ssh/moduli  usr/lib/libssl.so.1.1 usr/bin/ssh-keygen \
@@ -451,7 +453,7 @@ shrink_rootfs_common()
     rm -rf usr/bin/swupdate
 	#裁剪大核rootfs;
 	cd ${BUILD_DIR}/images/big-core/root/bin/;
-	find . -type f  -not -name init.sh  -not -name  fastboot_app.elf -not -name   test.kmodel  | xargs rm -rf ; 
+	find . -type f  -not -name init.sh  -not -name  fastboot_app.elf -not -name   test.kmodel  | xargs rm -rf ;
 
 	if [ -f "${K230_SDK_ROOT}/src/big/mpp/userapps/src/vicap/src/isp/sdk/t_frameworks/t_database_c/calibration_data/sensor_cfg.bin" ]; then
         mkdir -p ${cfg_data_file_path};
@@ -467,7 +469,7 @@ gen_image_spinand()
 
 	shrink_rootfs_common;
 	#裁剪小核rootfs
-	cd ${BUILD_DIR}/images/little-core/rootfs/; 
+	cd ${BUILD_DIR}/images/little-core/rootfs/;
 
 	#裁剪大核romfs;
 	#$(RT-SMART_SRC_PATH)/userapps/root
@@ -477,16 +479,16 @@ gen_image_spinand()
 	cd ${K230_SDK_ROOT}; make rtt_update_romfs;
 	cd "${BUILD_DIR}/images/big-core/"
 	cp ${BUILD_DIR}/big/rt-smart/rtthread.* .;
-	
+
 	bin_gzip_ubootHead_firmHead  ${BUILD_DIR}/common/big-opensbi/platform/kendryte/fpgac908/firmware/fw_payload.bin \
 		   "-O opensbi -T multi -a ${CONFIG_MEM_RTT_SYS_BASE} -e ${CONFIG_MEM_RTT_SYS_BASE} -n rtt"
 	mv  fn_ug_fw_payload.bin rtt_system.bin ;
-	
+
 	#生成spinor 镜像；
 	gen_image ${GENIMAGE_CFG_SPI_NAND} sysimage-spinand32m.img
 
 	#恢复删除前状态；
-	cd  ${BUILD_DIR}/;rm -rf images_spinand;mv  images images_spinand; mv  images_bak images; 
+	cd  ${BUILD_DIR}/;rm -rf images_spinand;mv  images images_spinand; mv  images_bak images;
 	cp images_spinand/sysimage-spinand32m.img* images;
 	return;
 }
@@ -504,12 +506,12 @@ gen_env_bin()
 	sed -i -e "/^quick_boot/d"  ${default_env_file}
 	sed -i -e "/restore_img/d"  ${default_env_file}
 
-	if [ "${CONFIG_QUICK_BOOT}" != "y" ] || [ "${CONFIG_REMOTE_TEST_PLATFORM}" = "y" ] ; then 
+	if [ "${CONFIG_QUICK_BOOT}" != "y" ] || [ "${CONFIG_REMOTE_TEST_PLATFORM}" = "y" ] ; then
 		echo "quick_boot=false" >> ${jffs2_env_file}
 		echo "quick_boot=false" >> ${spinand_env_file}
 		echo "quick_boot=false" >> ${default_env_file}
 	fi
-	if [ "${CONFIG_REMOTE_TEST_PLATFORM}" = "y" ] ; then 
+	if [ "${CONFIG_REMOTE_TEST_PLATFORM}" = "y" ] ; then
 		echo "restore_img=mmc dev 0; mmc read 0x10000 0x200000 0x40000; gzwrite mmc 1 0x10000 0x8000000; reset" >> ${default_env_file}
 	fi
 
@@ -525,7 +527,7 @@ copy_app()
 		[ "${CONFIG_SUPPORT_LINUX}" = "y" ] && cp ${K230_SDK_ROOT}/src/common/cdk/user/out/big/*  ${BUILD_DIR}/images/big-core/app
 	fi
 
-	if [ "${CONFIG_REMOTE_TEST_PLATFORM}" = "y" ] ; then 
+	if [ "${CONFIG_REMOTE_TEST_PLATFORM}" = "y" ] ; then
 		local DIR="${K230_SDK_ROOT}/output/k230_evb_defconfig/images/k230_remote_test_platform"
 		local SHAREFS="${DIR}/sharefs"
 		rm ${DIR} -rf
@@ -550,13 +552,3 @@ copy_app()
 		cp ${K230_SDK_ROOT}/src/big/mpp/userapps/sample/elf/sample_audio.elf ${SHAREFS}/app/
 	fi
 }
-
-
-
-
-
-
-
-
-
-

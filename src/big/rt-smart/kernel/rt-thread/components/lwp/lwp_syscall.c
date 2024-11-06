@@ -455,7 +455,7 @@ void sys_exit_group(int status)
     return;
 }
 
-#define MAX_SIZE_BLOCK (1024 * 1024)
+#define MAX_SIZE_BLOCK (64 * 1024)
 /* syscall: "read" ret: "ssize_t" args: "int" "void *" "size_t" */
 ssize_t sys_read(int fd, void *buf, size_t nbyte)
 {
@@ -1689,7 +1689,7 @@ static void lwp_struct_copy(struct rt_lwp *dst, struct rt_lwp *src)
     dst->tty_old_pgrp = 0;
     dst->__pgrp = src->__pgrp;
     dst->tty = src->tty;
-    rt_memcpy(dst->cmd, src->cmd, RT_NAME_MAX);
+    rt_memcpy(dst->cmd, src->cmd, sizeof(dst->cmd));
 
     dst->sa_flags = src->sa_flags;
     dst->signal_mask = src->signal_mask;
@@ -2208,7 +2208,7 @@ int load_ldso(struct rt_lwp *lwp, char *exec_name, char *const argv[], char *con
 
     ret = lwp_load("/lib/ld.so", lwp, RT_NULL, 0, aux);
 
-    rt_strncpy(lwp->cmd, exec_name, RT_NAME_MAX);
+    rt_strncpy(lwp->cmd, exec_name, sizeof(lwp->cmd));
 quit:
     if (page)
     {
@@ -2428,6 +2428,7 @@ int sys_execve(const char *path, char *const argv[], char *const envp[])
         level = rt_hw_interrupt_disable();
 
         rt_strncpy(thread->name, run_name + last_backslash, RT_NAME_MAX);
+        rt_strncpy(lwp->cmd, new_lwp->cmd, sizeof(lwp->cmd));
 
         rt_pages_free(page, 0);
 

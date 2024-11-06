@@ -113,12 +113,12 @@ struct rpc_err {
     int RE_errno;		/* related system error */
     int RE_why;	/* why the auth error occurred */
     struct {
-      unsigned long low;		/* lowest verion supported */
-      unsigned long high;		/* highest verion supported */
+      uint32_t low;		/* lowest verion supported */
+      uint32_t high;		/* highest verion supported */
     } RE_vers;
     struct {			/* maybe meaningful if RPC_FAILED */
-      long s1;
-      long s2;
+      int32_t s1;
+      int32_t s2;
     } RE_lb;			/* life boot & debugging only */
   } ru;
 #define	re_errno	ru.RE_errno
@@ -137,7 +137,7 @@ typedef struct CLIENT CLIENT;
 struct CLIENT {
   AUTH	*cl_auth;		 /* authenticator */
   struct clnt_ops {
-    enum clnt_stat (*cl_call) (CLIENT *, unsigned long, xdrproc_t, char*, xdrproc_t,
+    enum clnt_stat (*cl_call) (CLIENT *, uint32_t, xdrproc_t, char*, xdrproc_t,
 			       char*, struct timeval);
 			       	/* call remote procedure */
     void (*cl_abort) (void);	/* abort a call */
@@ -164,7 +164,7 @@ struct CLIENT {
  * enum clnt_stat
  * CLNT_CALL(rh, proc, xargs, argsp, xres, resp, timeout)
  * 	CLIENT *rh;
- *	unsigned long proc;
+ *	uint32_t proc;
  *	xdrproc_t xargs;
  *	char* argsp;
  *	xdrproc_t xres;
@@ -257,16 +257,16 @@ struct CLIENT {
  * and network administration.
  */
 
-#define RPCTEST_PROGRAM		((unsigned long)1)
-#define RPCTEST_VERSION		((unsigned long)1)
-#define RPCTEST_NULL_PROC	((unsigned long)2)
-#define RPCTEST_NULL_BATCH_PROC	((unsigned long)3)
+#define RPCTEST_PROGRAM		((uint32_t)1)
+#define RPCTEST_VERSION		((uint32_t)1)
+#define RPCTEST_NULL_PROC	((uint32_t)2)
+#define RPCTEST_NULL_BATCH_PROC	((uint32_t)3)
 
 /*
  * By convention, procedure 0 takes null arguments and returns them
  */
 
-#define NULLPROC ((unsigned long)0)
+#define NULLPROC ((uint32_t)0)
 
 /*
  * Below are the client handle creation routines for the various
@@ -280,12 +280,12 @@ struct CLIENT {
  * CLIENT *
  * clnt_create(host, prog, vers, prot)
  *	char *host; 	-- hostname
- *	unsigned long prog;	-- program number
+ *	uint32_t prog;	-- program number
  *	u_ong vers;	-- version number
  *	char *prot;	-- protocol
  */
-extern CLIENT *clnt_create (const char *__host, const unsigned long __prog,
-			    const unsigned long __vers, const char *__prot)
+extern CLIENT *clnt_create (const char *__host, const uint32_t __prog,
+			    const uint32_t __vers, const char *__prot)
     ;
 
 /*
@@ -293,8 +293,8 @@ extern CLIENT *clnt_create (const char *__host, const unsigned long __prog,
  * CLIENT *
  * clntudp_create(raddr, program, version, wait, sockp)
  *	struct sockaddr_in *raddr;
- *	unsigned long program;
- *	unsigned long version;
+ *	uint32_t program;
+ *	uint32_t version;
  *	struct timeval wait_resend;
  *	int *sockp;
  *
@@ -302,23 +302,23 @@ extern CLIENT *clnt_create (const char *__host, const unsigned long __prog,
  * CLIENT *
  * clntudp_bufcreate(raddr, program, version, wait, sockp, sendsz, recvsz)
  *	struct sockaddr_in *raddr;
- *	unsigned long program;
- *	unsigned long version;
+ *	uint32_t program;
+ *	uint32_t version;
  *	struct timeval wait_resend;
  *	int *sockp;
  *	unsigned int sendsz;
  *	unsigned int recvsz;
  */
-extern CLIENT *clntudp_create (struct sockaddr_in *__raddr, unsigned long __program,
-			       unsigned long __version, struct timeval __wait_resend,
+extern CLIENT *clntudp_create (struct sockaddr_in *__raddr, uint32_t __program,
+			       uint32_t __version, struct timeval __wait_resend,
 			       int *__sockp);
 extern CLIENT *clntudp_bufcreate (struct sockaddr_in *__raddr,
-				  unsigned long __program, unsigned long __version,
+				  uint32_t __program, uint32_t __version,
 				  struct timeval __wait_resend, int *__sockp,
 				  unsigned int __sendsz, unsigned int __recvsz);
 
-extern int callrpc (const char *__host, const unsigned long __prognum,
-		    const unsigned long __versnum, const unsigned long __procnum,
+extern int callrpc (const char *__host, const uint32_t __prognum,
+		    const uint32_t __versnum, const uint32_t __procnum,
 		    const xdrproc_t __inproc, const char *__in,
 		    const xdrproc_t __outproc, char *__out);
 

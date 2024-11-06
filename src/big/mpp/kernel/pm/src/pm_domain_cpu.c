@@ -180,6 +180,6 @@ struct pm_domain_dev pm_domain_cpu = {
     .profiles = profiles,
     .profile_nr = ARRAY_SIZE(profiles),
     .profile_lock = profile_lock,
-    .regulator_name = "regulator_cpu",
+    // .regulator_name = "regulator_cpu",
     .ops = &ops,
 };

@@ -48,6 +48,7 @@ static  void _help()
     printf("  type 1:sample adec->ao module\n");
     printf("  type 2:sample ai->aenc adec->ao loopback module\n");
     printf("  type 3:play wav\n");
+    printf("  type 4:sample ai->aenc module(lpcm)\n");
     //printf("  type 3:sample double loopback module\n");
 
     printf("-samplerate: set audio sample(8000 ~ 192000)\n");
@@ -103,7 +104,7 @@ int main(int argc, char *argv[])
 
     if (0 == g_type)
     {
-        audio_mapi_sample_ai_aenc(g_sample_rate,g_channels,g_enable_audio_codec,g_file_name);
+        audio_mapi_sample_ai_aenc(g_sample_rate,g_channels,g_enable_audio_codec,K_PT_G711A,g_file_name);
     }
     else if (1 == g_type)
     {
@@ -116,6 +117,10 @@ int main(int argc, char *argv[])
     else if (3 == g_type)
     {
         audio_mapi_sample_play_wav(g_file_name);
+    }
+    else if (4 == g_type)
+    {
+        audio_mapi_sample_ai_aenc(g_sample_rate,g_channels,g_enable_audio_codec,K_PT_LPCM,g_file_name);
     }
 #if 0
     else if (3 == g_type)

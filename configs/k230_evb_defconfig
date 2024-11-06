@@ -18,6 +18,7 @@ CONFIG_LINUX_DEFCONFIG="k230_evb"
 CONFIG_LINUX_DTB="k230_evb"
 # CONFIG_REMOTE_TEST_PLATFORM is not set
 CONFIG_GEN_IMG_SCRIPT="board/common/gen_image_script/gen_image.sh"
+CONFIG_CANAAN_SITE_IMG_NAME_PREFIX="EVB-K230"
 
 #
 # toolchain configurations

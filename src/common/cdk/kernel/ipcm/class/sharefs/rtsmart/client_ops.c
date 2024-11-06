@@ -1101,6 +1101,7 @@ static struct sfs_response *sfs_client_request(struct sfs_request *req_cmd, int 
 	rt_mutex_release(g_cmd_list_mutex);
 
 	sfs_client_send(req_cmd, count);
+retry:
 	rt_sem_take(g_sfs_sem, RT_WAITING_FOREVER);
 	rt_mutex_take(g_cmd_list_mutex, RT_WAITING_FOREVER);
 	list_for_each_cmd(cursor, &g_recv_cmd) {
@@ -1124,9 +1125,8 @@ static struct sfs_response *sfs_client_request(struct sfs_request *req_cmd, int 
 		free(cursor);
 		return resp_cmd;
 	} else {
-		sfs_error("no response for request:[%d,%lu]",
-				req_cmd->cmd, req_cmd->id);
-		return NULL;
+		rt_sem_release(g_sfs_sem);
+		goto retry;
 	}
 }
 

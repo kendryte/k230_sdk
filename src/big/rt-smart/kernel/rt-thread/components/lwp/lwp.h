@@ -100,7 +100,7 @@ struct rt_lwp
 
     int leader; /*boolean value for session group_leader*/
     struct dfs_fdtable fdt;
-    char cmd[RT_NAME_MAX];
+    char cmd[128];
 
     int sa_flags;
     lwp_sigset_t signal;

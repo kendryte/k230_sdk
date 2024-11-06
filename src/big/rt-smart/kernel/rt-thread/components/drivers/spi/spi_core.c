@@ -86,11 +86,8 @@ rt_err_t rt_spi_configure(struct rt_spi_device        *device,
         result = rt_mutex_take(&(device->bus->lock), RT_WAITING_FOREVER);
         if (result == RT_EOK)
         {
-            if (device->bus->owner == device)
-            {
-                device->bus->ops->configure(device, &device->config);
-            }
-
+            device->bus->ops->configure(device, cfg);
+            device->bus->owner = device;
             /* release lock */
             rt_mutex_release(&(device->bus->lock));
         }

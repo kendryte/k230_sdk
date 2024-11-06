@@ -50,8 +50,8 @@
  * Copyright (C) 1984, Sun Microsystems, Inc.
  */
 
-#define RPC_MSG_VERSION		((unsigned long) 2)
-#define RPC_SERVICE_PORT	((unsigned short) 2048)
+#define RPC_MSG_VERSION		((uint32_t) 2)
+#define RPC_SERVICE_PORT	((uint16_t) 2048)
 
 /*
  * Bottom up definition of an rpc message.
@@ -97,8 +97,8 @@ struct accepted_reply {
 	int	                ar_stat;
 	union {
 		struct {
-			unsigned long	low;
-			unsigned long	high;
+			uint32_t	low;
+			uint32_t	high;
 		} AR_versions;
 		struct {
 			char*	where;
@@ -117,8 +117,8 @@ struct rejected_reply {
 	int rj_stat;
 	union {
 		struct {
-			unsigned long low;
-			unsigned long high;
+			uint32_t low;
+			uint32_t high;
 		} RJ_versions;
 		int RJ_why;  /* why authentication did not work */
 	} ru;
@@ -143,10 +143,10 @@ struct reply_body {
  * Body of an rpc request call.
  */
 struct call_body {
-	unsigned long cb_rpcvers;	/* must be equal to two */
-	unsigned long cb_prog;
-	unsigned long cb_vers;
-	unsigned long cb_proc;
+	uint32_t cb_rpcvers;	/* must be equal to two */
+	uint32_t cb_prog;
+	uint32_t cb_vers;
+	uint32_t cb_proc;
 	struct opaque_auth cb_cred;
 	struct opaque_auth cb_verf; /* protocol specific - provided by client */
 };
@@ -155,7 +155,7 @@ struct call_body {
  * The rpc message
  */
 struct rpc_msg {
-	unsigned long	rm_xid;
+	uint32_t	rm_xid;
 	int				rm_direction;
 	union {
 		struct call_body RM_cmb;

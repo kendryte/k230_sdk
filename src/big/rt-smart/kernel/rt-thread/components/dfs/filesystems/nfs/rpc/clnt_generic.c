@@ -49,8 +49,8 @@ static char sccsid[] = "@(#)clnt_generic.c 1.4 87/08/11 (C) 1987 SMI";
  * returns client handle. Default options are set, which the user can
  * change using the rpc equivalent of ioctl()'s.
  */
-CLIENT *clnt_create(const char *hostname, const unsigned long prog,
-                    const unsigned long vers, const char *proto)
+CLIENT *clnt_create(const char *hostname, const uint32_t prog,
+                    const uint32_t vers, const char *proto)
 {
     int sock;
     struct sockaddr_in server;

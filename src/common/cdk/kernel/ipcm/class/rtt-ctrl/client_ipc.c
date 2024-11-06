@@ -51,7 +51,10 @@ static void *client_routine(void *arg)
 	struct rc_client *client = arg;
 	struct ipcm_handle_attr attr;
 	void *read_buf = NULL;
-	
+
+	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+
 	int open_count = 500; //open count timeout set
 	while (1) {
 		fd = open("/dev/ipcm_user", O_RDWR);
@@ -134,9 +137,10 @@ void rc_ipc_cleanup(void)
 	void *arg;
 	rc_ipc_exit = 1;
 
-    if (g_clients.thread)
-        pthread_join(g_clients.thread, &arg);
-
+	if (g_clients.thread) {
+		pthread_cancel(g_clients.thread);
+		pthread_join(g_clients.thread, &arg);
+	}
 }
 
 int rc_ipc_connected(void)

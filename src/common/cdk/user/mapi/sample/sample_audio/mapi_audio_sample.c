@@ -152,6 +152,13 @@ static k_s32 _init_ai(k_audio_bit_width bit_width, k_u32 sample_rate,k_u32 chann
         return K_FAILED;
     }
 
+    //enable vqe
+    k_ai_vqe_enable vqe_enable;
+    memset(&vqe_enable, 0, sizeof(k_ai_vqe_enable));
+    vqe_enable.ans_enable = K_TRUE;
+    printf("@@@@enable vqe ans\n");
+    kd_mapi_ai_set_vqe_attr(*ai_hdl, vqe_enable);
+
     if (K_SUCCESS != kd_mapi_ai_start(*ai_hdl))
     {
         printf("kd_mapi_ai_start failed\n");
@@ -230,10 +237,10 @@ static k_s32 _deinit_ao(k_handle ao_hdl)
     return K_SUCCESS;
 }
 
-static k_s32  _init_aenc(k_handle aenc_hdl,k_u32 sample_rate)
+static k_s32  _init_aenc(k_handle aenc_hdl,k_u32 sample_rate,k_payload_type aenc_type)
 {
     k_aenc_chn_attr aenc_chn_attr;
-    aenc_chn_attr.type = K_PT_G711A;
+    aenc_chn_attr.type = aenc_type;
     aenc_chn_attr.buf_size = AUDIO_PERSEC_DIV_NUM;
     aenc_chn_attr.point_num_per_frame = sample_rate / aenc_chn_attr.buf_size;
 
@@ -408,7 +415,7 @@ static  k_s32 _aenc_dataproc(k_u32 chn_num, k_audio_stream* stream_data, void* p
     return K_SUCCESS;
 }
 
-k_s32 audio_mapi_sample_ai_aenc(k_u32 sample_rate,k_u32 channels,k_bool enable_audio_codec,const char* filename)
+k_s32 audio_mapi_sample_ai_aenc(k_u32 sample_rate,k_u32 channels,k_bool enable_audio_codec,k_payload_type aenc_type,const char* filename)
 {
     g_enable_audio_codec = enable_audio_codec;
     k_s32 ret;
@@ -435,7 +442,7 @@ k_s32 audio_mapi_sample_ai_aenc(k_u32 sample_rate,k_u32 channels,k_bool enable_a
         return -1;
     }
 
-    ret = _init_aenc(aenc_hdl,sample_rate);
+    ret = _init_aenc(aenc_hdl,sample_rate,aenc_type);
     if(ret != K_SUCCESS) {
         printf("_init_aenc error: %x\n", ret);
         return -1;
@@ -705,7 +712,7 @@ k_s32 audio_mapi_sample_audio_loopback(k_u32 sample_rate,k_u32 channels)
 
     _init_audio_stream(sample_rate,channels);
 
-    ret = _init_aenc(aenc_hdl,sample_rate);
+    ret = _init_aenc(aenc_hdl,sample_rate,K_PT_G711A);
     if(ret != K_SUCCESS) {
         printf("_init_aenc error: %x\n", ret);
         return -1;

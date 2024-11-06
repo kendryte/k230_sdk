@@ -218,7 +218,7 @@ static void dhcpd_thread_entry(void *parameter)
     rt_uint32_t addr_len;
     struct sockaddr_in server_addr, client_addr;
     struct dhcp_msg *msg;
-    int optval = 1;
+    struct timeval optval = { .tv_sec = 1, .tv_usec = 0 };
     struct mac_addr_t mac_addr;
     uint8_t DHCPD_SERVER_IPADDR0, DHCPD_SERVER_IPADDR1, DHCPD_SERVER_IPADDR2, DHCPD_SERVER_IPADDR3;
 

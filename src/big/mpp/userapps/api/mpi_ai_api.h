@@ -202,7 +202,7 @@ k_s32 kd_mpi_ai_release_frame(k_audio_dev ai_dev, k_ai_chn ai_chn, const k_audio
  * @see K_ERR_CODE_E
  *
  */
-k_s32 kd_mpi_ai_set_vqe_attr(k_audio_dev ai_dev, k_ai_chn ai_chn, const k_bool vqe_enable);
+k_s32 kd_mpi_ai_set_vqe_attr(k_audio_dev ai_dev, k_ai_chn ai_chn, const k_ai_vqe_enable vqe_enable);
 
 /**
  * @brief Release ai device channel vqe
@@ -216,8 +216,22 @@ k_s32 kd_mpi_ai_set_vqe_attr(k_audio_dev ai_dev, k_ai_chn ai_chn, const k_bool v
  * @see K_ERR_CODE_E
  *
  */
-k_s32 kd_mpi_ai_get_vqe_attr(k_audio_dev ai_dev, k_ai_chn ai_chn, k_bool *vqe_enable);
+k_s32 kd_mpi_ai_get_vqe_attr(k_audio_dev ai_dev, k_ai_chn ai_chn, k_ai_vqe_enable *vqe_enable);
 
+
+/**
+ * @brief Sends a far echo frame to the specified audio input device and channel.
+ *
+ * @param ai_dev The audio input device identifier.
+ * @param ai_chn The audio input channel identifier.
+ * @param frame Pointer to the audio frame to be sent.
+ * @param milli_sec Timeout in milliseconds for sending the frame.
+ * @return k_s32
+ * @retval 0 success
+ * @retval "not 0" see err code
+ * @see K_ERR_CODE_E
+ */
+k_s32 kd_mpi_ai_send_far_echo_frame(k_audio_dev ai_dev, k_ai_chn ai_chn, const k_audio_frame *frame, k_s32 milli_sec);
 
 /**
  * @brief Set pitch shift attributes

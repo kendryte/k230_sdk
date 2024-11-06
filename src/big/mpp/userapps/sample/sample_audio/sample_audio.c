@@ -59,7 +59,7 @@ static  void _help()
     printf("-channels: channel count\n");
     printf("-monochannel:0:mic input 1:headphone input\n");
     printf("-filename: load or save file name\n");
-    printf("-audio3a: enable audio3a(0,1)\n");
+    printf("-audio3a: enable audio3a:enable_ans:0x01,enable_agc:0x02,enable_aec:0x04\n");
     //printf("-i2smode:set i2s mode(1:i2s  2:right justified  4:left justified)\n");
 }
 static pthread_t g_pthread_handle;
@@ -68,7 +68,7 @@ static k_u32     g_sample_rate = 44100;//44100;
 static k_audio_bit_width g_bit_width = KD_AUDIO_BIT_WIDTH_16;
 static k_bool    g_enable_audio_codec = K_FALSE;
 static k_i2s_work_mode g_i2s_work_mode = K_STANDARD_MODE;
-static k_bool    g_enable_audio3a = K_FALSE;
+static k_u32    g_enable_audio3a = 0;
 static char g_wav_name[256];
 static k_u32     g_channel_count = 2;
 static k_i2s_in_mono_channel  g_mono_channel = KD_I2S_IN_MONO_RIGHT_CHANNEL;//mono channel use mic input
@@ -106,7 +106,7 @@ static void *sample_thread_fn(void *arg)
         break;
     case 7:
         printf("sample aenc module (sysbind)\n");
-        audio_sample_ai_encode(K_TRUE,g_sample_rate,g_bit_width,0,K_PT_G711A,g_wav_name);
+        audio_sample_ai_encode(K_TRUE,g_sample_rate,g_bit_width,0,K_PT_G711A,g_wav_name,g_enable_audio3a);
         break;
     case 8:
         printf("sample adec module (sysbind)\n");
@@ -114,7 +114,7 @@ static void *sample_thread_fn(void *arg)
         break;
     case 9:
         printf("sample aenc module (api)\n");
-        audio_sample_ai_encode(K_FALSE,g_sample_rate,g_bit_width,0,K_PT_G711A,g_wav_name);
+        audio_sample_ai_encode(K_FALSE,g_sample_rate,g_bit_width,0,K_PT_G711A,g_wav_name,g_enable_audio3a);
         break;
     case 10:
         printf("sample adec module (api)\n");
@@ -122,11 +122,11 @@ static void *sample_thread_fn(void *arg)
         break;
     case 11:
         printf("sample ai->aenc->file file->adec->ao module\n");
-        audio_sample_ai_aenc_adec_ao(0,0,0,0,0,0,g_sample_rate,g_bit_width,K_PT_G711A,g_wav_name);
+        audio_sample_ai_aenc_adec_ao(0,0,0,0,0,0,g_sample_rate,g_bit_width,K_PT_G711A,g_wav_name,g_enable_audio3a);
         break;
     case 12:
         printf("sample ai->aenc  adec->ao module (loopback)\n");
-        audio_sample_ai_aenc_adec_ao_2(0,0,0,0,0,0,g_sample_rate,g_bit_width,K_PT_G711A);
+        audio_sample_ai_aenc_adec_ao_2(0,0,0,0,0,0,g_sample_rate,g_bit_width,K_PT_G711A,g_enable_audio3a);
         break;
     case 13:
         printf("sample  acodec\n");
@@ -220,7 +220,7 @@ int main(int argc, char *argv[])
         }
         else if (strcmp(argv[i], "-audio3a") == 0)
         {
-            g_enable_audio3a = (k_bool)atoi(argv[i + 1]);
+            g_enable_audio3a = atoi(argv[i + 1]);
         }
 
         else

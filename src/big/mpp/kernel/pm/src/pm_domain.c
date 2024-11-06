@@ -221,3 +221,8 @@ int pm_domain_enable_power(struct pm_domain_dev *pdev, bool enable)
 
     return pdev->ops->enable_power(enable);
 }
+
+__attribute__((weak)) int regulator_set_voltage(struct regulator_dev *pdev, int vol_uv)
+{
+    return -1;
+}

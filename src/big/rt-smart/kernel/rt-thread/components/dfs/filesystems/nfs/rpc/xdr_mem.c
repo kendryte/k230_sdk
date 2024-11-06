@@ -54,11 +54,12 @@ static char sccsid[] = "@(#)xdr_mem.c 1.19 87/08/11 Copyr 1984 Sun Micro";
 #include <rpc/xdr.h>
 #include <string.h>
 #include <limits.h>
+#include <byteswap.h>
 
-static bool_t xdrmem_getlong (XDR *, long *);
-static bool_t xdrmem_putlong (XDR *, const long *);
-static bool_t xdrmem_getint32 (XDR *, unsigned int *);
-static bool_t xdrmem_putint32 (XDR *, const unsigned int *);
+static bool_t xdrmem_getlong (XDR *, uint64_t *);
+static bool_t xdrmem_putlong (XDR *, const uint64_t *);
+static bool_t xdrmem_getint32 (XDR *, uint32_t *);
+static bool_t xdrmem_putint32 (XDR *, const uint32_t *);
 static bool_t xdrmem_getbytes (XDR *, char *, unsigned int);
 static bool_t xdrmem_putbytes (XDR *, const char *, unsigned int);
 static unsigned int xdrmem_getpos (const XDR *);
@@ -99,46 +100,46 @@ xdrmem_destroy (XDR *xdrs)
 }
 
 static bool_t
-xdrmem_getlong (XDR *xdrs, long *lp)
+xdrmem_getlong (XDR *xdrs, uint64_t *lp)
 {
-  if (xdrs->x_handy < 4) return FALSE;
-  xdrs->x_handy -= 4;
+  if (xdrs->x_handy < 8) return FALSE;
+  xdrs->x_handy -= 8;
 
-  *lp = (int32_t) ntohl((*((int32_t *) (xdrs->x_private))));
-  xdrs->x_private += 4;
+  *lp = bswap_64(*((uint64_t *) (xdrs->x_private)));
+  xdrs->x_private += 8;
   return TRUE;
 }
 
 static bool_t
-xdrmem_putlong (XDR *xdrs, const long *lp)
+xdrmem_putlong (XDR *xdrs, const uint64_t *lp)
 {
-  if (xdrs->x_handy < 4) return FALSE;
-  xdrs->x_handy -= 4;
+  if (xdrs->x_handy < 8) return FALSE;
+  xdrs->x_handy -= 8;
 
-  *(int32_t *) xdrs->x_private = htonl(*lp);
-  xdrs->x_private += 4;
+  *(uint64_t *)xdrs->x_private = bswap_64(*lp);
+  xdrs->x_private += 8;
   return (TRUE);
 }
 
 static bool_t
-xdrmem_getint32 (XDR *xdrs, unsigned int *lp)
+xdrmem_getint32 (XDR *xdrs, uint32_t *lp)
 {
-  if (xdrs->x_handy < sizeof(unsigned int)) return FALSE;
-  xdrs->x_handy -= sizeof(unsigned int);
+  if (xdrs->x_handy < 4) return FALSE;
+  xdrs->x_handy -= 4;
 
-  *lp = (unsigned int) ntohl((*((int32_t *) (xdrs->x_private))));
-  xdrs->x_private += sizeof(unsigned int);
+  *lp = bswap_32(*((uint32_t *) (xdrs->x_private)));
+  xdrs->x_private += 4;
   return TRUE;
 }
 
 static bool_t
-xdrmem_putint32 (XDR *xdrs, const unsigned int *lp)
+xdrmem_putint32 (XDR *xdrs, const uint32_t *lp)
 {
-  if (xdrs->x_handy < sizeof(unsigned int)) return FALSE;
-  xdrs->x_handy -= sizeof(unsigned int);
+  if (xdrs->x_handy < 4) return FALSE;
+  xdrs->x_handy -= 4;
 
-  *(int32_t *) xdrs->x_private = htonl(*lp);
-  xdrs->x_private += sizeof(unsigned int);
+  *(uint32_t *)xdrs->x_private = bswap_32(*lp);
+  xdrs->x_private += 4;
   return (TRUE);
 }
 

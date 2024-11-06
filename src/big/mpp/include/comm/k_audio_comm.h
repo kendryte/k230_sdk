@@ -146,6 +146,14 @@ typedef struct
     k_u32 seq; /* frame seq, if stream is not a valid frame,seq is 0 */
 } k_audio_stream;
 
+typedef struct
+{
+    k_bool aec_enable;
+    k_u32  aec_echo_delay_ms;//speaker播出时间到mic录到的时间差(100-500ms)
+    k_bool agc_enable;
+    k_bool ans_enable;
+}k_ai_vqe_enable;
+
 /** @} */ /** <!-- ==== SYSTEM_CTRL End ==== */
 #ifdef __cplusplus
 #if __cplusplus

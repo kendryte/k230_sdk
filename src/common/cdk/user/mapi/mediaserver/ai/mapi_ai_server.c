@@ -32,7 +32,20 @@
 #include "mapi_ai_comm.h"
 #include "mapi_sys_api.h"
 #include "k_acodec_comm.h"
+#include "k_datafifo.h"
 
+typedef struct
+{
+    pthread_t get_ai_aec_frame_tid;
+    k_handle ai_hdl;
+    k_bool start;
+
+} ai_aec_server_chn_ctl;
+
+static ai_aec_server_chn_ctl g_ai_aec_chn_ctl[AI_MAX_CHN_NUMS];
+static k_ai_aec_datafifo g_ai_aec_chn_datafifo[AI_MAX_CHN_NUMS];
+static k_msg_ai_frame_t g_msg_ai_aec_frame[AI_MAX_CHN_NUMS];
+static k_ai_vqe_enable g_vqe_enable[AI_MAX_CHN_NUMS];
 
 #define CHECK_MAPI_AI_NULL_PTR(paraname, ptr)                                 \
     do {                                                                       \
@@ -67,6 +80,196 @@ static k_s32 acodec_check_close(void)
     return 0;
 }
 
+static k_s32 _ai_aec_datafifo_init_master(k_ai_aec_datafifo *info, k_u64 *phy_addr)
+{
+    k_datafifo_params_s datafifo_params;
+    datafifo_params.u32EntriesNum = info->item_count;
+    datafifo_params.u32CacheLineSize = info->item_size;
+    datafifo_params.bDataReleaseByWriter = K_TRUE;
+    datafifo_params.enOpenMode = info->open_mode;
+
+    k_s32 s32Ret = K_FAILED;
+    s32Ret = kd_datafifo_open(&info->data_hdl, &datafifo_params);
+    if (K_SUCCESS != s32Ret)
+    {
+        mapi_ai_error_trace("%s open datafifo error:%x\n", __FUNCTION__, s32Ret);
+        return K_FAILED;
+    }
+
+    s32Ret = kd_datafifo_cmd(info->data_hdl, DATAFIFO_CMD_GET_PHY_ADDR, phy_addr);
+    if (K_SUCCESS != s32Ret)
+    {
+        mapi_ai_error_trace("%s get datafifo phy addr error:%x\n", __FUNCTION__, s32Ret);
+        return K_FAILED;
+    }
+
+    if (info->release_func != NULL)
+    {
+        s32Ret = kd_datafifo_cmd(info->data_hdl, DATAFIFO_CMD_SET_DATA_RELEASE_CALLBACK, info->release_func);
+        if (K_SUCCESS != s32Ret)
+        {
+            mapi_ai_error_trace("%s set release func callback error:%x\n", __FUNCTION__, s32Ret);
+            return K_FAILED;
+        }
+    }
+
+    // printf("@@@@@@@%s phy_addr:0x%x,datafifo handle:0x%x\n",__FUNCTION__,*phy_addr,info->data_hdl);
+
+    return K_SUCCESS;
+}
+
+k_s32 ai_aec_datafifo_init(k_handle ai_hdl, k_u64 *phy_addr)
+{
+    k_s32 ret;
+    g_ai_aec_chn_datafifo[ai_hdl].item_count = K_AI_AEC_DATAFIFO_ITEM_COUNT;
+    g_ai_aec_chn_datafifo[ai_hdl].item_size = K_AI_AEC_DATAFIFO_ITEM_SIZE;
+    g_ai_aec_chn_datafifo[ai_hdl].open_mode = DATAFIFO_READER;
+    g_ai_aec_chn_datafifo[ai_hdl].release_func = NULL;
+
+    ret = _ai_aec_datafifo_init_master(&g_ai_aec_chn_datafifo[ai_hdl], phy_addr);
+
+    mapi_ai_error_trace("_ai_aec_datafifo_init_master phy_addr:0x%x,ret:%d,datafifo handle:0x%x\n", *phy_addr, ret, g_ai_aec_chn_datafifo[ai_hdl].data_hdl);
+
+    return ret;
+}
+
+static k_s32 _ai_aec_datafifo_deinit(k_datafifo_handle data_hdl, K_DATAFIFO_OPEN_MODE_E open_mode)
+{
+    k_s32 s32Ret = K_SUCCESS;
+    if (DATAFIFO_WRITER == open_mode)
+    {
+        // call write NULL to flush and release stream buffer.
+        s32Ret = kd_datafifo_write(data_hdl, NULL);
+        if (K_SUCCESS != s32Ret)
+        {
+            printf("%s write error:%x\n", __FUNCTION__, s32Ret);
+        }
+    }
+
+    return kd_datafifo_close(data_hdl);
+}
+
+k_s32 ai_aec_datafifo_deinit(k_handle ai_hdl)
+{
+    return _ai_aec_datafifo_deinit(g_ai_aec_chn_datafifo[ai_hdl].data_hdl, DATAFIFO_READER);
+}
+
+static k_s32 _do_datafifo_frame(k_datafifo_handle data_hdl, void *ppData, k_u32 data_len)
+{
+    k_s32 ret;
+    // mapi_adec_error_trace("==========_do_datafifo_stream\n");
+    if (data_len != K_AI_AEC_DATAFIFO_ITEM_SIZE)
+    {
+        mapi_ai_error_trace("datafifo_read_func len error %d(%d)\n", data_len, sizeof(k_msg_ai_frame_t));
+        return K_FAILED;
+    }
+
+    k_msg_ai_frame_t *msg_ai_aec_frame = (k_msg_ai_frame_t *)ppData;
+    k_handle ai_hdl = msg_ai_aec_frame->ai_hdl;
+
+    if (ai_hdl < 0 || ai_hdl >= AI_MAX_CHN_NUMS)
+    {
+        mapi_ai_error_trace("ai_hdl error %d\n", ai_hdl);
+        return K_FAILED;
+    }
+
+    g_msg_ai_aec_frame[ai_hdl] = *msg_ai_aec_frame;
+
+    ret = kd_mapi_ai_send_far_echo_frame(ai_hdl, &g_msg_ai_aec_frame[ai_hdl].audio_frame, g_msg_ai_aec_frame[ai_hdl].milli_sec);
+
+    // mapi_adec_error_trace("==========_do_datafifo_stream3:%d\n",ret);
+
+    return ret;
+}
+
+static void *ai_aec_chn_get_frame_threads(void *arg)
+{
+    k_handle ai_hdl = *((k_handle *)arg);
+
+    k_s32 s32Ret = K_FAILED;
+    k_u32 readLen = 0;
+    void *pdata = NULL;
+
+    while (g_ai_aec_chn_ctl[ai_hdl].start)
+    {
+        s32Ret = kd_datafifo_cmd(g_ai_aec_chn_datafifo[ai_hdl].data_hdl, DATAFIFO_CMD_GET_AVAIL_READ_LEN, &readLen);
+        if (K_SUCCESS != s32Ret)
+        {
+            mapi_ai_error_trace("%s get available read len error:%x\n", __FUNCTION__, s32Ret);
+            break;
+        }
+
+        if (readLen > 0)
+        {
+            while (readLen >= K_AI_AEC_DATAFIFO_ITEM_SIZE)
+            {
+                s32Ret = kd_datafifo_read(g_ai_aec_chn_datafifo[ai_hdl].data_hdl, &pdata);
+                // mapi_adec_error_trace("========kd_datafifo_read end:%d,ret:%d\n", readLen, s32Ret);
+                if (K_SUCCESS != s32Ret)
+                {
+                    mapi_ai_error_trace("%s read error:%x\n", __FUNCTION__, s32Ret);
+                    break;
+                }
+
+                _do_datafifo_frame(g_ai_aec_chn_datafifo[ai_hdl].data_hdl, pdata, K_AI_AEC_DATAFIFO_ITEM_SIZE);
+
+                s32Ret = kd_datafifo_cmd(g_ai_aec_chn_datafifo[ai_hdl].data_hdl, DATAFIFO_CMD_READ_DONE, pdata);
+                if (K_SUCCESS != s32Ret)
+                {
+                    mapi_ai_error_trace("%s read done error:%x\n", __FUNCTION__, s32Ret);
+                    break;
+                }
+                readLen -= K_AI_AEC_DATAFIFO_ITEM_SIZE;
+            }
+        }
+        else
+        {
+            usleep(1000);
+        }
+    }
+    return NULL;
+}
+
+static void _clean_datafifo(k_handle ai_hdl)
+{
+    k_s32 s32Ret = K_FAILED;
+    k_u32 readLen = 0;
+    void *pdata = NULL;
+
+    while (1)
+    {
+        s32Ret = kd_datafifo_cmd(g_ai_aec_chn_datafifo[ai_hdl].data_hdl, DATAFIFO_CMD_GET_AVAIL_READ_LEN, &readLen);
+        if (K_SUCCESS != s32Ret)
+        {
+            mapi_ai_error_trace("%s get available read len error:%x\n", __FUNCTION__, s32Ret);
+            break;
+        }
+        if (readLen <= 0)
+        {
+            break;
+        }
+
+        while (readLen >= K_AI_AEC_DATAFIFO_ITEM_SIZE)
+        {
+            s32Ret = kd_datafifo_read(g_ai_aec_chn_datafifo[ai_hdl].data_hdl, &pdata);
+            if (K_SUCCESS != s32Ret)
+            {
+                mapi_ai_error_trace("%s read error:%x\n", __FUNCTION__, s32Ret);
+                break;
+            }
+
+            s32Ret = kd_datafifo_cmd(g_ai_aec_chn_datafifo[ai_hdl].data_hdl, DATAFIFO_CMD_READ_DONE, pdata);
+            if (K_SUCCESS != s32Ret)
+            {
+                mapi_ai_error_trace("%s read done error:%x\n", __FUNCTION__, s32Ret);
+                break;
+            }
+            readLen -= K_AI_AEC_DATAFIFO_ITEM_SIZE;
+        }
+        usleep(10000);
+    }
+}
+
 k_s32 kd_mapi_ai_init(k_u32 dev, k_u32 chn, const k_aio_dev_attr *dev_attr,k_handle* ai_hdl)
 {
     CHECK_MAPI_AI_NULL_PTR("dev_attr", dev_attr);
@@ -78,6 +281,8 @@ k_s32 kd_mapi_ai_init(k_u32 dev, k_u32 chn, const k_aio_dev_attr *dev_attr,k_han
     }
 
     *ai_hdl = AI_CREATE_HANDLE(dev,chn);
+
+    memset(&g_vqe_enable,0,sizeof(g_vqe_enable));
 
     return ret;
 }
@@ -140,6 +345,26 @@ k_s32 kd_mapi_ai_start(k_handle ai_hdl)
     }
 
 
+    if (!g_ai_aec_chn_ctl[ai_hdl].start)
+    {
+        g_ai_aec_chn_ctl[ai_hdl].start = K_TRUE;
+    }
+    else
+    {
+        mapi_ai_error_trace("ai aec handle:%d already start\n", ai_hdl);
+    }
+
+    if (g_vqe_enable[ai_hdl].aec_enable)
+    {
+        _clean_datafifo(ai_hdl);
+        g_ai_aec_chn_ctl[ai_hdl].ai_hdl = ai_hdl;
+        g_ai_aec_chn_ctl[ai_hdl].start = K_TRUE;
+        pthread_create(&g_ai_aec_chn_ctl[ai_hdl].get_ai_aec_frame_tid, NULL, ai_aec_chn_get_frame_threads, &g_ai_aec_chn_ctl[ai_hdl].ai_hdl);
+        struct sched_param param;
+        param.sched_priority = 17;
+        pthread_setschedparam(g_ai_aec_chn_ctl[ai_hdl].get_ai_aec_frame_tid, SCHED_FIFO, &param);
+    }
+
     return ret;
 }
 
@@ -172,6 +397,17 @@ k_s32 kd_mapi_ai_stop(k_handle ai_hdl)
     {
         mapi_ai_error_trace("dev value not supported\n");
         return K_FAILED;
+    }
+
+    if (g_vqe_enable[ai_hdl].aec_enable)
+    {
+        if (g_ai_aec_chn_ctl[ai_hdl].get_ai_aec_frame_tid != 0)
+        {
+            g_ai_aec_chn_ctl[ai_hdl].start = K_FALSE;
+            pthread_join(g_ai_aec_chn_ctl[ai_hdl].get_ai_aec_frame_tid, NULL);
+            g_ai_aec_chn_ctl[ai_hdl].get_ai_aec_frame_tid = 0;
+        }
+        _clean_datafifo(ai_hdl);
     }
 
     if (1 == dev)
@@ -292,3 +528,33 @@ k_s32 kd_mapi_acodec_reset()
     ioctl(g_acodec_fd, k_acodec_reset, NULL);
     return 0;
 }
+
+k_s32 kd_mapi_ai_set_vqe_attr(k_handle ai_hdl,const k_ai_vqe_enable vqe_enable)
+{
+    k_u32 dev;
+    k_u32 chn;
+    AI_GET_DEVICE_AND_CHANNEL(ai_hdl,dev,chn);
+    g_vqe_enable[ai_hdl] = vqe_enable;
+    return kd_mpi_ai_set_vqe_attr(dev,chn, vqe_enable);
+}
+
+k_s32 kd_mapi_ai_get_vqe_attr(k_handle ai_hdl, k_ai_vqe_enable *vqe_enable)
+{
+    k_u32 dev;
+    k_u32 chn;
+    AI_GET_DEVICE_AND_CHANNEL(ai_hdl,dev,chn);
+
+    return kd_mpi_ai_get_vqe_attr(dev,chn, vqe_enable);
+}
+
+k_s32 kd_mapi_ai_send_far_echo_frame(k_handle ai_hdl, const k_audio_frame *audio_frame, k_s32 milli_sec)
+{
+    k_u32 dev;
+    k_u32 chn;
+    AI_GET_DEVICE_AND_CHANNEL(ai_hdl,dev,chn);
+
+    return kd_mpi_ai_send_far_echo_frame(dev,chn, audio_frame, milli_sec);
+    // mapi_ai_error_trace("========kd_mapi_ai_send_far_echo_frame\n");
+    // return K_SUCCESS;
+}
+

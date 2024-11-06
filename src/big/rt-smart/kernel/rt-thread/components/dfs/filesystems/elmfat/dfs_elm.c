@@ -346,16 +346,16 @@ int dfs_elm_open(struct dfs_fd *file)
     extern int elm_get_vol(FATFS * fat);
 
     RT_ASSERT(file->fnode->ref_count > 0);
-    if (file->fnode->ref_count > 1)
-    {
-        if (file->fnode->type == FT_DIRECTORY
-                && !(file->flags & O_DIRECTORY))
-        {
-            return -ENOENT;
-        }
-        file->pos = 0;
-        return 0;
-    }
+    // if (file->fnode->ref_count > 1)
+    // {
+    //     if (file->fnode->type == FT_DIRECTORY
+    //             && !(file->flags & O_DIRECTORY))
+    //     {
+    //         return -ENOENT;
+    //     }
+    //     file->pos = 0;
+    //     return 0;
+    // }
 
     if (fs == NULL)
     {

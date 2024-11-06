@@ -84,8 +84,9 @@ typedef struct
 static nonai_2d_conf_t g_nonai_2d_conf;
 extern const unsigned int osd_data;
 extern const int osd_data_size;
-k_u8 *dump_buf_rgb888=NULL;
-k_u8 *dump_buf_rgb565=NULL;
+static k_u8 *dump_buf_rgb888=NULL;
+static k_u8 *dump_buf_rgb565=NULL;
+static k_bool vicap_started=K_FALSE;
 
 static inline void CHECK_RET(k_s32 ret, const char *func, const int line)
 {
@@ -225,11 +226,15 @@ void sample_vicap_start()
 
     ret = kd_mpi_vicap_start_stream(VICAP_DEV_ID_0);
     CHECK_RET(ret, __func__, __LINE__);
+
+    vicap_started = K_TRUE;
 }
 
 void sample_vicap_stop()
 {
     k_s32 ret;
+
+    vicap_started = K_FALSE;
 
     ret = kd_mpi_vicap_stop_stream(VICAP_DEV_ID_0);
     CHECK_RET(ret, __func__, __LINE__);
@@ -434,9 +439,15 @@ static void *dump_thread(void *arg)
 
     while (1)
     {
+        if(!vicap_started)
+        {
+            usleep(30000);
+            continue;
+        }
+
         ret = kd_mpi_vicap_dump_frame(VICAP_DEV_ID_0, VICAP_CHN_ID_1, VICAP_DUMP_YUV, &dumm_vf_info, 1000);
         if (ret) {
-            printf("sample_vicap, chn(0) dump frame failed.\n");
+            printf("sample_vicap, chn(1) dump frame failed.\n");
             continue;
         }
 
@@ -471,6 +482,7 @@ static void *dump_thread(void *arg)
             printf("kd_mpi_nonai_2d_release_frame failed. %d\n", ret);
         }
 
+        usleep(30000);
         dump_cnt++;
     }
 
@@ -490,6 +502,12 @@ static void *dump_thread_1(void *arg)
 
     while (1)
     {
+        if(!vicap_started)
+        {
+            usleep(30000);
+            continue;
+        }
+
         ret = kd_mpi_vicap_dump_frame(VICAP_DEV_ID_0, VICAP_CHN_ID_0, VICAP_DUMP_RGB, &dumm_vf_info, 1000);
         if (ret) {
             printf("sample_vicap, chn(0) dump frame failed.\n");
@@ -527,6 +545,7 @@ static void *dump_thread_1(void *arg)
             printf("kd_mpi_nonai_2d_release_frame failed. %d\n", ret);
         }
 
+        usleep(30000);
         dump_cnt++;
     }
 
@@ -823,22 +842,28 @@ int main(int argc, char *argv[])
 
     if(dump_buf_rgb888)
     {
-        size = ISP_CHN0_WIDTH * ISP_CHN0_HEIGHT * 3;
-        output_file = fopen("/sharefs/out_2d_rgb888.rgb", "wb");
-        fwrite(dump_buf_rgb888, 1, size, output_file);
-        fclose(output_file);
+        if(g_nonai_2d_conf.output_file)
+        {
+            size = ISP_CHN0_WIDTH * ISP_CHN0_HEIGHT * 3;
+            output_file = fopen("/sharefs/out_2d_rgb888.rgb", "wb");
+            fwrite(dump_buf_rgb888, 1, size, output_file);
+            fclose(output_file);
+            printf("write 2D rgb888 output done\n");
+        }
         free(dump_buf_rgb888);
-        printf("write 2D rgb888 output done\n");
     }
 
     if(dump_buf_rgb565)
     {
-        size = ISP_CHN0_WIDTH * ISP_CHN0_HEIGHT * 2;
-        output_file = fopen("/sharefs/out_2d_rgb565.rgb", "wb");
-        fwrite(dump_buf_rgb565, 1, size, output_file);
-        fclose(output_file);
+        if(g_nonai_2d_conf.output_file)
+        {
+            size = ISP_CHN0_WIDTH * ISP_CHN0_HEIGHT * 2;
+            output_file = fopen("/sharefs/out_2d_rgb565.rgb", "wb");
+            fwrite(dump_buf_rgb565, 1, size, output_file);
+            fclose(output_file);
+            printf("write 2D rgb565 output done\n");
+        }
         free(dump_buf_rgb565);
-        printf("write 2D rgb565 output done\n");
     }
 
     printf("sample csc done!\n");

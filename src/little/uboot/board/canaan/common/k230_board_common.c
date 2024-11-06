@@ -365,6 +365,7 @@ U_BOOT_CMD(
 #define K230_SET_BIT(val, bit) ((val) | (1 << (bit)))
 #define K230_CLER_BIT(val, bit) ((val) & ~(1 << (bit)))
 #define K230_GET_BIT(val, bit) (((val) >> (bit)) & 1)
+#define GPIO_EXT_PORTA 0x50
 
 int k230_gpio(char opt, int pin, char *value)
 {
@@ -373,6 +374,7 @@ int k230_gpio(char opt, int pin, char *value)
     volatile u32 * gpio_dr = (volatile int *)(GPIO_BASE_ADDR0 + pin/32*0x1000);
     volatile u32 * gpio_ddr = (volatile int *)(gpio_dr+1);
     volatile u32 * gpio_ctrl = (volatile int *)(gpio_dr+2);
+    volatile u32 * gpio_value_in = (volatile int *)(GPIO_BASE_ADDR0+GPIO_EXT_PORTA + pin/32*4);
     u32 reg_org, reg_set;
 
     printf("pin=%d  org reg gpio_dr%x=%x gpio_ddr=%x %x\n", pin,  gpio_dr,*gpio_dr, *gpio_ddr, *gpio_ctrl);
@@ -393,7 +395,7 @@ int k230_gpio(char opt, int pin, char *value)
             *gpio_dr = K230_SET_BIT(reg_org, pin % 32);
         }
     } else if(opt == 'g') {
-        reg_org = *gpio_dr;
+        reg_org = *gpio_value_in;
         *value = K230_GET_BIT(reg_org, pin % 32);
     } else if(opt == 'i') { //set 0;
         reg_org = *gpio_ddr;
@@ -410,7 +412,7 @@ int k230_gpio(char opt, int pin, char *value)
         printf("opt %c is invalid\n", opt);
         return -1;
     }
-    printf("pin=%d  after reg gpio_dr=%x gpio_ddr=%x ctl%x\n", pin,  *gpio_dr, *gpio_ddr, *gpio_ctrl);
+    printf("pin=%d %c  after reg gpio_dr=%x gpio_ddr=%x ctl%x\n", pin,  opt, *gpio_dr, *gpio_ddr, *gpio_ctrl);
     return ret;
 
 }

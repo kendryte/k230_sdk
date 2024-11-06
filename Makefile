@@ -89,17 +89,20 @@ ifeq ($(NATIVE_BUILD),1)
 download_toolchain:
 	@set -e; \
 	if [ ! -f toolchain/.toolchain_ready ];then \
-	echo "download toolchain"; \
-	wget -q --show-progress -P $(K230_SDK_ROOT)/toolchain $(RTT_TOOLCHAIN_URL); \
-	wget -q --show-progress -P $(K230_SDK_ROOT)/toolchain $(LINUX_TOOLCHAIN_URL); \
+	echo "download toolchain"; mkdir -p  $(K230_SDK_ROOT)/toolchain ;\
+	wget -q --show-progress  -O $(K230_SDK_ROOT)/toolchain/$(notdir $(RTT_TOOLCHAIN_URL)) $(RTT_TOOLCHAIN_URL); \
+	wget -q --show-progress  -O $(K230_SDK_ROOT)/toolchain/$(notdir $(LINUX_TOOLCHAIN_URL))  $(LINUX_TOOLCHAIN_URL); \
 	fi;
 
 .PHONY: extract_toolchain
 extract_toolchain: download_toolchain
-	@echo "test1"
 	@set -e; \
 	if [ ! -f toolchain/.toolchain_ready ];then \
 	echo "extract toolchain"; \
+	md5=$(shell md5sum  $(K230_SDK_ROOT)/toolchain/$(notdir $(RTT_TOOLCHAIN_URL))  2>/dev/null  | awk '{print $$1}'  );\
+	[ "e6c0ce95844595eb0153db8dfaa74bcb" = "$${md5}" ]  ||  exit 4; \
+	md5=$(shell md5sum  $(K230_SDK_ROOT)/toolchain/$(notdir $(LINUX_TOOLCHAIN_URL))  2>/dev/null | awk '{print $$1}'  );\
+	[ "66a6571167767ffe9e9e1d5d5929f6a4" = "$${md5}" ]  || exit 3;\
 	for file in $(shell find ./toolchain -name "*.bz2"); do echo $$file;tar jxf $$file -C $(K230_SDK_ROOT)/toolchain; done; \
 	fi;
 
@@ -155,7 +158,13 @@ prepare_sourcecode:prepare_toolchain
 check_toolchain:
 	@if  [ ! -f  $(CONFIG_TOOLCHAIN_PATH_LINUX)/$(CONFIG_TOOLCHAIN_PREFIX_LINUX)gcc ] || \
 		 [ !   -f $(CONFIG_TOOLCHAIN_PATH_RTT)/$(CONFIG_TOOLCHAIN_PREFIX_RTT)gcc  ]; then \
-		 echo "please run command: make prepare_toolchain"; exit 1;  \
+		if [ ! -f toolchain/.toolchain_ready ];then \
+			echo "please run command: make prepare_toolchain"; exit 1;  \
+		else \
+			echo "you need enter docker build;";\
+			echo "or ln -s $(shell realpath toolchain) /opt/toolchain," ;\
+			echo "because sdk build need /opt/toolchain" ; exit 1; \
+		fi; \
 	fi;
 
 
@@ -587,8 +596,20 @@ help:
 	@echo "make buildroot-savedefconfig  -- Save k230 buildroot configuration to src/little/buildroot-ext/configs/k230_evb_defconfig";
 	@echo "make buildroot-clean          -- Clean the k230 buildroot build directory, after clean, run make buildroot-rebuild will fail because the build cirectory is not exist. Run make buildroot to build";
 	@echo "make build-image              -- Build k230 rootfs image";
+	@echo "make show_current_config      -- show current key config ";
 
 build_all:
 	(set -e;for conf in $$(ls configs | grep -v k230_fpga_defconfig);  do \
 	 echo "make CONF=$${conf} begin $$(date)">>tlog.log ; make CONF=$${conf} ; \
 	 echo "make CONF=$${conf} end $$(date)">>tlog.log ;done ;)
+
+.PHONY: show_current_config
+show_current_config:defconfig
+	@echo -e "\nCONF=$(CONF)"
+	@echo -e "out_image=$(BUILD_DIR)/images \n"
+	@echo -e "uboot_config=$(UBOOT_SRC_PATH)/configs/$(UBOOT_DEFCONFIG)"
+	@echo -e "uboog_dts=$(UBOOT_SRC_PATH)/arch/riscv/dts/$(shell cat $(UBOOT_SRC_PATH)/configs/$(UBOOT_DEFCONFIG) |   grep CONFIG_DEFAULT_DEVICE_TREE | cut -d = -f2 | tr -d \" ).dts \n"
+	@echo -e "linux_config=$(LINUX_SRC_PATH)/arch/riscv/configs/$(LINUX_KERNEL_DEFCONFIG)"
+	@echo -e "linux_dts=$(LINUX_SRC_PATH)arch/riscv/boot/dts/kendryte/$(CONFIG_LINUX_DTB).dts \n"
+	@echo -e "buildroot_config=$(BUILDROOT-EXT_SRC_PATH)/configs/$(BUILDROOT_DEFCONFIG)"
+	@echo -e "rtt_config=$(RT-SMART_SRC_PATH)/kernel/bsp/maix3/configs/$(CONFIG_RTTHREAD_DEFCONFIG).config \n"

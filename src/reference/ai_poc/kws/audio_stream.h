@@ -152,7 +152,7 @@ k_s32 start_aio_stream(bool enable_ai, bool enable_ao)
 {
     k_u32 sample_rate = 16000;
     k_u32 channel_count = 1;
-    k_bool enable_audio3a = K_TRUE;
+    k_u32 enable_audio3a = 0;
 
     audio_sample_enable_audio_codec(K_TRUE);
     audio_sample_vb_init(K_TRUE, sample_rate);
@@ -202,11 +202,33 @@ k_s32 start_aio_stream(bool enable_ai, bool enable_ao)
         kd_mpi_ao_enable(0);
         kd_mpi_ao_enable_chn(0, 0);
     }
+    
 
-    if (K_SUCCESS != kd_mpi_ai_set_vqe_attr(0, 0, K_TRUE))
+    if (enable_audio3a)
     {
-        std::cout << "kd_mpi_ai_set_vqe_attr failed\n" << std::endl;
-        return K_FAILED;
+        k_ai_vqe_enable vqe_enable;
+        memset(&vqe_enable, 0, sizeof(k_ai_vqe_enable));
+        if (enable_audio3a&0x1)
+        {
+            vqe_enable.ans_enable = K_TRUE;
+            printf("ans_enable\n");
+        }
+        if (enable_audio3a&0x2)
+        {
+            vqe_enable.agc_enable = K_TRUE;
+            printf("agc_enable\n");
+        }
+        if (enable_audio3a&0x4)
+        {
+            vqe_enable.aec_enable = K_TRUE;
+            printf("aec_enable\n");
+        }
+
+        if (K_SUCCESS != kd_mpi_ai_set_vqe_attr(0, 0, vqe_enable))
+        {
+            printf("kd_mpi_ai_set_vqe_attr failed\n");
+            return K_FAILED;
+        }
     }
     
     return K_SUCCESS;

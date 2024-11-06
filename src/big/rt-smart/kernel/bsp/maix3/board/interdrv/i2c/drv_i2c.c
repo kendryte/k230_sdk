@@ -17,6 +17,7 @@
 #include "drv_i2c.h"
 #include <dfs_file.h>
 #include <dfs_posix.h>
+#include "sysctl_clk.h"
 
 #include "tick.h"
 
@@ -60,6 +61,7 @@ struct chip_i2c_bus
 {
     struct rt_i2c_bus_device parent;
     struct dw_i2c i2c;
+    uint32_t clock;
 
     rt_bool_t slave;
     rt_uint8_t slave_address;
@@ -592,58 +594,32 @@ static int __dw_i2c_read(struct i2c_regs *i2c_base, rt_uint8_t dev, uint addr,
                          int alen, rt_uint8_t *buffer, int len, uint flags)
 {
     unsigned long start_time_rx;
-    unsigned int active = 0;
     int need_restart = 0;
-    int cut = 0;
+    int recv_len = len;
 
     if (flags & I2C_M_RESTART)
         need_restart = BIT(10);
     else if (i2c_xfer_init(i2c_base, dev, addr, alen) != 0)
-    {
         return -RT_EBUSY;
-    }
 
     start_time_rx = get_timer(0);
 
-    while (len)
+    while (len || recv_len)
     {
-        if (!active)
+        if (len)
         {
-            /*
-             * Avoid writing to ic_cmd_data multiple times
-             * in case this loop spins too quickly and the
-             * ic_status RFNE bit isn't set after the first
-             * write. Subsequent writes to ic_cmd_data can
-             * trigger spurious i2c transfer.
-             */
-            if (len == 1)
-            {
-                LOG_D("set IC_STOP");
-                writel(IC_CMD | IC_STOP | need_restart, &i2c_base->ic_cmd_data);
-            }
-            else
-            {
-                writel(IC_CMD | need_restart, &i2c_base->ic_cmd_data);
-            }
-
-            while( (readl(&i2c_base->ic_status) & IC_STATUS_TFE) != IC_STATUS_TFE)
-            {
-                cut = cut + 1;
-                i2c_delay_us(100);
-                if(cut > 100)
-                    break;
-            }
-
-            active = 1;
+            while((readl(&i2c_base->ic_status) & IC_STATUS_TFNF) != IC_STATUS_TFNF);
+            need_restart = len == 1 ? need_restart | IC_STOP : need_restart;
+            writel(IC_CMD | need_restart, &i2c_base->ic_cmd_data);
             need_restart = 0;
+            len--;
         }
 
         if (readl(&i2c_base->ic_status) & IC_STATUS_RFNE)
         {
             *buffer++ = (uchar)readl(&i2c_base->ic_cmd_data);
-            len--;
+            recv_len--;
             start_time_rx = get_timer(0);
-            active = 0;
         }
         else if (get_timer(start_time_rx) > I2C_BYTE_TO)
         {
@@ -701,6 +677,9 @@ static int __dw_i2c_write(struct i2c_regs *i2c_base, rt_uint8_t dev, uint addr,
             return 1;
         }
     }
+
+    if ((flags & I2C_M_STOP) == 0)
+        return 0;
 
     while( (readl(&i2c_base->ic_status) & IC_STATUS_TFE) != IC_STATUS_TFE)
     {
@@ -909,7 +888,16 @@ static int designware_i2c_set_bus_speed(struct chip_i2c_bus *bus, unsigned int s
         return -1;
     }
 
-    return __dw_i2c_set_bus_speed(i2c->regs, RT_NULL, speed);
+    struct dw_scl_sda_cfg scl_sda_cfg;
+    uint32_t period = bus->clock / speed;
+    period = period - 20;
+    scl_sda_cfg.ss_lcnt = period / 2;
+    scl_sda_cfg.ss_hcnt = period - scl_sda_cfg.ss_lcnt;
+    scl_sda_cfg.fs_lcnt = scl_sda_cfg.ss_lcnt;
+    scl_sda_cfg.fs_hcnt = scl_sda_cfg.ss_hcnt;
+    scl_sda_cfg.sda_hold = 0;
+
+    return __dw_i2c_set_bus_speed(i2c->regs, &scl_sda_cfg, speed);
 }
 
 static rt_size_t chip_i2c_mst_xfer(struct rt_i2c_bus_device *bus,
@@ -988,6 +976,7 @@ int rt_hw_i2c_init(void)
     {
         i2c_buses[i].i2c.regs = (struct i2c_regs *)rt_ioremap((void *)i2c_buses[i].i2c.regs, 0x10000);
         i2c_buses[i].parent.ops = &chip_i2c_ops;
+        i2c_buses[i].clock = sysctl_clk_get_leaf_freq(SYSCTL_CLK_I2C_0_CLK + i);
 
         if (i2c_buses[i].slave) {
             dw_i2c_slave_init(&i2c_buses[i]);
@@ -1004,7 +993,7 @@ int rt_hw_i2c_init(void)
 
     return 0;
 }
-INIT_BOARD_EXPORT(rt_hw_i2c_init);
+INIT_DEVICE_EXPORT(rt_hw_i2c_init);
 
 #ifdef RT_USING_I2C_DUMP
 void i2c_reg_show(int argc, char *argv[])

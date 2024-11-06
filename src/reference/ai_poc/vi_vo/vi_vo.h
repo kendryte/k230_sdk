@@ -566,6 +566,7 @@ int vivcap_start()
     dev_attr.pipe_ctrl.data = 0xFFFFFFFF;
     dev_attr.pipe_ctrl.bits.af_enable = 0;
     dev_attr.pipe_ctrl.bits.ahdr_enable = 0;
+    dev_attr.pipe_ctrl.bits.dnr3_enable = 0;
 
 
     dev_attr.cpature_frame = 0;

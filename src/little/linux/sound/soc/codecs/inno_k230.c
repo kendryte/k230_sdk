@@ -15,6 +15,9 @@
 #include <linux/io.h>
 #include "inno_k230_reg.h"
 
+static bool g_audio_codec_adc_init = false;
+static bool g_audio_codec_dac_init = false;
+
 #define INNO_VOLUME_INVERT_VALUE 39
 
 struct k230_inno_codec_priv {
@@ -328,7 +331,11 @@ static int k230_inno_codec_dai_hw_params(struct snd_pcm_substream *substream,
 			return ret;
 		}
 
-		audio_codec_adc_init(K_STANDARD_MODE,i2s_ws);
+		if (g_audio_codec_adc_init == false)
+		{
+			audio_codec_adc_init(K_STANDARD_MODE,i2s_ws);
+			g_audio_codec_adc_init = true;
+		}
 	}
 	else
 	{
@@ -340,7 +347,11 @@ static int k230_inno_codec_dai_hw_params(struct snd_pcm_substream *substream,
 			return ret;
 		}
 
-		audio_codec_dac_init(K_STANDARD_MODE,i2s_ws);
+		if (g_audio_codec_dac_init == false)
+		{
+			g_audio_codec_dac_init = true;
+			audio_codec_dac_init(K_STANDARD_MODE,i2s_ws);
+		}
 	}
 
 	//channel count

@@ -50,11 +50,14 @@
 #include "mpi_connector_api.h"
 
 #include "mpi_sensor_api.h"
+#include "k_dma_comm.h"
+#include "mpi_dma_api.h"
 
 extern k_vo_display_resolution hx8399[20];
 
-#define VICAP_OUTPUT_BUF_NUM 6
-#define VICAP_INPUT_BUF_NUM 4
+#define VICAP_OUTPUT_BUF_NUM 3//3
+#define VICAP_INPUT_BUF_NUM 3
+#define GDMA_BUF_NUM 3
 
 #define DISPLAY_WITDH  1088
 #define DISPLAY_HEIGHT 1920
@@ -266,7 +269,7 @@ static k_s32 sample_vicap_vb_init(vicap_device_obj *dev_obj)
             continue;
         printf("%s, enable dev(%d)\n", __func__, i);
 
-        if (dev_obj[i].mode == VICAP_WORK_OFFLINE_MODE) {
+        if ((dev_obj[i].mode == VICAP_WORK_OFFLINE_MODE) || (dev_obj[i].mode == VICAP_WORK_SW_TILE_MODE)) {
             config.comm_pool[k].blk_cnt = VICAP_INPUT_BUF_NUM;
             config.comm_pool[k].mode = VB_REMAP_MODE_NOCACHE;
             config.comm_pool[k].blk_size = dev_obj[i].in_size;
@@ -280,6 +283,8 @@ static k_s32 sample_vicap_vb_init(vicap_device_obj *dev_obj)
             printf("%s, enable chn(%d), k(%d)\n", __func__, j, k);
             config.comm_pool[k].blk_cnt = VICAP_OUTPUT_BUF_NUM;
             config.comm_pool[k].mode = VB_REMAP_MODE_NOCACHE;
+            if (dev_obj[i].preview[j] && dev_obj[i].rotation[j] > 16)
+                config.comm_pool[k].blk_cnt += GDMA_BUF_NUM;
 
             k_pixel_format pix_format = dev_obj[i].out_format[j];
             k_u16 out_width = dev_obj[i].out_win[j].width;
@@ -386,6 +391,31 @@ static void sample_vicap_unbind_vo(k_s32 vicap_dev, k_s32 vicap_chn, k_s32 vo_ch
     return;
 }
 
+static k_s32 dma_dev_attr_init(void)
+{
+    k_dma_dev_attr_t dev_attr;
+
+    dev_attr.burst_len = 0;
+    dev_attr.ckg_bypass = 0xff;
+    dev_attr.outstanding = 7;
+
+    int ret = kd_mpi_dma_set_dev_attr(&dev_attr);
+    if (ret != K_SUCCESS)
+    {
+        printf("set dma dev attr error\r\n");
+        return ret;
+    }
+
+    ret = kd_mpi_dma_start_dev();
+    if (ret != K_SUCCESS)
+    {
+        printf("start dev error\r\n");
+        return ret;
+    }
+
+    return ret;
+}
+
 #define VICAP_MIN_PARAMETERS (7)
 
 static void usage(void)
@@ -420,7 +450,7 @@ static void usage(void)
     printf(" -crop:         crop enable[0: disable, 1: enable]\n");
     printf(" -ofmt:         the output pixel format[0: yuv, 1: rgb888, 2: rgb888p, 3: raw], only channel 0 support raw data, default yuv\n");
     printf(" -preview:      the output preview enable[0: disable, 1: enable], only support 2 output channel preview\n");
-    printf(" -rotation:     display rotaion[0: degree 0, 1: degree 90, 2: degree 180, 3: degree 270, 4: unsupport rotaion]\n");
+    printf(" -rotation:     display rotaion[0: degree 0, 1: degree 90, 2: degree 180, 3: degree 270, 4: unsupport rotaion, 17: gdma-degree 90, 18: gdma-degree 180, 19: gdma-degree 270]\n");
     printf(" -dalign:       dump data align mode[0: lsb align, 1: msb align]\tdefault 0\n");
 
     printf(" -help:         print this help\n");
@@ -459,6 +489,7 @@ int main(int argc, char *argv[])
     // _set_mod_log(K_ID_VI, 6);
     k_s32 ret = 0;
     k_u8 salve_en = 0;
+    k_u8 gdma_enable = 0;
 
     k_u32 work_mode = VICAP_WORK_ONLINE_MODE;
     k_connector_type connector_type = HX8377_V2_MIPI_4LAN_1080X1920_30FPS;//HX8377_V2_MIPI_4LAN_1080X1920_30FPS;//ST7701_V1_MIPI_2LAN_480X854_30FPS;//ST7701_V1_MIPI_2LAN_480X800_30FPS;//HX8377_V2_MIPI_4LAN_1080X1920_30FPS;
@@ -508,6 +539,8 @@ int main(int argc, char *argv[])
                 work_mode = VICAP_WORK_ONLINE_MODE;
             } else if (mode == 1) {
                 work_mode = VICAP_WORK_OFFLINE_MODE;
+            } else if (mode == 2) {
+                work_mode = VICAP_WORK_SW_TILE_MODE;
             } else {
                 printf("unsupport mode.\n");
                 return -1;
@@ -1042,6 +1075,11 @@ chn_parse:
                             device_obj[cur_dev].sensor_type =  GC2093_MIPI_CSI1_1280X720_90FPS_10BIT_LINEAR;
                             break;
                         }
+                        case 59:
+                        {
+                            device_obj[cur_dev].sensor_type =  OS08A20_MIPI_CSI0_3840X2160_30FPS_10BIT_LINEAR;
+                            break;
+                        }
                         default:
                         {
                             printf("unsupport sensor type.\n");
@@ -1261,12 +1299,19 @@ chn_parse:
         dev_attr.acq_win.v_start = 0;
         dev_attr.acq_win.width = device_obj[dev_num].in_width;
         dev_attr.acq_win.height = device_obj[dev_num].in_height;
-        if ((work_mode == VICAP_WORK_OFFLINE_MODE) || (work_mode == VICAP_WORK_LOAD_IMAGE_MODE)) {
+        if ((work_mode == VICAP_WORK_OFFLINE_MODE) || (work_mode == VICAP_WORK_LOAD_IMAGE_MODE) ||(work_mode == VICAP_WORK_SW_TILE_MODE)) {
             dev_attr.mode = work_mode;
             dev_attr.buffer_num = VICAP_INPUT_BUF_NUM;
-            dev_attr.buffer_size = VICAP_ALIGN_UP((device_obj[dev_num].in_width * device_obj[dev_num].in_height * 2), VICAP_ALIGN_1K);
+            if(work_mode == VICAP_WORK_SW_TILE_MODE)
+                dev_attr.buffer_size = VICAP_ALIGN_UP((device_obj[dev_num].in_width * device_obj[dev_num].in_height * 12 / 8), VICAP_ALIGN_1K);
+            else
+                dev_attr.buffer_size = VICAP_ALIGN_UP((device_obj[dev_num].in_width * device_obj[dev_num].in_height * 2), VICAP_ALIGN_1K);
             device_obj[dev_num].in_size = dev_attr.buffer_size;
-            device_obj[dev_num].mode = VICAP_WORK_OFFLINE_MODE;
+            if(work_mode == VICAP_WORK_SW_TILE_MODE)
+                device_obj[dev_num].mode = VICAP_WORK_SW_TILE_MODE;
+            else
+                device_obj[dev_num].mode = VICAP_WORK_OFFLINE_MODE;
+                
             if (work_mode == VICAP_WORK_LOAD_IMAGE_MODE) {
                 dev_attr.image_pat = device_obj[dev_num].pattern;
                 dev_attr.sensor_info.sensor_name = device_obj[dev_num].calib_file;
@@ -1280,7 +1325,12 @@ chn_parse:
         dev_attr.pipe_ctrl.bits.af_enable = 0;
         dev_attr.pipe_ctrl.bits.ae_enable = device_obj[dev_num].ae_enable;
         dev_attr.pipe_ctrl.bits.awb_enable = device_obj[dev_num].awb_enable;
-        dev_attr.pipe_ctrl.bits.dnr3_enable = device_obj[dev_num].dnr3_enable;
+
+        if(work_mode == VICAP_WORK_SW_TILE_MODE)
+            dev_attr.pipe_ctrl.bits.dnr3_enable = 1;
+        else
+            dev_attr.pipe_ctrl.bits.dnr3_enable = device_obj[dev_num].dnr3_enable;
+
         dev_attr.pipe_ctrl.bits.ahdr_enable = device_obj[dev_num].hdr_enable;
 
         dev_attr.cpature_frame = 0;
@@ -1436,32 +1486,103 @@ chn_parse:
                 k_s32 vo_chn;
                 k_vo_layer layer;
                 k_u16 rotation;
+                k_u16 gdma_rotation = 0;
+                k_s32 gdma_chn;
+                rotation = device_obj[dev_num].rotation[chn_num];
+                if (rotation > 16) {
+                    gdma_rotation = rotation - 16;
+                    rotation = 4;
+                    if (gdma_enable == 0) {
+                        gdma_enable = 1;
+                        dma_dev_attr_init();
+                    }
+                }
                 if (vo_count == 0) {
                     vo_chn = K_VO_DISPLAY_CHN_ID1;
                     layer = K_VO_LAYER1;
-                    rotation = device_obj[dev_num].rotation[chn_num];
+                    gdma_chn = 0;
                 } else if (vo_count == 1) {
                     vo_chn = K_VO_DISPLAY_CHN_ID2;
                     layer = K_VO_LAYER2;
                     rotation = 4;//layer2 unsupport roation
-                } 
-                else if (vo_count == 2) {
+                    gdma_chn = 1;
+                } else if (vo_count == 2) {
                     vo_chn = K_VO_DISPLAY_CHN_ID3;
                     layer = K_VO_OSD0;
                     rotation = 4;//layer2 unsupport roation
-                } 
-                else if (vo_count >= MAX_VO_LAYER_NUM){
+                    gdma_chn = 2;
+                } else if (vo_count >= MAX_VO_LAYER_NUM){
                     printf("only support bind two vo channel.\n");
                     continue;
                 }
-                printf("sample_vicap, vo_count(%d), dev(%d) chn(%d) bind vo chn(%d) layer(%d) rotation(%d)\n", vo_count, dev_num, chn_num, vo_chn, layer, rotation);
-                sample_vicap_bind_vo(dev_num, chn_num, vo_chn);
-
                 layer_conf.enable[vo_count] = K_TRUE;
                 layer_conf.width[vo_count] = chn_attr.out_win.width;
                 layer_conf.height[vo_count] = chn_attr.out_win.height;
                 layer_conf.rotation[vo_count] = rotation;
                 layer_conf.layer[vo_count] = layer;
+                printf("sample_vicap, vo_count(%d), dev(%d) chn(%d) bind vo chn(%d) layer(%d) rotation(%d)\n", vo_count, dev_num, chn_num, vo_chn, layer, rotation);
+                if (gdma_rotation) {
+                    k_dma_chn_attr_u gdma_attr;
+                    k_mpp_chn src_chn;
+                    k_mpp_chn dst_chn;
+                    memset(&gdma_attr, 0, sizeof(gdma_attr));
+                    gdma_attr.gdma_attr.buffer_num = GDMA_BUF_NUM;
+                    gdma_attr.gdma_attr.rotation = gdma_rotation;
+                    gdma_attr.gdma_attr.x_mirror = K_FALSE;
+                    gdma_attr.gdma_attr.y_mirror = K_FALSE;
+                    gdma_attr.gdma_attr.width = chn_attr.out_win.width;
+                    gdma_attr.gdma_attr.height = chn_attr.out_win.height;
+                    gdma_attr.gdma_attr.work_mode = DMA_BIND;
+                    gdma_attr.gdma_attr.src_stride[0] = chn_attr.out_win.width;
+                    if (gdma_rotation == DEGREE_180) {
+                        gdma_attr.gdma_attr.dst_stride[0] = chn_attr.out_win.width;
+                    } else {
+                        gdma_attr.gdma_attr.dst_stride[0] = chn_attr.out_win.height;
+                        layer_conf.width[vo_count] = chn_attr.out_win.height;
+                        layer_conf.height[vo_count] = chn_attr.out_win.width;
+                    }
+                    if (chn_attr.pix_format == PIXEL_FORMAT_RGB_888) {
+                        gdma_attr.gdma_attr.pixel_format = DMA_PIXEL_FORMAT_RGB_888;
+                        gdma_attr.gdma_attr.src_stride[0] *= 3;
+                        gdma_attr.gdma_attr.dst_stride[0] *= 3;
+                    } else {
+                        gdma_attr.gdma_attr.pixel_format = DMA_PIXEL_FORMAT_YUV_SEMIPLANAR_420_8BIT;
+                        gdma_attr.gdma_attr.src_stride[1] = gdma_attr.gdma_attr.src_stride[0];
+                        gdma_attr.gdma_attr.dst_stride[1] = gdma_attr.gdma_attr.dst_stride[0];
+                    }
+                    src_chn.mod_id = K_ID_VI;
+                    src_chn.dev_id = dev_num;
+                    src_chn.chn_id = chn_num;
+                    dst_chn.mod_id = K_ID_DMA;
+                    dst_chn.dev_id = 0;
+                    dst_chn.chn_id = gdma_chn;
+                    ret = kd_mpi_sys_bind(&src_chn, &dst_chn);
+                    if (ret) {
+                        printf("kd_mpi_sys_bind failed:0x%x\n", ret);
+                    }
+
+                    src_chn.mod_id = K_ID_DMA;
+                    src_chn.dev_id = 0;
+                    src_chn.chn_id = gdma_chn;
+                    dst_chn.mod_id = K_ID_VO;
+                    dst_chn.dev_id = K_VO_DISPLAY_DEV_ID;
+                    dst_chn.chn_id = vo_chn;
+                    ret = kd_mpi_sys_bind(&src_chn, &dst_chn);
+                    if (ret) {
+                        printf("kd_mpi_sys_bind failed:0x%x\n", ret);
+                    }
+
+                    ret = kd_mpi_dma_set_chn_attr(gdma_chn, &gdma_attr);
+                    if (ret != K_SUCCESS) {
+                        printf("set chn attr error\r\n");
+                    }
+                    ret = kd_mpi_dma_start_chn(gdma_chn);
+                    if (ret != K_SUCCESS) {
+                        printf("start chn error\r\n");
+                    }
+                } else {
+                    sample_vicap_bind_vo(dev_num, chn_num, vo_chn);
+                }
                 vo_count++;
             }
         }
@@ -1803,16 +1924,22 @@ app_exit:
             if (device_obj[dev_num].preview[chn_num]) {
                 k_s32 vo_chn;
                 k_vo_layer layer;
+                k_u16 gdma_rotation = 0;
+                k_s32 gdma_chn;
+                gdma_rotation = device_obj[dev_num].rotation[chn_num] > 16 ? 1 : 0;
                 if (vo_count == 0) {
                     vo_chn = K_VO_DISPLAY_CHN_ID1;
                     layer = K_VO_LAYER1;
+                    gdma_chn = 0;
                 } else if (vo_count == 1) {
                     vo_chn = K_VO_DISPLAY_CHN_ID2;
                     layer = K_VO_LAYER2;
+                    gdma_chn = 1;
                 } 
                 else if (vo_count == 2) {
-                    vo_chn = K_VO_DISPLAY_CHN_ID2;
+                    vo_chn = K_VO_DISPLAY_CHN_ID3;
                     layer = K_VO_OSD0;
+                    gdma_chn = 2;
                 }else {
                     printf("only support unbind two vo chn.\n");
                     continue;
@@ -1821,18 +1948,52 @@ app_exit:
                 {
                     sample_vicap_disable_vo_layer(layer);
                     printf("sample_vicap, vo_count(%d), dev(%d) chn(%d) unbind vo chn(%d) layer(%d)\n", vo_count, dev_num, chn_num, vo_chn, layer);
-                    sample_vicap_unbind_vo(dev_num, chn_num, vo_chn);
                 }
                 else
                 {
                     sample_vicap_disable_vo_osd(layer);
+                }
+                if (gdma_rotation) {
+                    k_mpp_chn src_chn;
+                    k_mpp_chn dst_chn;
+                    ret = kd_mpi_dma_stop_chn(gdma_chn);
+                    if (ret != K_SUCCESS) {
+                        printf("stop chn error\r\n");
+                    }
+                    src_chn.mod_id = K_ID_VI;
+                    src_chn.dev_id = dev_num;
+                    src_chn.chn_id = chn_num;
+                    dst_chn.mod_id = K_ID_DMA;
+                    dst_chn.dev_id = 0;
+                    dst_chn.chn_id = gdma_chn;
+                    ret = kd_mpi_sys_unbind(&src_chn, &dst_chn);
+                    if (ret) {
+                        printf("kd_mpi_sys_unbind failed:0x%x\n", ret);
+                    }
+
+                    src_chn.mod_id = K_ID_DMA;
+                    src_chn.dev_id = 0;
+                    src_chn.chn_id = gdma_chn;
+                    dst_chn.mod_id = K_ID_VO;
+                    dst_chn.dev_id = K_VO_DISPLAY_DEV_ID;
+                    dst_chn.chn_id = vo_chn;
+                    ret = kd_mpi_sys_unbind(&src_chn, &dst_chn);
+                    if (ret) {
+                        printf("kd_mpi_sys_unbind failed:0x%x\n", ret);
+                    }
+                } else {
                     sample_vicap_unbind_vo(dev_num, chn_num, vo_chn);
                 }
                 vo_count++;
             }
         }
     }
-
+    if (gdma_enable) {
+        ret = kd_mpi_dma_stop_dev();
+        if (ret != K_SUCCESS) {
+            printf("stop dev error\r\n");
+        }
+    }
 
     printf("Press Enter to exit!!!!\n");
     getchar();

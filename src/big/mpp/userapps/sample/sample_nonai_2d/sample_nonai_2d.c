@@ -96,7 +96,7 @@ typedef struct
     k_vb_blk_handle *video_blk_handle;
     k_vb_blk_handle osd_blk_handle;
 
-    char out_filename[20];
+    char out_filename[50];
     FILE *video_file;
     FILE *output_file;
 

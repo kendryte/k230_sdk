@@ -17,8 +17,7 @@
 #include <riscv.h>
 
 #include "opcode.h"
-
-#define L1_CACHE_BYTES (64)
+#include "cache.h"
 
 /**
  * GCC version not support t-head cache flush, so we use fixed code to achieve.
@@ -189,18 +188,6 @@ void rt_hw_cpu_icache_invalidate_all(void)
 int sys_cacheflush(void *addr, int size, int cache)
 {
     return 0;
-}
-
-void rt_hw_cpu_sync(void)
-{
-    asm volatile(OPC_SYNC::
-                     : "memory");
-}
-
-void rt_hw_cpu_sync_i(void)
-{
-    asm volatile(OPC_SYNC_I::
-                     : "memory");
 }
 
 void rt_hw_sync_cache_local(void *addr, int size)

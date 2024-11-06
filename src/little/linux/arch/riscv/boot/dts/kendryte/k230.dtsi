@@ -183,8 +183,7 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 			interrupt-parent = <&intc>;
-			interrupts = <146>,<148>,<153>;
-			interrupt-names = "spi_txe","spi_rxf","spi_done";
+			interrupts = <146>,<147>,<148>,<149>,<150>,<151>,<152>,<153>,<154>;
 			rx-sample-delay-ns = <5>;
 			num-cs = <1>;
 			reg-io-width = <4>;
@@ -197,8 +196,7 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 			interrupt-parent = <&intc>;
-			interrupts = <155>,<157>,<162>;
-			interrupt-names = "spi_txe","spi_rxf","spi_done";
+			interrupts = <155>,<156>,<157>,<158>,<159>,<160>,<161>,<162>,<163>;
 			num-cs = <1>;
 			reg-io-width = <4>;
 			status = "disabled";
@@ -210,8 +208,7 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 			interrupt-parent = <&intc>;
-			interrupts = <164>,<166>,<171>;
-			interrupt-names = "spi_txe","spi_rxf","spi_done";
+			interrupts = <164>,<165>,<166>,<167>,<168>,<169>,<170>,<171>,<172>;
 			num-cs = <1>;
 			reg-io-width = <4>;
 			status = "disabled";

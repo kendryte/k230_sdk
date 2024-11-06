@@ -96,9 +96,9 @@ static bool_t xdr_accepted_reply(XDR *xdrs, struct accepted_reply *ar)
 		return ((*(ar->ar_results.proc)) (xdrs, ar->ar_results.where));
 
 	case PROG_MISMATCH:
-		if (!xdr_u_long(xdrs, &(ar->ar_vers.low)))
+		if (!xdr_uint32_t(xdrs, &(ar->ar_vers.low)))
 			return (FALSE);
-		return (xdr_u_long(xdrs, &(ar->ar_vers.high)));
+		return (xdr_uint32_t(xdrs, &(ar->ar_vers.high)));
 	}
 	return (TRUE);				/* TRUE => open ended set of problems */
 }
@@ -115,9 +115,9 @@ static bool_t xdr_rejected_reply(XDR *xdrs, struct rejected_reply *rr)
 	switch (rr->rj_stat) {
 
 	case RPC_MISMATCH:
-		if (!xdr_u_long(xdrs, &(rr->rj_vers.low)))
+		if (!xdr_uint32_t(xdrs, &(rr->rj_vers.low)))
 			return (FALSE);
-		return (xdr_u_long(xdrs, &(rr->rj_vers.high)));
+		return (xdr_uint32_t(xdrs, &(rr->rj_vers.high)));
 
 	case AUTH_ERROR:
 		return (xdr_enum(xdrs, (enum_t *) & (rr->rj_why)));
@@ -136,7 +136,7 @@ static struct xdr_discrim reply_dscrm[3] = {
  */
 bool_t xdr_replymsg(XDR *xdrs, struct rpc_msg *rmsg)
 {
-	if (xdr_u_long(xdrs, &(rmsg->rm_xid)) &&
+	if (xdr_uint32_t(xdrs, &(rmsg->rm_xid)) &&
 		xdr_enum(xdrs, (enum_t *) & (rmsg->rm_direction)) &&
 		(rmsg->rm_direction == REPLY))
 		return (xdr_union(xdrs, (enum_t *) & (rmsg->rm_reply.rp_stat),
@@ -158,11 +158,11 @@ bool_t xdr_callhdr(XDR *xdrs, struct rpc_msg *cmsg)
 	cmsg->rm_call.cb_rpcvers = RPC_MSG_VERSION;
 	if (
 		(xdrs->x_op == XDR_ENCODE) &&
-		xdr_u_long(xdrs, &(cmsg->rm_xid)) &&
+		xdr_uint32_t(xdrs, &(cmsg->rm_xid)) &&
 		xdr_enum(xdrs, (enum_t *) & (cmsg->rm_direction)) &&
-		xdr_u_long(xdrs, &(cmsg->rm_call.cb_rpcvers)) &&
-		xdr_u_long(xdrs, &(cmsg->rm_call.cb_prog)))
-			return (xdr_u_long(xdrs, &(cmsg->rm_call.cb_vers)));
+		xdr_uint32_t(xdrs, &(cmsg->rm_call.cb_rpcvers)) &&
+		xdr_uint32_t(xdrs, &(cmsg->rm_call.cb_prog)))
+			return (xdr_uint32_t(xdrs, &(cmsg->rm_call.cb_vers)));
 	return (FALSE);
 }
 
@@ -199,8 +199,8 @@ static void accepted(enum accept_stat acpt_stat, struct rpc_err *error)
 	}
 	/* something's wrong, but we don't know what ... */
 	error->re_status = RPC_FAILED;
-	error->re_lb.s1 = (long) MSG_ACCEPTED;
-	error->re_lb.s2 = (long) acpt_stat;
+	error->re_lb.s1 = (int32_t) MSG_ACCEPTED;
+	error->re_lb.s2 = (int32_t) acpt_stat;
 }
 
 static void rejected(enum reject_stat rjct_stat, struct rpc_err *error)
@@ -218,8 +218,8 @@ static void rejected(enum reject_stat rjct_stat, struct rpc_err *error)
 	}
 	/* something's wrong, but we don't know what ... */
 	error->re_status = RPC_FAILED;
-	error->re_lb.s1 = (long) MSG_DENIED;
-	error->re_lb.s2 = (long) rjct_stat;
+	error->re_lb.s1 = (int32_t) MSG_DENIED;
+	error->re_lb.s2 = (int32_t) rjct_stat;
 }
 
 /*
@@ -245,7 +245,7 @@ void _seterr_reply(struct rpc_msg *msg, struct rpc_err *error)
 
 	default:
 		error->re_status = RPC_FAILED;
-		error->re_lb.s1 = (long) (msg->rm_reply.rp_stat);
+		error->re_lb.s1 = (int32_t) (msg->rm_reply.rp_stat);
 		break;
 	}
 	switch (error->re_status) {

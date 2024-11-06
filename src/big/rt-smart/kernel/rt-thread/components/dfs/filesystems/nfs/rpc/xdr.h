@@ -113,9 +113,9 @@ struct XDR
     enum xdr_op x_op;		/* operation; fast additional param */
     struct xdr_ops
       {
-	bool_t (*x_getlong) (XDR *__xdrs, long *__lp);
+	bool_t (*x_getlong) (XDR *__xdrs, uint64_t *__lp);
 	/* get a long from underlying stream */
-	bool_t (*x_putlong) (XDR *__xdrs, const long *__lp);
+	bool_t (*x_putlong) (XDR *__xdrs, const uint64_t *__lp);
 	/* put a long to " */
 	bool_t (*x_getbytes) (XDR *__xdrs, char* __addr, unsigned int __len);
 	/* get some bytes from " */
@@ -129,9 +129,9 @@ struct XDR
 	/* buf quick ptr to buffered data */
 	void (*x_destroy) (XDR *__xdrs);
 	/* free privates of this xdr_stream */
-	bool_t (*x_getint32) (XDR *__xdrs, int32_t *__ip);
+	bool_t (*x_getint32) (XDR *__xdrs, uint32_t *__ip);
 	/* get a int from underlying stream */
-	bool_t (*x_putint32) (XDR *__xdrs, const int32_t *__ip);
+	bool_t (*x_putint32) (XDR *__xdrs, const uint32_t *__ip);
 	/* put a int to " */
       }
      *x_ops;
@@ -284,16 +284,16 @@ struct xdr_discrim
  * also, the XDR structure is always updated by some of these calls.
  */
 extern bool_t xdr_void (void);
-extern bool_t xdr_short (XDR *__xdrs, short *__sp);
-extern bool_t xdr_u_short (XDR *__xdrs, unsigned short *__usp);
-extern bool_t xdr_int (XDR *__xdrs, int *__ip);
-extern bool_t xdr_u_int (XDR *__xdrs, unsigned int *__up);
-extern bool_t xdr_long (XDR *__xdrs, long *__lp);
-extern bool_t xdr_u_long (XDR *__xdrs, unsigned long *__ulp);
+extern bool_t xdr_short (XDR *__xdrs, int16_t *__sp);
+extern bool_t xdr_u_short (XDR *__xdrs, uint16_t *__usp);
+extern bool_t xdr_int (XDR *__xdrs, int32_t *__ip);
+extern bool_t xdr_u_int (XDR *__xdrs, uint32_t *__up);
+extern bool_t xdr_long (XDR *__xdrs, int64_t *__lp);
+extern bool_t xdr_u_long (XDR *__xdrs, uint64_t *__ulp);
 extern bool_t xdr_hyper (XDR *__xdrs, int64_t *__llp);
 extern bool_t xdr_u_hyper (XDR *__xdrs, uint64_t *__ullp);
-extern bool_t xdr_longlong_t (XDR *__xdrs, long long *__llp);
-extern bool_t xdr_u_longlong_t (XDR *__xdrs, unsigned long long *__ullp);
+extern bool_t xdr_longlong_t (XDR *__xdrs, int64_t *__llp);
+extern bool_t xdr_u_longlong_t (XDR *__xdrs, uint64_t *__ullp);
 extern bool_t xdr_int8_t (XDR *__xdrs, int8_t *__ip);
 extern bool_t xdr_uint8_t (XDR *__xdrs, uint8_t *__up);
 extern bool_t xdr_int16_t (XDR *__xdrs, int16_t *__ip);

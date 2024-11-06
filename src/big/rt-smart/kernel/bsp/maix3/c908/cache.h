@@ -17,6 +17,8 @@
 
 #include <opcode.h>
 
+#define L1_CACHE_BYTES (64)
+
 void rt_hw_cpu_dcache_clean(void *addr,int size);
 void rt_hw_cpu_icache_invalidate(void *addr,int size);
 void rt_hw_cpu_dcache_invalidate(void *addr,int size);

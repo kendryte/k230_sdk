@@ -253,10 +253,7 @@ struct dw_spi {
 
 	void __iomem		*regs;
 	unsigned long		paddr;
-	int			irq;
-	int         txe_irq;
-	int			rxf_irq;
-	int			done_irq;
+	int			irq[16];
 	u32			fifo_len;	/* depth of the FIFO buffer */
 	u32			max_mem_freq;	/* max mem-ops bus freq */
 	u32			max_freq;	/* max bus freq supported */

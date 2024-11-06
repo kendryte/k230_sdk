@@ -174,6 +174,34 @@ k_s32 kd_mapi_ai_unbind_ao(k_handle ai_hdl,k_handle ao_hdl);
 k_s32 kd_mapi_ai_set_volume(k_handle ai_hdl,float volume);
 
 /**
+ * @brief Set the VQE (Voice Quality Enhancement) attributes for the AI handle.
+ *
+ * @param ai_hdl The handle to the AI instance.
+ * @param vqe_enable The VQE enable attributes to be set.
+ * @return Returns 0 on success, or a negative error code on failure.
+ */
+k_s32 kd_mapi_ai_set_vqe_attr(k_handle ai_hdl,const k_ai_vqe_enable vqe_enable);
+
+/**
+ * @brief Get the VQE (Voice Quality Enhancement) attributes for the AI handle.
+ *
+ * @param ai_hdl The handle to the AI instance.
+ * @param vqe_enable Pointer to a structure where the VQE enable attributes will be stored.
+ * @return Returns 0 on success, or a negative error code on failure.
+ */
+k_s32 kd_mapi_ai_get_vqe_attr(k_handle ai_hdl,  k_ai_vqe_enable *vqe_enable);
+
+/**
+ * @brief Send a far-end echo frame to the AI handle.
+ *
+ * @param ai_hdl The handle to the AI instance.
+ * @param frame Pointer to the audio frame to be sent.
+ * @param milli_sec Timeout in milliseconds for sending the frame.
+ * @return Returns 0 on success, or a negative error code on failure.
+ */
+k_s32 kd_mapi_ai_send_far_echo_frame(k_handle ai_hdl, const k_audio_frame *frame, k_s32 milli_sec);
+
+/**
  * @brief acodec reset
  *
  * @return k_s32

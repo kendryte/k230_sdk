@@ -468,8 +468,8 @@ static void dw_spi_irq_setup(struct dw_spi *dws,
 	if(dma_flag){
 		imask = SPI_INT_TXOI | SPI_INT_RXUI | SPI_INT_RXOI | SPI_INT_DONE;
 	}else {
-		imask = SPI_INT_TXEI | SPI_INT_TXOI | SPI_INT_RXUI | SPI_INT_RXOI;
-	}	
+		imask = SPI_INT_TXEI | SPI_INT_TXOI | SPI_INT_RXFI | SPI_INT_RXOI;
+	}
 
 	spi_umask_intr(dws, imask);
 }
@@ -555,7 +555,7 @@ static int dw_spi_transfer_one(struct spi_controller *master,
 
 	if (dws->dma_mapped)
 		return dws->dma_ops->dma_transfer(dws, transfer);
-	else if (dws->irq == IRQ_NOTCONNECTED)
+	else if (dws->irq[0] == IRQ_NOTCONNECTED)
 		return dw_spi_poll_transfer(dws, transfer);
 
 	dw_spi_irq_setup(dws, dw_spi_transfer_handler);
@@ -1358,6 +1358,7 @@ int dw_spi_add_host(struct device *dev, struct dw_spi *dws)
 {
 	struct spi_controller *master;
 	int ret;
+	int i;
 
 	if (!dws)
 		return -EINVAL;
@@ -1374,29 +1375,15 @@ int dw_spi_add_host(struct device *dev, struct dw_spi *dws)
 	/* Basic HW init */
 	spi_hw_init(dev, dws);
 
-	// ret = request_irq(dws->irq, dw_spi_irq, IRQF_SHARED, dev_name(dev),
-	// 		  master);
-	// if (ret < 0 && ret != -ENOTCONN) {
-	// 	dev_err(dev, "can not get IRQ\n");
-	// 	goto err_free_master;
-	// }
-	ret = request_irq(dws->txe_irq, dw_spi_irq, IRQF_SHARED, dev_name(dev),
-			  master);
-	if (ret < 0 && ret != -ENOTCONN) {
-		dev_err(dev, "can not get IRQ\n");
-		goto err_free_master;
-	}
-	ret = request_irq(dws->rxf_irq, dw_spi_irq, IRQF_SHARED, dev_name(dev),
-			  master);
-	if (ret < 0 && ret != -ENOTCONN) {
-		dev_err(dev, "can not get IRQ\n");
-		goto err_free_master;
-	}
-	ret = request_irq(dws->done_irq, dw_spi_irq, IRQF_SHARED, dev_name(dev),
-			  master);
-	if (ret < 0 && ret != -ENOTCONN) {
-		dev_err(dev, "can not get IRQ\n");
-		goto err_free_master;
+	for (i = 0; i < 16; i++) {
+		if (dws->irq[i] < 0)
+			break;
+		ret = request_irq(dws->irq[i], dw_spi_irq, IRQF_SHARED, dev_name(dev),
+				master);
+		if (ret < 0 && ret != -ENOTCONN) {
+			dev_err(dev, "can not get IRQ\n");
+			goto err_free_master;
+		}
 	}
 
 	dw_spi_init_mem_ops(dws);
@@ -1449,10 +1436,11 @@ err_dma_exit:
 	if (dws->dma_ops && dws->dma_ops->dma_exit)
 		dws->dma_ops->dma_exit(dws);
 	spi_enable_chip(dws, 0);
-	// free_irq(dws->irq, master);
-	free_irq(dws->txe_irq, master);
-	free_irq(dws->rxf_irq, master);
-	free_irq(dws->done_irq, master);
+	for (i = 0; i < 16; i++) {
+		if (dws->irq[i] < 0)
+			break;
+		free_irq(dws->irq[i], master);
+	}
 err_free_master:
 	spi_controller_put(master);
 	return ret;
@@ -1461,6 +1449,8 @@ EXPORT_SYMBOL_GPL(dw_spi_add_host);
 
 void dw_spi_remove_host(struct dw_spi *dws)
 {
+	int i;
+
 	dw_spi_debugfs_remove(dws);
 
 	spi_unregister_controller(dws->master);
@@ -1470,10 +1460,11 @@ void dw_spi_remove_host(struct dw_spi *dws)
 
 	spi_shutdown_chip(dws);
 
-	// free_irq(dws->irq, dws->master);
-	free_irq(dws->txe_irq, dws->master);
-	free_irq(dws->rxf_irq, dws->master);
-	free_irq(dws->done_irq, dws->master);
+	for (i = 0; i < 16; i++) {
+		if (dws->irq[i] < 0)
+			break;
+		free_irq(dws->irq[i], dws->master);
+	}
 }
 EXPORT_SYMBOL_GPL(dw_spi_remove_host);
 

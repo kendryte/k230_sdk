@@ -42,6 +42,8 @@ extern struct sensor_driver_dev gc2053_sensor_drv;
 extern struct sensor_driver_dev gc2093_sensor_drv;
 extern struct sensor_driver_dev gc2093_csi1_sensor_drv;
 extern struct sensor_driver_dev gc2093_csi2_sensor_drv;
+extern struct sensor_driver_dev os08a20_sensor_drv ;
+extern struct sensor_driver_dev sc132gs_sensor_drv;
 
 struct sensor_driver_dev *sensor_drv_list[SENSOR_NUM_MAX] = {
     &ov9732_sensor_drv,
@@ -59,6 +61,8 @@ struct sensor_driver_dev *sensor_drv_list[SENSOR_NUM_MAX] = {
     &gc2093_sensor_drv,
     &gc2093_csi1_sensor_drv,
     &gc2093_csi2_sensor_drv,
+    &os08a20_sensor_drv,
+    &sc132gs_sensor_drv,
 };
 
 void sensor_drv_list_init(struct sensor_driver_dev *drv_list[])

@@ -88,11 +88,13 @@ RUN groupadd --gid ${UID} ${USER} \
 # toolchain and work dir
 RUN mkdir -p /opt/toolchain/
 
-# local build flag
+# default local build flag, default is True
 RUN echo "False" > /tmp/.flag
-RUN wget -P /tmp/ "https://ai.b-bug.org/k230/downloads/aitest/aitest-0.0.5.dev20240613-py3-none-any.whl" || echo "True" > /tmp/.flag
 
-# install local test env
+# local build, download error will set flag to True
+RUN wget -P /tmp/ "https://ai.b-bug.org/k230/downloads/aitest/aitest-0.0.6.dev20240829-py3-none-any.whl" || echo "True" > /tmp/.flag
+
+# check and install test env with local build flag
 RUN FLAG=$(cat /tmp/.flag) && if [ "$FLAG" = "False" ]; then python3 -m pip install -U /tmp/aitest*.whl; else echo "Skip install"; fi \
     && FLAG=$(cat /tmp/.flag) && if [ "$FLAG" = "False" ]; then python3 -m pip install -U robotframework requests; else echo "Skip install"; fi
 

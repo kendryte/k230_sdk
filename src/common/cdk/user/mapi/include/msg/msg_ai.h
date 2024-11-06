@@ -36,7 +36,7 @@
 #include "k_ai_comm.h"
 #include "mpi_ai_api.h"
 #include "mpi_sys_api.h"
-
+#include "k_datafifo.h"
 
 #ifdef __cplusplus
 #if __cplusplus
@@ -60,6 +60,11 @@ typedef enum {
     MSG_CMD_MEDIA_AI_BIND_AO,
     MSG_CMD_MEDIA_AI_UNBIND_AO,
     MSG_CMD_MEDIA_ACODEC_RESET,
+    MSG_CMD_MEDIA_AI_SET_VEQ_ATTR,
+    MSG_CMD_MEDIA_AI_GET_VEQ_ATTR,
+    MSG_CMD_MEDIA_AI_SEND_FAR_ECHO_FRAME,
+    MSG_CMD_MEDIA_AI_AEC_INIT_DATAFIFO,
+    MSG_CMD_MEDIA_AI_AEC_DEINIT_DATAFIFO,
 } k_msg_media_ai_cmd_t;
 
 typedef struct
@@ -97,6 +102,31 @@ typedef struct
     k_s32 gain;
 }k_msg_ai_gain_info;
 
+typedef struct
+{
+    k_handle ai_hdl;
+    k_ai_vqe_enable vqe_enable;
+}k_msg_ai_vqe_attr;
+
+typedef struct
+{
+    k_handle ai_hdl;
+    k_u64 phyAddr;
+} k_msg_ai_aec_datafifo_t;
+
+typedef void (*ai_aec_datafifo_release_func)(void* pStream);
+typedef struct
+{
+    k_u32 item_count;//in
+    k_u32 item_size;//in
+    K_DATAFIFO_OPEN_MODE_E open_mode;//in
+    ai_aec_datafifo_release_func release_func;//in
+
+    k_datafifo_handle data_hdl;//out
+}k_ai_aec_datafifo;
+
+#define K_AI_AEC_DATAFIFO_ITEM_COUNT 5
+#define K_AI_AEC_DATAFIFO_ITEM_SIZE  sizeof(k_msg_ai_frame_t)
 
 /** @}*/  /** <!-- ==== COMM End ====*/
 #ifdef __cplusplus

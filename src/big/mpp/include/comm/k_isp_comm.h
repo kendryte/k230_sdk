@@ -381,6 +381,7 @@ typedef enum {
     ISP_WORK_MODE_STREAM,                /**< Stream mode: one sensor input */
     ISP_WORK_MODE_MCM,                   /**< Reserved. */
     ISP_WORK_MODE_RDMA,                  /**< RDMA mode: input from DMA buffer */
+    ISP_WORK_MODE_SW_TILE,
     ISP_WORK_MODE_MAX
 } k_isp_work_mode;
 

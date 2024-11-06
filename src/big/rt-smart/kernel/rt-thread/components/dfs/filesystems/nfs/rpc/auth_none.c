@@ -73,7 +73,7 @@ static struct auth_ops ops = {
 static struct authnone_private {
 	AUTH no_client;
 	char marshalled_client[MAX_MARSHEL_SIZE];
-	unsigned int mcnt;
+	uint16_t mcnt;
 } *authnone_private;
 
 AUTH *authnone_create()
@@ -94,7 +94,7 @@ AUTH *authnone_create()
 		ap->no_client.ah_ops = &ops;
 		xdrs = &xdr_stream;
 		xdrmem_create(xdrs, ap->marshalled_client,
-					  (unsigned int) MAX_MARSHEL_SIZE, XDR_ENCODE);
+					  (uint16_t) MAX_MARSHEL_SIZE, XDR_ENCODE);
 		(void) xdr_opaque_auth(xdrs, &ap->no_client.ah_cred);
 		(void) xdr_opaque_auth(xdrs, &ap->no_client.ah_verf);
 		ap->mcnt = XDR_GETPOS(xdrs);

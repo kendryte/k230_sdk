@@ -30,9 +30,9 @@ extern "C" {
 #endif /* end of #ifdef __cplusplus */
 
 #include "k_type.h"
+#include "k_payload_comm.h"
 
-
-k_s32 audio_mapi_sample_ai_aenc(k_u32 sample_rate,k_u32 channels,k_bool enable_audio_codec, const char* filename);
+k_s32 audio_mapi_sample_ai_aenc(k_u32 sample_rate,k_u32 channels,k_bool enable_audio_codec, k_payload_type aenc_type,const char* filename);
 k_s32 audio_mapi_sample_adec_ao(k_u32 sample_rate,k_u32 channels,k_bool enable_audio_codec,const char* filename);
 k_s32 audio_mapi_sample_audio_loopback(k_u32 sample_rate,k_u32 channels);
 k_s32 audio_mapi_sample_audio_double_loopback(k_u32 sample_rate,k_u32 channels,k_bool enable_audio_codec);

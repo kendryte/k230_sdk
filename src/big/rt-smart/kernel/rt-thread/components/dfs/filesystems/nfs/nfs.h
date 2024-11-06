@@ -38,13 +38,13 @@ extern "C" {
 #define	FSF3_HOMOGENEOUS 0x0008
 #define	FSF3_CANSETTIME 0x0010
 
-typedef unsigned long long uint64;
+typedef uint64_t uint64;
 
-typedef long long int64;
+typedef int64_t int64;
 
-typedef u_long uint32;
+typedef uint32_t uint32;
 
-typedef long int32;
+typedef int32_t int32;
 
 typedef char *filename3;
 

@@ -322,7 +322,9 @@ k_s32 kd_mapi_adec_start(k_handle adec_hdl)
     g_adec_chn_ctl[adec_hdl].adec_hdl = adec_hdl;
     g_adec_chn_ctl[adec_hdl].start = K_TRUE;
     pthread_create(&g_adec_chn_ctl[adec_hdl].get_stream_tid, NULL, adec_chn_get_stream_threads, &g_adec_chn_ctl[adec_hdl].adec_hdl);
-
+    struct sched_param param;
+    param.sched_priority = 17;
+    pthread_setschedparam(g_adec_chn_ctl[adec_hdl].get_stream_tid, SCHED_FIFO, &param);
     return K_SUCCESS;
 }
 

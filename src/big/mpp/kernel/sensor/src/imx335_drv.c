@@ -212,8 +212,10 @@ static const k_sensor_reg imx335_mipi_2lane_raw12_1920x1080_30fps_mclk_24m_regs[
     { 0x3057, 0x04 },
     { 0x302c, 0x80 }, // crop mode H start
     { 0x302d, 0x01 },
-    { 0x302e, 0x98 }, // crop mode H size, 1944
+
+    { 0x302e, 0x80 }, // crop mode H size, 1944(798) - > 1920(780)
     { 0x302f, 0x07 },
+
     { 0x3072, 0x28 }, // crop mode OB V size
     { 0x3073, 0x00 },
     { 0x3074, 0x60 }, // crop mode UL V start
@@ -279,10 +281,12 @@ static const k_sensor_reg imx335_mipi_2lane_raw12_1920x1080_30fps_mclk_74_25_reg
     { 0x30e9, 0x00 },
     { 0x3056, 0x48 }, // effective pixel line
     { 0x3057, 0x04 },
-    { 0x302c, 0x80 }, // crop mode H start
+    { 0x302c, 0x80 }, // crop mode H start  384
     { 0x302d, 0x01 },
-    { 0x302e, 0x98 }, // crop mode H size, 1944
+
+    { 0x302e, 0x80 }, // crop mode H size, 1944(798) - > 1920(780)
     { 0x302f, 0x07 },
+
     { 0x3072, 0x28 }, // crop mode OB V size
     { 0x3073, 0x00 },
     { 0x3074, 0x60 }, // crop mode UL V start
@@ -328,6 +332,10 @@ static const k_sensor_reg imx335_mipi_2lane_raw12_2592x1944_30fps_mclk_24m_regs[
     { 0x3a27, 0x00 },
     { 0x3a28, 0x3f },
     { 0x3a29, 0x00 },
+
+    { 0x302e, 0x20 }, // crop mode H size, 2616(a38) - > 2592(a20)
+    { 0x302f, 0x0a },
+
     { 0x3302, 0x10 }, //black level
     { 0x3058, 0xac }, // shutter sweep time, 1000 ET Line
     { 0x3059, 0x0d },
@@ -368,6 +376,10 @@ static const k_sensor_reg imx335_mipi_2lane_raw12_2592x1944_30fps_mclk_74_25_reg
     { 0x3a27, 0x00 },
     { 0x3a28, 0x3f },
     { 0x3a29, 0x00 },
+
+    { 0x302e, 0x20 }, // crop mode H size, 2616(a38) - > 2592(a20)
+    { 0x302f, 0x0a },
+
     { 0x3302, 0x10 }, //black level
     { 0x3058, 0xac }, // shutter sweep time, 1000 ET Line
     { 0x3059, 0x0d },
@@ -508,6 +520,10 @@ static const k_sensor_reg imx335_mipi_4lane_raw12_2592x1944_30fps_mclk_74_25_reg
     { 0x3a27, 0x00 },
     { 0x3a28, 0x2f },
     { 0x3a29, 0x00 },
+
+    { 0x302e, 0x20 }, // crop mode H size, 2616(a38) - > 2592(a20)
+    { 0x302f, 0x0a },
+    
     { 0x3302, 0x10 }, //black level
     { 0x3058, 0xac }, // shutter sweep time, 1000 ET Line
     { 0x3059, 0x0d },
@@ -547,6 +563,10 @@ static const k_sensor_reg imx335_mipi_4lane_raw12_2592x1944_30fps_mclk_24m_regs[
     { 0x3a27, 0x00 },
     { 0x3a28, 0x2f },
     { 0x3a29, 0x00 },
+
+    { 0x302e, 0x20 }, // crop mode H size, 2616(a38) - > 2592(a20)
+    { 0x302f, 0x0a },
+    
     { 0x3302, 0x10 }, //black level
     { 0x3058, 0xac }, // shutter sweep time, 1000 ET Line
     { 0x3059, 0x0d },
@@ -989,7 +1009,7 @@ static k_sensor_mode imx335_mode_info[] = {
         .mipi_info = {
             .csi_id = 0,
             .mipi_lanes = 4,
-            .data_type = 0x2B,
+            .data_type = 0x2C,
         },
         .reg_list = imx335_mipi_4lane_raw10_dol_2x_regs,
     },
@@ -1012,7 +1032,7 @@ static k_sensor_mode imx335_mode_info[] = {
         .mipi_info = {
             .csi_id = 0,
             .mipi_lanes = 4,
-            .data_type = 0x2B,
+            .data_type = 0x2C,
         },
         .reg_list = imx335_mipi_4lane_raw10_3x_regs,
     },

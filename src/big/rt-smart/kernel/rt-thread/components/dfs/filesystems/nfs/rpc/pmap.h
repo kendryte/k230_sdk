@@ -42,23 +42,23 @@
  * The service supports remote procedure calls on udp/ip or tcp/ip socket 111.
  */
 
-#define PMAPPORT		((unsigned short)111)
-#define PMAPPROG		((unsigned long)100000)
-#define PMAPVERS		((unsigned long)2)
-#define PMAPVERS_PROTO		((unsigned long)2)
-#define PMAPVERS_ORIG		((unsigned long)1)
-#define PMAPPROC_NULL		((unsigned long)0)
-#define PMAPPROC_SET		((unsigned long)1)
-#define PMAPPROC_UNSET		((unsigned long)2)
-#define PMAPPROC_GETPORT	((unsigned long)3)
-#define PMAPPROC_DUMP		((unsigned long)4)
-#define PMAPPROC_CALLIT		((unsigned long)5)
+#define PMAPPORT		((uint16_t)111)
+#define PMAPPROG		((uint32_t)100000)
+#define PMAPVERS		((uint32_t)2)
+#define PMAPVERS_PROTO		((uint32_t)2)
+#define PMAPVERS_ORIG		((uint32_t)1)
+#define PMAPPROC_NULL		((uint32_t)0)
+#define PMAPPROC_SET		((uint32_t)1)
+#define PMAPPROC_UNSET		((uint32_t)2)
+#define PMAPPROC_GETPORT	((uint32_t)3)
+#define PMAPPROC_DUMP		((uint32_t)4)
+#define PMAPPROC_CALLIT		((uint32_t)5)
 
 struct pmap {
-	long unsigned pm_prog;
-	long unsigned pm_vers;
-	long unsigned pm_prot;
-	long unsigned pm_port;
+	uint32_t pm_prog;
+	uint32_t pm_vers;
+	uint32_t pm_prot;
+	uint32_t pm_port;
 };
 
 extern bool_t xdr_pmap (XDR *__xdrs, struct pmap *__regs);

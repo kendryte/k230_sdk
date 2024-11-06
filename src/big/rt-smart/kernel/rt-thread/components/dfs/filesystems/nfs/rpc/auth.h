@@ -46,7 +46,7 @@ typedef union des_block des_block;
 struct opaque_auth {
 	enum_t	oa_flavor;		/* flavor of auth */
 	char*	oa_base;		/* address of more auth stuff */
-	unsigned int	oa_length;		/* not to exceed MAX_AUTH_BYTES */
+	uint16_t oa_length;		/* not to exceed MAX_AUTH_BYTES */
 };
 
 /*

@@ -127,6 +127,7 @@ void video_proc(char *argv[])
                 std::cout << "play_wav failed\n" << std::endl;
             }
         }
+	delete[] data_;
         
     }
 

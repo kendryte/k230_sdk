@@ -345,6 +345,19 @@ k_s32 kd_mpi_venc_set_h265_entropy(k_u32 chn_num, const k_venc_h265_entropy *h26
 k_s32 kd_mpi_venc_get_h265_entropy(k_u32 chn_num, k_venc_h265_entropy *h265_entropy);
 
 /**
+ * @brief Set venc internal buf size
+ *
+ * @param [in] chn_num Channel number
+ * @param [in] size internal buf size
+ * @return k_s32
+ * @retval 0 success
+ * @retval "not 0" see err code
+ * @see K_ERR_CODE_E
+ * @note configure internal memory used for vpu firmware
+ */
+k_s32 kd_mpi_venc_set_intbuf_size(k_u32 chn_num, k_u32 size);
+
+/**
  * @brief Start 2d channel
  *
  * @param [in] chn_num Channel number of 2D

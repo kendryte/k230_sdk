@@ -187,8 +187,8 @@ static struct regulator_ops tps6286x_ops = {
 static struct tps6286x_dev dev[2] = {
     {
         .dev_name = "regulator_cpu",
-        .i2c_name = "i2c3",
-        .i2c_addr = 0x49,
+        .i2c_name = PMIC_CPU_I2C_DEV,
+        .i2c_addr = PMIC_CPU_I2C_ADDR,
         .base_uv = 400000,
         .min_uv = 400000,
         .max_uv = 1675000,
@@ -196,8 +196,8 @@ static struct tps6286x_dev dev[2] = {
     },
     {
         .dev_name = "regulator_kpu",
-        .i2c_name = "i2c1",
-        .i2c_addr = 0x49,
+        .i2c_name = PMIC_KPU_I2C_DEV,
+        .i2c_addr = PMIC_KPU_I2C_ADDR,
         .base_uv = 400000,
         .min_uv = 400000,
         .max_uv = 1675000,
@@ -220,4 +220,4 @@ int regulator_tps6286x_init(void)
 
     return ret;
 }
-INIT_DEVICE_EXPORT(regulator_tps6286x_init);
+INIT_COMPONENT_EXPORT(regulator_tps6286x_init);

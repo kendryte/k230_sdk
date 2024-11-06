@@ -18,7 +18,7 @@
 #include "mount.h"
 #include "nfs.h"
 
-#define DFS_NFS_MAX_MTU  1024
+#define DFS_NFS_MAX_MTU  0x540
 
 #ifdef _WIN32
 #define strtok_r strtok_s
@@ -61,6 +61,17 @@ struct nfs_filesystem
 typedef struct nfs_filesystem nfs_filesystem;
 typedef struct nfs_file nfs_file;
 typedef struct nfs_dir nfs_dir;
+static struct rt_mutex nfs_mutex;
+
+void nfs_lock(void)
+{
+    rt_mutex_take(&nfs_mutex, RT_WAITING_FOREVER);
+}
+
+void nfs_unlock(void)
+{
+    rt_mutex_release(&nfs_mutex);
+}
 
 nfs_dir *nfs_opendir(nfs_filesystem *nfs, const char *path);
 
@@ -757,16 +768,16 @@ int nfs_open(struct dfs_fd *file)
     RT_ASSERT(nfs != NULL);
 
     RT_ASSERT(file->fnode->ref_count > 0);
-    if (file->fnode->ref_count > 1)
-    {
-        if (file->fnode->type == FT_DIRECTORY
-                && !(file->flags & O_DIRECTORY))
-        {
-            return -ENOENT;
-        }
-        file->pos = 0;
-        return 0;
-    }
+    // if (file->fnode->ref_count > 1)
+    // {
+    //     if (file->fnode->type == FT_DIRECTORY
+    //             && !(file->flags & O_DIRECTORY))
+    //     {
+    //         return -ENOENT;
+    //     }
+    //     file->pos = 0;
+    //     return 0;
+    // }
 
     if (file->flags & O_DIRECTORY)
     {
@@ -1185,6 +1196,7 @@ static const struct dfs_filesystem_ops _nfs =
 
 int nfs_init(void)
 {
+    rt_mutex_init(&nfs_mutex, "nfs_mutex", 0);
     /* register nfs file system */
     dfs_register(&_nfs);
 

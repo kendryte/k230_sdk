@@ -49,9 +49,9 @@
 #include <stdint.h>
 
 #ifndef RT_USING_MINILIBC
-typedef unsigned int u_int;
-typedef unsigned char u_char;
-typedef unsigned long u_long;
+// typedef unsigned int u_int;
+// typedef unsigned char u_char;
+// typedef unsigned long u_long;
 #else
 #include <sys/types.h>
 #include <stdint.h>
@@ -72,11 +72,11 @@ typedef rt_int32_t  ssize_t;
 #endif
 
 /* This needs to be changed to uint32_t in the future */
-typedef unsigned long rpcprog_t;
-typedef unsigned long rpcvers_t;
-typedef unsigned long rpcproc_t;
-typedef unsigned long rpcprot_t;
-typedef unsigned long rpcport_t;
+typedef uint32_t rpcprog_t;
+typedef uint32_t rpcvers_t;
+typedef uint32_t rpcproc_t;
+typedef uint32_t rpcprot_t;
+typedef uint32_t rpcport_t;
 
 #define        __dontcare__    -1
 

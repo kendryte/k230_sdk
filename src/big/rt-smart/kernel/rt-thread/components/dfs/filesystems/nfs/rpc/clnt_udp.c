@@ -53,7 +53,7 @@ static char sccsid[] = "@(#)clnt_udp.c 1.39 87/08/11 Copyr 1984 Sun Micro";
  * UDP bases client side rpc operations
  */
 static enum clnt_stat clntudp_call(register CLIENT *cl,         /* client handle */
-	unsigned long proc,          /* procedure number */
+	uint32_t proc,          /* procedure number */
 	xdrproc_t xargs,             /* xdr routine for args */
 	char* argsp,                 /* pointer to args */
 	xdrproc_t xresults,          /* xdr routine for results */
@@ -112,11 +112,11 @@ struct cu_data
  * sendsz and recvsz are the maximum allowable packet sizes that can be
  * sent and received.
  */
-CLIENT *clntudp_bufcreate(struct sockaddr_in *raddr, 
-	unsigned long program, 
-	unsigned long version,
-	struct timeval wait, 
-	int *sockp, 
+CLIENT *clntudp_bufcreate(struct sockaddr_in *raddr,
+	uint32_t program,
+	uint32_t version,
+	struct timeval wait,
+	int *sockp,
 	unsigned int sendsz,
 	unsigned int recvsz)
 {
@@ -143,9 +143,9 @@ CLIENT *clntudp_bufcreate(struct sockaddr_in *raddr,
 
 	if (raddr->sin_port == 0) {
 		unsigned short port;
-		extern unsigned short pmap_getport(struct sockaddr_in *address, 
-			unsigned long program, 
-			unsigned long version, 
+		extern unsigned short pmap_getport(struct sockaddr_in *address,
+			uint32_t program,
+			uint32_t version,
 			unsigned int protocol);
 
 		if ((port =
@@ -164,7 +164,7 @@ CLIENT *clntudp_bufcreate(struct sockaddr_in *raddr,
 	cu->cu_total.tv_usec = -1;
 	cu->cu_sendsz = sendsz;
 	cu->cu_recvsz = recvsz;
-	call_msg.rm_xid = ((unsigned long)rt_thread_self()) ^ ((unsigned long)rt_tick_get()) ^ (xid_count++);
+	call_msg.rm_xid = ((uint32_t)rt_thread_self()) ^ ((uint32_t)rt_tick_get()) ^ (xid_count++);
 	call_msg.rm_direction = CALL;
 	call_msg.rm_call.cb_rpcvers = RPC_MSG_VERSION;
 	call_msg.rm_call.cb_prog = program;
@@ -200,21 +200,22 @@ fooy:
 	return ((CLIENT *) NULL);
 }
 
-CLIENT *clntudp_create(struct sockaddr_in *raddr, 
-	unsigned long program, 
-	unsigned long version, 
-	struct timeval wait, 
+CLIENT *clntudp_create(struct sockaddr_in *raddr,
+	uint32_t program,
+	uint32_t version,
+	struct timeval wait,
 	int *sockp)
 {
 	return (clntudp_bufcreate(raddr, program, version, wait, sockp,
 							  UDPMSGSIZE, UDPMSGSIZE));
 }
 
-static enum clnt_stat clntudp_call(CLIENT *cl, unsigned long proc, 
+static enum clnt_stat clntudp_call(CLIENT *cl, uint32_t proc,
 	xdrproc_t xargs, char* argsp, 
 	xdrproc_t xresults, char* resultsp, 
 	struct timeval utimeout)
 {
+	nfs_lock();
 	register struct cu_data *cu = (struct cu_data *) cl->cl_private;
 	register XDR *xdrs;
 	register int outlen;
@@ -226,7 +227,8 @@ static enum clnt_stat clntudp_call(CLIENT *cl, unsigned long proc,
 	XDR reply_xdrs;
 	bool_t ok;
 	int nrefreshes = 2;			/* number of times to refresh cred */
-    int ret;
+	int ret;
+	int retry = 3;
 call_again:
 	xdrs = &(cu->cu_outxdrs);
 	xdrs->x_op = XDR_ENCODE;
@@ -235,24 +237,25 @@ call_again:
 	/*
 	 * the transaction is the first thing in the out buffer
 	 */
-	(*(unsigned long *) (cu->cu_outbuf))++;
+	(*(uint32_t *) (cu->cu_outbuf))++;
 
-	if ((!XDR_PUTLONG(xdrs, (long *) &proc)) ||
+	if ((!XDR_PUTINT32(xdrs, &proc)) ||
 			(!AUTH_MARSHALL(cl->cl_auth, xdrs)) || (!(*xargs) (xdrs, argsp)))
-    {
-        cu->cu_error.re_status = RPC_CANTENCODEARGS;
+	{
+		cu->cu_error.re_status = RPC_CANTENCODEARGS;
+		nfs_unlock();
 		return RPC_CANTENCODEARGS;
-    }
+	}
 	outlen = (int) XDR_GETPOS(xdrs);
 
 send_again:
-    ret = sendto(cu->cu_sock, cu->cu_outbuf, outlen, 0,
+	ret = sendto(cu->cu_sock, cu->cu_outbuf, outlen, 0,
 			   (struct sockaddr *) &(cu->cu_raddr), cu->cu_rlen);
 	if (ret != outlen)
 	{
 		cu->cu_error.re_errno = errno;
-        cu->cu_error.re_status = RPC_CANTSEND;
-        
+		cu->cu_error.re_status = RPC_CANTSEND;
+		nfs_unlock();
 		return RPC_CANTSEND;
 	}
 
@@ -277,10 +280,12 @@ send_again:
 
 	if (inlen < 4)
 	{
+		if (retry--)
+			goto send_again;
 		rt_kprintf("recv error, len %d\n", inlen);
 		cu->cu_error.re_errno = errno;
 		cu->cu_error.re_status = RPC_CANTRECV;
-		
+		nfs_unlock();
 		return RPC_CANTRECV;
 	}
 
@@ -329,7 +334,7 @@ send_again:
 	{
 		cu->cu_error.re_status = RPC_CANTDECODERES;
 	}
-
+	nfs_unlock();
 	return (enum clnt_stat)(cu->cu_error.re_status);
 }
 
@@ -361,14 +366,11 @@ static bool_t clntudp_control(CLIENT *cl, int request, char *info)
 	{
 	case CLSET_TIMEOUT:
 		{
-		int mtimeout;
-
 		cu->cu_total = *(struct timeval *) info;
-		mtimeout = ((cu->cu_total.tv_sec * 1000) + ((cu->cu_total.tv_usec + 500)/1000));
 
 		/* set socket option, note: lwip only support msecond timeout */
 		setsockopt(cu->cu_sock, SOL_SOCKET, SO_RCVTIMEO, 
-			&mtimeout, sizeof(mtimeout));
+			&cu->cu_total, sizeof(cu->cu_total));
 		}
 		break;
 	case CLGET_TIMEOUT:

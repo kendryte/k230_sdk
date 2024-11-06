@@ -19,6 +19,7 @@ CONFIG_LINUX_DTB="k230_canmv"
 # CONFIG_REMOTE_TEST_PLATFORM is not set
 CONFIG_GEN_IMG_SCRIPT="board/common/gen_image_script/gen_image.sh"
 CONFIG_RTT_CONSOLE_ID=3
+CONFIG_CANAAN_SITE_IMG_NAME_PREFIX="CanMV-K230"
 
 #
 # toolchain configurations

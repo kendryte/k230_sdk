@@ -594,7 +594,7 @@ pid_t lwp_name2pid(const char *name)
         {
             process_name = strrchr(lwp->cmd, '/');
             process_name = process_name? process_name + 1: lwp->cmd;
-            if (!rt_strncmp(name, process_name, RT_NAME_MAX))
+            if (!rt_strncmp(name, process_name, sizeof(lwp->cmd)))
             {
                 main_thread = rt_list_entry(lwp->t_grp.prev, struct rt_thread, sibling);
                 if (!(main_thread->stat & RT_THREAD_CLOSE))
@@ -805,7 +805,7 @@ long list_process(void)
             for (node = list->next; node != list; node = node->next)
             {
                 thread = rt_list_entry(node, struct rt_thread, sibling);
-                rt_kprintf("%4d %-*.*s ", lwp_to_pid(lwp), maxlen, RT_NAME_MAX, lwp->cmd);
+                rt_kprintf("%4d %-*.*s ", lwp_to_pid(lwp), maxlen, sizeof(lwp->cmd), lwp->cmd);
                 print_thread_info(thread, maxlen);
             }
         }

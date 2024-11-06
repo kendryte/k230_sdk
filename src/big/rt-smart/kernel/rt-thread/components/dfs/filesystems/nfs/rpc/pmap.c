@@ -16,10 +16,10 @@ static struct timeval tottimeout = { 60, 0 };
 
 bool_t xdr_pmap(XDR *xdrs, struct pmap *regs)
 {
-	if (xdr_u_long(xdrs, &regs->pm_prog) &&
-		xdr_u_long(xdrs, &regs->pm_vers) &&
-		xdr_u_long(xdrs, &regs->pm_prot))
-			return (xdr_u_long(xdrs, &regs->pm_port));
+	if (xdr_uint32_t(xdrs, &regs->pm_prog) &&
+		xdr_uint32_t(xdrs, &regs->pm_vers) &&
+		xdr_uint32_t(xdrs, &regs->pm_prot))
+			return (xdr_uint32_t(xdrs, &regs->pm_port));
 	return (FALSE);
 }
 
@@ -28,14 +28,14 @@ bool_t xdr_pmap(XDR *xdrs, struct pmap *regs)
  * Calls the pmap service remotely to do the lookup.
  * Returns 0 if no map exists.
  */
-unsigned short pmap_getport(struct sockaddr_in *address, unsigned long program, unsigned long version, unsigned int protocol)
+uint16_t pmap_getport(struct sockaddr_in *address, uint32_t program, uint32_t version, uint32_t protocol)
 {
-	unsigned short port = 0;
+	uint16_t port = 0;
 	int socket = -1;
 	register CLIENT *client = RT_NULL;
 	struct pmap parms;
 
-	address->sin_port = htons((unsigned short)PMAPPORT);
+	address->sin_port = htons((uint16_t)PMAPPORT);
 	if (protocol == IPPROTO_UDP)
 	  client = clntudp_bufcreate(address, PMAPPROG, PMAPVERS, timeout,
 								  &socket, RPCSMALLMSGSIZE,

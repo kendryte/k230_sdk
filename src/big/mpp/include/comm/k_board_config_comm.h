@@ -338,17 +338,17 @@ extern "C" {
 #define GC2053_CSI0_IIC "i2c4"
 #define VICAP_GC2053_RST_GPIO                           (21)
 
-#define GC2093_CSI0_IIC "i2c3"
+#define GC2093_CSI0_IIC "i2c0"
 #define GC2093_SLAVE_ADDR   0x7e
-#define VICAP_GC2093_RST_GPIO                           (0)
+#define VICAP_GC2093_RST_GPIO                           (10)
 
-#define GC2093_CSI1_IIC         "i2c3"
+#define GC2093_CSI1_IIC         "i2c1"
 #define GC2093_CSI1_SLAVE_ADDR   0x7e
-#define GC2093_CSI1_RST_GPIO                            (23)
+#define GC2093_CSI1_RST_GPIO                            (12)
 
 #define GC2093_CSI2_IIC         "i2c4"
 #define GC2093_CSI2_SLAVE_ADDR   0x37 //0x3f
-#define GC2093_CSI2_RST_GPIO                            (62)
+#define GC2093_CSI2_RST_GPIO                            (21)
 
 #define BOARD_CSI0_CONN                          CONNECTOR_EXTERNAL_BOARD_SENOSR
 #define BOARD_CSI1_CONN                          CONNECTOR_EXTERNAL_BOARD_SENOSR

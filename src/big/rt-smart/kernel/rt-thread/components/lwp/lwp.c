@@ -967,7 +967,7 @@ RT_WEAK int lwp_load(const char *filename, struct rt_lwp *lwp, uint8_t *load_add
     RT_ASSERT(lwp != RT_NULL);
 
     /* copy file name to process name */
-    rt_strncpy(lwp->cmd, filename, RT_NAME_MAX);
+    rt_strncpy(lwp->cmd, filename, sizeof(lwp->cmd));
 
     if (load_addr != RT_NULL)
     {

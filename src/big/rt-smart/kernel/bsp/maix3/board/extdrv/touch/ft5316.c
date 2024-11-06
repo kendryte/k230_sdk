@@ -51,8 +51,6 @@ struct ft5316_dev {
 static int ft5316_read_reg(struct ft5316_dev *dev, rt_uint8_t addr,
         rt_uint8_t *buffer, rt_size_t length)
 {
-    int ret;
-    // todo fix
     struct rt_i2c_msg msgs[2] =
     {
         {
@@ -64,17 +62,12 @@ static int ft5316_read_reg(struct ft5316_dev *dev, rt_uint8_t addr,
         {
             .addr   = dev->i2c_addr,
             .flags  = RT_I2C_RD,
-            .len    = 1,
+            .buf    = buffer,
+            .len    = length,
         },
     };
 
-    for (int i = 0; i < length; i++) {
-        msgs[1].buf    = buffer + i,
-        ret = rt_i2c_transfer(dev->bus, msgs, 2);
-        addr++;
-    }
-
-    return ret;
+    return rt_i2c_transfer(dev->bus, msgs, 2);
 }
 
 static rt_size_t ft5316_read_point(struct rt_touch_device *touch, void *buf, rt_size_t read_num)
@@ -184,4 +177,4 @@ int ft5316_init(void)
 
     return ret;
 }
-INIT_DEVICE_EXPORT(ft5316_init);
+INIT_COMPONENT_EXPORT(ft5316_init);

@@ -30,7 +30,8 @@
 #include "mapi_ai_api.h"
 #include "mapi_ai_comm.h"
 
-
+extern k_s32  ai_aec_datafifo_init(k_handle ai_hdl,k_u64* phy_addr);
+extern k_s32  ai_aec_datafifo_deinit(k_handle ai_hdl);
 k_s32 msg_ai_init(k_s32 id, k_ipcmsg_message_t *msg)
 {
     k_s32 ret;
@@ -304,6 +305,84 @@ k_s32 msg_ai_set_volume(k_s32 id, k_ipcmsg_message_t *msg)
     return K_SUCCESS;
 }
 
+k_s32 msg_ai_set_vqe_attr(k_s32 id, k_ipcmsg_message_t *msg)
+{
+    k_s32 ret;
+    k_ipcmsg_message_t *resp_msg;
+    k_msg_ai_vqe_attr * vqe_attr = msg->pBody;
+
+    ret = kd_mapi_ai_set_vqe_attr(vqe_attr->ai_hdl,vqe_attr->vqe_enable);
+    if(ret != K_SUCCESS) {
+        mapi_ai_error_trace("%s failed:0x%x\n",__FUNCTION__ ,ret);
+    }
+
+    resp_msg = kd_ipcmsg_create_resp_message(msg, ret, NULL,0);
+    if(resp_msg == NULL) {
+        mapi_ai_error_trace("kd_ipcmsg_create_resp_message failed\n");
+        return K_FAILED;
+    }
+
+    ret = kd_ipcmsg_send_async(id, resp_msg, NULL);
+    if(ret != K_SUCCESS) {
+        mapi_ai_error_trace(" kd_ipcmsg_send_async failed:%x\n", ret);
+    }
+    kd_ipcmsg_destroy_message(resp_msg);
+
+    return K_SUCCESS;
+}
+
+k_s32 msg_ai_get_vqe_attr(k_s32 id, k_ipcmsg_message_t *msg)
+{
+    k_s32 ret;
+    k_ipcmsg_message_t *resp_msg;
+    k_msg_ai_vqe_attr * vqe_attr = msg->pBody;
+
+    ret = kd_mapi_ai_get_vqe_attr(vqe_attr->ai_hdl,&vqe_attr->vqe_enable);
+    if(ret != K_SUCCESS) {
+        mapi_ai_error_trace("%s failed:0x%x\n",__FUNCTION__ ,ret);
+    }
+
+    resp_msg = kd_ipcmsg_create_resp_message(msg, ret, vqe_attr, sizeof(k_msg_ai_vqe_attr));
+    if(resp_msg == NULL) {
+        mapi_ai_error_trace("kd_ipcmsg_create_resp_message failed\n");
+        return K_FAILED;
+    }
+
+    ret = kd_ipcmsg_send_async(id, resp_msg, NULL);
+    if(ret != K_SUCCESS) {
+        mapi_ai_error_trace(" kd_ipcmsg_send_async failed:%x\n", ret);
+    }
+    kd_ipcmsg_destroy_message(resp_msg);
+
+    return K_SUCCESS;
+}
+
+k_s32 msg_ai_send_far_echo_frame(k_s32 id, k_ipcmsg_message_t *msg)
+{
+    k_s32 ret;
+    k_ipcmsg_message_t *resp_msg;
+    k_msg_ai_frame_t * far_echo_frame = msg->pBody;
+
+    ret = kd_mapi_ai_send_far_echo_frame(far_echo_frame->ai_hdl,&far_echo_frame->audio_frame,far_echo_frame->milli_sec);
+    if(ret != K_SUCCESS) {
+        mapi_ai_error_trace("%s failed:0x%x\n",__FUNCTION__ ,ret);
+    }
+
+    resp_msg = kd_ipcmsg_create_resp_message(msg, ret, NULL,0);
+    if(resp_msg == NULL) {
+        mapi_ai_error_trace("kd_ipcmsg_create_resp_message failed\n");
+        return K_FAILED;
+    }
+
+    ret = kd_ipcmsg_send_async(id, resp_msg, NULL);
+    if(ret != K_SUCCESS) {
+        mapi_ai_error_trace(" kd_ipcmsg_send_async failed:%x\n", ret);
+    }
+    kd_ipcmsg_destroy_message(resp_msg);
+
+    return K_SUCCESS;
+}
+
 k_s32 msg_acodec_reset(k_s32 id, k_ipcmsg_message_t *msg)
 {
     k_s32 ret;
@@ -330,6 +409,61 @@ k_s32 msg_acodec_reset(k_s32 id, k_ipcmsg_message_t *msg)
     return K_SUCCESS;
 }
 
+k_s32 msg_ai_aec_init_datafifo(k_s32 id, k_ipcmsg_message_t *msg)
+{
+    k_s32 ret;
+    k_ipcmsg_message_t *resp_msg;
+    k_msg_ai_aec_datafifo_t* ai_aec_datafifo = msg->pBody;
+
+    k_u64 phy_addr;
+    ret = ai_aec_datafifo_init(ai_aec_datafifo->ai_hdl,&phy_addr);
+    if(ret != K_SUCCESS) {
+        mapi_ai_error_trace("ai_aec_datafifo_init failed:%x\n", ret);
+    }
+
+    ai_aec_datafifo->phyAddr = phy_addr;
+
+    resp_msg = kd_ipcmsg_create_resp_message(msg, ret, msg->pBody, sizeof(k_msg_ai_aec_datafifo_t));
+    if(resp_msg == NULL) {
+        mapi_ai_error_trace("kd_ipcmsg_create_resp_message failed\n");
+        return K_FAILED;
+    }
+
+    ret = kd_ipcmsg_send_async(id, resp_msg, NULL);
+    if(ret != K_SUCCESS) {
+        mapi_ai_error_trace(" kd_ipcmsg_send_async failed:%x\n", ret);
+    }
+    kd_ipcmsg_destroy_message(resp_msg);
+
+    return K_SUCCESS;
+}
+
+k_s32 msg_ai_aec_deinit_datafifo(k_s32 id, k_ipcmsg_message_t *msg)
+{
+    k_s32 ret;
+    k_ipcmsg_message_t *resp_msg;
+    k_msg_ai_aec_datafifo_t* ai_aec_datafifo = msg->pBody;
+
+    k_u64 phy_addr;
+    ret = ai_aec_datafifo_deinit(ai_aec_datafifo->ai_hdl);
+    if(ret != K_SUCCESS) {
+        mapi_ai_error_trace("ai_aec_datafifo_deinit failed:%x\n", ret);
+    }
+
+    resp_msg = kd_ipcmsg_create_resp_message(msg, ret, NULL,0);
+    if(resp_msg == NULL) {
+        mapi_ai_error_trace("kd_ipcmsg_create_resp_message failed\n");
+        return K_FAILED;
+    }
+
+    ret = kd_ipcmsg_send_async(id, resp_msg, NULL);
+    if(ret != K_SUCCESS) {
+        mapi_ai_error_trace(" kd_ipcmsg_send_async failed:%x\n", ret);
+    }
+    kd_ipcmsg_destroy_message(resp_msg);
+
+    return K_SUCCESS;
+}
 
 static msg_module_cmd_t g_module_cmd_table[] = {
     {MSG_CMD_MEDIA_AI_INIT,      msg_ai_init},
@@ -347,6 +481,11 @@ static msg_module_cmd_t g_module_cmd_table[] = {
     {MSG_CMD_MEDIA_AI_BIND_AO,msg_ai_bind_ao},
     {MSG_CMD_MEDIA_AI_UNBIND_AO,msg_ai_unbind_ao},
     {MSG_CMD_MEDIA_ACODEC_RESET,msg_acodec_reset},
+    {MSG_CMD_MEDIA_AI_SET_VEQ_ATTR,msg_ai_set_vqe_attr},
+    {MSG_CMD_MEDIA_AI_GET_VEQ_ATTR,msg_ai_get_vqe_attr},
+    {MSG_CMD_MEDIA_AI_SEND_FAR_ECHO_FRAME,msg_ai_send_far_echo_frame},
+    {MSG_CMD_MEDIA_AI_AEC_INIT_DATAFIFO,      msg_ai_aec_init_datafifo},
+    {MSG_CMD_MEDIA_AI_AEC_DEINIT_DATAFIFO,      msg_ai_aec_deinit_datafifo},
 };
 
 msg_server_module_t g_module_ai = {

@@ -135,10 +135,13 @@ typedef struct
     k_bool ch_done;
 } venc_conf_t;
 
-char out_filename[50] = {"\0"};
-FILE *output_file = NULL;
-VENC_SAMPLE_STATUS g_venc_sample_status = VENC_SAMPLE_STATUS_IDLE;
-venc_conf_t g_venc_conf;
+static char out_filename[50] = {"\0"};
+static FILE *output_file = NULL;
+static VENC_SAMPLE_STATUS g_venc_sample_status = VENC_SAMPLE_STATUS_IDLE;
+static venc_conf_t g_venc_conf;
+static k_u32 intbuf_size=0;
+static k_u32 enc_width=1280;
+static k_u32 enc_height=720;
 
 static inline void CHECK_RET(k_s32 ret, const char *func, const int line)
 {
@@ -197,6 +200,9 @@ static void sample_vicap_config(k_u32 ch, k_u32 width, k_u32 height, k_vicap_sen
     dev_attr.acq_win.width = sensor_info.width;
     dev_attr.acq_win.height = sensor_info.height;
     dev_attr.mode = VICAP_WORK_ONLINE_MODE;
+
+    dev_attr.pipe_ctrl.bits.ae_enable = 1;
+    dev_attr.pipe_ctrl.bits.awb_enable = 1;
 
     memcpy(&dev_attr.sensor_info, &sensor_info, sizeof(k_vicap_sensor_info));
 
@@ -555,8 +561,8 @@ k_s32 sample_venc_h265(k_vicap_sensor_type sensor_type)
     int ch = 0;
     k_u32 output_frames = 10;
     k_u32 bitrate   = 4000;   //kbps
-    int width       = 1280;
-    int height      = 720;
+    int width       = enc_width;
+    int height      = enc_height;
     k_venc_rc_mode rc_mode  = K_VENC_RC_MODE_CBR;
     k_payload_type type     = K_PT_H265;
     k_venc_profile profile  = VENC_PROFILE_H265_MAIN;
@@ -583,6 +589,12 @@ k_s32 sample_venc_h265(k_vicap_sensor_type sensor_type)
     ret = kd_mpi_venc_create_chn(ch, &attr);
     CHECK_RET(ret, __func__, __LINE__);
     g_venc_sample_status = VENC_SAMPLE_STATUS_INIT;
+
+    if (intbuf_size > 0)
+    {
+        kd_mpi_venc_set_intbuf_size(ch, intbuf_size);
+        printf("%s>intbuf_size %d\n", __func__, intbuf_size);
+    }
 
     ret = kd_mpi_venc_start_chn(ch);
     CHECK_RET(ret, __func__, __LINE__);
@@ -614,8 +626,8 @@ k_s32 sample_venc_jpeg(k_vicap_sensor_type sensor_type)
     int chnum = 1;
     int ch = 0;
     k_u32 output_frames = 10;
-    int width       = 1280;
-    int height      = 720;
+    int width       = enc_width;
+    int height      = enc_height;
     k_venc_rc_mode rc_mode  = K_VENC_RC_MODE_MJPEG_FIXQP;
     k_payload_type type     = K_PT_JPEG;
     k_u32 q_factor          = 45;
@@ -641,6 +653,12 @@ k_s32 sample_venc_jpeg(k_vicap_sensor_type sensor_type)
     ret = kd_mpi_venc_create_chn(ch, &attr);
     CHECK_RET(ret, __func__, __LINE__);
     g_venc_sample_status = VENC_SAMPLE_STATUS_INIT;
+
+    if (intbuf_size > 0)
+    {
+        kd_mpi_venc_set_intbuf_size(ch, intbuf_size);
+        printf("%s>intbuf_size %d\n", __func__, intbuf_size);
+    }
 
     ret = kd_mpi_venc_start_chn(ch);
     CHECK_RET(ret, __func__, __LINE__);
@@ -673,8 +691,8 @@ k_s32 sample_venc_osd_h264(k_vicap_sensor_type sensor_type)
     int ch = 0;
     k_u32 output_frames = 10;
     k_u32 bitrate   = 4000;   //kbps
-    int width       = 1280;
-    int height      = 720;
+    int width       = enc_width;
+    int height      = enc_height;
     k_venc_rc_mode rc_mode  = K_VENC_RC_MODE_CBR;
     k_payload_type type     = K_PT_H264;
     k_venc_profile profile  = VENC_PROFILE_H264_HIGH;
@@ -719,6 +737,12 @@ k_s32 sample_venc_osd_h264(k_vicap_sensor_type sensor_type)
     ret = kd_mpi_venc_create_chn(ch, &attr);
     CHECK_RET(ret, __func__, __LINE__);
     g_venc_sample_status = VENC_SAMPLE_STATUS_INIT;
+
+    if (intbuf_size > 0)
+    {
+        kd_mpi_venc_set_intbuf_size(ch, intbuf_size);
+        printf("%s>intbuf_size %d\n", __func__, intbuf_size);
+    }
 
     ret = kd_mpi_venc_start_chn(ch);
     CHECK_RET(ret, __func__, __LINE__);
@@ -776,8 +800,8 @@ k_s32 sample_venc_osd_border_h265(k_vicap_sensor_type sensor_type)
     int ch = 0;
     k_u32 output_frames = 10;
     k_u32 bitrate   = 4000;   //kbps
-    int width       = 1280;
-    int height      = 720;
+    int width       = enc_width;
+    int height      = enc_height;
 
     k_venc_rc_mode rc_mode  = K_VENC_RC_MODE_CBR;
     k_payload_type type     = K_PT_H265;
@@ -831,6 +855,12 @@ k_s32 sample_venc_osd_border_h265(k_vicap_sensor_type sensor_type)
     ret = kd_mpi_venc_create_chn(ch, &attr);
     CHECK_RET(ret, __func__, __LINE__);
     g_venc_sample_status = VENC_SAMPLE_STATUS_INIT;
+
+    if (intbuf_size > 0)
+    {
+        kd_mpi_venc_set_intbuf_size(ch, intbuf_size);
+        printf("%s>intbuf_size %d\n", __func__, intbuf_size);
+    }
 
     ret = kd_mpi_venc_start_chn(ch);
     CHECK_RET(ret, __func__, __LINE__);
@@ -943,6 +973,18 @@ int main(int argc, char *argv[])
                 venc_debug("Cannot open output file\n");
             }
             printf("out_filename: %s\n", out_filename);
+        }
+        else if(strcmp(argv[i], "-buf") == 0)
+        {
+            intbuf_size = atoi(argv[i + 1]);
+        }
+        else if(strcmp(argv[i], "-w") == 0)
+        {
+            enc_width = atoi(argv[i + 1]);
+        }
+        else if(strcmp(argv[i], "-h") == 0)
+        {
+            enc_height = atoi(argv[i + 1]);
         }
     }
 

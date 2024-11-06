@@ -50,7 +50,6 @@ static struct rt_thread idle[_CPUS_NR];
 ALIGN(RT_ALIGN_SIZE)
 static rt_uint8_t rt_thread_stack[_CPUS_NR][IDLE_THREAD_STACK_SIZE];
 
-#ifdef RT_USING_SMP
 #ifndef SYSTEM_THREAD_STACK_SIZE
 #define SYSTEM_THREAD_STACK_SIZE IDLE_THREAD_STACK_SIZE
 #endif
@@ -58,7 +57,6 @@ static struct rt_thread rt_system_thread;
 ALIGN(RT_ALIGN_SIZE)
 static rt_uint8_t rt_system_stack[SYSTEM_THREAD_STACK_SIZE];
 static struct rt_semaphore system_sem;
-#endif
 
 #ifdef RT_USING_IDLE_HOOK
 #ifndef RT_IDLE_HOOK_LIST_SIZE
@@ -159,9 +157,7 @@ rt_inline int _has_defunct_thread(void)
 void rt_thread_defunct_enqueue(rt_thread_t thread)
 {
     rt_list_insert_after(&_rt_thread_defunct, &thread->tlist);
-#ifdef RT_USING_SMP
     rt_sem_release(&system_sem);
-#endif
 }
 
 /* dequeue a thread from defunct queue
@@ -293,7 +289,6 @@ static void rt_thread_idle_entry(void *parameter)
 #endif
 
 #ifndef RT_USING_SMP
-        rt_defunct_execute();
 #endif
 
 #ifdef RT_USING_PM
@@ -302,7 +297,6 @@ static void rt_thread_idle_entry(void *parameter)
     }
 }
 
-#ifdef RT_USING_SMP
 static void rt_thread_system_entry(void *parameter)
 {
     while (1)
@@ -311,7 +305,6 @@ static void rt_thread_system_entry(void *parameter)
         rt_defunct_execute();
     }
 }
-#endif
 
 /**
  * @ingroup SystemInit
@@ -343,7 +336,6 @@ void rt_thread_idle_init(void)
         rt_thread_startup(&idle[i]);
     }
 
-#ifdef RT_USING_SMP
     RT_ASSERT(RT_THREAD_PRIORITY_MAX > 2);
 
     rt_sem_init(&system_sem, "defunct", 1, RT_IPC_FLAG_FIFO);
@@ -359,7 +351,6 @@ void rt_thread_idle_init(void)
             32);
     /* startup */
     rt_thread_startup(&rt_system_thread);
-#endif
 }
 
 /**
