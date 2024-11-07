@@ -248,7 +248,7 @@ void pi_ddr_init_2133(void);
 void sip_ddr_init_1600(void);
 void sip_ddr_init_2667(void);
 void canmv_01studio_ddr_init_2133(void);
-
+void canmv_dongshanpi_ddr_init_1866(void);
 __weak int ddr_init_training(void)
 {
 	#if defined(CONFIG_TARGET_K230_FPGA)
@@ -291,6 +291,8 @@ __weak int ddr_init_training(void)
 	#elif defined(CONFIG_SIPLP4_2667)
 		change_pll_2660();
 		sip_ddr_init_2667();
+	#elif defined(CONFIG_CANMV_DONGSHANPI_LPDDR3_2133)
+                canmv_dongshanpi_ddr_init_2133();
 	#endif
 
 	return 0;
