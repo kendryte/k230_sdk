@@ -732,6 +732,7 @@ static int usb_get_string(struct usb_device *dev, unsigned short langid,
 	int result;
 
 	for (i = 0; i < 3; ++i) {
+		mdelay(1);
 		/* some devices are flaky */
 		result = usb_control_msg(dev, usb_rcvctrlpipe(dev, 0),
 			USB_REQ_GET_DESCRIPTOR, USB_DIR_IN,
@@ -1098,6 +1099,7 @@ int usb_select_config(struct usb_device *dev)
 
 	/* only support for one config for now */
 	err = usb_get_configuration_len(dev, 0);
+	mdelay(1);
 	if (err >= 0) {
 		tmpbuf = (unsigned char *)malloc_cache_aligned(err);
 		if (!tmpbuf)
@@ -1115,6 +1117,7 @@ int usb_select_config(struct usb_device *dev)
 	usb_parse_config(dev, tmpbuf, 0);
 	free(tmpbuf);
 	usb_set_maxpacket(dev);
+	mdelay(1);
 	/*
 	 * we set the default configuration here
 	 * This seems premature. If the driver wants a different configuration

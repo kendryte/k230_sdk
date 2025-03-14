@@ -393,7 +393,7 @@ linux-config:
 linux-build:
 	cd $(LINUX_SRC_PATH); \
 	make -j16 O=$(LINUX_BUILD_DIR) CROSS_COMPILE=$(LINUX_EXEC_PATH)/$(LINUX_CC_PREFIX) ARCH=riscv || exit $?; \
-	make O=$(LINUX_BUILD_DIR) modules_install INSTALL_MOD_PATH=$(LINUX_BUILD_DIR)/rootfs/ CROSS_COMPILE=$(LINUX_EXEC_PATH)/$(LINUX_CC_PREFIX) ARCH=riscv || exit $?; \
+	make O=$(LINUX_BUILD_DIR) modules_install  INSTALL_MOD_STRIP=1 INSTALL_MOD_PATH=$(LINUX_BUILD_DIR)/rootfs/ CROSS_COMPILE=$(LINUX_EXEC_PATH)/$(LINUX_CC_PREFIX) ARCH=riscv || exit $?; \
 	cd -
 
 .PHONY: linux-menuconfig

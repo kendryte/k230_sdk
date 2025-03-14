@@ -55,7 +55,7 @@
 
 extern k_vo_display_resolution hx8399[20];
 
-#define VICAP_OUTPUT_BUF_NUM 3//3
+#define VICAP_OUTPUT_BUF_NUM 5//3
 #define VICAP_INPUT_BUF_NUM 3
 #define GDMA_BUF_NUM 3
 
@@ -297,7 +297,7 @@ static k_s32 sample_vicap_vb_init(vicap_device_obj *dev_obj)
                 config.comm_pool[k].blk_size = VICAP_ALIGN_UP((out_width * out_height * 3 / 2), VICAP_ALIGN_1K);
                 break;
             case PIXEL_FORMAT_RGB_888:
-            case PIXEL_FORMAT_BGR_888_PLANAR:
+            case PIXEL_FORMAT_RGB_888_PLANAR:
                 config.comm_pool[k].blk_size = VICAP_ALIGN_UP((out_width * out_height * 3), VICAP_ALIGN_1K);
                 break;
             case PIXEL_FORMAT_RGB_BAYER_10BPP:
@@ -710,7 +710,7 @@ chn_parse:
                                 device_obj[cur_dev].out_format[cur_chn] = PIXEL_FORMAT_RGB_888;
                                 break;
                             case 2://rgb888p
-                                device_obj[cur_dev].out_format[cur_chn] = PIXEL_FORMAT_BGR_888_PLANAR;
+                                device_obj[cur_dev].out_format[cur_chn] = PIXEL_FORMAT_RGB_888_PLANAR;
                                 break;
                             case 3://raw
                                 device_obj[cur_dev].out_format[cur_chn] = PIXEL_FORMAT_RGB_BAYER_10BPP;
@@ -767,324 +767,12 @@ chn_parse:
                         return -1;
                     }
                     k_u16 sensor = atoi(argv[i + 1]);
-                    switch (sensor) {
-                        case 0:
-                        {
-                            device_obj[cur_dev].sensor_type = OV_OV9732_MIPI_1280X720_30FPS_10BIT_LINEAR;
-                            break;
-                        }
-                        case 1:
-                        {
-                            device_obj[cur_dev].sensor_type = OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_IR;
-                            break;
-                        }
-                        case 2:
-                        {
-                            device_obj[cur_dev].sensor_type = OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_SPECKLE;
-                            break;
-                        }
-                        case 3:
-                        {
-                            device_obj[cur_dev].sensor_type = IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_LINEAR;
-                            break;
-                        }
-                        case 4:
-                        {
-                            device_obj[cur_dev].sensor_type = IMX335_MIPI_2LANE_RAW12_2592X1944_30FPS_LINEAR;
-                            break;
-                        }
-                        case 5:
-                        {
-                            device_obj[cur_dev].sensor_type = IMX335_MIPI_4LANE_RAW12_2592X1944_30FPS_LINEAR;
-                            break;
-                        }
-                        case 6:
-                        {
-                            device_obj[cur_dev].sensor_type = IMX335_MIPI_2LANE_RAW12_1920X1080_30FPS_MCLK_7425_LINEAR;
-                            // kd_mpi_vicap_set_mclk(VICAP_MCLK0, VICAP_PLL1_CLK_DIV4, 8, 1);
-                            break;
-                        }
-                        case 7:
-                        {
-                            device_obj[cur_dev].sensor_type = IMX335_MIPI_2LANE_RAW12_2592X1944_30FPS_MCLK_7425_LINEAR;
-                            // kd_mpi_vicap_set_mclk(VICAP_MCLK0, VICAP_PLL1_CLK_DIV4, 8, 1);
-                            break;
-                        }
-                        case 8:
-                        {
-                            device_obj[cur_dev].sensor_type = IMX335_MIPI_4LANE_RAW12_2592X1944_30FPS_MCLK_7425_LINEAR;
-                            // kd_mpi_vicap_set_mclk(VICAP_MCLK0, VICAP_PLL1_CLK_DIV4, 8, 1);
-                            break;
-                        }
-                        case 9:
-                        {
-                            device_obj[cur_dev].sensor_type = OV_OV9286_MIPI_1280X720_30FPS_10BIT_MCLK_25M_LINEAR_SPECKLE;
-                            // kd_mpi_vicap_set_mclk(VICAP_MCLK0, VICAP_PLL0_CLK_DIV4, 32, 1);
-                            break;
-                        }
-                        case 10:
-                        {
-                            device_obj[cur_dev].sensor_type =  OV_OV9732_MIPI_1280X720_30FPS_10BIT_MCLK_16M_LINEAR ;
-                            // kd_mpi_vicap_set_mclk(VICAP_MCLK1, VICAP_PLL0_CLK_DIV4, 25, 1);
-                            break;
-                        }
-                        case 11:
-                        {
-                            device_obj[cur_dev].sensor_type = OV_OV9286_MIPI_1280X720_30FPS_10BIT_MCLK_25M_LINEAR_IR;
-                            // kd_mpi_vicap_set_mclk(VICAP_MCLK0, VICAP_PLL0_CLK_DIV4, 32, 1);
-                            break;
-                        }
-                        case 12:
-                        {
-                            device_obj[cur_dev].sensor_type = SC_SC035HGS_MIPI_1LANE_RAW10_640X480_120FPS_LINEAR;
-                            break;
-                        }
-                        case 13:
-                        {
-                            device_obj[cur_dev].sensor_type = SC_SC035HGS_MIPI_1LANE_RAW10_640X480_60FPS_LINEAR;
-                            break;
-                        }
-                        case 14:
-                        {
-                            device_obj[cur_dev].sensor_type = SC_SC035HGS_MIPI_1LANE_RAW10_640X480_30FPS_LINEAR;
-                            break;
-                        }
-                        case 15:
-                        {
-                            device_obj[cur_dev].sensor_type = OV_OV9286_MIPI_1280X720_60FPS_10BIT_LINEAR_IR;
-                            break;
-                        }
-                        case 16:
-                        {
-                            device_obj[cur_dev].sensor_type = OV_OV9286_MIPI_1280X720_60FPS_10BIT_LINEAR_SPECKLE;
-                            break;
-                        }
-                        case 17:
-                        {
-                            device_obj[cur_dev].sensor_type = IMX335_MIPI_4LANE_RAW10_2XDOL;
-                            break;
-                        }
-                        case 18:
-                        {
-                            device_obj[cur_dev].sensor_type = IMX335_MIPI_4LANE_RAW10_3XDOL;
-                            break;
-                        }
-                        case 19:
-                        {
-                            device_obj[cur_dev].sensor_type = OV_OV5647_MIPI_1920X1080_30FPS_10BIT_LINEAR;
-                            break;
-                        }
-                        case 20:
-                        {
-                            device_obj[cur_dev].sensor_type = OV_OV5647_MIPI_2592x1944_10FPS_10BIT_LINEAR;
-                            break;
-                        }
-                        case 21:
-                        {
-                            device_obj[cur_dev].sensor_type = OV_OV5647_MIPI_640x480_90FPS_10BIT_LINEAR;
-                            break;
-                        }
-                        case 22:
-                        {
-                            device_obj[cur_dev].sensor_type = SC_SC201CS_MIPI_1LANE_RAW10_1600X1200_30FPS_LINEAR;
-                            // kd_mpi_vicap_set_mclk(VICAP_MCLK0, VICAP_PLL1_CLK_DIV4, 22, 1);         // set mclk1 = 27 M = 2376 / 4 / 22
-                            break;
-                        }
-                        case 23:
-                        {
-                            device_obj[cur_dev].sensor_type = OV_OV5647_MIPI_CSI0_1920X1080_30FPS_10BIT_LINEAR;
-                            // kd_mpi_vicap_set_mclk(VICAP_MCLK0, VICAP_PLL0_CLK_DIV4, 16, 1);
-                            break;
-                        }
-                        case 24:
-                        {
-                            device_obj[cur_dev].sensor_type = OV_OV9286_MIPI_1280X720_30FPS_10BIT_LINEAR_IR_SPECKLE;
-                            break;
-                        }
-                        case 25:
-                        {
-                            salve_en = 1;
-                            device_obj[cur_dev].sensor_type = SC_SC201CS_SLAVE_MODE_MIPI_1LANE_RAW10_1600X1200_30FPS_LINEAR;
-                            // kd_mpi_vicap_set_mclk(VICAP_MCLK0, VICAP_PLL1_CLK_DIV4, 22, 1);         // set mclk0 = 27 M = 2376 / 4 / 22
-                            // kd_mpi_vicap_set_mclk(VICAP_MCLK1, VICAP_PLL1_CLK_DIV4, 22, 1);         // set mclk1 = 27 M = 2376 / 4 / 22
-                            break;
-                        }
-                        case 26:
-                        {
-                            device_obj[cur_dev].sensor_type = OV_OV5647_MIPI_CSI1_1920X1080_30FPS_10BIT_LINEAR;
-                            // kd_mpi_vicap_set_mclk(VICAP_MCLK0, VICAP_PLL0_CLK_DIV4, 16, 1);
-                            break;
-                        }
-                        case 27:
-                        {
-                            device_obj[cur_dev].sensor_type = OV_OV5647_MIPI_CSI2_1920X1080_30FPS_10BIT_LINEAR;
-                            break;
-                        }
-                        case 28:
-                        {
-                            device_obj[cur_dev].sensor_type = OV_OV9286_MIPI_1280X720_30FPS_10BIT_MCLK_25M_LINEAR_SPECKLE_V2;
-                            break;
-                        }
-                        case 29:
-                        {
-                            device_obj[cur_dev].sensor_type = OV_OV9286_MIPI_1280X720_30FPS_10BIT_MCLK_25M_LINEAR_IR_V2;
-                            break;
-                        }
-                        case 30:
-                        {
-                            device_obj[cur_dev].sensor_type = OV_OV9732_MIPI_1280X720_30FPS_10BIT_MCLK_16M_LINEAR_V2;
-                            break;
-                        }
-                        case 31:
-                        {
-                            device_obj[cur_dev].sensor_type = OV_OV5647_MIPI_CSI0_1920X1080_30FPS_10BIT_LINEAR_V2;
-                            break;
-                        }
-                        case 32:
-                        {
-                            device_obj[cur_dev].sensor_type = OV_OV5647_MIPI_CSI1_1920X1080_30FPS_10BIT_LINEAR_V2;
-                            break;
-                        }
-                        case 33:
-                        {
-                            device_obj[cur_dev].sensor_type =  OV_OV5647_MIPI_CSI2_1920X1080_30FPS_10BIT_LINEAR_V2;
-                            break;
-                        }
-                        case 34:
-                        {
-                            device_obj[cur_dev].sensor_type =  GC2053_MIPI_CSI0_1920X1080_30FPS_10BIT_LINEAR;
-                            break;
-                        }
-                        case 35:
-                        {
-                            device_obj[cur_dev].sensor_type =  OV_OV5647_MIPI_CSI1_640x480_90FPS_10BIT_LINEAR;
-                            break;
-                        }
-                        case 36:
-                        {
-                            device_obj[cur_dev].sensor_type =  OV_OV5647_MIPI_CSI1_1280X720_60FPS_10BIT_LINEAR;
-                            break;
-                        }
-                        case 37:
-                        {
-                            device_obj[cur_dev].sensor_type =  OV_OV5647_MIPI_CSI1_1280X960_45FPS_10BIT_LINEAR;
-                            break;
-                        }
-                        case 38:
-                        {
-                            device_obj[cur_dev].sensor_type =  OV_OV5647_MIPI_CSI0_1280X720_60FPS_10BIT_LINEAR;
-                            break;
-                        }
-                        case 39:
-                        {
-                            device_obj[cur_dev].sensor_type =  OV_OV5647_MIPI_CSI0_1280X960_45FPS_10BIT_LINEAR;
-                            break;
-                        }
-                        case 40:
-                        {
-                            device_obj[cur_dev].sensor_type =  OV_OV5647_MIPI_CSI2_1280X720_60FPS_10BIT_LINEAR;
-                            break;
-                        }
-                        case 41:
-                        {
-                            device_obj[cur_dev].sensor_type =  OV_OV5647_MIPI_CSI2_1280X960_45FPS_10BIT_LINEAR;
-                            break;
-                        }
-                        case 42:
-                        {
-                            device_obj[cur_dev].sensor_type =  OV_OV5647_MIPI_CSI2_1280X960_45FPS_10BIT_LINEAR;
-                            break;
-                        }
-                         case 43:
-                        {
-                            device_obj[cur_dev].sensor_type =  GC2053_MIPI_CSI2_1920X1080_30FPS_10BIT_LINEAR;
-                            break;
-                        }
-                         case 44:
-                        {
-                            device_obj[cur_dev].sensor_type =  GC2093_MIPI_CSI0_1920X1080_30FPS_10BIT_LINEAR;
-                            break;
-                        }
-                         case 45:
-                        {
-                            device_obj[cur_dev].sensor_type =  GC2093_MIPI_CSI0_1920X1080_60FPS_10BIT_LINEAR;
-                            break;
-                        }
-                         case 46:
-                        {
-                            device_obj[cur_dev].sensor_type =  GC2093_MIPI_CSI2_1920X1080_30FPS_10BIT_LINEAR;
-                            break;
-                        }
-                         case 47:
-                        {
-                            device_obj[cur_dev].sensor_type =  GC2093_MIPI_CSI2_1920X1080_60FPS_10BIT_LINEAR;
-                            break;
-                        }
-                         case 48:
-                        {
-                            device_obj[cur_dev].sensor_type =  GC2093_MIPI_CSI0_1280X960_90FPS_10BIT_LINEAR;
-                            break;
-                        }
-                         case 49:
-                        {
-                            device_obj[cur_dev].sensor_type =  GC2093_MIPI_CSI2_1280X960_90FPS_10BIT_LINEAR;
-                            break;
-                        }
-                        case 50:
-                        {
-                            device_obj[cur_dev].sensor_type =  GC2093_MIPI_CSI0_1280X720_90FPS_10BIT_LINEAR;
-                            break;
-                        }
-                        case 51:
-                        {
-                            device_obj[cur_dev].sensor_type =  GC2093_MIPI_CSI2_1280X720_90FPS_10BIT_LINEAR;
-                            break;
-                        }
-                        case 52:
-                        {
-                            device_obj[cur_dev].sensor_type =  GC2053_MIPI_CSI0_1280X960_50FPS_10BIT_LINEAR;
-                            break;
-                        }
-                        case 53:
-                        {
-                            device_obj[cur_dev].sensor_type =  GC2053_MIPI_CSI0_1280X720_60FPS_10BIT_LINEAR;
-                            break;
-                        }
-                        case 54:
-                        {
-                            device_obj[cur_dev].sensor_type =  GC2053_MIPI_CSI2_1280X960_50FPS_10BIT_LINEAR;
-                            break;
-                        }
-                        case 55:
-                        {
-                            device_obj[cur_dev].sensor_type =  GC2053_MIPI_CSI2_1280X720_60FPS_10BIT_LINEAR;
-                            break;
-                        }
-                        case 56:
-                        {
-                            device_obj[cur_dev].sensor_type =  GC2093_MIPI_CSI1_1920X1080_30FPS_10BIT_LINEAR;
-                            break;
-                        }
-                        case 57:
-                        {
-                            device_obj[cur_dev].sensor_type =  GC2093_MIPI_CSI1_1920X1080_60FPS_10BIT_LINEAR;
-                            break;
-                        }
-                        case 58:
-                        {
-                            device_obj[cur_dev].sensor_type =  GC2093_MIPI_CSI1_1280X720_90FPS_10BIT_LINEAR;
-                            break;
-                        }
-                        case 59:
-                        {
-                            device_obj[cur_dev].sensor_type =  OS08A20_MIPI_CSI0_3840X2160_30FPS_10BIT_LINEAR;
-                            break;
-                        }
-                        default:
-                        {
-                            printf("unsupport sensor type.\n");
-                            return -1;
-                        }
+
+                    device_obj[cur_dev].sensor_type = (k_vicap_sensor_type)sensor;                   
+                    if(sensor >=SENSOR_TYPE_MAX)
+                    {
+                        printf("unsupport sensor type.\n");
+                        return -1;
                     }
                 }
                 else if (strcmp(argv[i], "-itype") == 0)
@@ -1699,7 +1387,7 @@ chn_parse:
                     } else if (dump_info.v_frame.pixel_format == PIXEL_FORMAT_RGB_888) {
                         suffix = "rgb888";
                         data_size = dump_info.v_frame.width * dump_info.v_frame.height * 3;
-                    }  else if (dump_info.v_frame.pixel_format == PIXEL_FORMAT_BGR_888_PLANAR) {
+                    }  else if (dump_info.v_frame.pixel_format == PIXEL_FORMAT_RGB_888_PLANAR) {
                         suffix = "rgb888p";
                         data_size = dump_info.v_frame.width * dump_info.v_frame.height * 3;
                     } else if (dump_info.v_frame.pixel_format == PIXEL_FORMAT_RGB_BAYER_10BPP) {

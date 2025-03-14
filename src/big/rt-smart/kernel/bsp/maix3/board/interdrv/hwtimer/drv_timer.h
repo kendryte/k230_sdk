@@ -75,4 +75,12 @@ typedef struct _kendryte_timer
     volatile uint32_t load_count2[4];
 } __attribute__((packed, aligned(4))) kendryte_timer_t;
 
+#define HWTIMER_CTRL_IRQ_SET 0x10
+
+typedef struct {
+    rt_uint8_t enable;
+    rt_uint8_t signo;
+    void *sigval;
+} hwtimer_irqcfg_t;
+
 #endif

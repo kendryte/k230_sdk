@@ -206,6 +206,56 @@
 			u-boot,dm-pre-reloc;
 		};
 
+		i2c0: i2c@91405000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			clocks = <&def_100mhz>;
+			compatible = "snps,designware-i2c";
+			reg = <0x0 0x91405000 0x0 0x1000>;
+			clock-frequency = <100000>;
+			status = "disabled";
+		};
+
+		i2c1: i2c@91406000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			clocks = <&def_100mhz>;
+			compatible = "snps,designware-i2c";
+			reg = <0x0 0x91406000 0x0 0x1000>;
+			clock-frequency = <400000>;
+			status = "disabled";
+		};
+
+		i2c2: i2c@91407000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			clocks = <&def_100mhz>;
+			compatible = "snps,designware-i2c";
+			reg = <0x0 0x91407000 0x0 0x1000>;
+			clock-frequency = <400000>;
+			status = "disabled";
+		};
+
+		i2c3: i2c@91408000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			clocks = <&def_100mhz>;
+			compatible = "snps,designware-i2c";
+			reg = <0x0 0x91408000 0x0 0x1000>;
+			clock-frequency = <400000>;
+			status = "disabled";
+		};
+
+		i2c4: i2c@91409000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			clocks = <&def_100mhz>;
+			compatible = "snps,designware-i2c";
+			reg = <0x0 0x91409000 0x0 0x1000>;
+			clock-frequency = <400000>;
+			status = "disabled";
+		};
+
 		usbotg0: usb-otg@91500000 {
 			compatible = "snps,dwc2";
 			reg = <0x0 0x91500000 0x0 0x10000>;

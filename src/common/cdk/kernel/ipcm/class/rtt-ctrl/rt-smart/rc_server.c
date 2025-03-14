@@ -90,7 +90,7 @@ int rc_server_init(void)
         return -1;
     }
 
-    rc_thread = rt_thread_create("rc_server_exec", rc_ipc_exec, RT_NULL, 0x1000, 5, 5);
+    rc_thread = rt_thread_create("rc_server_exec", rc_ipc_exec, RT_NULL, 0x4000, 5, 5);
     if (rc_thread == RT_NULL) {
         rc_error("create rc exec thread failed");
         return -1;

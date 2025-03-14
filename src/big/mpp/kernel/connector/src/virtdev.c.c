@@ -94,6 +94,7 @@ static k_s32 virtdev_init(void* ctx, k_connector_info* info)
         resolution->vfront_porch = vtotal - vact - 10;
     }
     connector_set_pixclk(info->pixclk_div);
+    connector_set_cmd_buff_num(info->buff_num);
     virtdev_vo_resolution_init(resolution, info->bg_color, info->intr_line);
 
     return 0;

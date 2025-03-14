@@ -505,14 +505,16 @@ static k_s32 lt9611_power_on(void* ctx, k_s32 on)
 {
     k_s32 ret = 0;
     struct connector_driver_dev* dev = ctx;
-    struct lt9611_dev *lt9611_dev;
+    static struct lt9611_dev *lt9611_dev;
 
     k230_display_rst();
     lt9611_reset(LT9611_RESET_GPIO);
-    lt9611_dev = lt9611_dev_create(LT9611_PORTB, LT9611_SLAVE_ADDR, LT9611_I2C_BUS);
     if (lt9611_dev == RT_NULL) {
-        LOG_E("lt9611_dev_create failed \n");
-        return K_FAILED;
+        lt9611_dev = lt9611_dev_create(LT9611_PORTB, LT9611_SLAVE_ADDR, LT9611_I2C_BUS);
+        if (lt9611_dev == RT_NULL) {
+            LOG_E("lt9611_dev_create failed \n");
+            return K_FAILED;
+        }
     }
     lt9611_set_interface(lt9611_dev);
 
@@ -612,6 +614,8 @@ k_s32 lt9611_init(void *ctx, k_connector_info *info)
     ret |= lt9611_enable_hdmi_out(lt9611_dev);
     if(info->pixclk_div != 0)
         connector_set_pixclk(info->pixclk_div);
+
+    ret |= connector_set_cmd_buff_num(info->buff_num);
     ret |= k230_vo_resolution_init(info->type, &info->resolution, info->bg_color, info->intr_line);
     ret |= k230_set_phy_freq(&info->phy_attr);
     ret |= k230_dsi_resolution_init(info);

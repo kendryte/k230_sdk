@@ -23,6 +23,10 @@
 
 #include "i2c-designware-core.h"
 
+#define IOMUX_BASE_ADDR             (0x91105000U)
+
+static void __iomem *iomux_regs;
+
 static void i2c_dw_configure_fifo_master(struct dw_i2c_dev *dev)
 {
 	/* Configure Tx/Rx FIFO threshold levels */
@@ -695,19 +699,35 @@ EXPORT_SYMBOL_GPL(i2c_dw_configure_master);
 static void i2c_dw_prepare_recovery(struct i2c_adapter *adap)
 {
 	struct dw_i2c_dev *dev = i2c_get_adapdata(adap);
+    struct i2c_bus_recovery_info *bri = adap->bus_recovery_info;
+    int scl_gpio = desc_to_gpio(bri->scl_gpiod);
+    int sda_gpio = desc_to_gpio(bri->sda_gpiod);
 
 	i2c_dw_disable(dev);
 	reset_control_assert(dev->rst);
 	i2c_dw_prepare_clk(dev, false);
+    
+    dev->scl_iomux_back = readl(iomux_regs + scl_gpio*4);
+    dev->sda_iomux_back = readl(iomux_regs + sda_gpio*4);
+
+    writel(dev->scl_iomux_back & ~(0x7<<11), iomux_regs + scl_gpio*4);
+    writel(dev->sda_iomux_back & ~(0x7<<11), iomux_regs + sda_gpio*4);
 }
 
 static void i2c_dw_unprepare_recovery(struct i2c_adapter *adap)
 {
 	struct dw_i2c_dev *dev = i2c_get_adapdata(adap);
+    struct i2c_bus_recovery_info *bri = adap->bus_recovery_info;
+    int scl_gpio = desc_to_gpio(bri->scl_gpiod);
+    int sda_gpio = desc_to_gpio(bri->sda_gpiod);
+    
+    writel(dev->scl_iomux_back, iomux_regs + scl_gpio*4);
+    writel(dev->sda_iomux_back, iomux_regs + sda_gpio*4);
 
 	i2c_dw_prepare_clk(dev, true);
 	reset_control_deassert(dev->rst);
 	i2c_dw_init_master(dev);
+
 }
 
 static int i2c_dw_init_recovery_info(struct dw_i2c_dev *dev)
@@ -726,6 +746,8 @@ static int i2c_dw_init_recovery_info(struct dw_i2c_dev *dev)
 	if (IS_ERR(gpio))
 		return PTR_ERR(gpio);
 	rinfo->sda_gpiod = gpio;
+
+	iomux_regs = ioremap(IOMUX_BASE_ADDR, 0x1000);
 
 	rinfo->recover_bus = i2c_generic_scl_recovery;
 	rinfo->prepare_recovery = i2c_dw_prepare_recovery;

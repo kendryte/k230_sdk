@@ -187,15 +187,15 @@ typedef struct usr_pdma_cfg {
 } usr_pdma_cfg_t;
 
 
-rt_uint32_t k_pdma_interrupt_stat(pdma_reg_t *pdma_reg);
-void k_pdma_int_clear_all(pdma_reg_t *pdma_reg,rt_uint32_t clear);
-int k_pdma_int_clear(pdma_reg_t *pdma_reg,rt_uint8_t ch, rt_uint32_t clear);
+rt_uint32_t k_pdma_interrupt_stat();
+void k_pdma_int_clear_all(rt_uint32_t clear);
+int k_pdma_int_clear(rt_uint8_t ch, rt_uint32_t clear);
 
-int k_pdma_config(pdma_reg_t *pdma_reg,usr_pdma_cfg_t pdma_cfg);
-void k_pdma_start(pdma_reg_t *pdma_reg,rt_uint8_t ch);
-void k_pdma_stop(pdma_reg_t *pdma_reg,rt_uint8_t ch);
-void k_pdma_resume(pdma_reg_t *pdma_reg,rt_uint8_t ch);
-void k_pdma_llt_free(pdma_reg_t *pdma_reg,rt_uint8_t ch);
+int k_pdma_config(usr_pdma_cfg_t pdma_cfg);
+void k_pdma_start(rt_uint8_t ch);
+void k_pdma_stop(rt_uint8_t ch);
+void k_pdma_resume(rt_uint8_t ch);
+void k_pdma_llt_free(rt_uint8_t ch);
 
 
 #endif

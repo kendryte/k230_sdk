@@ -112,7 +112,7 @@ static int canaan_thermal_probe(struct platform_device *pdev)
 			hardlock = -1;
 		}
 		request_status = true;
-		dev_err(&pdev->dev, "request hardlock %d success!\n", hardlock);
+		dev_info(&pdev->dev, "request hardlock %d success!\n", hardlock);
 	}
 
     data->tz = thermal_zone_device_register("canaan_thermal_zone", 

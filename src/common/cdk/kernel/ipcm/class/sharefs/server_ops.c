@@ -188,7 +188,7 @@ static int sfs_s_ioctl(int ipc_fd, struct sfs_request *req)
 	struct sfs_response_ioctl *resp_ioctl;
 
 	cmd_len = sizeof(struct sfs_response)
-		+ sizeof(struct sfs_response_ioctl);
+		+ sizeof(struct sfs_response_ioctl)+sizeof(struct flock);
 	resp_cmd = malloc(cmd_len);
 	if (!resp_cmd) {
 		sfs_error("malloc for cmd[%d:%d] failed",
@@ -198,7 +198,21 @@ static int sfs_s_ioctl(int ipc_fd, struct sfs_request *req)
 	resp_cmd->cmd = req->cmd;
 	resp_cmd->id = req->id;
 	resp_ioctl = (struct sfs_response_ioctl *)resp_cmd->response;
-	resp_ioctl->ret = ioctl(req_ioctl->fd, req_ioctl->cmd, req_ioctl->args);
+
+    switch (req_ioctl->cmd) {
+        case F_GETLK: 
+        case F_SETLK:
+            resp_ioctl->ret = fcntl(req_ioctl->fd, req_ioctl->cmd, req_ioctl->args);
+            break;
+        default:
+            resp_ioctl->ret = 0;
+            break;
+    }
+	
+    if(req_ioctl->cmd == F_GETLK)
+    {
+        memcpy(resp_ioctl->args, req_ioctl->args, sizeof(struct flock));
+    }
 	ret = sfs_server_send(ipc_fd, resp_cmd, cmd_len);
 	free(resp_cmd);
 	return ret;

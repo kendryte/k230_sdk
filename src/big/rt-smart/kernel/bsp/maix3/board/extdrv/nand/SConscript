@@ -1,0 +1,17 @@
+from building import *
+
+cwd = GetCurrentDir()
+src = []
+depend = []
+
+CPPPATH = [cwd]
+group = []
+
+if GetDepend(['RT_USING_WINBOND_NAND']):
+    src += ['winbond.c']
+    depend += ['RT_USING_WINBOND_NAND']
+
+if src:
+    group = DefineGroup('NAND', src, depend = depend, CPPPATH = CPPPATH)
+
+Return('group')

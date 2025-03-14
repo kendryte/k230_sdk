@@ -44,28 +44,16 @@ void tty_initstack(struct tty_node *node)
     node->next = node;
 }
 
-static struct tty_node tty_node_cache = { RT_NULL, RT_NULL };
-
 static struct tty_node *_tty_node_alloc(void)
 {
-    struct tty_node *node = tty_node_cache.next;
-
-    if (node == RT_NULL)
-    {
-        node = rt_calloc(1, sizeof(struct tty_node));
-    }
-    else
-    {
-        tty_node_cache.next = node->next;
-    }
+    struct tty_node *node = rt_calloc(1, sizeof(struct tty_node));
 
     return node;
 }
 
 static void _tty_node_free(struct tty_node *node)
 {
-    node->next = tty_node_cache.next;
-    tty_node_cache.next = node;
+    rt_free(node);
 }
 
 int tty_push(struct tty_node **head, struct rt_lwp *lwp)

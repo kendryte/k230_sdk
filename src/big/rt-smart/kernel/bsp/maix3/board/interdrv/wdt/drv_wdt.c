@@ -30,14 +30,13 @@
 #include "ioremap.h"
 #include "sysctl_clk.h"
 #include "drv_wdt.h"
+#include "sysctl_rst.h"
 #include <rtdbg.h>
-static rt_watchdog_t kd_watchdog;
-static kd_wdt_t *kd_wdt_reg;
+
+#define IRQN_WDT1 108
 
 /* There are sixteen TOPs (timeout periods) that can be set in the watchdog. */
-
 static const rt_uint32_t *tops;
-
 static const rt_uint32_t kd_wdt_fix_tops[KD_WDT_NUM_TOPS] = {
 	KD_WDT_FIX_TOP(0), KD_WDT_FIX_TOP(1), KD_WDT_FIX_TOP(2),
 	KD_WDT_FIX_TOP(3), KD_WDT_FIX_TOP(4), KD_WDT_FIX_TOP(5),
@@ -49,6 +48,8 @@ static const rt_uint32_t kd_wdt_fix_tops[KD_WDT_NUM_TOPS] = {
 
 static struct kd_wdt_timeout timeouts[KD_WDT_NUM_TOPS];
 static char rmod;   //wdt reset mode,
+static rt_uint64_t current_timeout = DEFUALT_TIMEOUT;
+static pid_t current_pid = 0;
 
 static void kd_wdt_timeouts_init(void)
 {
@@ -80,7 +81,6 @@ static void kd_wdt_timeouts_init(void)
 
         timeouts[i] = tout;
     }
-    rt_kprintf("watchdog timeout table init OK!\n");
 }
 
 static rt_err_t kd_wdt_feed(rt_watchdog_t *wdt)
@@ -102,11 +102,18 @@ static rt_err_t kd_wdt_enable(rt_watchdog_t *wdt)
 
 static rt_err_t kd_wdt_disable(rt_watchdog_t *wdt)
 {
-    kd_wdt_t *reg = (kd_wdt_t *)wdt->parent.user_data;
-    reg->crr = 0x76;
-    reg->cr &= ~0x1;
+    sysctl_reset(SYSCTL_RESET_WDT1_APB);
+
+    current_pid = 0;
 
     return RT_EOK;
+}
+
+static rt_err_t kd_wdt_is_stoped(rt_watchdog_t *wdt)
+{
+    kd_wdt_t *reg = (kd_wdt_t *)wdt->parent.user_data;
+    
+    return (reg->cr & 0x1) ? RT_EBUSY : RT_EOK;
 }
 
 static rt_err_t kd_wdt_set_timeout(rt_watchdog_t *wdt, rt_uint64_t timeout)
@@ -128,6 +135,25 @@ static rt_err_t kd_wdt_set_timeout(rt_watchdog_t *wdt, rt_uint64_t timeout)
 	top_val = timeouts[i].top_val;
 
     reg->torr = (top_val << 4) | (top_val << 0);
+    current_timeout = timeout;
+
+    return RT_EOK;
+}
+
+static rt_err_t kd_wdt_set_pretimeout(rt_watchdog_t *wdt, rt_uint64_t timeout)
+{
+    kd_wdt_t *reg = (kd_wdt_t *)wdt->parent.user_data;
+
+    if (timeout) {
+        current_pid = lwp_getpid();
+        rmod = KD_WDT_RMOD_IRQ;
+        reg->cr |= (0x1 << 1);
+    } else {
+        current_pid = 0;
+        rmod = KD_WDT_RMOD_RESET;
+        reg->cr &= ~(0x01 << 1);
+    }
+    kd_wdt_set_timeout(wdt, current_timeout);
 
     return RT_EOK;
 }
@@ -192,15 +218,36 @@ static rt_err_t kd_wdt_control(rt_watchdog_t *wdt, int cmd, void *args)
         case KD_DEVICE_CTRL_WDT_START:
             kd_wdt_enable(wdt);
         break;
-        case RT_DEVICE_CTRL_WDT_STOP:
         case KD_DEVICE_CTRL_WDT_STOP:
             kd_wdt_disable(wdt);
+        break;
+        case KD_DEVICE_CTRL_WDT_SET_PRETIMEOUT:
+            kd_wdt_set_pretimeout(wdt, *((rt_uint32_t*)args));
+        break;
+        case RT_DEVICE_CTRL_WDT_STOP:
+            return kd_wdt_is_stoped(wdt);
         break;
         default:
             return -RT_EINVAL;
     }
 
     return RT_EOK;
+}
+
+static void wdt1_irq(int irq, void *param)
+{
+    rt_watchdog_t *wdt = (rt_watchdog_t *)param;
+    kd_wdt_t *reg = (kd_wdt_t *)wdt->parent.user_data;
+
+    if (!reg->stat)
+        return;
+    rt_hw_console_output("big core watchdog timeout\n");
+    if (current_pid)
+        lwp_kill(current_pid, SIGUSR2);
+    current_pid = 0;
+    rmod = KD_WDT_RMOD_RESET;
+    reg->cr &= ~(0x01 << 1);
+    reg->eoi = reg->eoi;
 }
 
 static struct rt_watchdog_ops kd_wdt_ops =
@@ -212,19 +259,20 @@ static struct rt_watchdog_ops kd_wdt_ops =
 int rt_hw_wdt_init(void)
 {
     rt_err_t ret = RT_EOK;
-    kd_wdt_reg = (kd_wdt_t *)rt_ioremap((void *)WDT1_BASE_ADDR, WDT1_IO_SIZE);
+    void *reg = rt_ioremap((void *)WDT1_BASE_ADDR, WDT1_IO_SIZE);
+    static rt_watchdog_t kd_watchdog;
 
     kd_watchdog.ops = &kd_wdt_ops;
 
-    ret = rt_hw_watchdog_register(&kd_watchdog, "watchdog1", RT_DEVICE_FLAG_RDWR, kd_wdt_reg);
+    ret = rt_hw_watchdog_register(&kd_watchdog, "watchdog1", RT_DEVICE_FLAG_RDWR, reg);
 
     if (ret != RT_EOK)
     {
         LOG_E("rt device register failed %d\n", ret);
     }
-#ifndef RT_FASTBOOT
-    rt_kprintf("watchdog register OK!\n");
-#endif
+    /* register interrupt handler */
+    rt_hw_interrupt_install(IRQN_WDT1, wdt1_irq, &kd_watchdog, "wdt1");
+    rt_hw_interrupt_umask(IRQN_WDT1);
     return ret;
 }
 INIT_DEVICE_EXPORT(rt_hw_wdt_init);

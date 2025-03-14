@@ -350,6 +350,7 @@ static void *output_thread(void *arg)
                 config.h = status.height;
                 config.ro = 0;
             }
+            //Note: config.w/config.h CAN NOT be set larger than the physical width/height for your screen.
 
             sample_vdec_vo_init(&config);
 

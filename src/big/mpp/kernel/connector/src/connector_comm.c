@@ -222,3 +222,10 @@ void connector_set_pixclk(k_u32 div)
 {
     k230_set_pixclk(div);
 }
+
+k_u32 connector_set_cmd_buff_num(k_u32 buff_num)
+{
+    kd_vo_set_cmd_buff_num(buff_num);
+
+    return 0;
+}

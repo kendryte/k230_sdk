@@ -376,7 +376,7 @@ static void dwc2_port_intr(struct dwc2_hsotg *hsotg)
 	if (hprt0 & HPRT0_CONNDET) {
 		dwc2_writel(hsotg, hprt0_modify | HPRT0_CONNDET, HPRT0);
 
-		dev_vdbg(hsotg->dev,
+		dev_info(hsotg->dev,
 			 "--Port Interrupt HPRT0=0x%08x Port Connect Detected--\n",
 			 hprt0);
 		dwc2_hcd_connect(hsotg);

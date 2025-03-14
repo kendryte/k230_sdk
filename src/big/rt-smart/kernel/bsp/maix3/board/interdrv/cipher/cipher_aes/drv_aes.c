@@ -316,19 +316,17 @@ static void dma_write_rwcfg(const rt_uint8_t *out, const rt_uint8_t *in, rt_uint
 
     writel(len, sec_base_addr + DMA_DSC_CFG_2_OFFSET);
 
-    if(RT_NULL == out)
+    if (RT_NULL == out) {
         writel((uintptr_t)out, sec_base_addr + DMA_DSC_CFG_1_OFFSET);
-    else
-    {
+    } else {
         rt_hw_cpu_dcache_clean(out_kvirt, len);
         out_pa = virt_to_phys((void*)out_kvirt);
         writel(out_pa, sec_base_addr + DMA_DSC_CFG_1_OFFSET);
     }
 
-    if(RT_NULL == in)
+    if (RT_NULL == in) {
         writel((uintptr_t)in, sec_base_addr + DMA_DSC_CFG_0_OFFSET);
-    else    // virtual to physical
-    {
+    } else {
         if (0 == lwp_get_from_user(in_kvirt, in, len))
             rt_memcpy(in_kvirt, in, len);
         rt_hw_cpu_dcache_clean(in_kvirt, len);
@@ -1257,5 +1255,5 @@ int rt_hw_aes_device_init(void)
     g_aes_device.ops = &aes_ops;
 
     return 0;
-    }
-INIT_BOARD_EXPORT(rt_hw_aes_device_init);
+}
+INIT_DEVICE_EXPORT(rt_hw_aes_device_init);

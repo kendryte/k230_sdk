@@ -48,7 +48,7 @@ static bool sysctl_reset_cpu(volatile uint32_t *reset_reg, uint8_t reset_bit, ui
     rt_thread_delay(1);
 
     /* clear reset bit */
-    if(0x9110100c == (uint64_t)reset_reg)
+    if(&sysctl_rst->cpu1_rst_ctl == (uint64_t)reset_reg)
     {
         *reset_reg &= ~(1 << reset_bit);
         *reset_reg |= (1 << (reset_bit + 0x10));   /* write enable */
@@ -83,7 +83,7 @@ static bool sysctl_reset_sw_done(volatile uint32_t *reset_reg, uint8_t reset_bit
 {
     if(0 == reset_en)
     {
-        if((0x91101020 == (uint64_t)reset_reg) || (0x91101024 == (uint64_t)reset_reg) || (0x91101080 == (uint64_t)reset_reg) || (0x91101064 == (uint64_t)reset_reg))
+        if((&sysctl_rst->soc_ctl_rst_ctl == (uint64_t)reset_reg) || (&sysctl_rst->losys_rst_ctl == (uint64_t)reset_reg) || (&sysctl_rst->isp_rst_ctl == (uint64_t)reset_reg) || (&sysctl_rst->sram_rst_ctl == (uint64_t)reset_reg))
         {
             *reset_reg &= ~(1 << reset_bit);     /* set reset bit, 0 is assert */
         }
@@ -99,9 +99,9 @@ static bool sysctl_reset_sw_done(volatile uint32_t *reset_reg, uint8_t reset_bit
     // usleep(100);
     rt_thread_delay(1);
 
-    if((0x91101004 != (uint64_t)reset_reg) && (0x9110100c != (uint64_t)reset_reg))
+    if((&sysctl_rst->cpu0_rst_ctl != (uint64_t)reset_reg) && (&sysctl_rst->cpu1_rst_ctl != (uint64_t)reset_reg))
     {
-        if(0x911010a8 == (uint64_t)reset_reg)
+        if(&sysctl_rst->spi2axi_rst_ctl == (uint64_t)reset_reg)
         {
             *reset_reg &= ~(1 << reset_bit);    /* clear reset bit, 0 is clear */
         }

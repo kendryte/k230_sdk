@@ -72,26 +72,47 @@ int cleanup_before_linux(void)
 
 void harts_early_init(void)
 {
-	/*enable mtimer clk*/
+    /*enable mtimer clk*/
     writel(0x1, (volatile void __iomem *)0x91108020);//CPU0
-	writel(0x1, (volatile void __iomem *)0x91108030);//CPU1
-	// enable stc0 
-	writel(0x69, (volatile void __iomem *)0x91108000);
+    writel(0x1, (volatile void __iomem *)0x91108030);//CPU1
+    // enable stc0 
+    writel(0x69, (volatile void __iomem *)0x91108000);
 
-	record_boot_time_info_to_sram("et");
+    record_boot_time_info_to_sram("et");
 
-	writel(0x80199805, (void*)0x91100004);
-    
+    writel(0x80199805, (void*)0x91100004);
+
     writel(0x0, (void*)SYSCTL_PWR_BASE_ADDR + 0x158);
 
 // This address space only allows write access by the k230_burntool.
 #ifndef CONFIG_CMD_DFU
-	csr_write(pmpaddr0, 0x24484dff);//start addr：0x24484c00<<2=0x91213000 len=1<<9 * 8 = 4KB
-	csr_write(pmpaddr1, 0x244851ff);//start addr：0x24485000<<2=0x91214000 len=1<<9 * 8 = 4KB
-	csr_write(pmpcfg0, 0x9999);
+    csr_write(pmpaddr0, 0x24484dff);//start addr：0x24484c00<<2=0x91213000 len=1<<9 * 8 = 4KB
+    csr_write(pmpaddr1, 0x244851ff);//start addr：0x24485000<<2=0x91214000 len=1<<9 * 8 = 4KB
+    csr_write(pmpcfg0, 0x9999);
 #endif
 
-	//improving_cpu_performance();
+    #define USB_IDPULLUP0 		(1<<4)
+
+    u32 usb0_test_ctl3 = readl((void*)USB0_TEST_CTL3);
+    u32 usb1_test_ctl3 = readl((void*)USB1_TEST_CTL3);
+
+    usb0_test_ctl3 |= USB_IDPULLUP0;
+    usb1_test_ctl3 |= USB_IDPULLUP0;
+
+    writel(usb0_test_ctl3, (void*)USB0_TEST_CTL3);
+    writel(usb1_test_ctl3, (void*)USB1_TEST_CTL3);
+
+    writel(0x33881B, (void*)USB0_CTL0);
+	writel(0x33881B, (void*)USB1_CTL0);
+
+    writel(0x5E66A0, (void*)USB0_CTL1);
+    writel(0x5E66A0, (void*)USB1_CTL1);
+
+    #define SD_HOST_REG_VOL_STABLE      (1<<4)
+    #define SD_CARD_WRITE_PROT          (1<<6)
+    u32 sd0_ctrl = readl((void*)SD0_CTRL);
+    sd0_ctrl |= SD_HOST_REG_VOL_STABLE | SD_CARD_WRITE_PROT;
+    writel(sd0_ctrl, (void*)SD0_CTRL);
 }
 u32 spl_boot_device(void)
 {

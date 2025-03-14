@@ -197,7 +197,7 @@ static k_pixel_format get_pixel_format(k_u32 pix_fmt)
     case 1:
         return PIXEL_FORMAT_RGB_888;
     case 2:
-        return PIXEL_FORMAT_BGR_888_PLANAR;
+        return PIXEL_FORMAT_RGB_888_PLANAR;
     case 3:
         return PIXEL_FORMAT_RGB_BAYER_10BPP;
     default:
@@ -220,7 +220,7 @@ static k_s32 calc_buffer_size(k_pixel_format pix_fmt, k_u32 width, k_u32 height,
         size_calc->buffsize = width * height * 3;
         size_calc->suffix = "rgb888p";
         break;
-    case PIXEL_FORMAT_BGR_888_PLANAR:
+    case PIXEL_FORMAT_RGB_888_PLANAR:
         size_calc->buffsize_with_align = VICAP_ALIGN_UP((width * height * 3), VICAP_ALIGN_1K);
         size_calc->buffsize = width * height * 3;
         size_calc->suffix = "rgb888";

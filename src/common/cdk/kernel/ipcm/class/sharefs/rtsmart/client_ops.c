@@ -388,8 +388,54 @@ free_fd:
 
 int dfs_sharefs_ioctl(struct dfs_fd *fd, int cmd, void *args)
 {
-	/*Not supported*/
-	return -1;
+    int ret = 0;
+	struct sfs_request *req_cmd;
+	struct sfs_request_ioctl *req_ioctl;
+	struct sfs_response *resp_cmd;
+	struct sfs_response_ioctl *resp_ioctl;
+	int cmd_len;
+
+	sfs_check(fd);
+	sfs_ipc_check();
+    switch (cmd) {
+        case F_GETLK: 
+        case F_SETLK:
+            cmd_len = sizeof(struct sfs_request)
+		            + sizeof(struct sfs_request_ioctl) + sizeof(struct flock);
+            break;
+        default:
+            return 0;
+    }
+	
+	req_cmd = malloc(cmd_len);
+	if (!req_cmd) {
+		sfs_error("alloc for %d failed\n", SFS_CMD_IOCTL);
+		return -ENOMEM;
+	}
+	req_cmd->cmd = SFS_CMD_IOCTL;
+	req_ioctl = (struct sfs_request_ioctl *)req_cmd->request;
+	req_ioctl->fd = ((struct sfs_open_point *)(fd->data))->fd;
+    req_ioctl->cmd = cmd;
+    memcpy(req_ioctl->args, args, sizeof(struct flock));
+	resp_cmd = sfs_client_request(req_cmd, cmd_len);
+	if (!resp_cmd) {
+		sfs_error("ioctl %d, no response\n", req_ioctl->fd);
+		ret = -EIO;
+		goto free_req_cmd;
+	}
+	resp_ioctl = (struct sfs_response_ioctl *)resp_cmd->response;
+
+    if(cmd == F_GETLK)
+    {
+        memcpy(args, resp_ioctl->args, sizeof(struct flock));
+    }
+
+	ret = resp_ioctl->ret;
+	free(resp_cmd);
+
+free_req_cmd:
+	free(req_cmd);
+	return ret;
 }
 
 int dfs_sharefs_read(struct dfs_fd *fd, void *buf, size_t count)

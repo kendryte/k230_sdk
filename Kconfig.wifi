@@ -12,10 +12,13 @@ config AP6256
 config RTL8188FU
         bool "enable rtl8188fu"
         default n
-        
+
 config RTL8723DU
         bool "enable rtl8723du"
         default n
+
+config AIC_8800
+        bool "enable aic8800 driver"
+        default n
+
 endmenu
-
-

@@ -43,6 +43,7 @@ enum {
 	NTC_NCP15XH103,
 	NTC_NCP18WB473,
 	NTC_NCP21WB473,
+    NTC_MF52A104F3950,
 	NTC_LAST,
 };
 
@@ -56,6 +57,7 @@ static const struct platform_device_id ntc_thermistor_id[] = {
 	[NTC_NCP15XH103]      = { "ncp15xh103",      TYPE_NCPXXXH103 },
 	[NTC_NCP18WB473]      = { "ncp18wb473",      TYPE_NCPXXWB473 },
 	[NTC_NCP21WB473]      = { "ncp21wb473",      TYPE_NCPXXWB473 },
+    [NTC_MF52A104F3950]   = { "mf52a104f3950",   TYPE_MF52A104F3950 },
 	[NTC_LAST]            = { },
 };
 
@@ -299,6 +301,28 @@ static const struct ntc_compensation b57891s0103[] = {
 	{ .temp_c	= 155.0, .ohm	= 168 },
 };
 
+static const struct ntc_compensation mf52a104f3950[] = {
+	{ .temp_c	= -40, .ohm	= 3255090 },
+	{ .temp_c	= -35, .ohm	= 2366930 },
+	{ .temp_c	= -30, .ohm	= 1737340 },
+	{ .temp_c	= -25, .ohm	= 1287000 },
+	{ .temp_c	= -20, .ohm	= 961965 },
+	{ .temp_c	= -15, .ohm	= 725293 },
+	{ .temp_c	= -10, .ohm	= 551464 },
+	{ .temp_c	= -5, .ohm	= 422711 },
+	{ .temp_c	= 0, .ohm	= 326560 },
+	{ .temp_c	= 5, .ohm	= 254182 },
+	{ .temp_c	= 10, .ohm	= 189920 },
+	{ .temp_c	= 15, .ohm	= 157322 },
+	{ .temp_c	= 20, .ohm	= 126561 },
+	{ .temp_c	= 25, .ohm	= 100000 },
+	{ .temp_c	= 30, .ohm	= 80472 },
+	{ .temp_c	= 35, .ohm	= 65140 },
+	{ .temp_c	= 40, .ohm	= 53026 },
+	{ .temp_c	= 45, .ohm	= 43399 },
+	{ .temp_c	= 50, .ohm	= 35750 },
+};
+
 struct ntc_type {
 	const struct ntc_compensation *comp;
 	int n_comp;
@@ -314,6 +338,7 @@ static const struct ntc_type ntc_type[] = {
 	NTC_TYPE(TYPE_NCPXXWF104,  ncpXXwf104),
 	NTC_TYPE(TYPE_NCPXXWL333,  ncpXXwl333),
 	NTC_TYPE(TYPE_NCPXXXH103,  ncpXXxh103),
+    NTC_TYPE(TYPE_MF52A104F3950, mf52a104f3950),
 };
 
 struct ntc_data {
@@ -374,6 +399,9 @@ static const struct of_device_id ntc_match[] = {
 		.data = &ntc_thermistor_id[NTC_NCP18WB473] },
 	{ .compatible = "ntc,ncp21wb473",
 		.data = &ntc_thermistor_id[NTC_NCP21WB473] },
+
+    { .compatible = "shiheng,b57891s0103",
+		.data = &ntc_thermistor_id[NTC_MF52A104F3950] },
 	{ },
 };
 MODULE_DEVICE_TABLE(of, ntc_match);

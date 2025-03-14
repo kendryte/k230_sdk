@@ -154,7 +154,7 @@ void* read_dpu_data_pth(void* arg)
                         memcpy(&p_dpu_data->dpu_result.img_result, &pmsg->dpu_result.img_result, sizeof(k_video_frame));
 
                         k_video_frame *p_img_result = &p_dpu_data->dpu_result.img_result;
-                        if(p_img_result->pixel_format == PIXEL_FORMAT_BGR_888_PLANAR)
+                        if(p_img_result->pixel_format == PIXEL_FORMAT_RGB_888_PLANAR)
                         {
                             for(int i = 0; i < 3; i++)
                             {

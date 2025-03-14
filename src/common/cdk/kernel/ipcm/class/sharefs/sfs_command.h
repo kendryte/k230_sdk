@@ -108,11 +108,12 @@ struct sfs_request_ioctl
 {
 	int fd;
 	long long cmd ;
-	unsigned long long args;
+	unsigned long long args[0];
 };
 struct sfs_response_ioctl
 {
 	int ret;
+    unsigned long long args[0];
 };
 
 /* sync */

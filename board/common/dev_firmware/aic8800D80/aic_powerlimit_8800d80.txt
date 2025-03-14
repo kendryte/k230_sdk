@@ -1,0 +1,59 @@
+# AIC POWERLIMIT 2024/0218/1206
+# Max tx power reference: Linux wireless regulatory database for CRDA
+# https://git.kernel.org/pub/scm/linux/kernel/git/sforshee/wireless-regdb.git/tree/db.txt
+
+# Table 1:
+##	2.4G,#2#
+##	START
+##	CN	US
+CH01	15	18
+CH02	15	18
+CH03	15	18
+CH04	15	18
+CH05	15	18
+CH06	15	18
+CH07	15	18
+CH08	15	18
+CH09	15	18
+CH10	15	18
+CH11	15	18
+CH12	12	NA
+CH13	12	NA
+CH14	NA	NA
+##	END
+
+# Table 2:
+##	5G,#2#
+##	START
+##	CN	US
+# 5G Band 1
+CH36	15	18
+CH40	15	18
+CH44	15	18
+CH48	15	18
+# 5G Band 2
+CH52	15	19
+CH56	15	19
+CH60	15	19
+CH64	15	19
+# 5G Band 3
+CH100	NA	19
+CH104	NA	19
+CH108	NA	19
+CH112	NA	19
+CH116	NA	19
+CH120	NA	19
+CH124	NA	19
+CH128	NA	19
+CH132	NA	19
+CH136	NA	19
+CH140	NA	19
+CH144	NA	NA
+# 5G Band 4
+CH149	19	19
+CH153	19	19
+CH157	19	19
+CH161	19	19
+CH165	19	19
+##	END
+

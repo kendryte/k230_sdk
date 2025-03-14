@@ -372,6 +372,7 @@ k_s32 st7701_init(void *ctx, k_connector_info *info)
     if(info->pixclk_div != 0)
         connector_set_pixclk(info->pixclk_div);
 
+    ret |= connector_set_cmd_buff_num(info->buff_num);
     ret |= st7701_set_phy_freq(&info->phy_attr);
     ret |= st7701_dsi_resolution_init(info);
     ret |= st7701_vo_resolution_init(&info->resolution, info->bg_color, info->intr_line);

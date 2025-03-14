@@ -145,6 +145,7 @@ static int serial_fops_read(struct dfs_fd *fd, void *buf, size_t count)
             wait_ret = rt_wqueue_wait_interruptible(&(device->wait_queue), 0, RT_WAITING_FOREVER);
             if (wait_ret != RT_EOK)
             {
+                size = wait_ret;
                 break;
             }
         }

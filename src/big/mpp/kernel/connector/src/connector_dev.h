@@ -85,6 +85,7 @@ extern k_s32 kd_vo_set_dev_attr(k_vo_pub_attr *pub_attr, k_vo_sync_attr *sync_at
 extern void kd_vo_enable(void);
 extern void kd_vo_set_vtth_intr(k_bool status, k_u32 vpos);
 extern void k230_set_pixclk(k_u32 div);
+extern void kd_vo_set_cmd_buff_num(k_u32 cmd_buff_num);
 
 k_s32 connector_priv_ioctl(struct connector_driver_dev *dev, k_u32 cmd, void *args);
 void connector_drv_list_init(struct connector_driver_dev *drv_list[]);
@@ -101,4 +102,7 @@ void connector_set_vo_enable(void);
 void connector_set_vtth_intr(k_bool status, k_u32 vpos);
 void connector_delay_us(uint64_t us);
 void connector_set_pixclk(k_u32 div);
+k_u32 connector_set_cmd_buff_num(k_u32 buff_num);
+
+
 #endif /* _SENSOR_DEV_H_ */

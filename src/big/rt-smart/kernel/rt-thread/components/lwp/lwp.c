@@ -1013,7 +1013,6 @@ void lwp_cleanup(struct rt_thread *tid)
 {
     rt_base_t level;
     struct rt_lwp *lwp;
-    struct tty_node *tty_head = RT_NULL;
 
     if (tid == NULL)
     {
@@ -1028,17 +1027,7 @@ void lwp_cleanup(struct rt_thread *tid)
     lwp_tid_put(tid->tid);
     rt_list_remove(&tid->sibling);
     rt_hw_interrupt_enable(level);
-    if (lwp->tty != RT_NULL)
-    {
-        tty_head = lwp->tty->head;
-    }
-    if (!lwp_ref_dec(lwp))
-    {
-        if (tty_head)
-        {
-            tty_pop(&tty_head, lwp);
-        }
-    }
+    lwp_ref_dec(lwp);
 
     return;
 }

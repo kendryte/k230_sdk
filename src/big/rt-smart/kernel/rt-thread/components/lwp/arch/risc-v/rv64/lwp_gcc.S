@@ -196,6 +196,11 @@ lwp_sigreturn_copy_loop:
      * and get sighandler by signal id
      */
     mv s2, a0
+    mv a0, s0
+    call siginfo_push
+    mv s3, a0
+    mv a0, s2
+    mv a1, s3
     call lwp_sighandler_get
 
     /**
@@ -204,7 +209,7 @@ lwp_sigreturn_copy_loop:
      */
     mv ra, s0
     csrw sscratch, sp
-    mv sp, s0
+    mv sp, s3
 
     /**
      * a0 is signal_handler,
@@ -225,6 +230,8 @@ skip_user_signal_handler:
     csrw sepc, s1
     // a0 <- signal id
     mv a0, s2
+    mv a1, s3
+    mv a2, zero
     sret
 
 .align 3

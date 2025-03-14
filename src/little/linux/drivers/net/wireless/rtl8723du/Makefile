@@ -189,7 +189,7 @@ $(MODULE_NAME)-y += $(_PHYDM_FILES)
 $(MODULE_NAME)-y += $(_BTC_FILES)
 $(MODULE_NAME)-y += $(_PLATFORM_FILES)
 
-obj-m := $(MODULE_NAME).o
+obj-$(CONFIG_RTL8723DU) := $(MODULE_NAME).o
 
 else
 

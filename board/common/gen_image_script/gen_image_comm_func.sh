@@ -152,6 +152,11 @@ add_dev_firmware()
         mkdir -p ${BUILD_DIR}/images/little-core/rootfs/lib/firmware/
         cp -rf ${K230_SDK_ROOT}/board/common/dev_firmware/rtl8723du/* ${BUILD_DIR}/images/little-core/rootfs/lib/firmware/
     fi
+
+	if [ "${CONFIG_AIC_8800}" = "y" ] ; then
+        cp -rf ${K230_SDK_ROOT}/board/common/dev_firmware/aic8800D80 ${BUILD_DIR}/images/little-core/rootfs/${dev_firmware}/
+    fi
+
 }
 
 #add_firmHead  xxx.bin  "-n"
@@ -270,7 +275,7 @@ gen_final_ext2 ()
 	rm -rf rootfs/dev/console
 	rm -rf rootfs/dev/null
 
-	fakeroot ${mkfs} -d rootfs  -r 1 -N 0 -m 1 -L "rootfs" -O ^64bit rootfs.ext4 80M
+	fakeroot ${mkfs} -d rootfs  -r 1 -N 0 -m 1 -L "rootfs" -O ^64bit rootfs.ext4 128M
 }
 
 

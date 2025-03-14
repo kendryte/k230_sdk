@@ -25,10 +25,6 @@
 //必须实现；board_r 会调用；
 int board_init(void)
 {
-	#define USB_IDPULLUP0 		(1<<4)
-	#define USB_DMPULLDOWN0 	(1<<8)
-	#define USB_DPPULLDOWN0 	(1<<9)
-
     u32 usb0_otg_en_gpio52_dir = readl((void*)(GPIO_BASE_ADDR1 + 0x4));
     usb0_otg_en_gpio52_dir |= 1 << (52 - 32);
     writel(usb0_otg_en_gpio52_dir, (void*)(GPIO_BASE_ADDR1 + 0x4));
@@ -37,20 +33,6 @@ int board_init(void)
     usb0_otg_en_gpio52_data |= 1 << (52 - 32);
     writel(usb0_otg_en_gpio52_data, (void*)(GPIO_BASE_ADDR1 + 0x0));
 
-    u32 usb0_test_ctl3 = readl((void*)USB0_TEST_CTL3);
-	u32 usb1_test_ctl3 = readl((void*)USB1_TEST_CTL3);
-
-	usb0_test_ctl3 |= USB_IDPULLUP0;
-	usb1_test_ctl3 |= USB_IDPULLUP0;
-
-	writel(usb0_test_ctl3, (void*)USB0_TEST_CTL3);
-	writel(usb1_test_ctl3, (void*)USB1_TEST_CTL3);
-
-    #define SD_HOST_REG_VOL_STABLE      (1<<4)
-    #define SD_CARD_WRITE_PROT          (1<<6)
-    u32 sd0_ctrl = readl((void*)SD0_CTRL);
-    sd0_ctrl |= SD_HOST_REG_VOL_STABLE | SD_CARD_WRITE_PROT;
-    writel(sd0_ctrl, (void*)SD0_CTRL);
 	return 0;
 }
 

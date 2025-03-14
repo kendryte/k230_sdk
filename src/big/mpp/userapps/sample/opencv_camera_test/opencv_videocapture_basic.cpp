@@ -277,7 +277,7 @@ static k_pixel_format get_pixel_format(k_u32 pix_fmt)
     case 1:
         return PIXEL_FORMAT_RGB_888;
     case 2:
-        return PIXEL_FORMAT_BGR_888_PLANAR;
+        return PIXEL_FORMAT_RGB_888_PLANAR;
     case 3:
         return PIXEL_FORMAT_RGB_BAYER_10BPP;
     default:

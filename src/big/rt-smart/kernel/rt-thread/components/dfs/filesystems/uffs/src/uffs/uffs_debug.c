@@ -176,9 +176,6 @@ UBOOL uffs_Assert(UBOOL expr, const char *fmt, ...)
 
 #else
 
-void uffs_DebugMessage(int level, const char *prefix, const char *suffix, const char *errFmt, ...) {};
-void uffs_AssertCall(const char *file, int line, const char *msg, ...) {};
-
 #ifdef _COMPILER_DO_NOT_SUPPORT_MACRO_VALIST_REPLACE_
 void uffs_Perror(int level, const char *fmt, ...) {}
 void uffs_PerrorRaw(int level, const char *fmt, ...) {}

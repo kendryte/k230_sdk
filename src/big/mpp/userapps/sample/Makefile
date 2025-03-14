@@ -1,10 +1,15 @@
 MPP_BUILD_DIR ?= $(shell pwd)
 FASTBOOT_BUILD_DIR=$(MPP_BUILD_DIR)/userapps/sample/fastboot_app
 TRIPLE_CAMERA_BUILD_DIR=$(MPP_BUILD_DIR)/userapps/sample/sample_triple_camera_facedetect
+SAMPLE_LVGL_BUILD_DIR=$(MPP_BUILD_DIR)/userapps/sample/sample_lvgl
 all:
 	@rm -f elf/*
 	@mkdir -p $(FASTBOOT_BUILD_DIR)
 	@mkdir -p $(TRIPLE_CAMERA_BUILD_DIR)
+	@mkdir -p $(SAMPLE_LVGL_BUILD_DIR)
+	@cmake -S sample_lvgl -B $(SAMPLE_LVGL_BUILD_DIR) && cmake --build $(SAMPLE_LVGL_BUILD_DIR) -j && make -C $(SAMPLE_LVGL_BUILD_DIR) install
+	$(MAKE) -C tiger
+	$(MAKE) -C sample_gpu_cube
 	@cd sample_audio; make || exit 1
 	@cd sample_dma; make || exit 1
 	@cd sample_mmz; make || exit 1
@@ -49,7 +54,11 @@ all:
 	@cd sample_sensor_otp; make || exit 1
 	@cd sample_eeprom; make || exit 1
 	@$(MAKE) -C sample_i2c_slave
+	@cd sample_gpio_intc; make || exit 1
+	@cd sample_hwtimer; make || exit 1
 clean:
+	$(MAKE) -C tiger clean
+	$(MAKE) -C sample_gpu_cube clean
 	@cd sample_audio; make clean
 	@cd sample_dma; make clean
 	@cd sample_mmz; make clean
@@ -92,4 +101,6 @@ clean:
 	@cd sample_sensor_otp; make clean
 	@cd sample_eeprom; make clean
 	@$(MAKE) -C sample_i2c_slave clean
+	@cd sample_gpio_intc; make clean
+	@cd sample_hwtimer; make clean
 

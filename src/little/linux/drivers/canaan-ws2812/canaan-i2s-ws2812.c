@@ -29,6 +29,9 @@
 #include <linux/miscdevice.h>
 #include <linux/platform_device.h>
 #include <linux/slab.h>
+#include <linux/dma-mapping.h>
+#include <linux/dmaengine.h>
+#include <linux/delay.h>
 
 #include "canaan-i2s-ws2812.h"
 #define CANAAN_DRIVER_NAME	"canaan-ws2812"
@@ -43,6 +46,11 @@ typedef struct _ws2812_t {
     struct device *dev;
 	struct clk *i2sclk;
     struct miscdevice mdev;
+    int 				err;
+    struct dma_chan		*dma_lch;
+    struct scatterlist *sg;
+
+    struct mutex lock;
 } ws2812_t;
 
 /* ws2812 use 24-bits G-R-B of color data */
@@ -164,9 +172,9 @@ static int i2s_transmit_dma_enable(const void *reg, bool enable)
     unsigned int data = i2s->ccr;
 
     if (enable)
-        data |= 1 << 0;
+        data |= 1 << 8;
     else
-        data &= 0 << 0;
+        data &= 0 << 8;
 
     i2s->ccr = data;
     return 0;
@@ -290,21 +298,103 @@ static void k230_i2s_init(const void *reg, int i2s_tx_num, int word_len)
     i2s_tx_channel_cfg(reg, I2S_CHANNEL_0, I2S_WORDLEN, TRIGGER_LEVEL_4, STANDARD_MODE);
 }
 
-static void i2s_transmit_data(const void *reg, int channel_num, void *buf, int len)
+static int k230_ws2812_dma_init(ws2812_t *ws2812)
 {
-    int i = 0;
-    int *data = buf;
-    i2s_t *i2s = (i2s_t*)reg;
+    struct dma_slave_config dma_conf;
+	int err;
 
-    while (i < len/8)
-    {
-        if (i2s->channel[channel_num].isr & 0x10)
-        {
-            i2s->channel[channel_num].left_rxtx = data[i*2];
-            i2s->channel[channel_num].right_rxtx = data[i*2+1];
-            i++;
-        }
-    }
+	memset(&dma_conf, 0, sizeof(dma_conf));
+
+	dma_conf.direction = DMA_MEM_TO_DEV;
+    dma_conf.src_addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
+    dma_conf.dst_addr = 0x9140f1C8U;
+    dma_conf.dst_addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
+
+
+	ws2812->dma_lch = dma_request_slave_channel(ws2812->dev, "tx");
+	if (!ws2812->dma_lch) {
+		dev_err(ws2812->dev, "Couldn't acquire a slave DMA channel.\n");
+		return -EBUSY;
+	}
+
+	err = dmaengine_slave_config(ws2812->dma_lch, &dma_conf);
+	if (err) {
+		dma_release_channel(ws2812->dma_lch);
+		ws2812->dma_lch = NULL;
+		dev_err(ws2812->dev, "Couldn't configure DMA slave.\n");
+		return err;
+	}
+
+	return 0;
+
+}
+
+enum dma_status k230_ws2812_dma_sync_wait(struct dma_chan *chan, dma_cookie_t cookie)
+{
+	enum dma_status status;
+	unsigned long dma_sync_wait_timeout = jiffies + msecs_to_jiffies(1000);
+
+	dma_async_issue_pending(chan);
+	do {
+		status = dma_async_is_tx_complete(chan, cookie, NULL, NULL);
+		if (time_after_eq(jiffies, dma_sync_wait_timeout)) {
+			dev_err(chan->device->dev, "%s: timeout!\n", __func__);
+			return DMA_ERROR;
+		}
+		if (status != DMA_IN_PROGRESS)
+			break;
+		usleep_range(1000, 2000);
+	} while (1);
+
+	return status;
+}
+
+static int k230_ws2812_xmit_dma(ws2812_t *ws2812,
+			       struct scatterlist *sg, int length, int mdma)
+{
+	struct dma_async_tx_descriptor *in_desc;
+	dma_cookie_t cookie;
+	static u32 count = 0;
+	int err;
+    count++;
+
+	in_desc = dmaengine_prep_slave_sg(ws2812->dma_lch, sg, 1,
+					  DMA_MEM_TO_DEV, DMA_PREP_INTERRUPT |
+					  DMA_CTRL_ACK);
+	if (!in_desc) {
+		dev_err(ws2812->dev, "dmaengine_prep_slave error\n");
+		return -ENOMEM;
+	}
+
+	cookie = dmaengine_submit(in_desc);
+	err = dma_submit_error(cookie);
+	if (err)
+		return -ENOMEM;
+
+    err = k230_ws2812_dma_sync_wait(ws2812->dma_lch, cookie);
+
+	if (err) {
+		dev_err(ws2812->dev, "DMA Error %i\n", err);
+		dmaengine_terminate_all(ws2812->dma_lch);
+		return err;
+	}
+
+    return 0;
+}
+
+static void i2s_transmit_data_dma(ws2812_t *ws2812, int channel_num, void *buf, int len)
+{
+    
+    dma_addr_t dma_handle;
+    uint8_t *dma_virt_addr;
+
+    ws2812->sg->length = len;
+    dma_virt_addr = dma_alloc_coherent(ws2812->dev, len, &dma_handle, GFP_KERNEL);
+    ws2812->sg->dma_address = dma_handle;
+    memcpy(dma_virt_addr, buf, len);
+
+    k230_ws2812_xmit_dma(ws2812, ws2812->sg, 1, 0);
+    dma_free_coherent(ws2812->dev, len, dma_virt_addr, dma_handle);
 }
 
 static int ws2812_open(struct inode *inode, struct file *file)
@@ -315,6 +405,19 @@ static int ws2812_open(struct inode *inode, struct file *file)
     k230_i2s_init(ws2812->base, I2S_CHANNEL_0, 32);
     /* enable i2s channel */
     i2s_tx_channel_enable(ws2812->base, I2S_CHANNEL_0, true); //channel0 output enable
+    i2s_tx_dma_enable(ws2812->base, true);
+
+	return 0;
+}
+
+static int ws2812_release(struct inode *inode, struct file *file)
+{
+    ws2812_t *ws2812 = container_of(file->private_data,
+					      ws2812_t, mdev);
+
+    /* enable i2s channel */
+    i2s_tx_dma_enable(ws2812->base, false);
+    i2s_tx_channel_enable(ws2812->base, I2S_CHANNEL_0, false); //channel0 output enable
 
 	return 0;
 }
@@ -324,14 +427,23 @@ static ssize_t ws2812_write(struct file *file, const char __user *buf, size_t si
     unsigned char *data;
     unsigned int *ws2812_data;
     int i;
+    size_t ret = size;
     ws2812_t *ws2812 = container_of(file->private_data, ws2812_t, mdev);
+
+	if (!mutex_trylock(&ws2812->lock)) {
+		return -EBUSY;
+	}
 	data = kmalloc(size, GFP_KERNEL);
 	if (!data)
-		return -ENOMEM;
+    {
+		ret = -ENOMEM;
+        goto exit0;
+    }
 
     if (copy_from_user(data, buf, size))
     {
-        return -EFAULT;
+        ret = -EFAULT;
+        goto exit1;
     }
 
     if (size % 2)
@@ -342,7 +454,10 @@ static ssize_t ws2812_write(struct file *file, const char __user *buf, size_t si
     }
 
 	if (!ws2812_data)
-		return -ENOMEM;
+    {
+		ret = -ENOMEM;
+        goto exit1;
+    }
 
     for (i = 0; i < size; i++)
     {
@@ -352,39 +467,28 @@ static ssize_t ws2812_write(struct file *file, const char __user *buf, size_t si
     if (size % 2)
     {
         ws2812_data[i] = 0x0;
-        i2s_transmit_data(ws2812->base, I2S_CHANNEL_0, (void*)ws2812_data, size * 4 + 4);
+        i2s_transmit_data_dma(ws2812, I2S_CHANNEL_0, (void*)ws2812_data, size * 4 + 4);
     } else {
-        i2s_transmit_data(ws2812->base, I2S_CHANNEL_0, (void*)ws2812_data, size * 4);
+        i2s_transmit_data_dma(ws2812, I2S_CHANNEL_0, (void*)ws2812_data, size * 4);
     }
 
-    kfree(data);
     kfree(ws2812_data);
-    return size;
+exit1:
+    kfree(data);
+exit0:
+    mutex_unlock(&ws2812->lock);
+    return ret;
 }
 
 static long ws2812_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
-    unsigned int *data;
-    int i;
-    ws2812_t *ws2812 = container_of(file->private_data, ws2812_t, mdev);
-
-	data = kmalloc(400, GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
-
-    for (i = 0; i < 50; i++)
-        data[i] = 0xffffffff;
-    for (i = 50; i < 100; i++)
-        data[i] = 0x0;
-
-    i2s_transmit_data(ws2812->base, I2S_CHANNEL_0, (void*)data, 400);
-    kfree(data);
     return 0;
 }
 
 static const struct file_operations ws2812_fops = {
 	.owner = THIS_MODULE,
 	.open = ws2812_open,
+    .release = ws2812_release,
     .write = ws2812_write,
     .unlocked_ioctl = ws2812_ioctl,
 };
@@ -417,8 +521,15 @@ static int k230_ws2812_probe(struct platform_device *pdev)
 			return ret;
 		}
 	}
+    ws2812->dev = dev;
+    ws2812->sg = devm_kzalloc(ws2812->dev, sizeof(struct scatterlist), GFP_KERNEL);
 
+    mutex_init(&ws2812->lock);
 	dev_set_drvdata(&pdev->dev, ws2812);
+    
+    k230_ws2812_dma_init(ws2812);
+    
+    
 
     misc = &ws2812->mdev;
     memset(misc, 0, sizeof(*misc));

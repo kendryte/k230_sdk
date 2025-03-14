@@ -71,7 +71,7 @@
 static k_u32 g_vo_pool_id;
 static k_u8 exit_flag = 0;
 
-static k_vo_layer g_vo_layer = K_VO_LAYER1;
+// static k_vo_layer g_vo_layer = K_VO_LAYER1;
 
 typedef struct {
     k_vicap_dev vicap_dev;
@@ -984,7 +984,7 @@ int main(int argc, char *argv[])
     }
 
     // vo init
-    sample_vo_init(ILI9881C_MIPI_4LAN_800X1280_60FPS);
+    sample_vo_init(LT9611_MIPI_4LAN_1280X720_30FPS);
 
     // init 2d 
     nonai_2d_init();

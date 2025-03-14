@@ -22,15 +22,17 @@ extern rt_mmu_info mmu_info;
 
 static void _iounmap_range(void *addr, size_t size)
 {
-    void *va = RT_NULL, *pa = RT_NULL;
-    int i = 0;
+    void *va, *pa;
+    size_t bytes;
 
-    for (va = addr, i = 0; i < size; va = (void *)((char *)va + ARCH_PAGE_SIZE), i += ARCH_PAGE_SIZE)
+    for (va = addr; size; va += bytes, size -= bytes)
     {
+        bytes = ARCH_PAGE_SIZE - ((size_t)va & (ARCH_PAGE_SIZE - 1));
+        bytes = bytes > size ? size : bytes;
         pa = rt_hw_mmu_v2p(&mmu_info, va);
         if (pa)
         {
-            rt_hw_mmu_unmap(&mmu_info, va, ARCH_PAGE_SIZE);
+            rt_hw_mmu_unmap(&mmu_info, va, bytes);
         }
     }
 }

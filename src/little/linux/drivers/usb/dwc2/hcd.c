@@ -3607,9 +3607,11 @@ static int dwc2_hcd_hub_control(struct dwc2_hsotg *hsotg, u16 typereq,
 		break;
 
 	case SetPortFeature:
-		dev_dbg(hsotg->dev, "SetPortFeature\n");
 		if (wvalue != USB_PORT_FEAT_TEST && (!windex || windex > 1))
+        {
+            dev_info(hsotg->dev, "wvalue=%d windex=%d\n", wvalue, windex);
 			goto error;
+        }
 
 		if (!hsotg->flags.b.port_connect_status) {
 			/*
@@ -3619,7 +3621,8 @@ static int dwc2_hcd_hub_control(struct dwc2_hsotg *hsotg, u16 typereq,
 			 * register can't be written if the core is in device
 			 * mode.
 			 */
-			break;
+			dev_info(hsotg->dev, "port_connect_status=%d\n", hsotg->flags.b.port_connect_status);
+			// break;
 		}
 
 		switch (wvalue) {

@@ -1,0 +1,4 @@
+[submodule "userapps/src/lvgl"]
+	path = userapps/src/lvgl
+	url = git@g.a-bug.org:canmv/k230/lvgl.git
+	branch = canmv_k230

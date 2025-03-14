@@ -150,7 +150,7 @@ int vo_creat_layer_test(k_vo_layer chn_id, layer_info *info)
     info->size = info->act_size.height * info->act_size.width * 3 / 2;
     //set pixel format
     attr.pixel_format = info->format;
-    if (info->format != PIXEL_FORMAT_YVU_PLANAR_420)
+    if (info->format != PIXEL_FORMAT_YUV_SEMIPLANAR_420)
     {
         printf("input pix format failed \n");
         return -1;
@@ -191,7 +191,7 @@ k_vb_blk_handle vo_insert_frame(k_video_frame_info *vf_info, void **pic_vaddr)
         size = vf_info->v_frame.height * vf_info->v_frame.width * 3;
     else if (vf_info->v_frame.pixel_format == PIXEL_FORMAT_ARGB_1555 || vf_info->v_frame.pixel_format == PIXEL_FORMAT_ABGR_1555)
         size = vf_info->v_frame.height * vf_info->v_frame.width * 2;
-    else if (vf_info->v_frame.pixel_format == PIXEL_FORMAT_YVU_PLANAR_420)
+    else if (vf_info->v_frame.pixel_format == PIXEL_FORMAT_YUV_SEMIPLANAR_420)
         size = vf_info->v_frame.height * vf_info->v_frame.width * 3 / 2;
 
     size = size + 4096;         // 强制4K ，后边得删了
@@ -224,7 +224,7 @@ k_vb_blk_handle vo_insert_frame(k_video_frame_info *vf_info, void **pic_vaddr)
     vf_info->mod_id = K_ID_VO;
     vf_info->pool_id = g_pool_id;
     vf_info->v_frame.phys_addr[0] = phys_addr;
-    if (vf_info->v_frame.pixel_format == PIXEL_FORMAT_YVU_PLANAR_420)
+    if (vf_info->v_frame.pixel_format == PIXEL_FORMAT_YUV_SEMIPLANAR_420)
         vf_info->v_frame.phys_addr[1] = phys_addr + (vf_info->v_frame.height * vf_info->v_frame.stride[0]);
     *pic_vaddr = virt_addr;
 
@@ -358,17 +358,17 @@ static k_s32 vo_layer_vdss_bind_vo_config(void)
     #if defined(CONFIG_BOARD_K230D_CANMV) 
     info.act_size.width = ISP_CHN0_HEIGHT;//1080;//640;//1080;
     info.act_size.height = ISP_CHN0_WIDTH;//1920;//480;//1920;
-    info.format = PIXEL_FORMAT_YVU_PLANAR_420;
+    info.format = PIXEL_FORMAT_YUV_SEMIPLANAR_420;
     info.func = K_ROTATION_90;
     #elif defined(CONFIG_BOARD_K230_CANMV_01STUDIO)
     info.act_size.width = ISP_CHN0_HEIGHT;//1080;//640;//1080;
     info.act_size.height = ISP_CHN0_WIDTH;//1920;//480;//1920;
-    info.format = PIXEL_FORMAT_YVU_PLANAR_420;
+    info.format = PIXEL_FORMAT_YUV_SEMIPLANAR_420;
     info.func = K_ROTATION_90;
     #else
     info.act_size.width = ISP_CHN0_WIDTH;//ISP_CHN0_HEIGHT;//1080;//640;//1080;
     info.act_size.height = ISP_CHN0_HEIGHT;//ISP_CHN0_WIDTH;//1920;//480;//1920;
-    info.format = PIXEL_FORMAT_YVU_PLANAR_420;
+    info.format = PIXEL_FORMAT_YUV_SEMIPLANAR_420;
     info.func = 0;//K_ROTATION_180;////K_ROTATION_90;
     #endif
 
@@ -516,7 +516,7 @@ int vivcap_start()
     chn_attr.scale_enable = K_FALSE;
     // chn_attr.dw_enable = K_FALSE;
     chn_attr.chn_enable = K_TRUE;
-    chn_attr.pix_format = PIXEL_FORMAT_YVU_PLANAR_420;
+    chn_attr.pix_format = PIXEL_FORMAT_YUV_SEMIPLANAR_420;
     chn_attr.buffer_num = VICAP_MAX_FRAME_COUNT;//at least 3 buffers for isp
     // chn_attr.buffer_size = config.comm_pool[0].blk_size;
     chn_attr.buffer_size = VICAP_ALIGN_UP((ISP_CHN0_WIDTH * ISP_CHN0_HEIGHT * 3 / 2), 0x1000);
@@ -564,7 +564,7 @@ int vivcap_start()
     chn_attr.scale_enable = K_FALSE;
     // chn_attr.dw_enable = K_FALSE;
     chn_attr.chn_enable = K_TRUE;
-    chn_attr.pix_format = PIXEL_FORMAT_BGR_888_PLANAR;
+    chn_attr.pix_format = PIXEL_FORMAT_RGB_888_PLANAR;
     chn_attr.buffer_num = VICAP_MAX_FRAME_COUNT;//at least 3 buffers for isp
     // chn_attr.buffer_size = config.comm_pool[1].blk_size;
     chn_attr.buffer_size = VICAP_ALIGN_UP((SENSOR_HEIGHT * SENSOR_WIDTH * 3 ), VICAP_ALIGN_1K);

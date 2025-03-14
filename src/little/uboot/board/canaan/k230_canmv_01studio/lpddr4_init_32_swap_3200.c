@@ -27,8 +27,9 @@
 //#include <k230.h>
 //#include <core_rv64.h>
 #include <linux/delay.h>
+#define LP4_DEFALUT_2GB_PARAME
 #define               DDR_REG_BASE 0x98000000
- 
+
 #define reg_write( addr,v)                       \
     {                                         \
         (*(volatile uint32_t *)((size_t)(addr))) = (v); \
@@ -40,13 +41,13 @@
        v =readl ((const volatile void __iomem *) addr );  \
     }
 
-int change_pll_3100(void);
+static int change_pll_3100(void);
 
-void ddr4_init_3200(void)
+void ddr_init_board(void)
 {
     int data;
     int train_data=0;
-    printf("ddr4_init_3200 \n");
+    printf("lpddr4_init_3200 \n");
 
     change_pll_3100();
 
@@ -76,11 +77,20 @@ reg_write( DDR_REG_BASE +  0x00000030 , 0x00000020 );
 reg_write( DDR_REG_BASE +  0x00000034 , 0x00408a04 );
 reg_write( DDR_REG_BASE +  0x00000038 , 0x0e0e0002 );
 reg_write( DDR_REG_BASE +  0x0000003c , 0x00000060 );
-reg_write( DDR_REG_BASE +  0x00000050 , 0x98210000 );
-reg_write( DDR_REG_BASE +  0x00000054 , 0x005a0050 );
+#ifdef  LP4_DEFALUT_2GB_PARAME
+reg_write( DDR_REG_BASE +  0x00000050 , 0x98210002 );//0x98210002,0x98210000 //2G, 1G
+reg_write( DDR_REG_BASE +  0x00000054 , 0x98210002 );//0x98210002,0x004b0043
 reg_write( DDR_REG_BASE +  0x00000060 , 0x00000001 );
-reg_write( DDR_REG_BASE +  0x00000064 , 0x00610068 );
-reg_write( DDR_REG_BASE +  0x00000068 , 0x00300000 );
+reg_write( DDR_REG_BASE +  0x00000064 , 0x006100e0 );//0x006100e0,0x00510057
+reg_write( DDR_REG_BASE +  0x00000068 , 0x00480000 );//0x00480000,0x00280000
+#else
+reg_write( DDR_REG_BASE +  0x00000050 , 0x98210000 );//0x98210002,0x98210000 //2G, 1G
+reg_write( DDR_REG_BASE +  0x00000054 , 0x005a0050 );//0x98210002,0x004b0043
+reg_write( DDR_REG_BASE +  0x00000060 , 0x00000001 );
+reg_write( DDR_REG_BASE +  0x00000064 , 0x00610068 );//0x006100e0,0x00510057
+reg_write( DDR_REG_BASE +  0x00000068 , 0x00300000 );//0x00480000,0x00280000
+#endif
+
 reg_write( DDR_REG_BASE +  0x000000c0 , 0x00000000 );
 reg_write( DDR_REG_BASE +  0x000000d0 , 0xc0020002 );
 reg_write( DDR_REG_BASE +  0x000000d4 , 0x00010002 );
@@ -104,7 +114,11 @@ reg_write( DDR_REG_BASE +  0x0000011c , 0x00000402 );
 reg_write( DDR_REG_BASE +  0x00000120 , 0x00000101 );
 reg_write( DDR_REG_BASE +  0x00000130 , 0x00020000 );
 reg_write( DDR_REG_BASE +  0x00000134 , 0x0c100002 );
-reg_write( DDR_REG_BASE +  0x00000138 , 0x0000006e );
+#ifdef LP4_DEFALUT_2GB_PARAME
+reg_write( DDR_REG_BASE +  0x00000138 , 0x000000e6 );//0x000000e6, 0x0000005c
+#else
+reg_write( DDR_REG_BASE +  0x00000138 , 0x0000006e );//0x000000e6, 0x0000005c
+#endif
 reg_write( DDR_REG_BASE +  0x0000013c , 0x80000000 );
 reg_write( DDR_REG_BASE +  0x00000144 , 0x00a00050 );
 reg_write( DDR_REG_BASE +  0x00000180 , 0xc3200018 );
@@ -291,7 +305,7 @@ reg_write( DDR_REG_BASE +  0x00000030 , 0x00000020 );
 
 ////////////////////de rst////////////////////////////////////////
 
- reg_read ( 0x9110309c, data  ); 
+ reg_read ( 0x9110309c, data  );
  data=data|0x00020000;
  reg_write ( 0x9110309c, data  );
 
@@ -363,7 +377,7 @@ reg_write(   DDR_REG_BASE +0x2007c*4 +0x02000000,0x61);
 reg_write(   DDR_REG_BASE +0x20056*4 +0x02000000,0x3);
 
 //iteration place
-//PHY RX ODT  
+//PHY RX ODT
 //0010_00 00_0000 0x208 0x200  Down:120
 //0010_10 00_0000 0x28a 0x280  Down:80
 //0110_00 00_0000 0x618 0x600  Down:60
@@ -380,7 +394,7 @@ reg_write(   DDR_REG_BASE +0x1304d*4 +0x02000000,0x600);
 reg_write(   DDR_REG_BASE +0x1314d*4 +0x02000000,0x600);
 
 //iteration place
-//PHY TX output impedence 
+//PHY TX output impedence
 //0010_00 00_1000 0x208 Pullup/Down:120
 //0010_10 00_1010 0x28a Pullup/Down:80
 //0110_00 01_1000 0x618 Pullup/Down:60
@@ -397,7 +411,7 @@ reg_write(   DDR_REG_BASE +0x13049*4 +0x02000000,0xe38);
 reg_write(   DDR_REG_BASE +0x13149*4 +0x02000000,0xe38);
 
 //iteration
-// PHY AC/CLK output  impedence 
+// PHY AC/CLK output  impedence
 //00000_00000  0x0    120
 //00001_00001  0x21   60
 //00011_00011  0x63   40
@@ -465,12 +479,12 @@ reg_write(   DDR_REG_BASE +0x20060*4 +0x02000000,0x2);
 
 
 //swap
-reg_write(   DDR_REG_BASE + 0x20100*4+0x02000000,0x5); //CA0 		
-reg_write(   DDR_REG_BASE + 0x20101*4+0x02000000,0x4); //CA1 		
-reg_write(   DDR_REG_BASE + 0x20102*4+0x02000000,0x3); //CA2 		
-reg_write(   DDR_REG_BASE + 0x20103*4+0x02000000,0x2); //CA3 		
-reg_write(   DDR_REG_BASE + 0x20104*4+0x02000000,0x1); //CA4 		
-reg_write(   DDR_REG_BASE + 0x20105*4+0x02000000,0x0); //CA5 
+reg_write(   DDR_REG_BASE + 0x20100*4+0x02000000,0x5); //CA0
+reg_write(   DDR_REG_BASE + 0x20101*4+0x02000000,0x4); //CA1
+reg_write(   DDR_REG_BASE + 0x20102*4+0x02000000,0x3); //CA2
+reg_write(   DDR_REG_BASE + 0x20103*4+0x02000000,0x2); //CA3
+reg_write(   DDR_REG_BASE + 0x20104*4+0x02000000,0x1); //CA4
+reg_write(   DDR_REG_BASE + 0x20105*4+0x02000000,0x0); //CA5
 
 reg_write(   DDR_REG_BASE + 0x100a0*4+0x02000000,0x4); //
 reg_write(   DDR_REG_BASE + 0x100a1*4+0x02000000,0x5); //
@@ -499,14 +513,14 @@ reg_write(   DDR_REG_BASE + 0x130a5*4+0x02000000,0x5); //
 reg_write(   DDR_REG_BASE + 0x130a6*4+0x02000000,0x6); //
 reg_write(   DDR_REG_BASE + 0x130a7*4+0x02000000,0x7); //
 
-//reg_write(   DDR_REG_BASE + 0x130a0*4+0x02000000,0x3); //lndq =1				
-//reg_write(   DDR_REG_BASE + 0x130a1*4+0x02000000,0x0); //CA1 =0				
-//reg_write(   DDR_REG_BASE + 0x130a2*4+0x02000000,0x2); //CA1 =0				
-//reg_write(   DDR_REG_BASE + 0x130a3*4+0x02000000,0x1); //CA1 =0				
-//reg_write(   DDR_REG_BASE + 0x130a4*4+0x02000000,0x6); //CA1 =0				
-//reg_write(   DDR_REG_BASE + 0x130a5*4+0x02000000,0x7); //CA1 =0				
-//reg_write(   DDR_REG_BASE + 0x130a6*4+0x02000000,0x5); //CA1 =0				
-//reg_write(   DDR_REG_BASE + 0x130a7*4+0x02000000,0x4); //CA1 =0	
+//reg_write(   DDR_REG_BASE + 0x130a0*4+0x02000000,0x3); //lndq =1
+//reg_write(   DDR_REG_BASE + 0x130a1*4+0x02000000,0x0); //CA1 =0
+//reg_write(   DDR_REG_BASE + 0x130a2*4+0x02000000,0x2); //CA1 =0
+//reg_write(   DDR_REG_BASE + 0x130a3*4+0x02000000,0x1); //CA1 =0
+//reg_write(   DDR_REG_BASE + 0x130a4*4+0x02000000,0x6); //CA1 =0
+//reg_write(   DDR_REG_BASE + 0x130a5*4+0x02000000,0x7); //CA1 =0
+//reg_write(   DDR_REG_BASE + 0x130a6*4+0x02000000,0x5); //CA1 =0
+//reg_write(   DDR_REG_BASE + 0x130a7*4+0x02000000,0x4); //CA1 =0
 
 reg_write(   DDR_REG_BASE + 0x120a0*4+0x02000000,0x3); //
 reg_write(   DDR_REG_BASE + 0x120a1*4+0x02000000,0x0); //
@@ -516,7 +530,7 @@ reg_write(   DDR_REG_BASE + 0x120a4*4+0x02000000,0x4); //
 reg_write(   DDR_REG_BASE + 0x120a5*4+0x02000000,0x1); //
 reg_write(   DDR_REG_BASE + 0x120a6*4+0x02000000,0x7); //
 reg_write(   DDR_REG_BASE + 0x120a7*4+0x02000000,0x6); //
-	
+
 
 
 reg_write(   DDR_REG_BASE +  0x000d0000*4+0x02000000 , 0x00000000 );
@@ -17764,7 +17778,7 @@ reg_write(   DDR_REG_BASE +   0x000d0099*4 +0x02000000 , 0x00000000  );
 
 while((train_data&0x7) !=0x07) {
 
- reg_read (   DDR_REG_BASE  + 0x000d0004*4 +0x02000000 ,  data       ); 
+ reg_read (   DDR_REG_BASE  + 0x000d0004*4 +0x02000000 ,  data       );
  while((data&0x1) !=0x0) {
  reg_read (   DDR_REG_BASE  + 0x000d0004*4 +0x02000000 ,  data       );
  }
@@ -17792,7 +17806,7 @@ while((train_data&0x7) !=0x07) {
   case 0x000000fe: printf("%08X: PMU Major Msg: End of Write leveling coarse delay                            \n",train_data);break;
   case 0x000000ff: printf("%08X: PMU Major Msg: FATAL ERROR.                                                  \n",train_data);break;
   default:         printf("%08X: PMU Major Msg: Un-recognized message... !                                    \n",train_data);break;
-  } 
+  }
 
 
  reg_write(   DDR_REG_BASE +   0x000d0031*4 +0x02000000 , 0x00000000   );
@@ -34929,7 +34943,7 @@ reg_write(   DDR_REG_BASE +   0x000d0099*4 +0x02000000 , 0x00000000  );
 
 while((train_data&0x7) !=0x07) {
 
- reg_read (   DDR_REG_BASE  + 0x000d0004*4 +0x02000000 ,  data       ); 
+ reg_read (   DDR_REG_BASE  + 0x000d0004*4 +0x02000000 ,  data       );
  while((data&0x1) !=0x0) {
  reg_read (   DDR_REG_BASE  + 0x000d0004*4 +0x02000000 ,  data       );
  }
@@ -34957,7 +34971,7 @@ while((train_data&0x7) !=0x07) {
   case 0x000000fe: printf("%08X: PMU Major Msg: End of Write leveling coarse delay                            \n",train_data);break;
   case 0x000000ff: printf("%08X: PMU Major Msg: FATAL ERROR.                                                  \n",train_data);break;
   default:         printf("%08X: PMU Major Msg: Un-recognized message... !                                    \n",train_data);break;
-  } 
+  }
 
 
  reg_write(   DDR_REG_BASE +   0x000d0031*4 +0x02000000 , 0x00000000   );
@@ -35558,9 +35572,9 @@ reg_read (   DDR_REG_BASE +  0x00020097*4 +0x02000000 ,  data);
 
 reg_write( DDR_REG_BASE +  0x000001b0 , 0x00000034 );
 
-reg_read (DDR_REG_BASE +  0x000001bc  , data );  
+reg_read (DDR_REG_BASE +  0x000001bc  , data );
 while((data&0x1) !=0x1) {
- reg_read (DDR_REG_BASE +  0x000001bc  , data );  
+ reg_read (DDR_REG_BASE +  0x000001bc  , data );
 }
 
 
@@ -35572,14 +35586,14 @@ reg_write( DDR_REG_BASE +  0x00000320 , 0x00000001 );
 
 
 
-reg_read (DDR_REG_BASE +  0x00000324  , data ); 
+reg_read (DDR_REG_BASE +  0x00000324  , data );
  while((data&0x1) !=0x1) {
- reg_read (DDR_REG_BASE +  0x00000324  , data );  
+ reg_read (DDR_REG_BASE +  0x00000324  , data );
  }
 
-reg_read (DDR_REG_BASE +  0x00000004  , data ); 
+reg_read (DDR_REG_BASE +  0x00000004  , data );
  while((data&0x1) !=0x1) {
- reg_read (DDR_REG_BASE +  0x00000004  , data );  
+ reg_read (DDR_REG_BASE +  0x00000004  , data );
  }
 
 
@@ -35592,9 +35606,9 @@ reg_write( DDR_REG_BASE +  0x00000320 , 0x00000001 );
 
 
 
-reg_read (DDR_REG_BASE +  0x00000324  , data ); 
+reg_read (DDR_REG_BASE +  0x00000324  , data );
  while((data&0x1) !=0x1) {
- reg_read (DDR_REG_BASE +  0x00000324  , data );  
+ reg_read (DDR_REG_BASE +  0x00000324  , data );
  }
 
 
@@ -35613,49 +35627,49 @@ reg_write( DDR_REG_BASE +  0x0000060 , 0x00000000 );
 reg_write( DDR_REG_BASE +  0x0000050 , 0x98210000 );
 
 
-   {
-         unsigned long add,i;
-         //add = DDR_REG_BASE +0x5401b*4+0x02000000; printf("MR12-CA add =%lx value =%lx\n",add,readl(add));
-         //add = DDR_REG_BASE +0x5401c*4+0x02000000; printf("MR14-DQ add =%lx value =%lx\n",add,readl(add));
+//    {
+//          unsigned long add,i;
+//          //add = DDR_REG_BASE +0x5401b*4+0x02000000; printf("MR12-CA add =%lx value =%lx\n",add,readl(add));
+//          //add = DDR_REG_BASE +0x5401c*4+0x02000000; printf("MR14-DQ add =%lx value =%lx\n",add,readl(add));
 
-         for(i=0;i<8;i++)
-         {add = DDR_REG_BASE +  0x00010040*4+0x02000000+i*0x100*4; printf("dbyte0 add =%lx value =%x\n",add,readl((void*)add));}        
-         for(i=0;i<8;i++)
-         {add = DDR_REG_BASE +  0x00011040*4+0x02000000+i*0x100*4; printf("dbyte1 add =%lx value =%x\n",add,readl((void*)add));}
-         for(i=0;i<8;i++)
-         {add = DDR_REG_BASE +  0x00012040*4+0x02000000+i*0x100*4; printf("dbyte2 add =%lx value =%x\n",add,readl((void*)add));}
-         for(i=0;i<8;i++)
-         {add = DDR_REG_BASE +  0x00013040*4+0x02000000+i*0x100*4; printf("dbyte3 add =%lx value =%x\n",add,readl((void*)add)); }
-     }
+//          for(i=0;i<8;i++)
+//          {add = DDR_REG_BASE +  0x00010040*4+0x02000000+i*0x100*4; printf("dbyte0 add =%lx value =%x\n",add,readl((void*)add));}
+//          for(i=0;i<8;i++)
+//          {add = DDR_REG_BASE +  0x00011040*4+0x02000000+i*0x100*4; printf("dbyte1 add =%lx value =%x\n",add,readl((void*)add));}
+//          for(i=0;i<8;i++)
+//          {add = DDR_REG_BASE +  0x00012040*4+0x02000000+i*0x100*4; printf("dbyte2 add =%lx value =%x\n",add,readl((void*)add));}
+//          for(i=0;i<8;i++)
+//          {add = DDR_REG_BASE +  0x00013040*4+0x02000000+i*0x100*4; printf("dbyte3 add =%lx value =%x\n",add,readl((void*)add)); }
+//      }
 
 }
 
 
 
 #define BOOT_REG_BASE   (0x91102000)
-#define  PLL0_CFG0                           (BOOT_REG_BASE + 0x0  ) 
-#define  PLL0_CFG1                           (BOOT_REG_BASE + 0x4  ) 
-#define  PLL0_CTL                            (BOOT_REG_BASE + 0x8  ) 
-#define  PLL0_STAT                           (BOOT_REG_BASE + 0xC  ) 
-#define  PLL1_CFG0                           (BOOT_REG_BASE + 0x10 ) 
-#define  PLL1_CFG1                           (BOOT_REG_BASE + 0x14 ) 
-#define  PLL1_CTL                            (BOOT_REG_BASE + 0x18 ) 
-#define  PLL1_STAT                           (BOOT_REG_BASE + 0x1C ) 
-#define  PLL2_CFG0                           (BOOT_REG_BASE + 0x20 ) 
-#define  PLL2_CFG1                           (BOOT_REG_BASE + 0x24 ) 
-#define  PLL2_CTL                            (BOOT_REG_BASE + 0x28 ) 
-#define  PLL2_STAT                           (BOOT_REG_BASE + 0x2C ) 
-#define  PLL3_CFG0                           (BOOT_REG_BASE + 0x30 ) 
-#define  PLL3_CFG1                           (BOOT_REG_BASE + 0x34 ) 
-#define  PLL3_CTL                            (BOOT_REG_BASE + 0x38 ) 
-#define  PLL3_STAT                           (BOOT_REG_BASE + 0x3C ) 
+#define  PLL0_CFG0                           (BOOT_REG_BASE + 0x0  )
+#define  PLL0_CFG1                           (BOOT_REG_BASE + 0x4  )
+#define  PLL0_CTL                            (BOOT_REG_BASE + 0x8  )
+#define  PLL0_STAT                           (BOOT_REG_BASE + 0xC  )
+#define  PLL1_CFG0                           (BOOT_REG_BASE + 0x10 )
+#define  PLL1_CFG1                           (BOOT_REG_BASE + 0x14 )
+#define  PLL1_CTL                            (BOOT_REG_BASE + 0x18 )
+#define  PLL1_STAT                           (BOOT_REG_BASE + 0x1C )
+#define  PLL2_CFG0                           (BOOT_REG_BASE + 0x20 )
+#define  PLL2_CFG1                           (BOOT_REG_BASE + 0x24 )
+#define  PLL2_CTL                            (BOOT_REG_BASE + 0x28 )
+#define  PLL2_STAT                           (BOOT_REG_BASE + 0x2C )
+#define  PLL3_CFG0                           (BOOT_REG_BASE + 0x30 )
+#define  PLL3_CFG1                           (BOOT_REG_BASE + 0x34 )
+#define  PLL3_CTL                            (BOOT_REG_BASE + 0x38 )
+#define  PLL3_STAT                           (BOOT_REG_BASE + 0x3C )
 
 void pd_pll(uint32_t pll_ctl,uint32_t pll_stat)
 {
 int rdata;
    writel(0x10001,(void*)(ulong)pll_ctl);
    rdata=readl((void*)(ulong)pll_stat);
-   while( (rdata&0x30) != 0x0){ 
+   while( (rdata&0x30) != 0x0){
         rdata=readl((void*)(ulong)pll_stat);
    }
 
@@ -35665,7 +35679,7 @@ void init_pll(uint32_t pll_ctl,uint32_t pll_stat)
    int rdata;
    writel(0x20002,(void*)(ulong)pll_ctl);
    rdata=readl((void*)(ulong)pll_stat);
-   while( (rdata & 0x30) != 0x20){ 
+   while( (rdata & 0x30) != 0x20){
         rdata=readl((void*)(ulong)pll_stat);
    }
 
@@ -35682,13 +35696,13 @@ uint32_t cfg_pll(int fb_div,int ref_div,int out_div,unsigned int pllx_cfg0,unsig
   init_pll(pllx_ctl,pllx_stat);
   return 0;
 }
-    
-int change_pll_3100(void)
+
+static int change_pll_3100(void)
 {
-    /* enable cache */ 
+    /* enable cache */
     //Note: The recommended value for BWADJ is FBK_DIV/2.Valid values range from 0 to 0xFFF.
-    //To minimize long-term jitter, using NB=NF/4 is better. NB = BWADJ[11:0] + 1, 
-    //So, BWADJ=(NB-1)=[NF/2 -1] or (NF/4 -1)--minimize long term jitter 
+    //To minimize long-term jitter, using NB=NF/4 is better. NB = BWADJ[11:0] + 1,
+    //So, BWADJ=(NB-1)=[NF/2 -1] or (NF/4 -1)--minimize long term jitter
 
     // csi_dcache_enable();
     // csi_icache_enable();

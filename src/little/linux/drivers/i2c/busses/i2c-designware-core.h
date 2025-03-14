@@ -285,6 +285,8 @@ struct dw_i2c_dev {
 	int			(*set_sda_hold_time)(struct dw_i2c_dev *dev);
 	int			mode;
 	struct i2c_bus_recovery_info rinfo;
+	u32			scl_iomux_back;
+	u32			sda_iomux_back;
 	bool			suspended;
 };
 

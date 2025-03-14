@@ -74,7 +74,7 @@ static int ipcm_dev_recv(void *vdd_handle, void *buf, unsigned int len)
 
 	mem = (struct kos_mem_list *)data;
 	mem->data = (void *)((long)data + sizeof(struct kos_mem_list));
-	memcpy(mem->data, buf, len);
+	__memcpy__(mem->data, buf, len);
 	mem->len = len;
 
 	spin_lock_irqsave(&phandle->lock, flags);

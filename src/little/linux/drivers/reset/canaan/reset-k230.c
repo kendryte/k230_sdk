@@ -35,7 +35,7 @@
 #include <linux/delay.h>
 #include <dt-bindings/reset/canaan-k230-reset.h>
 
-#define K230_RESET_DEBUG
+// #define K230_RESET_DEBUG
 
 struct k230_reset_controller {
     spinlock_t                  lock;
@@ -138,7 +138,7 @@ static int k230_reset(struct reset_controller_dev *rcdev, unsigned long id)
             reg = readl(rstc->membase+offset);
             if((0x20 == offset) || (0x24 == offset) || (0x80 == offset) || (0x64 == offset))
             {
-                reg |= (0 << reset);            //special，复位：reset=0
+                reg &= ~(1 << reset);            //special，复位：reset=0
             }
             else if((0x4 == offset) || (0xc == offset))
             {
@@ -163,7 +163,7 @@ static int k230_reset(struct reset_controller_dev *rcdev, unsigned long id)
                 }
                 else
                 {
-                    reg &= ~(0 << reset);                   
+                    reg |= (1 << reset);                   
                     writel(reg, rstc->membase+offset);
                 }
             }
@@ -224,7 +224,7 @@ static int k230_reset_assert(struct reset_controller_dev *rcdev, unsigned long i
         /* set reset bit */
         if((0x20 == offset) || (0x24 == offset) || (0x80 == offset) || (0x64 == offset))
         {
-            reg |= (0 << reset);            //special，复位：reset=0
+            reg &= ~(1 << reset);            //special，复位：reset=0
         }
         else if((0x4 == offset) || (0xc == offset))
         {
@@ -316,7 +316,7 @@ static int k230_reset_deassert(struct reset_controller_dev *rcdev, unsigned long
             }
             else
             {
-                reg &= ~(0 << reset);                   
+                reg |= (1 << reset);                   
                 writel(reg, rstc->membase+offset);
             }
         }

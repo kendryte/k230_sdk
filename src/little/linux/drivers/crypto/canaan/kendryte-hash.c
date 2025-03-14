@@ -580,7 +580,7 @@ static int kendryte_sha256_probe(struct platform_device *pdev)
 			hardlock = -1;
 		}
 		request_status = true;
-		dev_err(&pdev->dev, "request hardlock %d success!\n", hardlock);
+		dev_info(&pdev->dev, "request hardlock %d success!\n", hardlock);
 	}
 
     platform_set_drvdata(pdev, &sha256_info);

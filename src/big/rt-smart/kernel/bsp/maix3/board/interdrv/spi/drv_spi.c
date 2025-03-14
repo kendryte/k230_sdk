@@ -658,7 +658,7 @@ int rt_hw_spi_bus_init(void)
     spi_bus0.base = rt_ioremap((void*)SPI_OPI_BASE_ADDR, SPI_OPI_IO_SIZE);
     spi_bus0.idx = 0;
     spi_bus0.rdse = 0;
-    spi_bus0.rdsd = 0;
+    spi_bus0.rdsd = 6;
     spi_bus0.max_line = 8;
     spi_bus0.max_hz = 200000000;
 

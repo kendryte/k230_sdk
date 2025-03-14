@@ -342,7 +342,7 @@ int sample_vivcap_init( void )
     chn_attr.scale_enable = K_FALSE;
     // chn_attr.dw_enable = K_FALSE;
     chn_attr.chn_enable = K_TRUE;
-    chn_attr.pix_format = PIXEL_FORMAT_BGR_888_PLANAR;
+    chn_attr.pix_format = PIXEL_FORMAT_RGB_888_PLANAR;
     chn_attr.buffer_num = VICAP_MAX_FRAME_COUNT;//at least 3 buffers for isp
     chn_attr.buffer_size = VICAP_ALIGN_UP((ISP_CHN1_HEIGHT * ISP_CHN1_WIDTH * 3 ), VICAP_ALIGN_1K);
 

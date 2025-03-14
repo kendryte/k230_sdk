@@ -22,29 +22,16 @@
 // #include "k230_board_common.h"
 #include <env_internal.h>
 #include <linux/delay.h>
-
+extern int ddr_init_board(void);
 int ddr_init_training(void)
 {
-	#if defined(CONFIG_TARGET_K230_FPGA) 
+	#if defined(CONFIG_TARGET_K230_FPGA)
 		return 0; //fpga not need init;
 	#endif
-	if( (readl((const volatile void __iomem *)0x980001bcULL) & 0x1 ) != 0 ){ 
+	if( (readl((const volatile void __iomem *)0x980001bcULL) & 0x1 ) != 0 ){
 		return 0; //have init ,not need reinit;
 	}
-	#ifdef CONFIG_LPDDR3_800
-		printf("CONFIG_LPDDR3_800 \n");
-		ddr_init_800();
-    #elif defined(CONFIG_CANMV_01STUDIO_LPDDR3_2133)
-		canmv_01studio_ddr_init_2133();
-    #elif defined(CONFIG_CANMV_01STUDIO_LPDDR3_1600)
-		canmv_01studio_ddr_init_1600();
-	#elif defined(CONFIG_CANMV_01STUDIO_LPDDR3_800)
-		canmv_01studio_ddr_init_800();
-	#elif defined(CONFIG_CANMV_01STUDIO_LPDDR4_2667)
-		ddr_init_2667();
-	#elif defined(CONFIG_CANMV_01STUDIO_LPDDR4_3200)
-		ddr4_init_3200();
-	#endif 	
+	ddr_init_board();
 	return 0;
 }
 sysctl_boot_mode_e sysctl_boot_get_boot_mode(void)

@@ -39,6 +39,8 @@ int clock_time_system_init()
 }
 INIT_COMPONENT_EXPORT(clock_time_system_init);
 
+MSH_CMD_EXPORT_ALIAS(clock_time_system_init, time_sync, sync rtc time);
+
 int clock_time_to_tick(const struct timespec *time)
 {
     int tick = 0;
@@ -333,9 +335,14 @@ RTM_EXPORT(nanosleep);
 static void rtthread_timer_wrapper(void *timerobj)
 {
     struct timer_obj *timer;
+    siginfo_t info;
 
     timer = (struct timer_obj *)timerobj;
-    sys_kill(timer->pid, timer->sigev_signo);
+
+    rt_memset(&info, 0, sizeof(info));
+    info.si_code = SI_TIMER;
+    info.si_value = timer->val;
+    lwp_kill_ext(timer->pid, timer->sigev_signo, &info);
 
     if (timer->reload == 0U)
     {

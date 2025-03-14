@@ -25,8 +25,10 @@
 
 #ifndef DRV_GPIO_H__
 #define DRV_GPIO_H__
+
+#define GPIO_IRQ_MAX_NUM            (64)
 #define GPIO_MAX_NUM                (64+8)
-#define IRQN_GPIO0_INTERRUPT      32
+#define IRQN_GPIO0_INTERRUPT        32
 
 /* k230 gpio register table */
 #define DATA_OUTPUT         0x0
@@ -55,21 +57,27 @@
 
 /* ioctl */
 
-#define	KD_GPIO_DM_OUTPUT           _IOW('G', 0, int)
-#define	KD_GPIO_DM_INPUT            _IOW('G', 1, int)
-#define	KD_GPIO_DM_INPUT_PULL_UP    _IOW('G', 2, int)
-#define	KD_GPIO_DM_INPUT_PULL_DOWN  _IOW('G', 3, int)
-#define	KD_GPIO_WRITE_LOW           _IOW('G', 4, int)
-#define	KD_GPIO_WRITE_HIGH          _IOW('G', 5, int)
+#define KD_GPIO_DM_OUTPUT           _IOW('G', 0, int)
+#define KD_GPIO_DM_INPUT            _IOW('G', 1, int)
+#define KD_GPIO_DM_INPUT_PULL_UP    _IOW('G', 2, int)
+#define KD_GPIO_DM_INPUT_PULL_DOWN  _IOW('G', 3, int)
+#define KD_GPIO_WRITE_LOW           _IOW('G', 4, int)
+#define KD_GPIO_WRITE_HIGH          _IOW('G', 5, int)
 
-#define	KD_GPIO_PE_RISING           _IOW('G', 7, int)
-#define	KD_GPIO_PE_FALLING          _IOW('G', 8, int)
-#define	KD_GPIO_PE_BOTH             _IOW('G', 9, int)
-#define	KD_GPIO_PE_HIGH             _IOW('G', 10, int)
-#define	KD_GPIO_PE_LOW              _IOW('G', 11, int)
+#define KD_GPIO_PE_RISING           _IOW('G', 7, int)
+#define KD_GPIO_PE_FALLING          _IOW('G', 8, int)
+#define KD_GPIO_PE_BOTH             _IOW('G', 9, int)
+#define KD_GPIO_PE_HIGH             _IOW('G', 10, int)
+#define KD_GPIO_PE_LOW              _IOW('G', 11, int)
 
-#define KD_GPIO_READ_VALUE       	_IOW('G', 12, int)
+#define KD_GPIO_READ_VALUE          _IOW('G', 12, int)
 
+#define KD_GPIO_SET_MODE            _IOW('G', 20, int)
+#define KD_GPIO_GET_MODE            _IOWR('G', 21, int)
+#define KD_GPIO_SET_VALUE           _IOW('G', 22, int)
+#define KD_GPIO_GET_VALUE           _IOWR('G', 23, int)
+#define KD_GPIO_SET_IRQ             _IOW('G', 24, int)
+#define KD_GPIO_GET_IRQ             _IOWR('G', 25, int)
 
 typedef enum _gpio_pin_edge
 {
@@ -94,13 +102,25 @@ typedef enum _gpio_pin_value
     GPIO_PV_HIGH
 } gpio_pin_value_t;
 
-int rt_hw_pin_init(void);
+typedef struct {
+    rt_uint16_t pin;
+    rt_uint16_t value;
+} gpio_cfg_t;
+
+typedef struct {
+    rt_uint16_t pin;
+    rt_uint8_t enable;
+    rt_uint8_t mode;
+    rt_uint16_t debounce;
+    rt_uint8_t signo;
+    void *sigval;
+} gpio_irqcfg_t;
 
 rt_err_t kd_pin_irq_enable(rt_base_t pin, rt_uint32_t enabled);
 rt_err_t kd_pin_detach_irq(rt_int32_t pin);
 rt_err_t kd_pin_attach_irq(rt_int32_t pin,rt_uint32_t mode, void (*hdr)(void *args), void *args);
-void kd_pin_write(rt_base_t pin, rt_base_t value);
-void kd_pin_mode(rt_base_t pin, rt_base_t mode);
+rt_err_t kd_pin_write(rt_base_t pin, rt_base_t value);
+rt_err_t kd_pin_mode(rt_base_t pin, rt_base_t mode);
 int kd_pin_read(rt_base_t pin);
 
 #endif

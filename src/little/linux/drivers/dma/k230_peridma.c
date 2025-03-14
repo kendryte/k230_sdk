@@ -22,6 +22,7 @@
 #include <linux/spinlock.h>
 #include <linux/delay.h>
 #include <linux/dma-mapping.h>
+#include <linux/canaan-hardlock.h>
 
 #include "virt-dma.h"
 
@@ -281,6 +282,9 @@ typedef struct pdma_chn_llt
 }pdma_chn_llt_t;
 static pdma_chn_llt_t g_pdma_llt_list[CH_NUM];
 
+static int hardlock;
+static bool hardlock_requested = false;
+
 static void free_pchan(struct k230_peridma_dev *pdev, struct k230_peridma_pchan *pchan);
 
 static struct k230_peridma_dev *to_k230_peridma_dev(struct dma_device *dev)
@@ -358,30 +362,34 @@ static inline void peridma_pchan_irq_clear(struct k230_peridma_pchan *pchan)
         u32 clear = PDONE_INT | PITEM_INT | PPAUSE_INT | PTOUT_INT;
 
         reg = ioread32(pdev->base + PDMA_INT_STAT);
-        reg |= (clear << ch_id);
+        reg &= (clear << ch_id);
         iowrite32(reg, pdev->base + PDMA_INT_STAT);
 }
 
 static inline void peridma_pchan_irq_enable(struct k230_peridma_pchan *pchan)
 {
-	struct k230_peridma_dev *pdev = pchan->pdev;
-        u32 reg;
-	u32 ch_id = pchan->id;
+    struct k230_peridma_dev *pdev = pchan->pdev;
+    u32 reg;
+    u32 ch_id = pchan->id;
 
-        reg = ioread32(pdev->base + PDMA_CH_EN);
-        reg |= (1 << ch_id);
-        iowrite32(reg, pdev->base + PDMA_CH_EN);
+    while(hardlock_lock(hardlock));
+    reg = ioread32(pdev->base + PDMA_CH_EN);
+    reg |= (1 << ch_id);
+    iowrite32(reg, pdev->base + PDMA_CH_EN);
+    hardlock_unlock(hardlock);
 }
 
 static inline void peridma_pchan_irq_disable(struct k230_peridma_pchan *pchan)
 {
-	struct k230_peridma_dev *pdev = pchan->pdev;
-        u32 reg;
-	u32 ch_id = pchan->id;
+    struct k230_peridma_dev *pdev = pchan->pdev;
+    u32 reg;
+    u32 ch_id = pchan->id;
 
-        reg = ioread32(pdev->base + PDMA_CH_EN);
-        reg &= (~(1 << ch_id));
-        iowrite32(reg, pdev->base + PDMA_CH_EN);
+    while(hardlock_lock(hardlock));
+    reg = ioread32(pdev->base + PDMA_CH_EN);
+    reg &= (~(1 << ch_id));
+    iowrite32(reg, pdev->base + PDMA_CH_EN);
+    hardlock_unlock(hardlock);
 }
 
 static inline void peridma_pchan_start(struct k230_peridma_pchan *pchan)
@@ -412,15 +420,15 @@ static inline void peridma_pchan_resume(struct k230_peridma_pchan *pchan)
 
 static void k230_peridma_hw_init(struct k230_peridma_dev *pdev)
 {
-        u32 i;
+        // u32 i;
 
-        iowrite32(0, pdev->base + PDMA_CH_EN);
-        iowrite32(0, pdev->base + PDMA_INT_MASK);
-        iowrite32(0, pdev->base + PDMA_INT_STAT);
+        // iowrite32(0, pdev->base + PDMA_CH_EN);
+        // iowrite32(0, pdev->base + PDMA_INT_MASK);
+        // iowrite32(0, pdev->base + PDMA_INT_STAT);
 
-        for (i = 0; i < pdev->nr_channels; i++) {
-                peridma_pchan_stop(&pdev->pchan[i]);
-        }
+        // for (i = 0; i < pdev->nr_channels; i++) {
+        //         peridma_pchan_stop(&pdev->pchan[i]);
+        // }
 }
 
 static void peridma_desc_put(struct k230_peridma_desc *desc)
@@ -774,10 +782,16 @@ static void free_pchan(struct k230_peridma_dev *pdev, struct k230_peridma_pchan 
 
 	vchan = pchan->vchan;
 	vchan->pchan = NULL;
-        pchan->vchan = NULL;
-        clear_bit(nr, pdev->pchans_used);
+    pchan->vchan = NULL;
+    clear_bit(nr, pdev->pchans_used);
+        
+    u32 int_stat = 0;
+    int_stat = ioread32(pdev->base + PDMA_INT_STAT);
+    int_stat &= ((PDONE_INT | PITEM_INT | PPAUSE_INT | PTOUT_INT) << pchan->id);
+    iowrite32(int_stat, pdev->base + PDMA_INT_STAT);
+    g_pdma_llt_list[pchan->id].use = false;
 
-        spin_unlock_irqrestore(&pdev->lock, flags);
+    spin_unlock_irqrestore(&pdev->lock, flags);
 
 }
 
@@ -961,26 +975,10 @@ static void k230_peridma_issue_pending(struct dma_chan *dchan)
         spin_unlock_irqrestore(&vchan->vchan.lock, flags);
 }
 
-static void _pdma_chn_state_clear(pdma_ch_e pdma_chn, u32* int_state)
+static u32 _pdma_chn_state_clear(pdma_ch_e pdma_chn, u32 int_state)
 {
-    if (*int_state & (1 << pdma_chn))
-    {
-        *int_state |= (PDONE_INT << pdma_chn);
-
-        //free 链表
-    }
-    if (*int_state & (1 << (8 + pdma_chn)))
-    {
-        *int_state |= (PITEM_INT << pdma_chn);
-    }
-    if (*int_state & (1 << (16 + pdma_chn)))
-    {
-        *int_state |= (PPAUSE_INT << pdma_chn);
-    }
-    if (*int_state & (1 << (24 + pdma_chn)))
-    {
-        *int_state |= (PTOUT_INT << pdma_chn);
-    }
+    int_state &= ((PDONE_INT | PITEM_INT | PPAUSE_INT | PTOUT_INT) << pdma_chn);
+    return int_state;
 }
 
 static irqreturn_t k230_peridma_interrupt(int irq, void *dev_id)
@@ -992,16 +990,26 @@ static irqreturn_t k230_peridma_interrupt(int irq, void *dev_id)
     struct k230_peridma_hwdesc *hwdesc = NULL;
     int i;
     u32 ch_id;
-
+    u32 int_clear = 0;
     u32 int_stat = 0;
     int_stat = ioread32(priv->base + PDMA_INT_STAT);
+
     for (i = 0;i < CH_NUM;i ++)
     {
-        if ((int_stat >> i) & 0x1)
+        if ((*(priv->pchans_used) & BIT_ULL(i)) == 0) {
+                continue;
+        }
+
+        if ((int_stat >> i) & (PDONE_INT | PITEM_INT | PPAUSE_INT | PTOUT_INT))
         {
-                _pdma_chn_state_clear(i, &int_stat);
-                iowrite32(int_stat, priv->base + PDMA_INT_STAT);
+                int_clear = _pdma_chn_state_clear(i, int_stat);
+                iowrite32(int_clear, priv->base + PDMA_INT_STAT);
                 g_pdma_llt_list[i].use = false;
+                if((int_clear >> i) & PTOUT_INT)
+                {
+                    dev_err(vchan2dev(priv->pchan[i].vchan), "chan[%d] timeout", i);
+                    continue;
+                }
         }
         else
         {
@@ -1246,6 +1254,19 @@ static int k230_peridma_probe(struct platform_device *pdev)
 		return priv->irq;
 	}
 
+	if (!hardlock_requested) {
+		if (of_property_read_u32(pdev->dev.of_node, "hardlock", &hardlock)) {
+			dev_err(&pdev->dev, "get used hardlock num failed!\n");
+			return -EINVAL;
+		}
+		if (request_lock(hardlock))
+		{
+			dev_err(&pdev->dev, "request hardlock %d failed!\n", hardlock);
+			hardlock = -1;
+		}
+		hardlock_requested = true;
+		dev_info(&pdev->dev, "request hardlock %d success!\n", hardlock);
+	}
 
 	priv->clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(priv->clk)) {

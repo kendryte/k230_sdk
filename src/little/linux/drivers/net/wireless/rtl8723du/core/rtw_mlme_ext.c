@@ -10639,6 +10639,8 @@ static void rtw_mlmeext_disconnect(struct adapter *adapt)
 		self_action = MLME_ADHOC_STOPPED;
 	else if (MLME_IS_NULL(adapt))
 		self_action = MLME_ACTION_NONE;
+    else if (MLME_IS_SCAN(adapt))
+		self_action = MLME_SCAN_DISABLE;
 	else {
 		RTW_INFO("state:0x%x\n", MLME_STATE(adapt));
 		rtw_warn_on(1);

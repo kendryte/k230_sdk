@@ -196,6 +196,8 @@ static int k230_pwm_probe(struct platform_device *pdev)
 	k230_pwm->chip.ops = &k230_pwm_ops;
 	k230_pwm->chip.base = -1;
 	k230_pwm->chip.npwm = 6;
+	k230_pwm->chip.of_xlate = of_pwm_xlate_with_flags;
+	k230_pwm->chip.of_pwm_n_cells = 3;
 
 	ret = pwmchip_add(&k230_pwm->chip);
 	if (ret < 0)

@@ -83,24 +83,6 @@ int board_early_init_f(void)
 
 __weak int board_init(void)
 {
-	#define USB_IDPULLUP0 		(1<<4)
-	#define USB_DMPULLDOWN0 	(1<<8)
-	#define USB_DPPULLDOWN0 	(1<<9)
-
-    u32 usb0_test_ctl3 = readl((void*)USB0_TEST_CTL3);
-	u32 usb1_test_ctl3 = readl((void*)USB1_TEST_CTL3);
-
-	usb0_test_ctl3 |= USB_IDPULLUP0;
-	usb1_test_ctl3 |= USB_IDPULLUP0;
-
-	writel(usb0_test_ctl3, (void*)USB0_TEST_CTL3);
-	writel(usb1_test_ctl3, (void*)USB1_TEST_CTL3);
-
-    #define SD_HOST_REG_VOL_STABLE      (1<<4)
-    #define SD_CARD_WRITE_PROT          (1<<6)
-    u32 sd0_ctrl = readl((void*)SD0_CTRL);
-    sd0_ctrl |= SD_HOST_REG_VOL_STABLE | SD_CARD_WRITE_PROT;
-    writel(sd0_ctrl, (void*)SD0_CTRL);
 	return 0;
 }
 

@@ -31,10 +31,43 @@
 #include <fcntl.h>
 #include "sys/ioctl.h"
 
-#define HASH_DEVICE_NAME                "/dev/hwhash"
-#define RT_HWHASH_CTRL_INIT             _IOWR('H', 0, int)
-#define RT_HWHASH_CTRL_UPDATE           _IOWR('H', 1, int)
-#define RT_HWHASH_CTRL_FINISH           _IOWR('H', 2, int)
+#define HASH_DEVICE_NAME                "/dev/hash"
+#define RT_HASH_INIT                    _IOWR('H', 0, int)
+#define RT_HASH_UPDATE                  _IOWR('H', 1, int)
+#define RT_HASH_FINAL                   _IOWR('H', 2, int)
+#define RT_HASH_FAST_DOUBLE             _IOWR('H', 4, int)
+
+typedef enum {
+    SHA_224,
+    SHA_256,
+    SHA_384,
+    SHA_512,
+    SHA_512_224,
+    SHA_512_256,
+    SM3,
+    N_HASH_T,
+} k_pufs_hash_t;
+
+union rt_hash_control_args
+{
+    struct {
+        uint8_t mode;
+    } init;
+    struct {
+        uint8_t *msg;
+        uint32_t msglen;
+    } update;
+    struct {
+        uint8_t *dgst;
+        uint32_t dlen;
+    } final;
+    struct {
+        uint8_t *msg;
+        uint32_t msglen;
+        uint8_t *dgst;
+        uint32_t dlen;
+    } fast;
+};
 
 static const struct hash_test_pattern
 {
@@ -70,21 +103,13 @@ static const struct hash_test_pattern
     },
 };
 
-typedef struct
-{
-    void *msg;
-    void *dgst;
-    uint32_t msglen;
-    uint32_t dlen;
-} hash_config_t;
-
 int main(int argc, char *argv[])
 {
     int fd;
     int ntests = sizeof(hash_tp) / sizeof(struct hash_test_pattern);
     int i, j;
     uint8_t out[32] = {0};
-    hash_config_t config;
+    union rt_hash_control_args ctl;
 
     fd = open(HASH_DEVICE_NAME, O_RDWR);
     if(fd < 0)
@@ -96,36 +121,34 @@ int main(int argc, char *argv[])
     for(i=0; i<ntests; i++)
     {
         printf("case %d, msglen = %d\n", i, hash_tp[i].msglen);
-        config.msg = (void *)hash_tp[i].msg;
-        config.msglen = hash_tp[i].msglen;
-        config.dgst = (void *)out;
-        config.dlen = 0;
-
+        ctl.init.mode = SHA_256;
         // init
-        if(ioctl(fd, RT_HWHASH_CTRL_INIT, &config))
+        if(ioctl(fd, RT_HASH_INIT, &ctl))
         {
             perror("ioctl");
             close(fd);
             return -1;
         }
-
+        ctl.update.msg = (void *)hash_tp[i].msg;
+        ctl.update.msglen = hash_tp[i].msglen;
         // update
-        if(ioctl(fd, RT_HWHASH_CTRL_UPDATE, &config))
+        if(ioctl(fd, RT_HASH_UPDATE, &ctl))
         {
             perror("ioctl");
             close(fd);
             return -1;
         }
-
+        ctl.final.dgst = (void *)out;
+        ctl.final.dlen = 32;
         // finish
-        if(ioctl(fd, RT_HWHASH_CTRL_FINISH, &config))
+        if(ioctl(fd, RT_HASH_FINAL, &ctl))
         {
             perror("ioctl");
             close(fd);
             return -1;
         }
 
-        if(memcmp(config.dgst, (void *)hash_tp[i].md, config.dlen) == 0)
+        if(memcmp(out, (void *)hash_tp[i].md, ctl.final.dlen) == 0)
         {
             printf("Success!\n");
         }
@@ -133,8 +156,8 @@ int main(int argc, char *argv[])
         {
             printf("Fail!\n");
             printf("golden message digest       computed message digest\n\r");
-            for(j=0; j<config.dlen; j++)
-                printf("0x%x 0x%x\n", *(uint8_t *)(hash_tp[i].md + j), *(uint8_t *)(config.dgst + j));
+            for(j=0; j<ctl.final.dlen; j++)
+                printf("0x%x 0x%x\n", *(uint8_t *)(hash_tp[i].md + j), *(uint8_t *)(out + j));
         }
 
         memset(out, 0, 32);

@@ -38,6 +38,7 @@ typedef enum k230_hardlock_type
     HARDLOCK_HASH = 6,
     HARDLOCK_AES = 7,
     HARDLOCK_SM4 = 8,
+    HARDLOCK_PDMA = 9,
     HARDLOCK_MAX = 128
 } hardlock_type;
 

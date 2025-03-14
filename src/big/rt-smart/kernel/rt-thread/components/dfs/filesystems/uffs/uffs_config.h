@@ -104,7 +104,7 @@
  * \note Enable debug message output. You must call uffs_InitDebugMessageOutput()
  *      to initialize debug apart from enable debug feature.
  */
-#define CONFIG_ENABLE_UFFS_DEBUG_MSG
+// #define CONFIG_ENABLE_UFFS_DEBUG_MSG
 
 /**
  * \def CONFIG_USE_GLOBAL_FS_LOCK
@@ -207,7 +207,7 @@
  * \def CONFIG_PAGE_WRITE_VERIFY
  * \note verify page data after write, for extra safe data storage.
  */
-#define CONFIG_PAGE_WRITE_VERIFY
+// #define CONFIG_PAGE_WRITE_VERIFY
 
 /**
  * \def CONFIG_BAD_BLOCK_POLICY_STRICT
@@ -217,7 +217,7 @@
  *
  * \note Enable this will ensure your data always be stored on completely good blocks.
  */
-#define CONFIG_BAD_BLOCK_POLICY_STRICT
+// #define CONFIG_BAD_BLOCK_POLICY_STRICT
 
 
 /**
@@ -225,7 +225,7 @@
  * \note If this is enabled, UFFS save page data CRC16 sum in mini header,
  *       it provides extra protection for data integrity.
  */
-#define CONFIG_ENABLE_PAGE_DATA_CRC
+// #define CONFIG_ENABLE_PAGE_DATA_CRC
 
 
 /** micros for calculating buffer sizes */

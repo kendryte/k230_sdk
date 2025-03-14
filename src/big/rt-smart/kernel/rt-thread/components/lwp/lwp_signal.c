@@ -229,7 +229,7 @@ rt_inline int _lwp_check_ignore(int sig)
 }
 
 void sys_exit(int value);
-lwp_sighandler_t lwp_sighandler_get(int sig)
+lwp_sighandler_t lwp_sighandler_get(int sig, siginfo_t *info)
 {
     lwp_sighandler_t func = RT_NULL;
     struct rt_lwp *lwp;
@@ -264,6 +264,7 @@ lwp_sighandler_t lwp_sighandler_get(int sig)
         }
         sys_exit(0);
     }
+    *info = thread->siginfo[sig - 1];
 out:
     rt_hw_interrupt_enable(level);
 
@@ -514,13 +515,22 @@ static void _do_signal_wakeup(rt_thread_t thread, int sig)
 
 int lwp_kill(pid_t pid, int sig)
 {
+    siginfo_t info;
+
+    rt_memset(&info, 0, sizeof(info));
+    info.si_code = SI_KERNEL;
+    return lwp_kill_ext(pid, sig, &info);
+}
+
+int lwp_kill_ext(pid_t pid, int sig, siginfo_t *info)
+{
     rt_base_t level;
     struct rt_lwp *lwp;
     int ret = -1;
     rt_list_t *list;
     rt_thread_t thread;
 
-    if (sig < 0 || sig >= _LWP_NSIG)
+    if (sig <= 0 || sig > _LWP_NSIG)
     {
         rt_set_errno(EINVAL);
         return ret;
@@ -532,17 +542,16 @@ int lwp_kill(pid_t pid, int sig)
         rt_set_errno(ESRCH);
         goto out;
     }
-    if (sig)
+    for (list = lwp->t_grp.prev; list != &lwp->t_grp; list = list->prev)
     {
-        for (list = lwp->t_grp.prev; list != &lwp->t_grp; list = list->prev)
+        thread = rt_list_entry(list, struct rt_thread, sibling);
+        if (!lwp_sigismember(&thread->signal_mask, sig)) /* if signal masked */
         {
-            thread = rt_list_entry(list, struct rt_thread, sibling);
-            if (!lwp_sigismember(&thread->signal_mask, sig)) /* if signal masked */
-            {
-                lwp_sigaddset(&thread->signal, sig);
-                _do_signal_wakeup(thread, sig);
-                break;
-            }
+            info->si_signo = sig;
+            thread->siginfo[sig - 1] = *info;
+            lwp_sigaddset(&thread->signal, sig);
+            _do_signal_wakeup(thread, sig);
+            break;
         }
     }
     ret = 0;
@@ -553,6 +562,15 @@ out:
 
 int lwp_thread_kill(rt_thread_t thread, int sig)
 {
+    siginfo_t info;
+
+    rt_memset(&info, 0, sizeof(info));
+    info.si_code = SI_KERNEL;
+    return lwp_thread_kill_ext(thread, sig, &info);
+}
+
+int lwp_thread_kill_ext(rt_thread_t thread, int sig, siginfo_t *info)
+{
     rt_base_t level;
     int ret = -RT_EINVAL;
 
@@ -561,7 +579,7 @@ int lwp_thread_kill(rt_thread_t thread, int sig)
         rt_set_errno(ESRCH);
         return ret;
     }
-    if (sig < 0 || sig >= _LWP_NSIG)
+    if (sig <= 0 || sig > _LWP_NSIG)
     {
         rt_set_errno(EINVAL);
         return ret;
@@ -573,6 +591,8 @@ int lwp_thread_kill(rt_thread_t thread, int sig)
         goto out;
     }
     lwp_sigaddset(&thread->signal, sig);
+    info->si_signo = sig;
+    thread->siginfo[sig - 1] = *info;
     if (!lwp_sigismember(&thread->signal_mask, sig)) /* if signal masked */
     {
         _do_signal_wakeup(thread, sig);
@@ -581,4 +601,12 @@ int lwp_thread_kill(rt_thread_t thread, int sig)
 out:
     rt_hw_interrupt_enable(level);
     return ret;
+}
+
+void* siginfo_push(void* sp)
+{
+    sp = (void *)((uint64_t)sp & ~7UL);
+    sp -= sizeof(siginfo_t);
+
+    return sp;
 }

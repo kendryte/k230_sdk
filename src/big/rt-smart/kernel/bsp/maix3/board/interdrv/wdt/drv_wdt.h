@@ -23,6 +23,7 @@
 #define KD_DEVICE_CTRL_WDT_KEEPALIVE      _IOW('W', 4, int) /* refresh watchdog */
 #define KD_DEVICE_CTRL_WDT_START          _IOW('W', 5, int) /* start watchdog */
 #define KD_DEVICE_CTRL_WDT_STOP           _IOW('W', 6, int) /* stop watchdog */
+#define KD_DEVICE_CTRL_WDT_SET_PRETIMEOUT _IOW('W', 7, int) /* set pretimeout(in seconds) */
 
 struct kd_wdt_timeout {
 	rt_uint32_t top_val;

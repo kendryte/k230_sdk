@@ -186,6 +186,11 @@ extern "C" {
 #define USB1_TEST_CTL5 (HS_REG_BASE + 0xa4)
 #define USB1_TEST_CTL6 (HS_REG_BASE + 0xa8)
 
+#define USB0_CTL0 (HS_REG_BASE + 0xb0)
+#define USB0_CTL1 (HS_REG_BASE + 0xb4)
+#define USB1_CTL0 (HS_REG_BASE + 0xb8)
+#define USB1_CTL1 (HS_REG_BASE + 0xbc)
+
 #define REG_USB0_TEST_CTL2         REG32(USB0_TEST_CTL2)
 #define REG_USB0_TEST_CTL3         REG32(USB0_TEST_CTL3)
 #define REG_USB1_TEST_CTL3         REG32(USB1_TEST_CTL3)

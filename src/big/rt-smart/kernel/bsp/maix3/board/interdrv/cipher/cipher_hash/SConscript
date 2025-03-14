@@ -6,7 +6,7 @@ cwd     = GetCurrentDir()
 src     = Glob('*.c') + Glob('*.S')
 CPPPATH = [cwd]
 
-group = DefineGroup('Cipher_hash', src, depend = ['RT_USING_HWHASH'], CPPPATH = CPPPATH)
+group = DefineGroup('Cipher_hash', src, depend = ['RT_USING_HASH'], CPPPATH = CPPPATH, CFLAGS = '-O2')
 
 objs = [group]
 

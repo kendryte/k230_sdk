@@ -29,7 +29,7 @@
 //#include <core_rv64.h>
 #include <linux/delay.h>
 #define               DDR_REG_BASE 0x98000000
- 
+
 #define reg_write( addr,v)                       \
     {        \
         writel(v, (volatile void __iomem *)addr); \
@@ -41,7 +41,7 @@
        v =readl((const volatile void __iomem *) addr );  \
     }
 
-void sip_ddr_init_3200_have_wodt(void)
+void ddr_init_board(void)
 {
     int data;
     int train_data=0;
@@ -290,7 +290,7 @@ reg_write( DDR_REG_BASE +  0x00000030 , 0x00000020 );
 
 ////////////////////de rst////////////////////////////////////////
 
- reg_read ( 0x9110309c, data  ); 
+ reg_read ( 0x9110309c, data  );
  data=data|0x00020000;
  reg_write ( 0x9110309c, data  );
 
@@ -362,7 +362,7 @@ reg_write(   DDR_REG_BASE +0x2007c*4 +0x02000000,0x61);
 reg_write(   DDR_REG_BASE +0x20056*4 +0x02000000,0x3);
 
 //iteration place
-//PHY RX ODT  
+//PHY RX ODT
 //0010_00 00_0000 0x208 0x200  Down:120
 //0010_10 00_0000 0x28a 0x280  Down:80
 //0110_00 00_0000 0x618 0x600  Down:60
@@ -379,7 +379,7 @@ reg_write(   DDR_REG_BASE +0x1304d*4 +0x02000000,0x0);
 reg_write(   DDR_REG_BASE +0x1314d*4 +0x02000000,0x0);
 
 //iteration place
-//PHY TX output impedence 
+//PHY TX output impedence
 //0010_00 00_1000 0x208 Pullup/Down:120
 //0010_10 00_1010 0x28a Pullup/Down:80
 //0110_00 01_1000 0x618 Pullup/Down:60
@@ -397,7 +397,7 @@ reg_write(   DDR_REG_BASE +0x13049*4 +0x02000000,0xfbe);
 reg_write(   DDR_REG_BASE +0x13149*4 +0x02000000,0xfbe);
 
 //iteration
-// PHY AC/CLK output  impedence 
+// PHY AC/CLK output  impedence
 //00000_00000  0x0    120
 //00001_00001  0x21   60
 //00011_00011  0x63   40
@@ -469,26 +469,26 @@ reg_write(   DDR_REG_BASE +0x2002c*4 +0x02000000,0x0);
 reg_write(   DDR_REG_BASE +0x20060*4 +0x02000000,0x2);
 
 
-reg_write(   DDR_REG_BASE + 0x100a0*4+0x02000000,0x4); //lndq =1				
-reg_write(   DDR_REG_BASE + 0x100a1*4+0x02000000,0x5); //CA1 =0				
-reg_write(   DDR_REG_BASE + 0x100a2*4+0x02000000,0x7); //CA1 =0				
-reg_write(   DDR_REG_BASE + 0x100a3*4+0x02000000,0x6); //CA1 =0				
-reg_write(   DDR_REG_BASE + 0x100a4*4+0x02000000,0x0); //CA1 =0				
-reg_write(   DDR_REG_BASE + 0x100a5*4+0x02000000,0x2); //CA1 =0				
-reg_write(   DDR_REG_BASE + 0x100a6*4+0x02000000,0x3); //CA1 =0				
-reg_write(   DDR_REG_BASE + 0x100a7*4+0x02000000,0x1); //CA1 =0	
+reg_write(   DDR_REG_BASE + 0x100a0*4+0x02000000,0x4); //lndq =1
+reg_write(   DDR_REG_BASE + 0x100a1*4+0x02000000,0x5); //CA1 =0
+reg_write(   DDR_REG_BASE + 0x100a2*4+0x02000000,0x7); //CA1 =0
+reg_write(   DDR_REG_BASE + 0x100a3*4+0x02000000,0x6); //CA1 =0
+reg_write(   DDR_REG_BASE + 0x100a4*4+0x02000000,0x0); //CA1 =0
+reg_write(   DDR_REG_BASE + 0x100a5*4+0x02000000,0x2); //CA1 =0
+reg_write(   DDR_REG_BASE + 0x100a6*4+0x02000000,0x3); //CA1 =0
+reg_write(   DDR_REG_BASE + 0x100a7*4+0x02000000,0x1); //CA1 =0
 
-reg_write(   DDR_REG_BASE + 0x110a0*4+0x02000000,0x0); //lndq =1				
-reg_write(   DDR_REG_BASE + 0x110a1*4+0x02000000,0x1); //CA1 =0				
-reg_write(   DDR_REG_BASE + 0x110a2*4+0x02000000,0x3); //CA1 =0				
-reg_write(   DDR_REG_BASE + 0x110a3*4+0x02000000,0x2); //CA1 =0				
-reg_write(   DDR_REG_BASE + 0x110a4*4+0x02000000,0x4); //CA1 =0				
-reg_write(   DDR_REG_BASE + 0x110a5*4+0x02000000,0x7); //CA1 =0				
-reg_write(   DDR_REG_BASE + 0x110a6*4+0x02000000,0x6); //CA1 =0				
-reg_write(   DDR_REG_BASE + 0x110a7*4+0x02000000,0x5); //CA1 =0	
+reg_write(   DDR_REG_BASE + 0x110a0*4+0x02000000,0x0); //lndq =1
+reg_write(   DDR_REG_BASE + 0x110a1*4+0x02000000,0x1); //CA1 =0
+reg_write(   DDR_REG_BASE + 0x110a2*4+0x02000000,0x3); //CA1 =0
+reg_write(   DDR_REG_BASE + 0x110a3*4+0x02000000,0x2); //CA1 =0
+reg_write(   DDR_REG_BASE + 0x110a4*4+0x02000000,0x4); //CA1 =0
+reg_write(   DDR_REG_BASE + 0x110a5*4+0x02000000,0x7); //CA1 =0
+reg_write(   DDR_REG_BASE + 0x110a6*4+0x02000000,0x6); //CA1 =0
+reg_write(   DDR_REG_BASE + 0x110a7*4+0x02000000,0x5); //CA1 =0
 
 
-	
+
 
 
 reg_write(   DDR_REG_BASE +  0x000d0000*4+0x02000000 , 0x00000000 );
@@ -16925,7 +16925,7 @@ reg_write(   DDR_REG_BASE +0x5401f*4 +0x02000000,0x2d54);
 reg_write(   DDR_REG_BASE +0x54020*4 +0x02000000,0x33);
 //iteration
 //MR11 l-DQ/h-CA ODT: 2:120 3:80 4:60 5:70  6:40
-reg_write(   DDR_REG_BASE +0x54021*4 +0x02000000,0x4d06);//MR12-CA 
+reg_write(   DDR_REG_BASE +0x54021*4 +0x02000000,0x4d06);//MR12-CA
 reg_write(   DDR_REG_BASE +0x54022*4 +0x02000000,0x4d08);//MR14-DQ
 reg_write(   DDR_REG_BASE +0x54023*4 +0x02000000,0x0);
 reg_write(   DDR_REG_BASE +0x54024*4 +0x02000000,0x4);
@@ -17736,7 +17736,7 @@ reg_write(   DDR_REG_BASE +   0x000d0099*4 +0x02000000 , 0x00000000  );
 
 while((train_data&0x7) !=0x07) {
 
- reg_read (   DDR_REG_BASE  + 0x000d0004*4 +0x02000000 ,  data       ); 
+ reg_read (   DDR_REG_BASE  + 0x000d0004*4 +0x02000000 ,  data       );
  while((data&0x1) !=0x0) {
  reg_read (   DDR_REG_BASE  + 0x000d0004*4 +0x02000000 ,  data       );
  }
@@ -17765,7 +17765,7 @@ while((train_data&0x7) !=0x07) {
   case 0x000000ff: K230_dbg("%08X: PMU Major Msg: FATAL ERROR 3200wodt.                                                  \n",train_data);break;
  default:         K230_dbg("%08X: PMU Major Msg: Un-recognized message... !                                    \n",train_data);break;
 //   default: break;
-  } 
+  }
 
 
  reg_write(   DDR_REG_BASE +   0x000d0031*4 +0x02000000 , 0x00000000   );
@@ -34902,7 +34902,7 @@ reg_write(   DDR_REG_BASE +   0x000d0099*4 +0x02000000 , 0x00000000  );
 
 while((train_data&0x7) !=0x07) {
 
- reg_read (   DDR_REG_BASE  + 0x000d0004*4 +0x02000000 ,  data       ); 
+ reg_read (   DDR_REG_BASE  + 0x000d0004*4 +0x02000000 ,  data       );
  while((data&0x1) !=0x0) {
  reg_read (   DDR_REG_BASE  + 0x000d0004*4 +0x02000000 ,  data       );
  }
@@ -34931,7 +34931,7 @@ while((train_data&0x7) !=0x07) {
   case 0x000000ff: K230_dbg("%08X: PMU Major Msg: FATAL ERROR.                                                  \n",train_data);break;
   default:         K230_dbg("%08X: PMU Major Msg: Un-recognized message... !                                    \n",train_data);break;
   //default: break;
-  } 
+  }
 
 
  reg_write(   DDR_REG_BASE +   0x000d0031*4 +0x02000000 , 0x00000000   );
@@ -35532,9 +35532,9 @@ reg_read (   DDR_REG_BASE +  0x00020097*4 +0x02000000 ,  data);
 
 reg_write( DDR_REG_BASE +  0x000001b0 , 0x00000034 );
 
-reg_read (DDR_REG_BASE +  0x000001bc  , data );  
+reg_read (DDR_REG_BASE +  0x000001bc  , data );
 while((data&0x1) !=0x1) {
- reg_read (DDR_REG_BASE +  0x000001bc  , data );  
+ reg_read (DDR_REG_BASE +  0x000001bc  , data );
 }
 
 
@@ -35546,14 +35546,14 @@ reg_write( DDR_REG_BASE +  0x00000320 , 0x00000001 );
 
 
 
-reg_read (DDR_REG_BASE +  0x00000324  , data ); 
+reg_read (DDR_REG_BASE +  0x00000324  , data );
  while((data&0x1) !=0x1) {
- reg_read (DDR_REG_BASE +  0x00000324  , data );  
+ reg_read (DDR_REG_BASE +  0x00000324  , data );
  }
 
-reg_read (DDR_REG_BASE +  0x00000004  , data ); 
+reg_read (DDR_REG_BASE +  0x00000004  , data );
  while((data&0x1) !=0x1) {
- reg_read (DDR_REG_BASE +  0x00000004  , data );  
+ reg_read (DDR_REG_BASE +  0x00000004  , data );
  }
 
 
@@ -35566,9 +35566,9 @@ reg_write( DDR_REG_BASE +  0x00000320 , 0x00000001 );
 
 
 
-reg_read (DDR_REG_BASE +  0x00000324  , data ); 
+reg_read (DDR_REG_BASE +  0x00000324  , data );
  while((data&0x1) !=0x1) {
- reg_read (DDR_REG_BASE +  0x00000324  , data );  
+ reg_read (DDR_REG_BASE +  0x00000324  , data );
  }
 
 
@@ -35602,7 +35602,7 @@ reg_write( DDR_REG_BASE +  0x0000050 , 0x98210000 );
 
 
          for(i=0;i<8;i++)
-         {add = DDR_REG_BASE +  0x00010040*4+0x02000000+i*0x100*4; K230_dbg("dbyte0 add =%lx value =%x\n",add,readl((const volatile void __iomem *) add ));}        
+         {add = DDR_REG_BASE +  0x00010040*4+0x02000000+i*0x100*4; K230_dbg("dbyte0 add =%lx value =%x\n",add,readl((const volatile void __iomem *) add ));}
          for(i=0;i<8;i++)
          {add = DDR_REG_BASE +  0x00011040*4+0x02000000+i*0x100*4; K230_dbg("dbyte1 add =%lx value =%x\n",add,readl((const volatile void __iomem *) add ));}
          for(i=0;i<8;i++)

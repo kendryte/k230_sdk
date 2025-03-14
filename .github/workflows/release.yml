@@ -127,7 +127,7 @@ jobs:
           ls -alht output/${CONF}/images/
           # Copy compiled files to /github/workspace/artifacts
           mkdir -p /github/workspace/artifacts
-          cp output/${CONF}/images/k230_${{ matrix.cfg }}* /github/workspace/artifacts/
+          cp -L output/${CONF}/images/*.img.gz /github/workspace/artifacts/
           ls -alht /github/workspace/artifacts/
         shell: bash
 

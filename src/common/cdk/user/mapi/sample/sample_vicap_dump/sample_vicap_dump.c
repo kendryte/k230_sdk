@@ -225,7 +225,7 @@ static k_s32 sample_vicap_vb_init(vicap_device_obj *dev_obj)
                 config.comm_pool[k].blk_size = VICAP_ALIGN_UP((out_width * out_height * 3 / 2), VICAP_ALIGN_1K);
                 break;
             case PIXEL_FORMAT_RGB_888:
-            case PIXEL_FORMAT_BGR_888_PLANAR:
+            case PIXEL_FORMAT_RGB_888_PLANAR:
                 config.comm_pool[k].blk_size = VICAP_ALIGN_UP((out_width * out_height * 3), VICAP_ALIGN_1K);
                 break;
             case PIXEL_FORMAT_RGB_BAYER_10BPP:
@@ -492,7 +492,7 @@ chn_parse:
                                 device_obj[cur_dev].out_format[cur_chn] = PIXEL_FORMAT_RGB_888;
                                 break;
                             case 2://rgb888p
-                                device_obj[cur_dev].out_format[cur_chn] = PIXEL_FORMAT_BGR_888_PLANAR;
+                                device_obj[cur_dev].out_format[cur_chn] = PIXEL_FORMAT_RGB_888_PLANAR;
                                 break;
                             case 3://raw
                                 device_obj[cur_dev].out_format[cur_chn] = PIXEL_FORMAT_RGB_BAYER_10BPP;
@@ -895,7 +895,7 @@ chn_parse:
                     } else if (dump_info.v_frame.pixel_format == PIXEL_FORMAT_RGB_888) {
                         suffix = "rgb888";
                         data_size = dump_info.v_frame.width * dump_info.v_frame.height * 3;
-                    }  else if (dump_info.v_frame.pixel_format == PIXEL_FORMAT_BGR_888_PLANAR) {
+                    }  else if (dump_info.v_frame.pixel_format == PIXEL_FORMAT_RGB_888_PLANAR) {
                         suffix = "rgb888p";
                         data_size = dump_info.v_frame.width * dump_info.v_frame.height * 3;
                     } else if (dump_info.v_frame.pixel_format == PIXEL_FORMAT_RGB_BAYER_10BPP) {

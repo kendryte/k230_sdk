@@ -20,6 +20,7 @@ connector|\
 lib|\
 fft|\
 pm|\
+gpu|\
 mediafreq|\
 Makefile|\
 rt-smart.mk|\
@@ -32,6 +33,8 @@ sensor|\
 connector|\
 fft|\
 pm|\
+vg_lite|\
+lvgl|\
 Makefile|\
 rt-smart.mk|\
 mpp.mk\

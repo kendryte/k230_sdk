@@ -3270,7 +3270,7 @@ static int rtw_rsn_sync_pmkid(struct adapter *adapter, u8 *ie, uint ie_len, int 
 		return 0;
 	}
 
-	if (i_ent < 0 && info.pmkid_cnt == 0)
+	if (info.pmkid_cnt == 0)
 		goto exit;
 
 	if (i_ent >= 0 && info.pmkid_cnt == 1 && !memcmp(info.pmkid_list, sec->PMKIDList[i_ent].PMKID, 16)) {

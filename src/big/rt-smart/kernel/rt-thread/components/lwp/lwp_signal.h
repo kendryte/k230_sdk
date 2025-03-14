@@ -20,7 +20,7 @@ extern "C" {
 int lwp_signal_check(void);
 int lwp_signal_backup(void *user_sp, void *user_pc, void* user_flag);
 struct rt_user_context *lwp_signal_restore(void);
-lwp_sighandler_t lwp_sighandler_get(int sig);
+lwp_sighandler_t lwp_sighandler_get(int sig, siginfo_t *info);
 void lwp_sighandler_set(int sig, lwp_sighandler_t func);
 #ifndef ARCH_MM_MMU
 void lwp_thread_sighandler_set(int sig, lwp_sighandler_t func);
@@ -31,6 +31,8 @@ int lwp_thread_sigprocmask(int how, const lwp_sigset_t *sigset, lwp_sigset_t *os
 
 int lwp_kill(pid_t pid, int sig);
 int lwp_thread_kill(rt_thread_t thread, int sig);
+int lwp_kill_ext(pid_t pid, int sig, siginfo_t *info);
+int lwp_thread_kill_ext(rt_thread_t thread, int sig, siginfo_t *info);
 
 #ifdef __cplusplus
 }

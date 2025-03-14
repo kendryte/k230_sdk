@@ -269,7 +269,8 @@ static URET ReadPageWithLayout(uffs_Device   *dev,
     }
 
     res = rt_mtd_nand_read(RT_MTD_NAND_DEVICE(dev->_private),
-                           page, data, data_len, spare, spare_len);
+                           page, data, data_len, ts ? spare : NULL,
+                           ts ? spare_len : 0);
     if (res == 0)
         res = UFFS_FLASH_NO_ERR;
     else if (res == -1)

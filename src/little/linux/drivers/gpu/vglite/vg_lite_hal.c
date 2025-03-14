@@ -188,6 +188,8 @@ struct vg_lite_device {
     u32 physical;
     u32 size;
     int irq_enabled;
+    int irq;
+    bool irq_mask;
 
     volatile u32 int_flags;
 
@@ -237,9 +239,13 @@ void vg_lite_hal_open(void) {
     pm_runtime_get_sync(device->dev);
     // Reset
     reset_control_reset(device->reset);
+    // enable_irq(device->irq);
+    device->irq_mask = 1;
 }
 
 void vg_lite_hal_close(void) {
+    // disable_irq(device->irq);
+    device->irq_mask = 0;
     // Power-off
     pm_runtime_put_sync(device->dev);
 }
@@ -435,9 +441,9 @@ int vg_lite_hal_wait_interrupt(u32 timeout, u32 mask, u32 *value)
     // FIXME: struct timeval tv;
     unsigned long jiffies;
     unsigned long result;
-    #define IGNORE_INTERRUPT 0
+    #define IGNORE_INTERRUPT 1
     #if IGNORE_INTERRUPT
-    unsigned int_flag;
+    u32 idle;
     #endif
 
     if (timeout == VG_LITE_INFINITE) {
@@ -459,17 +465,15 @@ int vg_lite_hal_wait_interrupt(u32 timeout, u32 mask, u32 *value)
     do {
         result = wait_event_interruptible_timeout(device->int_queue, device->int_flags & mask, jiffies);
         #if IGNORE_INTERRUPT
-        int_flag = vg_lite_hal_peek(0x10);
-        if (int_flag) {
-            result = int_flag;
-        }
-        printk(
+        // printk("vg_lite: wake, int_flags: 0x%08X, mask: 0x%08X, result: %ld\n", device->int_flags, mask, result);
+        idle = vg_lite_hal_peek(0x04);
+        dev_vdbg(device->dev,
             "vg_lite: waiting... idle: 0x%08X, int: 0x%08X, FE: 0x%08X 0x%08X 0x%08X\n",
-            vg_lite_hal_peek(0x4), int_flag,
+            vg_lite_hal_peek(0x4),
             vg_lite_hal_peek(0x500), vg_lite_hal_peek(0x504), vg_lite_hal_peek(0x508)
         );
         #endif
-    } while (timeout == VG_LITE_INFINITE && result == 0);
+    } while ((timeout == VG_LITE_INFINITE && result == 0) || (idle != 0x7fffffff));
 
     /* Report the event(s) got. */
     if (value)
@@ -771,29 +775,33 @@ static int vg_lite_exit(struct platform_device *pdev)
 static irqreturn_t irq_handler(int irq, void *context)
 {
     struct vg_lite_device *device = context;
+    u32 flags;
 
-    /* Read interrupt status. */
-    u32 flags = *(u32 *)((uint8_t *)device->gpu + VG_LITE_INTR_STATUS);
-
-    if (flags) {
-        /* Combine with current interrupt flags. */
-        device->int_flags |= flags;
-
-        /* Wake up any waiters. */
-        wake_up_interruptible(&device->int_queue);
-
-        /* We handled the IRQ. */
+    if (!device->irq_mask) {
         return IRQ_HANDLED;
     }
 
-    /* Not our IRQ. */
-    return IRQ_NONE;
+    /* Read interrupt status. */
+    flags = *(u32 *)((uint8_t *)device->gpu + VG_LITE_INTR_STATUS);
+    // printk("vg_lite: interrupt 0x%08X\n", flags);
+    /* Combine with current interrupt flags. */
+    if (flags) {
+        device->int_flags |= flags;
+    } else {
+        // ???
+        device->int_flags |= 1;
+    }
+
+    /* Wake up any waiters. */
+    wake_up_interruptible(&device->int_queue);
+
+    /* We handled the IRQ. */
+    return IRQ_HANDLED;
 }
 
 static int vg_lite_init(struct platform_device *pdev)
 {
     struct resource *mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-    int irq_line = platform_get_irq(pdev, 0);
     int error = 0;
     struct device* dev;
 
@@ -805,6 +813,7 @@ static int vg_lite_init(struct platform_device *pdev)
     }
     memset(device, 0, sizeof(struct vg_lite_device));
     get_device(&pdev->dev);
+    device->irq = platform_get_irq(pdev, 0);
     device->dev = &pdev->dev;
     device->clk = devm_clk_get(&pdev->dev, "vglite");
     device->reset = devm_reset_control_get(&pdev->dev, NULL);
@@ -822,19 +831,21 @@ static int vg_lite_init(struct platform_device *pdev)
     init_waitqueue_head(&device->int_queue);
 
     /* Install IRQ. */
-    if (irq_line < 0) {
-        printk(KERN_ERR "vg_lite: platform_get_irq failed, %d\n", irq_line);
+    if (device->irq < 0) {
+        printk(KERN_ERR "vg_lite: platform_get_irq failed, %d\n", device->irq);
         vg_lite_exit(pdev);
         return -1;
     }
-    error = request_irq(irq_line/*GPU_IRQ*/, irq_handler, 0, "vg_lite_irq", device);
+    // disable_irq(device->irq);
+    device->irq_mask = 0;
+    error = request_irq(device->irq/*GPU_IRQ*/, irq_handler, 0, pdev->name, device);
     if (error) {
         printk(KERN_ERR "vg_lite: request_irq failed, %d\n", error);
         vg_lite_exit(pdev);
         return -1;
     }
     device->irq_enabled = 1;
-    printk(KERN_DEBUG "vg_lite: enabled ISR for interrupt %d\n", irq_line/*GPU_IRQ*/);
+    printk(KERN_DEBUG "vg_lite: enabled ISR for interrupt %d\n", device->irq/*GPU_IRQ*/);
 
     /* Register device. */
     device->major = register_chrdev(0, "vg_lite", &file_operations);
@@ -867,11 +878,11 @@ static int vg_lite_init(struct platform_device *pdev)
 
     INIT_LIST_HEAD(&device->dma_list_head);
     INIT_LIST_HEAD(&device->mapped_list_head);
-    if (dma_set_mask_and_coherent(device->dev, DMA_BIT_MASK(32))) {
-        printk(KERN_ERR "vg_lite: dma_set_coherent_mask failed\n");
-        vg_lite_exit(pdev);
-        return -1;
-    }
+    // if (dma_set_mask_and_coherent(device->dev, DMA_BIT_MASK(32))) {
+    //     printk(KERN_ERR "vg_lite: dma_set_coherent_mask failed\n");
+    //     vg_lite_exit(pdev);
+    //     return -1;
+    // }
 
     /* Success. */
     return 0;

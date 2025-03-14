@@ -631,7 +631,7 @@ static int k230_gpio_add_port(struct platform_device *pdev, struct k230_gpio *gp
 			hardlock = -1;
 		}
 		hardlock_requested = true;
-		dev_err(gpio->dev, "request hardlock %d success!\n", hardlock);
+		dev_info(gpio->dev, "request hardlock %d success!\n", hardlock);
 	}
 
 	err = devm_gpiochip_add_data(gpio->dev, &port->gc, port);

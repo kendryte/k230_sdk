@@ -1,0 +1,89 @@
+/* Copyright (c) 2023, Canaan Bright Sight Co., Ltd
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+*/
+#include "k230.dtsi"
+#include "clock_provider.dtsi"          /* k230 soc clock tree */
+#include "clock_consumer.dtsi"          /* k230 soc clock consumer */
+#include "reset_provider.dtsi"          /* k230 soc reset provider */
+#include "reset_consumer.dtsi"          /* k230 soc reset consumer */
+#include "power_provider.dtsi"          /* k230 soc power provider */
+#include "power_consumer.dtsi"          /* k230 soc power consumer */
+#include "gpio_provider.dtsi"           /* k230 soc gpio provider */
+#include "gpio_consumer.dtsi"           /* k230 soc gpio consumer */
+
+
+/ {
+	aliases {
+		serial0 = &uart0;
+	};
+
+	chosen {
+		bootargs = "";
+		linux,initrd-start = <0x0 0xa100000>;
+		linux,initrd-end = <0x0 0x0>;
+		stdout-path = "serial0:115200";
+	};
+
+	sound {
+		status                      = "disable";
+		compatible                  = "canaan,k230-audio-inno";
+		canaan,model                = "CANAAN_K230_I2S_INNO";
+		canaan,k230-i2s-controller  = <&i2s>;
+		canaan,k230-audio-codec     = <&inno_codec>;
+	};
+};
+&ddr {
+	reg = <0x0 0x8200000 0x0 0x7dff000>;  /*linux memory config*/
+};
+
+&usbotg0 {
+	status = "okay";
+};
+
+&usbotg1 {
+	dr_mode = "host";
+	status = "okay";
+};
+
+&mmc_sd0{
+    status = "okay";
+    rx_delay_line = <0x0d>;
+    tx_delay_line = <0xc0>;
+};
+
+&mmc_sd1{
+    status = "okay";
+    no-1-8-v;
+    cap-sd-highspeed;
+    mshc_ctrl_r = <0x00>;
+};
+
+&dsi {
+    status = "okay";
+
+    panel@0 {
+        compatible = "canaan,hx8399";
+        reg = <0>;
+
+        display-timings {
+            timing-0 {
+                clock-frequency = <74250000>;
+                hactive = <1920>;
+                vactive = <1080>;
+                hfront-porch = <88>;
+                hback-porch = <148>;
+                hsync-len = <44>;
+                vfront-porch = <36>;
+                vback-porch = <4>;
+                vsync-len = <5>;
+            };
+        };
+    };
+};
+
+&uart0 {
+	status = "okay";
+};

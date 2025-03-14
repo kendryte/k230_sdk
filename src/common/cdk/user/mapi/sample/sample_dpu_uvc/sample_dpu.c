@@ -435,7 +435,7 @@ static k_s32 sample_dpu_vicap_vb_init(vicap_device_obj *dev_obj)
                 config->comm_pool[k].blk_size = VICAP_ALIGN_UP((out_width * out_height * 3 / 2), 0x1000);
                 break;
             case PIXEL_FORMAT_RGB_888:
-            case PIXEL_FORMAT_BGR_888_PLANAR:
+            case PIXEL_FORMAT_RGB_888_PLANAR:
                 config->comm_pool[k].blk_size = VICAP_ALIGN_UP((out_width * out_height * 3), 0x1000);
                 break;
             case PIXEL_FORMAT_RGB_BAYER_10BPP:
@@ -901,7 +901,7 @@ static void get_img(k_u32 frame_number, unsigned  long long pts, kd_dpu_data_s* 
     width = p_dpu_data->dpu_result.img_result.width;
     height = p_dpu_data->dpu_result.img_result.height;
     //printf("pixel format: %d\n", p_dpu_data->dpu_result.img_result.pixel_format);
-    if(p_dpu_data->dpu_result.img_result.pixel_format == PIXEL_FORMAT_BGR_888_PLANAR)
+    if(p_dpu_data->dpu_result.img_result.pixel_format == PIXEL_FORMAT_RGB_888_PLANAR)
     {
         ;
     }

@@ -56,6 +56,7 @@ struct k230_adc_data {
 	.type = IIO_VOLTAGE,					\
 	.channel = index,					\
 	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),	\
+    .info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE), \
 	.datasheet_name = "CH##index",				\
 	.indexed = 1,						\
 }
@@ -105,6 +106,10 @@ static int k230_adc_read_raw(struct iio_dev *indio_dev,
 	case IIO_CHAN_INFO_RAW:
         *val = k230_adc_conversion(info);
 		return IIO_VAL_INT;
+    case IIO_CHAN_INFO_SCALE:
+        *val = 0;
+		*val2 = 440000;
+        return IIO_VAL_INT_PLUS_MICRO;
 	default:
 		return -EINVAL;
     }

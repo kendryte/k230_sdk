@@ -1368,7 +1368,7 @@ static int kendryte_crypto_probe(struct platform_device *pdev)
 			hardlock = -1;
 		}
 		request_status = true;
-		dev_err(&pdev->dev, "request hardlock %d success!\n", hardlock);
+		dev_info(&pdev->dev, "request hardlock %d success!\n", hardlock);
 	}
 
     platform_set_drvdata(pdev, &crypto_info);

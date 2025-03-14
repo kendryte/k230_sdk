@@ -204,8 +204,8 @@ void uffs_AssertCall(const char *file, int line, const char *msg, ...);
 #define uffs_AssertCall(file, line, msg, ...) \
 	rt_kprintf("ASSERT %s:%d - :" msg "\n", (const char *)file, (int)line, ##__VA_ARGS__)
 #else
-#define uffs_DebugMessage(level, prefix, suffix, errFmt, ...)
-#define uffs_AssertCall(file, line, msg, ...)
+#define uffs_DebugMessage(level, prefix, suffix, errFmt, ...) 0
+#define uffs_AssertCall(file, line, msg, ...) 0
 #endif //CONFIG_ENABLE_UFFS_DEBUG_MSG
 #endif //RT_THREAD
 

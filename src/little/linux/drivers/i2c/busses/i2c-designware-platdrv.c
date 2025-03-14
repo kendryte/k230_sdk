@@ -233,7 +233,7 @@ static int dw_i2c_plat_probe(struct platform_device *pdev)
 	if (IS_ERR(dev->rst))
 		return PTR_ERR(dev->rst);
 
-	reset_control_deassert(dev->rst);
+	reset_control_reset(dev->rst);
 
 	t = &dev->timings;
 	if (pdata)
