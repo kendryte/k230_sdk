@@ -2,7 +2,7 @@ if TARGET_K230_CANMV_DONGSHANPI
 
 config SYS_CPU
 	default "k230"
-
+    
 config SYS_VENDOR
     default "canaan"
 
@@ -16,14 +16,21 @@ config SYS_CONFIG_NAME
 config BOARD_SPECIFIC_OPTIONS # dummy
 	def_bool y
 	select RISCV_THEAD
+    choice
+        prompt "DDR Type And Frequency"
+        default CANMV_DONGSHANPI_LPDDR3_1866
 
-choice
-	prompt "ddr typy freq"
-	default CANMV_DONGSHANPI_LPDDR3_1866
-
-config CANMV_LPDDR3_2133
-	bool  2133
-config CANMV_DONGSHANPI_LPDDR3_1866
-	bool 1866
-endchoice
+        config CANMV_DONGSHANPI_LPDDR3_2133
+            bool "k230 canmv dongshanpi ddr3 2133"
+        config CANMV_DONGSHANPI_LPDDR3_1866
+            bool "k230 canmv dongshanpi ddr3 1866"
+	config CANMV_DONGSHANPI_LPDDR4_2667
+	    bool "k230 canmv dongshanpi ddr4 2667"
+	config CANMV_DONGSHANPI_LPDDR4_3200
+	    bool "k230 canmv dongshanpi ddr4 3200"
+	config CANMV_DS_LPDDR4_1600_WITHOUT_ODT
+	    bool "canmv  LP4_1600 WITHOUT ODT,"
+	help
+		"CANMV V3,lushanpai,01studio,dongshanpi"
+    endchoice
 endif
