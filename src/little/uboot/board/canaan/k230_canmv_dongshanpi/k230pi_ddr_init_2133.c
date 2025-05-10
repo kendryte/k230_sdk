@@ -16908,7 +16908,7 @@ reg_write(   DDR_REG_BASE +0x5400a*4+0x02000000,0x2);
 reg_write(   DDR_REG_BASE +0x5400b*4+0x02000000,0x0);
 
 //swap dbyte
-reg_write(   DDR_REG_BASE + 0x5400d*4+0x02000000,0x8083); 
+reg_write(   DDR_REG_BASE + 0x5400d*4+0x02000000,0x8083);
 reg_write(   DDR_REG_BASE + 0x5400c*4+0x02000000,0x8182);
 reg_write(   DDR_REG_BASE +0x5400e*4+0x02000000,0x0);
 reg_write(   DDR_REG_BASE +0x5400f*4+0x02000000,0x0);
@@ -16924,7 +16924,7 @@ reg_write(   DDR_REG_BASE +0x54018*4+0x02000000,0xc300);
 // iteration place
 // DRAM DSEL Output Impedance -higher 8 bit
 // MR3_A0/A1/B0/B1
-   //0x2:(default: output driver impedance 40 pulldown&pullup) 
+   //0x2:(default: output driver impedance 40 pulldown&pullup)
    //0x1:(34.3  pulldown&pullup )
    //0x3:(48)
    //0x4:(reserve for 60) optional
@@ -16939,9 +16939,9 @@ reg_write(   DDR_REG_BASE +0x54030*4+0x02000000,0x41e);
 
 //iteration place
 //DRAM DQ ODT -higher 8 bit
-   //0x0:(default: DQ odt disable)  
-   //0x5:(ODT:60)   
-   //0x6:(ODT:120)  
+   //0x0:(default: DQ odt disable)
+   //0x5:(ODT:60)
+   //0x6:(ODT:120)
    //0x7:(ODT:240)
 reg_write(   DDR_REG_BASE +0x5401a*4+0x02000000,0x600);
 reg_write(   DDR_REG_BASE +0x5401e*4+0x02000000,0x600);
@@ -17794,7 +17794,7 @@ reg_write(   DDR_REG_BASE +  0x000d0099*4 +0x02000000 , 0x00000000 );
 
 while((train_data&0x7) !=0x07){
 
- reg_read (   DDR_REG_BASE  + 0x000d0004*4 +0x02000000 ,  data       ); 
+ reg_read (   DDR_REG_BASE  + 0x000d0004*4 +0x02000000 ,  data       );
  while((data&0x1) !=0x0){
  reg_read (   DDR_REG_BASE  + 0x000d0004*4 +0x02000000 ,  data       );
  }
@@ -18348,9 +18348,9 @@ reg_read (   DDR_REG_BASE +  0x00020097*4 +0x02000000 , data );
 reg_write( DDR_REG_BASE + 0x000001b0 , 0x00000020 );
 
 
-reg_read (DDR_REG_BASE +  0x000001bc  , data );  
+reg_read (DDR_REG_BASE +  0x000001bc  , data ); 
 while((data&0x1) !=0x1){
- reg_read (DDR_REG_BASE +  0x000001bc  , data );  
+ reg_read (DDR_REG_BASE +  0x000001bc  , data );
 }
 
 
@@ -18367,9 +18367,9 @@ reg_write( DDR_REG_BASE + 0x00000320 , 0x00000001 );
  reg_read (DDR_REG_BASE +  0x00000324  , data );  
  }
 
-reg_read (DDR_REG_BASE +  0x00000004  , data ); 
+reg_read (DDR_REG_BASE +  0x00000004  , data );
  while((data&0x1) !=0x1){
- reg_read (DDR_REG_BASE +  0x00000004  , data );  
+ reg_read (DDR_REG_BASE +  0x00000004  , data );
  }
 
 
@@ -18381,7 +18381,7 @@ reg_write( DDR_REG_BASE + 0x000000d0 , 0x00020002 );
 reg_write( DDR_REG_BASE + 0x00000320 , 0x00000001 );
 
 
- reg_read (DDR_REG_BASE +  0x00000324  , data ); 
+ reg_read (DDR_REG_BASE +  0x00000324  , data );
  while((data&0x1) !=0x1){
  reg_read (DDR_REG_BASE +  0x00000324  , data );
  }
