@@ -110,7 +110,7 @@ static int change_pll_1866(void)
 
 }
 
-void ddr_init_board(void)
+void canmv_dongshanpi_ddr_init_1866(void)
 {
 int data;
 int train_data=0;
