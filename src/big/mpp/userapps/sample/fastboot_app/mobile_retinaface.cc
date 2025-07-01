@@ -53,7 +53,7 @@ MobileRetinaface::MobileRetinaface(const char *kmodel_file, size_t channel, size
     int w_pad_before = w_pad / 2;
     int w_pad_after = w_pad - w_pad_before;
 
-#if defined(CONFIG_BOARD_K230_CANMV) || defined(CONFIG_BOARD_K230_CANMV_V2) || defined(CONFIG_BOARD_K230_CANMV_01STUDIO) || defined(CONFIG_BOARD_K230D_CANMV) || defined(CONFIG_BOARD_K230_CANMV_DONGSHANPI) || defined(CONFIG_BOARD_K230D_CANMV_BPI)
+#if defined(CONFIG_BOARD_K230_CANMV) || defined(CONFIG_BOARD_K230_CANMV_V2) || defined(CONFIG_BOARD_K230_CANMV_01STUDIO) || defined(CONFIG_BOARD_K230D_CANMV) || defined(CONFIG_BOARD_K230_CANMV_DONGSHANPI) || defined(CONFIG_BOARD_K230_CANMV_RTT_EVB) || defined(CONFIG_BOARD_K230D_CANMV_BPI)
 	ai2d_pad_param_t pad_param { true, { { 0, 0 }, { 0, 0 }, { 70, 70 }, { 0, 0 } }, ai2d_pad_mode::constant, { 0, 0, 0 } };
 #else
    ai2d_pad_param_t pad_param { true, { { 0, 0 }, { 0, 0 }, { 0, 0 }, { 70, 70 } }, ai2d_pad_mode::constant, { 0, 0, 0 } };
