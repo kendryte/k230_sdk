@@ -72,6 +72,19 @@ using namespace nncase::runtime::detail;
 #define LCD_WIDTH       (1080)
 #define LCD_HEIGHT      (1920)
 
+#elif defined(CONFIG_BOARD_K230_CANMV_RTT_EVB)
+#define ISP_CHN1_HEIGHT (720)
+#define ISP_CHN1_WIDTH  (1280)
+
+#define ISP_CHN0_WIDTH  (960)
+#define ISP_CHN0_HEIGHT (540)
+
+#define ISP_INPUT_WIDTH (1920)
+#define ISP_INPUT_HEIGHT (1080)
+
+#define LCD_WIDTH       (1080)
+#define LCD_HEIGHT      (1920)
+
 #else
 #define ISP_CHN1_HEIGHT (1280)
 #define ISP_CHN1_WIDTH  (720)
@@ -297,6 +310,8 @@ k_s32 sample_connector_init(void)
     k_connector_type connector_type = ST7701_V1_MIPI_2LAN_480X800_30FPS;
 #elif defined(CONFIG_BOARD_K230_CANMV_DONGSHANPI)
     k_connector_type connector_type = ILI9806_MIPI_2LAN_480X800_30FPS;
+#elif defined(CONFIG_BOARD_K230_CANMV_RTT_EVB)
+    k_connector_type connector_type = NT35516_MIPI_2LAN_540X960_30FPS;
 #else
     k_connector_type connector_type = HX8377_V2_MIPI_4LAN_1080X1920_30FPS;
 #endif
@@ -334,7 +349,7 @@ static k_s32 vo_layer_vdss_bind_vo_config(void)
 
     sample_connector_init();
 
-#if defined(CONFIG_BOARD_K230D_CANMV) || defined(CONFIG_BOARD_K230_CANMV_DONGSHANPI) || defined(CONFIG_BOARD_K230D_CANMV_BPI) || defined(CONFIG_BOARD_K230_CANMV_LCKFB)
+#if defined(CONFIG_BOARD_K230D_CANMV) || defined(CONFIG_BOARD_K230_CANMV_DONGSHANPI) || defined(CONFIG_BOARD_K230_CANMV_RTT_EVB) || defined(CONFIG_BOARD_K230D_CANMV_BPI) || defined(CONFIG_BOARD_K230_CANMV_LCKFB)
     info.act_size.width = ISP_CHN0_HEIGHT;//1080;//640;//1080;
     info.act_size.height = ISP_CHN0_WIDTH;//1920;//480;//1920;
     info.format = PIXEL_FORMAT_YVU_PLANAR_420;
@@ -444,7 +459,7 @@ int sample_vb_init(void)
     return ret;
 }
 #if defined(CONFIG_BOARD_K230_CANMV) || defined(CONFIG_BOARD_K230_CANMV_V2) || defined(CONFIG_BOARD_K230_CANMV_01STUDIO) ||\
-        defined(CONFIG_BOARD_K230D_CANMV)  || defined(CONFIG_BOARD_K230_CANMV_DONGSHANPI) || defined(CONFIG_BOARD_K230D_CANMV_BPI) || defined(CONFIG_BOARD_K230_CANMV_LCKFB)
+        defined(CONFIG_BOARD_K230D_CANMV)  || defined(CONFIG_BOARD_K230_CANMV_DONGSHANPI) || defined(CONFIG_BOARD_K230_CANMV_RTT_EVB) || defined(CONFIG_BOARD_K230D_CANMV_BPI) || defined(CONFIG_BOARD_K230_CANMV_LCKFB)
 int sample_vivcap_init( void )
 {
     k_s32 ret = 0;
@@ -453,6 +468,8 @@ int sample_vivcap_init( void )
     sensor_type = OV_OV5647_MIPI_CSI0_1920X1080_30FPS_10BIT_LINEAR;
 #elif defined(CONFIG_BOARD_K230_CANMV_V2) || defined(CONFIG_BOARD_K230_CANMV_01STUDIO) || defined(CONFIG_BOARD_K230_CANMV_DONGSHANPI)
     sensor_type = OV_OV5647_MIPI_CSI2_1920X1080_30FPS_10BIT_LINEAR_V2;
+#elif defined(CONFIG_BOARD_K230_CANMV_RTT_EVB)
+    sensor_type = GC2093_MIPI_CSI2_1920X1080_30FPS_10BIT_LINEAR;
 #elif defined(CONFIG_BOARD_K230D_CANMV) || defined(CONFIG_BOARD_K230D_CANMV_BPI)
     sensor_type = OV_OV5647_MIPI_1920X1080_30FPS_10BIT_LINEAR;
 #elif defined(CONFIG_BOARD_K230_CANMV_LCKFB)
@@ -787,6 +804,11 @@ int main(int argc, char *argv[])
             vo_frame.line_x_start = 480 - (((uint32_t)boxes[i].y2) * ISP_CHN0_HEIGHT / ISP_CHN1_HEIGHT);
             vo_frame.line_y_start = ((uint32_t)boxes[i].x1) * ISP_CHN0_WIDTH / ISP_CHN1_WIDTH;
             vo_frame.line_x_end = 480 - (((uint32_t)boxes[i].y1) * ISP_CHN0_HEIGHT / ISP_CHN1_HEIGHT);
+            vo_frame.line_y_end = ((uint32_t)boxes[i].x2) * ISP_CHN0_WIDTH / ISP_CHN1_WIDTH;
+#elif defined(CONFIG_BOARD_K230_CANMV_RTT_EVB)
+            vo_frame.line_x_start = 540 - (((uint32_t)boxes[i].y2) * ISP_CHN0_HEIGHT / ISP_CHN1_HEIGHT);
+            vo_frame.line_y_start = ((uint32_t)boxes[i].x1) * ISP_CHN0_WIDTH / ISP_CHN1_WIDTH;
+            vo_frame.line_x_end = 540 - (((uint32_t)boxes[i].y1) * ISP_CHN0_HEIGHT / ISP_CHN1_HEIGHT);
             vo_frame.line_y_end = ((uint32_t)boxes[i].x2) * ISP_CHN0_WIDTH / ISP_CHN1_WIDTH;
 #else
             vo_frame.line_x_start = ((uint32_t)boxes[i].x1) * ISP_CHN0_WIDTH / ISP_CHN1_WIDTH;
