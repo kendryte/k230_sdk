@@ -49,6 +49,11 @@ config BOARD_K230_CANMV_DONGSHANPI
         help
            "CANMV(DONGSHANPI)";
 
+config BOARD_K230_CANMV_RTT_EVB
+       bool "K230 CANMV(rtt evb)"
+        help
+           "CANMV(rtt evb)";
+
 config BOARD_K230D_CANMV_BPI
        bool "K230 CANMV(BPI)"
         help
