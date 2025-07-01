@@ -1873,7 +1873,11 @@ static k_sensor_mode gc2093_mode_info[] = {
         .mclk_setting = {
             {
                 .mclk_setting_en = K_TRUE,
+#if defined(CONFIG_BOARD_K230_CANMV_RTT_EVB) 
+                .setting.id = SENSOR_MCLK0,
+#else
                 .setting.id = SENSOR_MCLK2,
+#endif
                 .setting.mclk_sel = SENSOR_PLL1_CLK_DIV4,
                 .setting.mclk_div = 25,
             },
@@ -1959,7 +1963,11 @@ static k_sensor_mode gc2093_mode_info[] = {
         .mclk_setting = {
             {
                 .mclk_setting_en = K_TRUE,
+#if defined(CONFIG_BOARD_K230_CANMV_RTT_EVB) 
+                .setting.id = SENSOR_MCLK0,
+#else
                 .setting.id = SENSOR_MCLK2,
+#endif
                 .setting.mclk_sel = SENSOR_PLL1_CLK_DIV4,
                 .setting.mclk_div = 25,
             },
