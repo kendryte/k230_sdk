@@ -9,6 +9,9 @@ CPPPATH = [cwd]
 if GetDepend(['RT_USING_FT5316']):
     src += Glob('ft5316.c')
 
+if GetDepend(['RT_USING_FT5406']):
+    src += Glob('ft5406.c')
+
 group = DefineGroup('touch', src, depend = ['RT_USING_TOUCH'], CPPPATH = CPPPATH)
 
 Return('group')
