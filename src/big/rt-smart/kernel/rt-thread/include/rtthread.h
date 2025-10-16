@@ -84,6 +84,7 @@ rt_tick_t rt_tick_get(void);
 void rt_tick_set(rt_tick_t tick);
 void rt_tick_increase(void);
 rt_tick_t  rt_tick_from_millisecond(rt_int32_t ms);
+rt_tick_t rt_tick_get_millisecond(void);
 #ifdef RT_USING_HOOK
 void rt_tick_sethook(void (*hook)(void));
 #endif
