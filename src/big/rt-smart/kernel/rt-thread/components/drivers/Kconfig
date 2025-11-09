@@ -278,7 +278,7 @@ config RT_USING_SPI
             bool "Using Serial Flash Universal Driver"
             default n
             help
-                An using JEDEC's SFDP standard serial (SPI) flash universal driver library
+                A universal driver library for serial (SPI) flash using JEDEC SFDP standard.
 
             if RT_USING_SFUD
                 config RT_SFUD_USING_SFDP
