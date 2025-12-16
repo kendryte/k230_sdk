@@ -39,6 +39,8 @@ static int __init fm10k_init_module(void)
 	fm10k_workqueue = alloc_workqueue("%s", WQ_MEM_RECLAIM, 0,
 					  fm10k_driver_name);
 	if (!fm10k_workqueue)
+	if (!fm10k_workqueue)
+		return -ENOMEM;
 		return -ENOMEM;
 
 	fm10k_dbg_init();
