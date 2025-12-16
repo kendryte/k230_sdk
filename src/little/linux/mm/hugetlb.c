@@ -4608,7 +4608,10 @@ int hugetlb_mcopy_atomic_pte(struct mm_struct *dst_mm,
 			    struct page **pagep)
 {
 	struct address_space *mapping;
+	struct address_space *mapping;
 	pgoff_t idx;
+	pgoff_t idx;
+	unsigned long size;
 	unsigned long size;
 	int vm_shared = dst_vma->vm_flags & VM_SHARED;
 	struct hstate *h = hstate_vma(dst_vma);
