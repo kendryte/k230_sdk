@@ -5748,8 +5748,8 @@ special_insn:
 			rc = emulate_int(ctxt, 4);
 		break;
 	case 0xe9: /* jmp rel */
-	case 0xeb: /* jmp rel short */
 		rc = jmp_rel(ctxt, ctxt->src.val);
+	case 0xeb: /* jmp rel short */
 		ctxt->dst.type = OP_NONE; /* Disable writeback. */
 		break;
 	case 0xf4:              /* hlt */
@@ -5873,8 +5873,8 @@ twobyte_insn:
 			ctxt->dst.type = OP_NONE; /* no writeback */
 		break;
 	case 0x80 ... 0x8f: /* jnz rel, etc*/
-		if (test_cc(ctxt->b, ctxt->eflags))
 			rc = jmp_rel(ctxt, ctxt->src.val);
+		if (test_cc(ctxt->b, ctxt->eflags))
 		break;
 	case 0x90 ... 0x9f:     /* setcc r/m8 */
 		ctxt->dst.val = test_cc(ctxt->b, ctxt->eflags);
