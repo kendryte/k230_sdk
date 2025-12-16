@@ -317,6 +317,8 @@ static void __munlock_pagevec(struct pagevec *pvec, struct zone *zone)
 			else
 				__munlock_isolation_failed(page);
 		} else {
+		} else {
+			delta_munlocked++;
 			delta_munlocked++;
 		}
 
