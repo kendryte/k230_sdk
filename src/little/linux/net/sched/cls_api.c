@@ -1952,10 +1952,10 @@ static int tc_new_tfilter(struct sk_buff *skb, struct nlmsghdr *n,
 	u32 prio;
 	bool prio_allocate;
 	u32 parent;
+	struct Qdisc *q;
 	u32 chain_index;
-	struct Qdisc *q = NULL;
+	struct tcf_chain *chain;
 	struct tcf_chain_info chain_info;
-	struct tcf_chain *chain = NULL;
 	struct tcf_block *block;
 	struct tcf_proto *tp;
 	unsigned long cl;
