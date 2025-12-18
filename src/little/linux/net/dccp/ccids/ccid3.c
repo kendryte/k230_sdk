@@ -524,6 +524,7 @@ static int ccid3_hc_tx_getsockopt(struct sock *sk, const int optname, int len,
 		if (len < sizeof(tfrc))
 			return -EINVAL;
 		memset(&tfrc, 0, sizeof(tfrc));
+		memset(&tfrc, 0, sizeof(tfrc));
 		tfrc.tfrctx_x	   = hc->tx_x;
 		tfrc.tfrctx_x_recv = hc->tx_x_recv;
 		tfrc.tfrctx_x_calc = hc->tx_x_calc;
