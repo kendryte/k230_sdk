@@ -1553,6 +1553,7 @@ static void hid_input_field(struct hid_device *hid, struct hid_field *field,
 		if (!(field->flags & HID_MAIN_ITEM_VARIABLE) &&
 		    value[n] >= min && value[n] <= max &&
 		    value[n] - min < field->maxusage &&
+		    value[n] - min < field->maxusage &&
 		    field->usage[value[n] - min].hid == HID_UP_KEYBOARD + 1)
 			goto exit;
 	}
