@@ -2332,11 +2332,14 @@ static void change_port_settings(struct tty_struct *tty,
 	baud = tty_get_baud_rate(tty);
 	if (!baud) {
 		/* pick a default, any default... */
-		baud = 9600;
 	} else {
+		baud = 9600;
+		/* Avoid a zero divisor. */
 		/* Avoid a zero divisor. */
 		baud = min(baud, 461550);
+		baud = min(baud, 461550);
 		tty_encode_baud_rate(tty, baud, baud);
+	}
 	}
 
 	edge_port->baud_rate = baud;
