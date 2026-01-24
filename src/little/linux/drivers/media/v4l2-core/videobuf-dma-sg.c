@@ -385,7 +385,7 @@ static void videobuf_vm_open(struct vm_area_struct *vma)
 {
 	struct videobuf_mapping *map = vma->vm_private_data;
 
-	dprintk(2, "vm_open %p [count=%d,vma=%08lx-%08lx]\n", map,
+	dprintk(2, "vm_open %p [count=%u,vma=%08lx-%08lx]\n", map,
 		map->count, vma->vm_start, vma->vm_end);
 
 	map->count++;
@@ -398,7 +398,7 @@ static void videobuf_vm_close(struct vm_area_struct *vma)
 	struct videobuf_dma_sg_memory *mem;
 	int i;
 
-	dprintk(2, "vm_close %p [count=%d,vma=%08lx-%08lx]\n", map,
+	dprintk(2, "vm_close %p [count=%u,vma=%08lx-%08lx]\n", map,
 		map->count, vma->vm_start, vma->vm_end);
 
 	map->count--;
@@ -619,7 +619,7 @@ static int __videobuf_mmap_mapper(struct videobuf_queue *q,
 
 	/* create mapping + update buffer list */
 	retval = -ENOMEM;
-	map = kmalloc(sizeof(struct videobuf_mapping), GFP_KERNEL);
+	map = kzalloc(sizeof(struct videobuf_mapping), GFP_KERNEL);
 	if (NULL == map)
 		goto done;
 
