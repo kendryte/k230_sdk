@@ -42,6 +42,8 @@
 #include <asm/unaligned.h>
 #include <trace/events/random.h>
 
+DEFINE_PER_CPU(struct rnd_state, net_rand_state) __latent_entropy;
+
 /**
  *	prandom_u32_state - seeded pseudo-random number generator.
  *	@state: pointer to state structure holding seeded state.
