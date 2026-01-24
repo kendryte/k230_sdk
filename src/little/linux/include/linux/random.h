@@ -11,6 +11,7 @@
 #include <linux/kernel.h>
 #include <linux/list.h>
 #include <linux/once.h>
+#include <linux/percpu.h>
 
 #include <uapi/linux/random.h>
 
@@ -109,6 +110,8 @@ declare_get_random_var_wait(long)
 #undef declare_get_random_var
 
 unsigned long randomize_page(unsigned long start, unsigned long range);
+
+DECLARE_PER_CPU(struct rnd_state, net_rand_state) __latent_entropy;
 
 /*
  * This is designed to be standalone for just prandom
