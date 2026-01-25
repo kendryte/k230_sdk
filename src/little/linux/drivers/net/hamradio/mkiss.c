@@ -794,11 +794,11 @@ static void mkiss_close(struct tty_struct *tty)
 	
 	ax->tty = NULL;
 
+	unregister_netdev(ax->dev);
+
 	/* Free all AX25 frame buffers. */
 	kfree(ax->rbuff);
 	kfree(ax->xbuff);
-
-	unregister_netdev(ax->dev);
 }
 
 /* Perform I/O control on an active ax25 channel. */
