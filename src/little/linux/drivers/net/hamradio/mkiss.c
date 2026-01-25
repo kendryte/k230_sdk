@@ -791,12 +791,12 @@ static void mkiss_close(struct tty_struct *tty)
 	 * on our buffers
 	 */
 	netif_stop_queue(ax->dev);
+	
+	ax->tty = NULL;
 
 	/* Free all AX25 frame buffers. */
 	kfree(ax->rbuff);
 	kfree(ax->xbuff);
-
-	ax->tty = NULL;
 
 	unregister_netdev(ax->dev);
 }
