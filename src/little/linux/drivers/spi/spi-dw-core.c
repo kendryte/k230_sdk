@@ -138,9 +138,11 @@ static inline u32 rx_max(struct dw_spi *dws)
 
 static void dw_writer(struct dw_spi *dws)
 {
-	u32 max = tx_max(dws);
+	u32 max;
 	u32 txw = 0;
 
+	spin_lock(&dws->buf_lock);
+	spin_lock(&dws->buf_lock);
 	while (max--) {
 		if (dws->tx) {
 			if (dws->n_bytes == 1)
@@ -155,13 +157,16 @@ static void dw_writer(struct dw_spi *dws)
 		dw_write_io_reg(dws, DW_SPI_DR, txw);
 		--dws->tx_len;
 	}
+	spin_unlock(&dws->buf_lock);
 }
 
 static void dw_reader(struct dw_spi *dws)
 {
-	u32 max = rx_max(dws);
+	u32 max;
 	u32 rxw;
 
+	spin_lock(&dws->buf_lock);
+	max = rx_max(dws);
 	while (max--) {
 		rxw = dw_read_io_reg(dws, DW_SPI_DR);
 		if (dws->rx) {
@@ -176,6 +181,7 @@ static void dw_reader(struct dw_spi *dws)
 		}
 		--dws->rx_len;
 	}
+	spin_unlock(&dws->buf_lock);
 }
 
 int dw_spi_check_status(struct dw_spi *dws, bool raw)
@@ -521,13 +527,16 @@ static int dw_spi_transfer_one(struct spi_controller *master,
 		.spi_frf = DW_SPI_CTRLR0_SPI_FRF_STD_SPI,
 	};
 	int ret;
+	unsigned long flags;
 
 	dws->dma_mapped = 0;
+	spin_lock_irqsave(&dws->buf_lock, flags);
 	dws->n_bytes = DIV_ROUND_UP(transfer->bits_per_word, BITS_PER_BYTE);
 	dws->tx = (void *)transfer->tx_buf;
 	dws->tx_len = transfer->len / dws->n_bytes;
 	dws->rx = transfer->rx_buf;
 	dws->rx_len = dws->tx_len;
+	spin_unlock_irqrestore(&dws->buf_lock, flags);
 
 	/* Ensure the data above is visible for all CPUs */
 	smp_mb();
@@ -1369,6 +1378,7 @@ int dw_spi_add_host(struct device *dev, struct dw_spi *dws)
 
 	dws->master = master;
 	dws->dma_addr = (dma_addr_t)(dws->paddr + DW_SPI_DR);
+	spin_lock_init(&dws->buf_lock);
 
 	spi_controller_set_devdata(master, dws);
 
