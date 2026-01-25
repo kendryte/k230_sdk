@@ -393,6 +393,11 @@ static int bond_ipsec_add_sa(struct xfrm_state *xs)
 
 	bond = netdev_priv(bond_dev);
 	slave = rcu_dereference(bond->curr_active_slave);
+	if (!slave) {
+		rcu_read_unlock();
+		return -ENODEV;
+	}
+
 	xs->xso.real_dev = slave->dev;
 	bond->xs = xs;
 
