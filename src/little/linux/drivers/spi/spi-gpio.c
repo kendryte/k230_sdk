@@ -367,8 +367,10 @@ static int spi_gpio_probe(struct platform_device *pdev)
 	else
 		status = spi_gpio_probe_pdata(pdev, master);
 
-	if (status)
+	if (status) {
+		spi_master_put(master);
 		return status;
+	}
 
 	spi_gpio = spi_master_get_devdata(master);
 
