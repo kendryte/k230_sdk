@@ -1054,6 +1054,10 @@ static struct mount *clone_mnt(struct mount *old, struct dentry *root,
 	mnt->mnt.mnt_flags = old->mnt.mnt_flags;
 	mnt->mnt.mnt_flags &= ~(MNT_WRITE_HOLD|MNT_MARKED|MNT_INTERNAL);
 
+	/* Don't allow unprivileged users to change mount flags */
+	if ((flag & CL_COPY_MNT_NS_FILE) && (mnt->mnt.mnt_flags & MNT_READONLY))
+		mnt->mnt.mnt_flags |= MNT_LOCK_READONLY;
+
 	atomic_inc(&sb->s_active);
 	mnt->mnt.mnt_sb = sb;
 	mnt->mnt.mnt_root = dget(root);
