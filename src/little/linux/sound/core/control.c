@@ -1277,7 +1277,9 @@ static int snd_ctl_elem_user_get(struct snd_kcontrol *kcontrol,
 	char *src = ue->elem_data +
 			snd_ctl_get_ioff(kcontrol, &ucontrol->id) * size;
 
+	mutex_lock(&ue->card->user_ctl_lock);
 	memcpy(&ucontrol->value, src, size);
+	mutex_unlock(&ue->card->user_ctl_lock);
 	return 0;
 }
 
@@ -1289,10 +1291,12 @@ static int snd_ctl_elem_user_put(struct snd_kcontrol *kcontrol,
 	unsigned int size = ue->elem_data_size;
 	char *dst = ue->elem_data +
 			snd_ctl_get_ioff(kcontrol, &ucontrol->id) * size;
-
+			
+	mutex_lock(&ue->card->user_ctl_lock);
 	change = memcmp(&ucontrol->value, dst, size) != 0;
 	if (change)
 		memcpy(dst, &ucontrol->value, size);
+	mutex_unlock(&ue->card->user_ctl_lock);
 	return change;
 }
 
@@ -1312,7 +1316,7 @@ static int replace_user_tlv(struct snd_kcontrol *kctl, unsigned int __user *buf,
 	container = vmemdup_user(buf, size);
 	if (IS_ERR(container))
 		return PTR_ERR(container);
-
+	mutex_lock(&ue->card->user_ctl_lock);
 	change = ue->tlv_data_size != size;
 	if (!change)
 		change = memcmp(ue->tlv_data, container, size) != 0;
@@ -1346,14 +1350,23 @@ static int read_user_tlv(struct snd_kcontrol *kctl, unsigned int __user *buf,
 {
 	struct user_element *ue = kctl->private_data;
 
-	if (ue->tlv_data_size == 0 || ue->tlv_data == NULL)
-		return -ENXIO;
+	int ret = 0;
 
-	if (size < ue->tlv_data_size)
-		return -ENOSPC;
-
-	if (copy_to_user(buf, ue->tlv_data, ue->tlv_data_size))
-		return -EFAULT;
+	mutex_lock(&ue->card->user_ctl_lock);
+	if (!ue->tlv_data_size || !ue->tlv_data) {
+		ret = -ENXIO;
+		goto err_unlock;
+	}
+	if (size < ue->tlv_data_size) {
+		ret = -ENOSPC;
+		goto err_unlock;
+	}
+	if (copy_to_user(tlv, ue->tlv_data, ue->tlv_data_size))
+		ret = -EFAULT;
+err_unlock:
+	mutex_unlock(&ue->card->user_ctl_lock);
+	if (ret)
+		return ret;
 
 	return 0;
 }
