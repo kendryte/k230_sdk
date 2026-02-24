@@ -203,7 +203,7 @@ static int lpspi_prepare_xfer_hardware(struct spi_controller *controller)
 	ret = pm_runtime_get_sync(fsl_lpspi->dev);
 	if (ret < 0) {
 		dev_err(fsl_lpspi->dev, "failed to enable clock\n");
-		return ret;
+		goto out_controller_put;
 	}
 
 	return 0;
