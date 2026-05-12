@@ -224,7 +224,6 @@ vg_lite_error_t vg_lite_hal_map_memory(vg_lite_kernel_map_memory_t *node)
 
 vg_lite_error_t vg_lite_hal_unmap_memory(vg_lite_kernel_unmap_memory_t *node)
 {
-    return VG_LITE_SUCCESS;
     if (lwp_unmap_user_phy(lwp_from_pid(lwp_getpid()), node->logical)) {
         return VG_LITE_INVALID_ARGUMENT;
     }
