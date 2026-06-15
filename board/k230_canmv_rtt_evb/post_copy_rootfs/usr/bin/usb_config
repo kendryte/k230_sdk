@@ -1,0 +1,10 @@
+#! /bin/sh
+
+sleep 1
+dev_path=/sys$1
+state=`cat ${dev_path}/state 2>/dev/null`
+
+if [ "$state"x != "configured"x ] ; then
+        UDC=`ls /sys/class/udc/ | awk 'NR==1 {print; exit}'`
+        echo $UDC > /sys/kernel/config/usb_gadget/g1/UDC
+fi

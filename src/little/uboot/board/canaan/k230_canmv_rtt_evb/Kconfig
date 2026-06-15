@@ -1,0 +1,34 @@
+if TARGET_K230_CANMV_RTT_EVB
+
+config SYS_CPU
+	default "k230"
+
+config SYS_VENDOR
+    default "canaan"
+
+config SYS_BOARD
+    default "k230_canmv_rtt_evb"
+
+config SYS_CONFIG_NAME
+    default "k230_evb"
+
+
+config BOARD_SPECIFIC_OPTIONS # dummy
+	def_bool y
+	select RISCV_THEAD
+
+choice
+	prompt "DDR Type And Frequency"
+	default CANMV_DONGSHANPI_CORE_LPDDR3_1866
+
+	config CANMV_DONGSHANPI_CORE_LPDDR3_2133
+		bool "k230 canmv dongshanpi core ddr3 2133"
+	config CANMV_DONGSHANPI_CORE_LPDDR3_1866
+		bool "k230 canmv dongshanpi core ddr3 1866"
+	config CANMV_DONGSHANPI_CORE_LPDDR4_2667
+	    bool "k230 canmv dongshanpi core ddr4 2667"
+	help
+		"CANMV V3,lushanpai,01studio,dongshanpi"
+    endchoice
+
+endif
