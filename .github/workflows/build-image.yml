@@ -7,14 +7,18 @@ on:
   workflow_dispatch:
 
 env:
-  CONF: k230_canmv_01studio_defconfig
   DOCKER_IMAGE: ghcr.io/kendryte/k230_sdk
 
 jobs:
   build-image:
-    name: Build k230_canmv_01studio_defconfig
+    name: Build ${{ matrix.conf }}
     runs-on: ubuntu-latest
     timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        conf:
+          - k230_canmv_01studio_defconfig
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,12 +34,12 @@ jobs:
       - name: Build image inside docker
         run: |
           docker run --rm -u root \
-            -e CONF=${{ env.CONF }} \
+            -e CONF=${{ matrix.conf }} \
             -v "$(pwd):$(pwd)" \
             -v "$(pwd)/toolchain:/opt/toolchain" \
             -w "$(pwd)" \
             ${{ env.DOCKER_IMAGE }} \
-            /bin/bash -c "make CONF=${{ env.CONF }}"
+            /bin/bash -c "make CONF=${{ matrix.conf }}"
 
       - name: Fix ownership of build outputs
         if: always()
@@ -44,15 +48,15 @@ jobs:
       - name: Collect img.gz
         run: |
           set -e
-          ls -alh output/${{ env.CONF }}/images/
+          ls -alh output/${{ matrix.conf }}/images/
           mkdir -p artifacts
-          cp -L output/${{ env.CONF }}/images/*.img.gz artifacts/
+          cp -L output/${{ matrix.conf }}/images/*.img.gz artifacts/
           ls -alh artifacts/
 
       - name: Upload image
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.CONF }}
+          name: ${{ matrix.conf }}
           path: artifacts/*.img.gz
           if-no-files-found: error
           retention-days: 7
