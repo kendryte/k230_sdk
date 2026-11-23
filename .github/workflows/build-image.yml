@@ -1,0 +1,58 @@
+name: Build K230 Image
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  CONF: k230_canmv_01studio_defconfig
+  DOCKER_IMAGE: ghcr.io/kendryte/k230_sdk
+
+jobs:
+  build-image:
+    name: Build ${{ env.CONF }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Prepare source code (toolchain + sources)
+        run: make prepare_sourcecode
+
+      - name: Pull build docker image
+        run: docker pull ${{ env.DOCKER_IMAGE }}
+
+      - name: Build image inside docker
+        run: |
+          docker run --rm -u root \
+            -e CONF=${{ env.CONF }} \
+            -v "$(pwd):$(pwd)" \
+            -v "$(pwd)/toolchain:/opt/toolchain" \
+            -w "$(pwd)" \
+            ${{ env.DOCKER_IMAGE }} \
+            /bin/bash -c "make CONF=${{ env.CONF }}"
+
+      - name: Fix ownership of build outputs
+        if: always()
+        run: sudo chown -R "$(id -u):$(id -g)" output toolchain src || true
+
+      - name: Collect img.gz
+        run: |
+          set -e
+          ls -alh output/${{ env.CONF }}/images/
+          mkdir -p artifacts
+          cp -L output/${{ env.CONF }}/images/*.img.gz artifacts/
+          ls -alh artifacts/
+
+      - name: Upload image
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.CONF }}
+          path: artifacts/*.img.gz
+          if-no-files-found: error
+          retention-days: 7
