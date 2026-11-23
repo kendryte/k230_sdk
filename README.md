@@ -166,6 +166,26 @@ k230_evb_defconfig/images
 
 > TF卡和eMMC均可使用`sysimage-sdcard.img`镜像,或使用`sysimage-sdcard.img.gz`解压缩得到该文件。
 
+### 自动化构建 (GitHub Actions)
+
+本项目使用GitHub Actions自动构建K230镜像。在每次push到main分支或创建pull request时，自动触发构建流程。
+
+**构建流程详情:**
+- Workflow文件: `.github/workflows/build-image.yml`
+- 支持配置: `k230_canmv_01studio_defconfig`
+- 构建产物: 编译生成的镜像文件自动上传至Artifacts，保留7天
+
+**构建步骤:**
+1. 检出代码及其子模块
+2. 准备源代码（下载toolchain和依赖）
+3. 拉取官方K230编译Docker镜像
+4. 在Docker容器中执行编译
+5. 修复编译产物的所有权
+6. 收集生成的镜像文件
+7. 上传到GitHub Artifacts
+
+> 若需手动触发构建，可在GitHub Actions页面使用"Run workflow"功能
+
 ### 预编译镜像下载
 
 如果不希望自行编译镜像，可下载预编译镜像，直接烧录使用
