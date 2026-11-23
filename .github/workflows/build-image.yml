@@ -12,7 +12,7 @@ env:
 
 jobs:
   build-image:
-    name: Build ${{ env.CONF }}
+    name: Build k230_canmv_01studio_defconfig
     runs-on: ubuntu-latest
     timeout-minutes: 180
     steps:
